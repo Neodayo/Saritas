@@ -1,32 +1,45 @@
-
-
-{ 
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registration Page</title>
+    <title>Login | Sarita's Wedding Creations</title>
     <link rel="stylesheet" href="../CSS/Sigup.css">
-    
+    <link href='https://fonts.googleapis.com/css?family=MonteCarlo' rel='stylesheet'>
 </head>
+
 <body>
-    <div class="container">
-        <h1>Register</h1>
-        <form name="registerForm" onsubmit="registerUser(event)">
-            <input type="text" name="first_name" placeholder="First Name" required>
-            <input type="text" name="last_name" placeholder="Last Name" required>
-            <input type="email" name="email" placeholder="Email" required>
-            <input type="tel" name="phone" placeholder="Phone Number" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <input type="password" name="confirm_password" placeholder="Confirm Password" required>
-            <br><br>
-            <button type="submit">Register</button>
-            <br><br>
-            <p>Already have an account? <a href="login.php"> Login Here</a></p>
-        </form>
+    <div class =bg-image></div>
+
+    <div class="register-container">
+        <div class="left-section">
+
+            <a href="Signup.html" class="back-button">
+                <img src="../Images/back.png" alt="Back" class ="back-button-image">  </a>
+              
+
+             <h1><span class="brand-name">Sarita’s</span> 
+                <br>
+                Wedding Creations
+                 <br>
+                 & Event Stylist
+            </h1>
+        </div>
+        <div class="right-section">
+            <form>
+                <input type="text" name="first_name" placeholder="First Name" required>
+                <input type="text" name="last_name" placeholder="Last Name" required>
+                <input type="text" name="branch" placeholder="Store Branch" required>
+                <input type="email" name="email" placeholder="Admin@gmail.com" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <input type="password" name="confirm_password" placeholder="Confirm Password" required>
+                <a href="../Dashboard/MainDashboard.html" class="register-btn">Register</a>
+                <p>Already have an account? <a href="Login.html"> Login Here</a></p>
+
+                <!-- Main Login Button cause submit is needed -->
+                <!-- <button type="submit" class="login-btn">Log in</button> -->
+            </form>
+        </div>
     </div>
 </body>
 </html>
-
-
