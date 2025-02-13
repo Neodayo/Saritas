@@ -208,3 +208,10 @@ input:checked + .slider {
     border-radius: 10px;
     backdrop-filter: blur(5px);
 }
+.brand-name {
+    font-family: "Rouge Script", cursive;
+  font-weight: 500;
+    font-size: 3em;
+  font-style: normal;
+    color: gold;
+}

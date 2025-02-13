@@ -88,12 +88,19 @@
         padding: 12px;
         margin: 10px 0;
         border: 2px solid gold;
-        border-radius: 5px;
+        border-radius: 20px;
         font-size: 16px;
     }
-    
+    select, option {       
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid gold;
+            border-radius: 20px;
+            font-size: 16px;
+    }
     .register-btn {
-        width: 100%;
+        width: 50%;
         padding: 4px;
         background: white;
         border: 2px solid black;
@@ -119,4 +126,10 @@
             padding: 30px;
         }
     }
-    
+    .brand-name {
+        font-family: "Rouge Script", cursive;
+      font-weight: 500;
+        font-size: 3em;
+      font-style: normal;
+        color: gold;
+    }

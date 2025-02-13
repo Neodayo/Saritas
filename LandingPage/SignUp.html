@@ -6,6 +6,7 @@
     <title>Login | Sarita's Wedding Creations</title>
     <link rel="stylesheet" href="../CSS/Sigup.css">
     <link href='https://fonts.googleapis.com/css?family=MonteCarlo' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=Rouge+Script&display=swap" rel="stylesheet">
 </head>
 
 <body>
@@ -29,10 +30,15 @@
             <form>
                 <input type="text" name="first_name" placeholder="First Name" required>
                 <input type="text" name="last_name" placeholder="Last Name" required>
-                <input type="text" name="branch" placeholder="Store Branch" required>
+                <select name="branch" id="branch" required>
+                    <option value="" disabled selected>Select a branch</option>
+                    <option value="Sucabon">Sucabon</option>
+                    <option value="Caneler">Canelar</option>
+                    <option value="unknown">unknown</option>
+                </select>
                 <input type="email" name="email" placeholder="Admin@gmail.com" required>
                 <input type="password" name="password" placeholder="Password" required>
-                <input type="password" name="confirm_password" placeholder="Confirm Password" required>
+                <input type="text" name="confirm_password" placeholder="Confirm Password" required>
                 <a href="../Dashboard/MainDashboard.html" class="register-btn">Register</a>
                 <p>Already have an account? <a href="Login.html"> Login Here</a></p>
 
