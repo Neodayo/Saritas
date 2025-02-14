@@ -39,10 +39,9 @@
     .brand-name {
         font-family: 'Rouge Script', cursive; 
     font-size: 100px; 
-    font-weight: bold;
-    color: #000000;
-    
-    text-shadow: 1px 1px 8px #efbf04;
+    font-weight: 700;
+    color: #efbf04;
+    text-shadow: 1px 1px 8px #000000;
     }
 
     h1{
@@ -109,7 +108,7 @@
             font-size: 16px;
     }
     .register-btn {
-     font-size: 15px;
+    font-size: 15px;
     font-weight: bold;
     background-color: white;
     color: black;
