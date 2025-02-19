@@ -6,66 +6,55 @@
     <title>Dashboard</title>
     <link rel="stylesheet" href="../CSS/Dashboard.css?v=2">
     <link href="https://fonts.googleapis.com/css2?family=Rouge+Script&display=swap" rel="stylesheet">
-</head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <body>
 
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="logo">
-            <img src="../Images/Logo.png" alt="Logo">
+            <img src="../Images/Logo.png" alt="Wedding Creations & Event Stylist">
+            <span>Wedding Creations & Event Stylist</span>
         </div>
-        <button class="nav-btn">☰ Inventory</button>
-        <button class="nav-btn">☰ Calendar of Event</button>
-        <button class="nav-btn">☰ Rental Tracker</button>
-        <button class="nav-btn">☰ Receipt</button>
-        <button class="nav-btn">☰ Data Analysis</button>
-    
-        
-        <button id="toggle-btn" class="collapse-btn">☰</button>
-    
-        <!-- <div class="search-bar">
+
+        <div class="nav-buttons">
+            <button class="nav-btn"><span class="fas fa-box"></span> Inventory</button>
+            <button class="nav-btn"><span class="fas fa-calendar"></span> Calendar of Event</button>
+            <button class="nav-btn"><span class="fas fa-chart-line"></span> Rental Tracker</button>
+            <button class="nav-btn"><span class="fas fa-receipt"></span> Receipt</button>
+            <button class="nav-btn"><span class="fas fa-chart-bar"></span> Data Analysis</button>
+        </div>
+
+        <div class="search-bar">
             <input type="text" placeholder="Search...">
             <button>🔍</button>
-        </div> -->
-    </div>
-
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Top Navigation Bar -->
-        <!-- <div class="top-nav">
-            <button class="nav-option">Individual</button>
-            <button class="nav-option">Package</button>
-            <button class="nav-option">Suit & Dress</button>
-            <span class="icons">🏠 🔔</span>
-            <button class="profile-btn">PROFILE</button>
-            <label class="switch">
-                <input type="checkbox">
-                <span class="slider"></span>
-            </label>
-        </div> -->
-        
-
-        <div class="background-overlay">
-            <h1 class="brand-name">Sarita’s</h1>
         </div>
     </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            let toggleBtn = document.getElementById("toggle-btn");
-            let sidebar = document.getElementById("sidebar");
-            let mainContent = document.querySelector(".main-content");
+    <button id="toggle-btn">☰</button>
     
-            toggleBtn.addEventListener("click", function () {
-                sidebar.classList.toggle("collapsed");
-                mainContent.classList.toggle("collapsed");
-            });
-        });
-        
-        function toggleSidebar() {
-            document.querySelector(".sidebar").classList.toggle("collapsed");
-            }
+    <!-- Header -->
+<div class="header">
+    <div class="header-items">
+        <a href="#" class="header-link">Individual</a>
+        <a href="#" class="header-link">Package</a>
+        <a href="#" class="header-link"><i class="fas fa-home"></i></a>
+        <a href="#" class="header-link"><i class="fas fa-bell"></i></a>
+        <a href="#" class="header-link"><i class="fas fa-user"></i></a>
+    </div>
+</div>
+
+
+    <script >
+        document.addEventListener("DOMContentLoaded", function () {
+    const sidebar = document.getElementById("sidebar");
+    const toggleBtn = document.getElementById("toggle-btn");
+
+    toggleBtn.addEventListener("click", function () {
+        sidebar.classList.toggle("collapsed");
+        toggleBtn.classList.toggle("collapsed");
+    });
+});
+
     </script>
 </body>
 </html>
