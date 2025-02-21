@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="../CSS/Dashboard.css?v=2">
+    <link href="https://fonts.googleapis.com/css2?family=Rouge+Script&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/locales-all.min.js"></script>
+</head>
+<body>
+
+    <style>
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            color: black;
+        }
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .tab-button {
+            padding: 10px 15px;
+            background-color: #21b495;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .tab-button.active {
+            background-color: #1a8d73;
+        }
+        .tab-content {
+            display: none;
+            margin-top: 20px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .event-list li {
+            background: #f9e31a27;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            list-style: none;
+        }
+        button {
+            background-color: #21b495;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #1a8d73;
+        }
+    </style>
+    </style>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="logo">
+            <img src="../Images/Logo.png" alt="Wedding Creations & Event Stylist">
+            <span>Wedding Creations & Event Stylist</span>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="switchTab('inventory-tab')"><span class="fas fa-box"></span> Inventory</button>
+            <button class="nav-btn" onclick="switchTab('calendar-tab')"><span class="fas fa-calendar"></span> Calendar of Event</button>
+            <button class="nav-btn"><span class="fas fa-chart-line"></span> Rental Tracker</button>
+            <button class="nav-btn"><span class="fas fa-receipt"></span> Receipt</button>
+            <button class="nav-btn"><span class="fas fa-chart-bar"></span> Data Analysis</button>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" placeholder="Search...">
+            <button>🔍</button>
+        </div>
+    </div>
+
+    <button id="toggle-btn">☰</button>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-items">
+            <a href="#" class="header-link">Individual</a>
+            <a href="#" class="header-link">Package</a>
+            <a href="#" class="header-link"><i class="fas fa-home"></i></a>
+            <a href="#" class="header-link"><i class="fas fa-bell"></i></a>
+            <a href="#" class="header-link"><i class="fas fa-user"></i></a>
+        </div>
+    </div>
+
+    <!-- Main Content Section -->
+    <section>
+        <div class="container" id="calendar-tab" class="tab-content">
+            <h2>Event Calendar</h2>
+            
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-button active" onclick="switchTab('calendar-tab')">Calendar</button>
+                <button class="tab-button" onclick="switchTab('ongoing-events-tab')">Ongoing</button>
+                <button class="tab-button" onclick="switchTab('upcoming-events-tab')">Upcoming</button>
+                <button class="tab-button" onclick="switchTab('past-events-tab')">Past</button>
+            </div>
+
+            <!-- Calendar Tab -->
+            <div id="calendar" class="tab-content active"></div>
+            <button id="addEvent">Create an Event</button>
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const sidebar = document.getElementById("sidebar");
+            const toggleBtn = document.getElementById("toggle-btn");
+            const calendarEl = document.getElementById("calendar");
+    
+            // Sidebar Toggle
+            toggleBtn.addEventListener("click", function () {
+                sidebar.classList.toggle("collapsed");
+                toggleBtn.classList.toggle("collapsed");
+            });
+    
+            // Initialize Calendar
+            let calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: "dayGridMonth",
+                themeSystem: "standard",
+                headerToolbar: {
+                    left: "prev,next today",
+                    center: "title",
+                    right: ""
+                },
+                dateClick: function (info) {
+                    createOrEditEvent(info.dateStr);
+                },
+                eventClick: function (info) {
+                    editEvent(info.event);
+                },
+                events: loadEvents()
+            });
+    
+            calendar.render();
+    
+            // Event Listeners
+            document.getElementById("addEvent").addEventListener("click", function () {
+                createOrEditEvent();
+            });
+    
+            // Create or Edit Event
+            function createOrEditEvent(date = null, existingEvent = null) {
+                let title = prompt("Enter event title:", existingEvent ? existingEvent.title : "");
+                if (!title) return;
+    
+                let venue = prompt("Enter event venue:", existingEvent ? existingEvent.extendedProps.venue : "");
+                let eventDate = date ? date : prompt("Enter event date (YYYY-MM-DD):", existingEvent ? existingEvent.startStr : "");
+                let time = prompt("Enter event time (HH:MM):", existingEvent ? existingEvent.extendedProps.time : "");
+                let remarks = prompt("Enter remarks:", existingEvent ? existingEvent.extendedProps.remarks : "");
+    
+                if (!eventDate) return;
+    
+                let event = {
+                    title: title,
+                    start: eventDate,
+                    allDay: true,
+                    extendedProps: {
+                        venue: venue,
+                        time: time,
+                        remarks: remarks
+                    }
+                };
+    
+                if (existingEvent) {
+                    existingEvent.remove();
+                }
+    
+                calendar.addEvent(event);
+                saveEvents(calendar.getEvents());
+                updateEventLists();
+            }
+    
+            // Edit Event
+            function editEvent(event) {
+                let action = confirm("Do you want to edit this event?");
+                if (action) {
+                    createOrEditEvent(null, event);
+                } else {
+                    let deleteConfirm = confirm("Do you want to delete this event?");
+                    if (deleteConfirm) {
+                        event.remove();
+                        saveEvents(calendar.getEvents());
+                        updateEventLists();
+                    }
+                }
+            }
+    
+            // Save Events to Local Storage
+            function saveEvents(events) {
+                let eventData = events.map(event => ({
+                    title: event.title,
+                    start: event.startStr,
+                    extendedProps: event.extendedProps
+                }));
+                localStorage.setItem("calendarEvents", JSON.stringify(eventData));
+                calendar.refetchEvents();
+            }
+    
+            // Load Events from Local Storage
+            function loadEvents() {
+                let saved = localStorage.getItem("calendarEvents");
+                return saved ? JSON.parse(saved) : [];
+            }
+    
+            // Update Event Lists for Ongoing, Upcoming, and Past Events
+            function updateEventLists() {
+                let events = loadEvents();
+                let now = new Date().toISOString().split("T")[0];
+    
+                let ongoing = document.getElementById("ongoing-events");
+                let upcoming = document.getElementById("upcoming-events");
+                let past = document.getElementById("past-events");
+    
+                ongoing.innerHTML = "";
+                upcoming.innerHTML = "";
+                past.innerHTML = "";
+    
+                if (events.length === 0) {
+                    ongoing.innerHTML = "<li>No ongoing events</li>";
+                    upcoming.innerHTML = "<li>No upcoming events</li>";
+                    past.innerHTML = "<li>No past events</li>";
+                    return;
+                }
+    
+                events.forEach(event => {
+                    let listItem = `
+                        <li>
+                            <strong>${event.title}</strong><br>
+                            Date: ${event.start}<br>
+                            Time: ${event.extendedProps?.time || "Not specified"}<br>
+                            Venue: ${event.extendedProps?.venue || "Not specified"}<br>
+                            Remarks: ${event.extendedProps?.remarks || "None"}
+                        </li>`;
+    
+                    if (event.start === now) {
+                        ongoing.innerHTML += listItem;
+                    } else if (event.start > now) {
+                        upcoming.innerHTML += listItem;
+                    } else {
+                        past.innerHTML += listItem;
+                    }
+                });
+            }
+    
+            updateEventLists();
+        });
+    
+        // Switch Tab Function
+        function switchTab(tabId) {
+            document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
+            document.getElementById(tabId).classList.add("active");
+    
+            document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
+            document.querySelector(`[onclick="switchTab('${tabId}')"]`).classList.add("active");
+        }
+    </script>
+    
+</body>
+</html>
