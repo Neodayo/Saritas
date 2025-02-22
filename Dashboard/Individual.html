@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="../CSS/Dashboard.css?v=2">
+    <link href="https://fonts.googleapis.com/css2?family=Rouge+Script&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="logo">
+            <img src="../Images/Logo.png" alt="Wedding Creations & Event Stylist">
+            <span>Wedding Creations & Event Stylist</span>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="nav-btn"><span class="fas fa-box"></span> Inventory</button>
+            <button class="nav-btn"><span class="fas fa-calendar"></span> Calendar of Event</button>
+            <button class="nav-btn"><span class="fas fa-chart-line"></span> Rental Tracker</button>
+            <button class="nav-btn"><span class="fas fa-receipt"></span> Receipt</button>
+            <button class="nav-btn"><span class="fas fa-chart-bar"></span> Data Analysis</button>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" placeholder="Search...">
+            <button>🔍</button>
+        </div>
+    </div>
+
+    <button id="toggle-btn">☰</button>
+    
+    <!-- Header -->
+<div class="header">
+    <div class="header-items">
+        <a href="#" class="header-link">Individual</a>
+        <a href="#" class="header-link">Package</a>
+        <a href="#" class="header-link"><i class="fas fa-home"></i></a>
+        <a href="#" class="header-link"><i class="fas fa-bell"></i></a>
+        <a href="#" class="header-link"><i class="fas fa-user"></i></a>
+    </div>
+</div>
+
+
+    <script >
+        document.addEventListener("DOMContentLoaded", function () {
+    const sidebar = document.getElementById("sidebar");
+    const toggleBtn = document.getElementById("toggle-btn");
+
+    toggleBtn.addEventListener("click", function () {
+        sidebar.classList.toggle("collapsed");
+        toggleBtn.classList.toggle("collapsed");
+    });
+});
+
+    </script>
+</body>
+</html>
