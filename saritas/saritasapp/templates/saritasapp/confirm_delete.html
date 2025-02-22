@@ -1,0 +1,26 @@
+{%load static%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Deletion</title>
+    <link rel="stylesheet" href="{% static 'css/saritas.css' %}">
+</head>
+<body>
+
+    <div class="container">
+        <h1>Confirm Deletion</h1>
+        <p>Are you sure you want to delete the item <span class="item-name">"{{ item.name }}"</span>?</p>
+        
+        <form method="POST" action="{% url 'saritasapp:delete_inventory' item.id %}">
+            {% csrf_token %}
+            <div class="btn-container">
+                <a href="{% url 'saritasapp:inventory_list' %}" class="btn btn-cancel">Cancel</a>
+                <button type="submit" class="btn btn-delete">Delete</button>
+            </div>
+        </form>
+    </div>
+
+</body>
+</html>

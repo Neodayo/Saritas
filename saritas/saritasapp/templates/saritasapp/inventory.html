@@ -1,0 +1,32 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory</title>
+    <link rel="stylesheet" href="{% static 'css/saritas.css' %}">
+</head>
+<body>
+
+    <h1>Inventory</h1>
+    
+    <div class="inventory-container">
+        {% for item in inventory_items %}
+        <div class="card">
+            <img src="{{ item.image.url }}" alt="{{ item.name }}">
+            <h2>{{ item.name }}</h2>
+            <p><strong>Category:</strong> {{ item.category.name }}</p>
+            <p><strong>Color:</strong> {{ item.color }}</p>
+            <p><strong>Rental Price:</strong> ₱{{ item.rental_price }}</p>
+            <p><strong>Purchase Price:</strong> {% if item.purchase_price %}₱{{ item.purchase_price }}{% else %}N/A{% endif %}</p>
+            <p><strong>Available:</strong> {% if item.available %}✅ Yes{% else %}❌ No{% endif %}</p>
+            <a href="{% url 'saritasapp:view_inventory' item.id %}" class="btn">View</a>
+        </div>
+        {% empty %}
+        <p>No inventory items available.</p>
+        {% endfor %}
+    </div>
+
+</body>
+</html>
