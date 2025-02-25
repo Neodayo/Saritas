@@ -29,7 +29,7 @@ body::before {
 .sidebar {
     width: 250px;
     height: 100vh;
-    background: #6C7293;
+    background: #eee8aa;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -75,7 +75,7 @@ body::before {
     align-items: center;
     width: 100%;
     padding: 10px;
-    margin: 10px 0;
+    margin-bottom: 10px;
     font-size: 14px;
     background: #ffffff;
     border: none;
@@ -122,7 +122,7 @@ body::before {
     position: fixed;
     top: 20px;
     left: 20px;
-    background: #ffffff;
+    background: #eee8aa;
     border: none;
     padding: 8px 12px;
     font-size: 18px;
@@ -141,6 +141,10 @@ body::before {
 }
 
 .sidebar.collapsed .logo span .logo img .logo {
+    display: none;
+}
+
+.sidebar.collapsed .search-bar{
     display: none;
 }
 
@@ -173,25 +177,35 @@ body::before {
 }
 
 .sidebar.collapsed .nav-btn span:not(.fas) {
-    display: none; 
+    display: none;   
 }
 
+.sidebar.collapsed .nav-btn {
+    color: #fff;
+    
+}
 
+.sidebar.collapsed .logo 
+    {
+        display: none;
+    }
 
-
-
-
+.sidebar.collapsed .nav-buttons {
+    
+    display: none;
+    
+}
+    
 .header {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     padding: 20px;
-    background-color: #6C7293;
+    background-color: #eee8aa;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     z-index: 98;
     height: 75px;
-
 }
 
 .header-items {
