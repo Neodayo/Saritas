@@ -68,14 +68,16 @@ body::before {
 /* _______________Navigation Buttons______ */
 .nav-buttons {
     width: 100%;
+    margin-top: 70px;
 }
 
 .nav-btn {
     display: flex;
     align-items: center;
-    width: 100%;
+    width: 90%;    /* reduced from 100% to 90% to create space on sides */
     padding: 10px;
-    margin-bottom: 10px;
+    margin: 20px 5%;  /* Increased top margin to 20px */
+    /* You can increase the first value (20px) to create more top space */
     font-size: 14px;
     background: #ffffff;
     border: none;
@@ -83,12 +85,15 @@ body::before {
     cursor: pointer;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
 }
-
+div.nav-btn{
+    margin-top: 700px;
+}
 .nav-btn:hover {
     background: #e0e0e0;
 }
 
 .menu-icon {
+    margin-top: 70px;
     margin-right: 10px;
 }
 
