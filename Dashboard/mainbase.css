@@ -1,0 +1,220 @@
+body {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background-color: white;
+    background-size: cover;
+    position: relative;
+}
+
+body::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.3); /* targit 30% opacity */
+    backdrop-filter: blur(5px); /* put blur effect */
+    z-index: -1;
+}
+
+/* for sidebar dito*/
+/* Sidebar Styling */
+.sidebar {
+    width: 250px;
+    height: 100vh;
+    background: #6C7293;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    position: fixed;
+    left: 0;
+    top: 0;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    transition: width 0.3s ease-in-out;
+    z-index: 99;
+}
+
+/* ______ Logo_________________ */
+.logo {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-left: 110px;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.logo img {
+    width: 70px;
+    height: auto;
+    border-radius: 50%;
+}
+
+.logo span {
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* _______________Navigation Buttons______ */
+.nav-buttons {
+    width: 100%;
+}
+
+.nav-btn {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    font-size: 14px;
+    background: #ffffff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.nav-btn:hover {
+    background: #e0e0e0;
+}
+
+.menu-icon {
+    margin-right: 10px;
+}
+
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    width: 90%;
+    background: #ffffff;
+    padding: 5px;
+    border-radius: 20px;
+    margin-top: auto;
+}
+
+.search-bar input {
+    border: none;
+    outline: none;
+    width: 80%;
+    padding: 5px;
+}
+
+.search-bar button {
+    border: none;
+    background: none;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+
+#toggle-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: #ffffff;
+    border: none;
+    padding: 8px 12px;
+    font-size: 18px;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease-in-out;
+    z-index: 100;
+    position: fixed;
+}
+
+
+
+.sidebar.collapsed {
+    width: 50px;
+}
+
+.sidebar.collapsed .logo span .logo img .logo {
+    display: none;
+}
+
+/*try ko dito
+*/
+.sidebar.collapsed .nav-btn {
+    display: none;
+    justify-content: center; 
+    align-items: center; 
+    padding: 10px;
+    text-align: center;
+    width: 100%;
+}
+
+.sidebar.collapsed .nav-btn .fas {
+    display: none; 
+}
+
+.sidebar.collapsed .nav-btn {
+    white-space: pre-line;
+    overflow: hidden;
+    font-size: 12px;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: #000;
+    opacity: 1;
+}
+
+.sidebar.collapsed .nav-btn span:not(.fas) {
+    display: none; 
+}
+
+
+
+
+
+
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    background-color: #6C7293;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    z-index: 98;
+    height: 75px;
+
+}
+
+.header-items {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-left: 250px;
+    margin-top: 20px;
+    padding-right: 20px;
+    position: relative;
+}
+
+.header-link {
+    margin-right: 50px;
+    text-decoration: none;
+    color: #333;
+    font-size: 30px;
+}
+
+.header-link i {
+    font-size: 30px;
+    margin-right: 50px;
+}
+
+
+
