@@ -27,19 +27,19 @@ body::before {
 /* for sidebar dito*/
 /* Sidebar Styling */
 .sidebar {
-    width: 250px;
+    width: 400px;
     height: 100vh;
     background: #eee8aa;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20px;
     position: fixed;
     left: 0;
     top: 0;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
     overflow-y: auto;
-    transition: width 0.3s ease-in-out;
+    transition: all 0.5s ease;
+    transform: translateX(-180px);
     z-index: 99;
 }
 
@@ -69,19 +69,19 @@ body::before {
 .nav-buttons {
     width: 100%;
     margin-top: 70px;
+    display: flex;
+    flex-direction: column;
 }
 
 .nav-btn {
     display: flex;
     align-items: center;
-    width: 90%;    /* reduced from 100% to 90% to create space on sides */
-    padding: 10px;
-    margin: 20px 5%;  /* Increased top margin to 20px */
-    /* You can increase the first value (20px) to create more top space */
+    width: 90%;
+    margin: 20px 5%;
     font-size: 14px;
     background: #ffffff;
     border: none;
-    border-radius: 10px;
+    border-radius: 0;
     cursor: pointer;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
 }
@@ -164,42 +164,7 @@ div.nav-btn{
     width: 100%;
 }
 
-.sidebar.collapsed .nav-btn .fas {
-    display: none; 
-}
 
-.sidebar.collapsed .nav-btn {
-    white-space: pre-line;
-    overflow: hidden;
-    font-size: 12px;
-    font-weight: bold;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    color: #000;
-    opacity: 1;
-}
-
-.sidebar.collapsed .nav-btn span:not(.fas) {
-    display: none;   
-}
-
-.sidebar.collapsed .nav-btn {
-    color: #fff;
-    
-}
-
-.sidebar.collapsed .logo 
-    {
-        display: none;
-    }
-
-.sidebar.collapsed .nav-buttons {
-    
-    display: none;
-    
-}
     
 .header {
     position: fixed;
