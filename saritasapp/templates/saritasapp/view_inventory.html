@@ -1,0 +1,36 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Inventory Item</title>
+    <link rel="stylesheet" href="{% static 'css/view_inventory.css' %}">
+</head>
+<body>
+    <div class="container">
+        <div class="image-container">
+            <a href="{{ item.image.url }}" target="_blank">
+                <img src="{{ item.image.url }}" alt="{{ item.name }}" 
+                     onerror="this.src='https://via.placeholder.com/300';">
+            </a>
+        </div>
+        <h1>{{ item.name }}</h1>
+        <p><strong>Category:</strong> {{ item.category.name }}</p>
+        <p><strong>Color:</strong> {{ item.color }}</p>
+        <p><strong>Quantity:</strong> {{ item.quantity }}</p>
+        <p><strong>Rental Price:</strong> ₱{{ item.rental_price }}</p>
+        <p><strong>Purchase Price:</strong> {% if item.purchase_price %}₱{{ item.purchase_price }}{% else %}N/A{% endif %}</p>
+        <p><strong>Available:</strong> {% if item.available %}✅ Yes{% else %}❌ No{% endif %}</p>
+        <div class="view-full-image">
+            <a href="{{ item.image.url }}" target="_blank" class="btn">View Full Image</a>
+        </div>
+
+        <div class="btn-container">
+            <a href="{% url 'saritasapp:inventory_list' %}" class="btn">Back</a>
+            <a href="{% url 'saritasapp:edit_inventory' item.id %}" class="btn">Edit</a>
+            <a href="{% url 'saritasapp:delete_inventory' item.id %}" class="btn btn-danger">Delete</a>
+        </div>
+    </div>
+</body>
+</html>

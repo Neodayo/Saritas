@@ -1,0 +1,17 @@
+{% extends "saritasapp/base.html" %}
+{% load static %}
+
+{% block title %}Inventory{% endblock %}
+
+{% block content %}
+    <h1>Inventory</h1>
+
+    <a href="{% url 'saritasapp:add_inventory' %}">Add New Item</a>
+    <label for="category">Filter by Category:</label>
+    <select id="category" name="category">
+        <option value="all">All</option>
+        <option value="dresses">Dresses</option>
+        <option value="tuxedos">Tuxedos</option>
+    </select>
+{% endblock %}
+
