@@ -2,6 +2,9 @@
 {%load static%}
 
 {%block title%}Create Customer{%endblock%}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/saritas.css' %}">
+{% endblock %}
 {%block content%}
     <div class="container mt-5">
         <h2 class="mb-4">Create a New Customer</h2>

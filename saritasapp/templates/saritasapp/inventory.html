@@ -1,7 +1,10 @@
-{% extends "saritasapp/base.html" %}
+{% extends "saritas/base.html" %}
 {% load static %}
 
 {% block title %}Inventory{% endblock %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/inventory.css' %}">
+{% endblock %}
 
 {% block content %}
     <h1>Inventory</h1>
@@ -14,4 +17,3 @@
         <option value="tuxedos">Tuxedos</option>
     </select>
 {% endblock %}
-

@@ -1,6 +1,9 @@
 {% extends "saritasapp/base.html" %}
 {% load static %}
 {% block title %}Rent an Item{% endblock %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/saritas.css' %}">
+{% endblock %}
 {% block content %}
 
     <div class="container">

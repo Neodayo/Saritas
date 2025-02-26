@@ -1,6 +1,9 @@
 {%extends "saritasapp/base.html"}
 {% load static %}
 {% block title %}View Inventory{%endblock%}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/view_inventory.css' %}">
+{% endblock %}
 {% block content %}
     <div class="container">
         <div class="image-container">
@@ -26,4 +29,4 @@
             <a href="{% url 'saritasapp:delete_inventory' item.id %}" class="btn btn-danger">Delete</a>
         </div>
     </div>
-{% endblock %}  
+{% endblock %}

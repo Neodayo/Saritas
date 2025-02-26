@@ -1,5 +1,8 @@
 {%extends "saritasapp/base.html"%}
 {%load static%}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/saritas.css' %}">
+{% endblock %}
 {%block title%}Register{%endblock%}
 {%block content%}
     <div class =bg-image></div>
