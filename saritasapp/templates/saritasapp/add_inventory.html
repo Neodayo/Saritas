@@ -1,57 +1,52 @@
-{%load static%}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{% static 'css/add_inventory.css' %}">
-    <title>Add Inventory</title>
-</head>
-<body>
-    <div class="container">
-        <h1>Add New Inventory Item</h1>
-        <form method="POST" action="{% url 'saritasapp:add_inventory' %}" enctype="multipart/form-data">
-            {% csrf_token %}
+{% extends "saritasapp/base.html" %}
+{% load static %}
 
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="name" required>
+{% block title %}Add Inventory{% endblock %}
 
-            <label for="category">Category:</label>
-            <select id="category" name="category" required>
-                {% if categories %}
-                    {% for category in categories %}
-                        <option value="{{ category.id }}">{{ category.name }}</option>
-                    {% endfor %}
-                {% else %}
-                    <option disabled>No categories available</option>
-                {% endif %}
-            </select>
-            <div class="category-link">
-                <span>Manage categories:</span>
-                <a href="{% url 'saritasapp:add_category' %}" target="_blank">Add new category</a>
-            </div>
+{% block content %}
+<div class="container">
+    <h1>Add New Inventory Item</h1>
+    <form method="POST" action="{% url 'saritasapp:add_inventory' %}" enctype="multipart/form-data">
+        {% csrf_token %}
 
-            <label for="color">Color:</label>
-            <input type="text" id="color" name="color">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
 
-            <label for="quantity">Quantity:</label>
-            <input type="number" id="quantity" name="quantity" required>
+        <label for="category">Category:</label>
+        <select id="category" name="category" required>
+            {% if categories %}
+                {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.name }}</option>
+                {% endfor %}
+            {% else %}
+                <option disabled>No categories available</option>
+            {% endif %}
+        </select>
+        <div class="category-link">
+            <span>Manage categories:</span>
+            <a href="{% url 'saritasapp:add_category' %}" target="_blank">Add new category</a>
+        </div>
 
-            <label for="rental_price">Rental Price:</label>
-            <input type="number" id="rental_price" name="rental_price" step="0.01" required>
+        <label for="color">Color:</label>
+        <input type="text" id="color" name="color">
 
-            <label for="purchase_price">Purchase Price:</label>
-            <input type="number" id="purchase_price" name="purchase_price" step="0.01">
+        <label for="quantity">Quantity:</label>
+        <input type="number" id="quantity" name="quantity" required>
 
-            <label for="available">Available:</label>
-            <input type="checkbox" id="available" name="available">
+        <label for="rental_price">Rental Price:</label>
+        <input type="number" id="rental_price" name="rental_price" step="0.01" required>
 
-            <label for="image">Upload Image:</label>
-            <input type="file" id="image" name="image">
+        <label for="purchase_price">Purchase Price:</label>
+        <input type="number" id="purchase_price" name="purchase_price" step="0.01">
 
-            <button type="submit" class="btn">Add Item</button>
-        </form>
-        <a href="{% url 'saritasapp:inventory_list' %}">Back</a>
-    </div>
-</body>
-</html>
+        <label for="available">Available:</label>
+        <input type="checkbox" id="available" name="available">
+
+        <label for="image">Upload Image:</label>
+        <input type="file" id="image" name="image">
+
+        <button type="submit" class="btn">Add Item</button>
+    </form>
+    <a href="{% url 'saritasapp:inventory_list' %}">Back</a>
+</div>
+{% endblock %}

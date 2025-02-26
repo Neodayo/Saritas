@@ -1,13 +1,7 @@
+{%extends "saritasapp/base.html"}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View Inventory Item</title>
-    <link rel="stylesheet" href="{% static 'css/view_inventory.css' %}">
-</head>
-<body>
+{% block title %}View Inventory{%endblock%}
+{% block content %}
     <div class="container">
         <div class="image-container">
             <a href="{{ item.image.url }}" target="_blank">
@@ -32,5 +26,4 @@
             <a href="{% url 'saritasapp:delete_inventory' item.id %}" class="btn btn-danger">Delete</a>
         </div>
     </div>
-</body>
-</html>
+{% endblock %}  

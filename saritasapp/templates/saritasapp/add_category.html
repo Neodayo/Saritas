@@ -1,14 +1,9 @@
-{%load static%}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Category</title>
-    <link rel="stylesheet" href="{% static 'css/saritas.css' %}">
-</head>
-<body>
-    
+{% extends "saritasapp/base.html" %}
+{% load static %}
+
+{% block title %}Add Category{% endblock %}
+
+{% block content %}
     <div class="container">
         <h1>Add Category</h1>
         <form method="POST">
@@ -18,6 +13,4 @@
         </form>
         <a href="{% url 'saritasapp:add_inventory' %}">Back</a>
     </div>
-    
-</body>
-</html>
+{% endblock %}

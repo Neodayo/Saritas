@@ -1,14 +1,7 @@
+{% extends "saritasapp/base.html%}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Inventory Item</title>
-    <link rel="stylesheet" href="{% static 'css/edit_inventory.css' %}">
-</head>
-<body>
-
+{% block title%}Edit Inventory Item{% endblock%}
+{% block content%}
     <div class="container">
         <h1>Edit Inventory Item</h1>
 
@@ -74,6 +67,4 @@
             }
         }
     </script>
-
-</body>
-</html>
+{% endblock %}
