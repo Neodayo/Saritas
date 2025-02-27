@@ -1,72 +1,56 @@
+{% extends "saritasapp/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        {% load static %}
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{% block title %}Dashboard{% endblock %}</title>
-        <link rel="stylesheet" href="{% static 'css/mainbase.css' %}">
-        <link href="https://fonts.googleapis.com/css2?family=Rouge+Script&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-        {% block extra_css %}{% endblock %}
-    </head>    
-<body>
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <div class="nav-buttons">
-            <a href="{% url 'saritasapp:inventory_list' %}" class="nav-btn">
-                <span class="fas fa-box"></span> <text>Inventory</text>
-            </a>
-            <a href="" class="nav-btn">
-                <span class="fas fa-calendar"></span> <text>Calendar of Event</text>
-            </a>
-            <a href="" class="nav-btn">
-                <span class="fas fa-chart-line"></span> <text>Rental Tracker</text>
-            </a>
-            <a href="" class="nav-btn">
-                <span class="fas fa-receipt"></span> <text>Receipt</text>
-            </a>
-            <a href="" class="nav-btn">
-                <span class="fas fa-chart-bar"></span> <text>Data Analysis</text>
-            </a>
+
+{% block title %}Add Inventory{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/add_inventory.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Add New Inventory Item</h1>
+    <form method="POST" action="{% url 'saritasapp:add_inventory' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+
+        <label for="category">Category:</label>
+        <select id="category" name="category" required>
+            {% if categories %}
+                {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.name }}</option>
+                {% endfor %}
+            {% else %}
+                <option disabled>No categories available</option>
+            {% endif %}
+        </select>
+        <div class="category-link">
+            <span>Manage categories:</span>
+            <a href="{% url 'saritasapp:add_category' %}" target="_blank">Add new category</a>
         </div>
-    </div>
-    
 
-    <!-- Header -->
-    <div class="header">
-        <div class="header-items">
-            <div class="logo">
-                <img src="{% static 'images/Logo.png' %}" alt="Wedding Creations & Event Stylist">
-                <span>Wedding Creations & Event Stylist</span>
-            </div>
-            <a href="#" class="header-link">Individual</a>
-            <a href="#" class="header-link">Package</a>
-            <a href="#" class="header-link"><i class="fas fa-home"></i></a>
-            <a href="#" class="header-link"><i class="fas fa-bell"></i></a>
-            <a href="#" class="header-link"><i class="fas fa-user"></i></a>
-        </div>
-    </div>
+        <label for="color">Color:</label>
+        <input type="text" id="color" name="color">
 
-    <!-- Main Content Area -->
-    <div class="container" style="margin-left: 220px; margin-top: 80px; padding: 20px;">
-        {% block content %}
-        {% endblock %}
-    </div>
+        <label for="quantity">Quantity:</label>
+        <input type="number" id="quantity" name="quantity" required>
 
-    <button id="toggle-btn">☰</button>
+        <label for="rental_price">Rental Price:</label>
+        <input type="number" id="rental_price" name="rental_price" step="0.01" required>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const sidebar = document.getElementById("sidebar");
-            const toggleBtn = document.getElementById("toggle-btn");
+        <label for="purchase_price">Purchase Price:</label>
+        <input type="number" id="purchase_price" name="purchase_price" step="0.01">
 
-            toggleBtn.addEventListener("click", function () {
-                sidebar.classList.toggle("collapsed");
-            });
-        });
-    </script>
-</body>
-</html>
+        <label for="available">Available:</label>
+        <input type="checkbox" id="available" name="available">
+
+        <label for="image">Upload Image:</label>
+        <input type="file" id="image" name="image">
+
+        <button type="submit" class="btn">Add Item</button>
+    </form>
+    <a href="{% url 'saritasapp:inventory_list' %}">Back</a>
+</div>
+{% endblock %}
