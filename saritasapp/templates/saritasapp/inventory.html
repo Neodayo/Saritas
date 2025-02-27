@@ -10,45 +10,91 @@
     <h1>Inventory</h1>
 
     <style>
-        body {
-        font-family: Arial, sans-serif;
-        background-color: #f8f9fa;
-        margin: 0;
-        padding: 20px;
-    }
     
-    h1 {
-        color: #333;
-        text-align: center;
-        margin-bottom: 20px;
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+
+.container {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 600px; /* Adjusted width */
+    box-sizing: border-box;
+    text-align: center;
+}
+
+
+h1 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+
+a {
+    display: block;
+    background-color: #007bff;
+    color: white;
+    padding: 12px;
+    text-align: center;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    text-decoration: none;
+    transition: background 0.3s ease;
+    margin-bottom: 20px;
+}
+
+a:hover {
+    background-color: #0056b3;
+}
+
+
+label {
+    font-weight: bold;
+    font-size: 14px;
+    display: block;
+    margin-bottom: 5px;
+}
+
+select {
+    width: 100%;
+    max-width: 200px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 15px;
+        max-width: 100%;
     }
-    
+
     a {
-        display: inline-block;
-        background-color: #007bff;
-        color: white;
-        padding: 10px 15px;
-        text-decoration: none;
-        border-radius: 5px;
-        margin-bottom: 15px;
+        font-size: 14px;
+        padding: 10px;
     }
-    
-    a:hover {
-        background-color: #0056b3;
-    }
-    
-    label {
-        font-weight: bold;
-        display: block;
-        margin: 10px 0 5px;
-    }
-    
+
     select {
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
+        width: 100%;
     }
-    
+}
+
     </style>
 
     <a href="{% url 'saritasapp:add_inventory' %}">Add New Item</a>
