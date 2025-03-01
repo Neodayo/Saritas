@@ -1,0 +1,80 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        {% load static %}
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}Dashboard{% endblock %}</title>
+        <link rel="stylesheet" href="{% static 'css/mainbase.css' %}">
+        <link href="https://fonts.googleapis.com/css2?family=Rouge+Script&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+        {% block extra_css %}{% endblock %}
+    </head>    
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="nav-buttons">
+            <a href="{% url 'saritasapp:inventory_list' %}" class="nav-btn">
+                <span class="fas fa-box"></span> <text>Inventory</text>
+            </a>
+            <a href="" class="nav-btn">
+                <span class="fas fa-calendar"></span> <text>Calendar of Event</text>
+            </a>
+            <a href="" class="nav-btn">
+                <span class="fas fa-chart-line"></span> <text>Rental Tracker</text>
+            </a>
+            <a href="" class="nav-btn">
+                <span class="fas fa-receipt"></span> <text>Receipt</text>
+            </a>
+            <a href="" class="nav-btn">
+                <span class="fas fa-chart-bar"></span> <text>Data Analysis</text>
+            </a>
+            <a href="{% url 'saritasapp:customer_list' %}" class="nav-btn">
+                <span class="fas fa-chart-bar"></span> <text>Customer Records</text>
+            </a>
+        </div>
+    </div>
+    
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-items">
+            <div class="logo">
+                <img src="{% static 'images/Logo.png' %}" alt="Wedding Creations & Event Stylist">
+                <span>Wedding Creations & Event Stylist</span>
+            </div>
+            <a href="#" class="header-link">Individual</a>
+            <select name="Packages" id="Package" class="header-link">
+                <option value="">Packages</option>
+                <option value="Wardrobe Packages">Wardrobe Packages</option>
+                <option value="Wedding Packages">Wedding Packages</option>
+            </select>
+     
+            <a href="#" class="header-link"><i class="fas fa-home"></i></a>
+            <a href="#" class="header-link"><i class="fas fa-bell"></i></a>
+            <a href="#" class="header-link"><i class="fas fa-user"></i></a>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="container" style="margin-left: 220px; margin-top: 80px; padding: 20px;">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <button id="toggle-btn">☰</button>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const sidebar = document.getElementById("sidebar");
+            const toggleBtn = document.getElementById("toggle-btn");
+
+            toggleBtn.addEventListener("click", function () {
+                sidebar.classList.toggle("collapsed");
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{% extends "saritasapp/base.html" %}
+{% load static %}
+
+{% block title %}Add Category{% endblock %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/add_category.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1>Add Category</h1>
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn">Add Category</button>
+        </form>
+        <a href="{% url 'saritasapp:add_inventory' %}">Back</a>
+    </div>
+{% endblock %}

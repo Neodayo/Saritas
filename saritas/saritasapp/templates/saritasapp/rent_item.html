@@ -1,0 +1,57 @@
+{% extends "saritasapp/base.html" %}
+{% load static %}
+
+{% block title %}Rent Item{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/rental.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h2>Rent {{ inventory_item.name }}</h2>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <label for="customer">Customer:</label>
+            <select name="customer" required>
+                <option value="" disabled selected>Select a customer</option>
+                {% for customer in customers %}
+                    <option value="{{ customer.id }}">{{ customer.first_name }} {{ customer.last_name }}</option>
+                {% endfor %}
+            </select>
+
+            <label>Item:</label>
+            <input type="text" value="{{ inventory_item.name }} ({{ inventory_item.quantity }} available)" readonly class="form-control">
+
+            <input type="hidden" name="inventory" value="{{ inventory_item.id }}">  {# Store inventory ID in hidden field #}
+
+            <label for="rental_start">Rental Start Date:</label>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="date" id="rental_start" name="rental_start" required min="{{ today|date:'Y-m-d' }}">
+                <button type="button" class="btn btn-secondary" onclick="setToday()">Set Today</button>
+            </div>
+
+            <label for="rental_end">Rental End Date:</label>
+            <input type="date" id="rental_end" name="rental_end" required min="{{ today|date:'Y-m-d' }}">
+
+            <button type="submit" class="btn btn-primary">Confirm Rental</button>
+        </form>
+    </div>
+
+    <script>
+        function setToday() {
+            let today = new Date().toISOString().split('T')[0];
+            document.getElementById("rental_start").value = today;
+        }
+    </script>
+{% endblock %}
