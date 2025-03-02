@@ -2,10 +2,22 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .forms import InventoryForm, CategoryForm, RentalForm, CustomerForm
 from .models import Customer, Inventory, Category, Rental, User
 from django.utils.timezone import now
-from django.db.models import F, Q
+from django.db.models import F, Q  ,Count , Sum#new
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from django.contrib import messages
+from datetime import date
+from calendar import month_name#new
+from django.db.models.functions import TruncMonth#new
+from django.utils.timezone import now #new
+from datetime import timedelta #new
+from .models import Rental, Customer, Inventory #new
+from django.db.models.functions import ExtractWeek, ExtractMonth, ExtractYear #new
+# for calendar
+from django.shortcuts import render, get_object_or_404, redirect
+from django.utils.timezone import now
+from .models import Event
+from django.http import JsonResponse
 from datetime import date
 
 def add_inventory(request):
@@ -191,3 +203,91 @@ def return_rental(request, rental_id):
         messages.warning(request, "This rental is already returned.")
 
     return redirect('saritasapp:view_customer', customer_id=rental.customer.id)
+
+
+#data_analysis
+def data_analysis(request):
+    # Total rentals and customers
+    total_rentals = Rental.objects.count()
+    total_customers = Customer.objects.count()
+
+    # Most rented items
+    most_rented_items = Inventory.objects.annotate(rental_count=Count('rental')).order_by('-rental_count')[:5]
+
+    # Weekly rentals & income
+    weekly_rentals = (
+        Rental.objects.annotate(week=ExtractWeek('rental_start'))
+        .values('week')
+        .annotate(count=Count('id'), income=Sum('inventory__rental_price'))
+        .order_by('week')
+    )
+
+    # Monthly rentals & income
+    monthly_rentals = (
+        Rental.objects.annotate(month=ExtractMonth('rental_start'))
+        .values('month')
+        .annotate(count=Count('id'), income=Sum('inventory__rental_price'))
+        .order_by('month')
+    )
+
+    # Yearly rentals & income
+    yearly_rentals = (
+        Rental.objects.annotate(year=ExtractYear('rental_start'))
+        .values('year')
+        .annotate(count=Count('id'), income=Sum('inventory__rental_price'))
+        .order_by('year')
+    )
+
+    context = {
+        'total_rentals': total_rentals,
+        'total_customers': total_customers,
+        'most_rented_items': most_rented_items,
+        'weekly_rentals': weekly_rentals,
+        'monthly_rentals': monthly_rentals,
+        'yearly_rentals': yearly_rentals,
+    }
+    return render(request, 'saritasapp/data_analysis.html', context)
+
+
+#calnder
+def calendar_view(request):
+    return render(request, "saritasapp/calendar.html")
+
+def ongoing_events(request):
+    events = Event.objects.filter(start_date__lte=now().date(), end_date__gte=now().date())
+    return render(request, "saritasapp/ongoing_events.html", {"events": events})
+
+def upcoming_events(request):
+    events = Event.objects.filter(start_date__gt=now().date())
+    return render(request, "saritasapp/upcoming_events.html", {"events": events})
+
+def past_events(request):
+    events = Event.objects.filter(end_date__lt=now().date())
+    return render(request, "saritasapp/past_events.html", {"events": events})
+
+def create_event(request):
+    if request.method == "POST":
+        title = request.POST.get("title")
+        start_date = request.POST.get("start_date")
+        end_date = request.POST.get("end_date")
+        notes = request.POST.get("notes")
+        Event.objects.create(title=title, start_date=start_date, end_date=end_date, notes=notes)
+        return redirect("calendar")
+    return render(request, "saritasapp/create_event.html")
+
+def view_event(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    return render(request, "saritasapp/view_event.html", {"event": event})
+
+def get_events(request):
+    events = Event.objects.all()
+    events_data = [
+        {
+            "id": event.id,
+            "title": event.title,
+            "start": event.start_date.strftime("%Y-%m-%d"),
+            "end": event.end_date.strftime("%Y-%m-%d"),
+        }
+        for event in events
+    ]
+    return JsonResponse(events_data, safe=False)

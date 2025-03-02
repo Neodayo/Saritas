@@ -173,3 +173,13 @@ class Rental(models.Model):
 
     def __str__(self):
         return f"Rental #{self.id} - {self.status}"
+
+
+#Calendar to
+class Event(models.Model):
+    title = models.CharField(max_length=200)
+    start = models.DateField()
+    end = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return self.title
