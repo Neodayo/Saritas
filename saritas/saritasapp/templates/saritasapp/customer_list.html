@@ -1,0 +1,70 @@
+{% extends "saritasapp/base.html" %}
+{% block title %}Customer List{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Customer List</h2>
+
+    <!-- Search Form -->
+    <form method="GET" action="{% url 'saritasapp:customer_list' %}" class="mb-3">
+        <div class="input-group">
+            <input type="text" name="q" class="form-control" placeholder="Search by name..." value="{{ request.GET.q }}">
+            <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+    </form>
+
+    <!-- Filter Dropdown -->
+    <div class="mb-3">
+        <label for="status-filter" class="form-label"><strong>Filter by Rental Status:</strong></label>
+        <select id="status-filter" class="form-select">
+            <option value="{% url 'saritasapp:customer_list' %}" {% if filter_status == 'all' %}selected{% endif %}>All</option>
+            <option value="{% url 'saritasapp:customer_list' %}?status=renting" {% if filter_status == 'renting' %}selected{% endif %}>Renting</option>
+            <option value="{% url 'saritasapp:customer_list' %}?status=returned" {% if filter_status == 'returned' %}selected{% endif %}>Returned</option>
+        </select>
+    </div>
+
+    <a href="{% url 'saritasapp:add_customer' %}" class="btn btn-success">Add New Customer</a>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for customer in customers %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ customer.first_name }} {{ customer.last_name }}</td>
+                <td>{{ customer.email }}</td>
+                <td>{{ customer.phone }}</td>
+                <td>
+                    <a href="{% url 'saritasapp:view_customer' customer.id %}" class="btn btn-info">View</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">No customers found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- JavaScript to Redirect on Selection Change -->
+<script>
+    document.getElementById("status-filter").addEventListener("change", function() {
+        const url = new URL(this.value, window.location.origin);
+        const params = new URLSearchParams(window.location.search);
+        if (params.has("q")) {
+            url.searchParams.set("q", params.get("q")); // Preserve search query
+        }
+        window.location.href = url.href;
+    });
+</script>
+
+{% endblock %}
