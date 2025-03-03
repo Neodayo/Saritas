@@ -291,3 +291,10 @@ def get_events(request):
         for event in events
     ]
     return JsonResponse(events_data, safe=False)
+
+#Default Homepage Views
+def homepage(request):
+    return render(request, 'saritasapp/base.html')
+
+def individual(request):
+    return render(request, 'saritasapp/individual.html')

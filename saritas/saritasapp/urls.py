@@ -4,6 +4,7 @@ from . import views
 app_name = 'saritasapp'
 
 urlpatterns = [
+    path('', views.homepage, name='homepage'),
     path('add-inventory/', views.add_inventory, name='add_inventory'),
     path('inventory/', views.inventory_view, name='inventory_list'),
     path('add-category/', views.add_category, name='add_category'),
@@ -25,4 +26,5 @@ urlpatterns = [
     path("create-event/", views.create_event, name="create_event"),
     path("view-event/<int:event_id>/", views.view_event, name="view_event"),
     path("api/events/", views.get_events, name="api_events"),
+    path("individual/", views.individual, name="individual"),
 ]
