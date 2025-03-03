@@ -1,0 +1,55 @@
+{% extends "saritasapp/base.html" %}
+{% load static %}
+{% block title %}Event Calendar{% endblock %}
+
+{% block content %}
+<h1>Event Calendar</h1>
+
+<!-- Tabs -->
+<div class="tabs">
+    <button class="tab-button active" onclick="window.location.href='{% url 'saritasapp:calendar' %}'">Calendar</button>
+    <button class="tab-button" onclick="window.location.href='{% url 'saritasapp:ongoing_events' %}'">Ongoing</button>
+    <button class="tab-button" onclick="window.location.href='{% url 'saritasapp:upcoming_events' %}'">Upcoming</button>
+    <button class="tab-button" onclick="window.location.href='{% url 'saritasapp:past_events' %}'">Past</button>
+</div>
+
+<!-- Calendar -->
+<div id="calendar"></div>
+
+<!-- Create Event Button -->
+<a href="{% url 'saritasapp:create_event' %}" class="create-event-btn">Create an Event</a>
+
+<!-- FullCalendar.js -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.css">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    var calendarEl = document.getElementById("calendar");
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: "dayGridMonth",
+        headerToolbar: {
+            left: "prev,next today",
+            center: "title",
+        },
+        events: "/api/events/",
+        dateClick: function (info) {
+            window.location.href = "/create-event/?date=" + info.dateStr;
+        },
+        eventClick: function (info) {
+            window.location.href = "/view-event/" + info.event.id;
+        }
+    });
+    calendar.render();
+});
+</script>
+
+<!-- Custom Styles -->
+<style>
+    .tabs { display: flex; gap: 10px; margin-bottom: 10px; }
+    .tab-button { background: #28a745; color: white; padding: 8px 12px; border: none; cursor: pointer; border-radius: 5px; }
+    .tab-button.active { background: #007bff; }
+    .create-event-btn { display: inline-block; margin-top: 10px; padding: 8px 12px; background: #28a745; color: white; text-decoration: none; border-radius: 5px; }
+</style>
+
+{% endblock %}

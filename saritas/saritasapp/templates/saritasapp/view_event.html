@@ -1,0 +1,10 @@
+{% extends "saritasapp/base.html" %}
+{% block title %}View Event{% endblock %}
+
+{% block content %}
+<h1>{{ event.title }}</h1>
+<p><strong>Date:</strong> {{ event.start_date }} - {{ event.end_date }}</p>
+<p><strong>Notes:</strong> {{ event.notes }}</p>
+
+<a href="{% url 'calendar' %}">Back to Calendar</a>
+{% endblock %}

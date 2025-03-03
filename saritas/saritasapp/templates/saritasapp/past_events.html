@@ -1,0 +1,13 @@
+{% extends "saritasapp/base.html" %}
+{% block title %}Past Events{% endblock %}
+
+{% block content %}
+<h1>Past Events</h1>
+<ul>
+    {% for event in events %}
+        <li>{{ event.title }} (Ended: {{ event.end_date }})</li>
+    {% empty %}
+        <p>No past events.</p>
+    {% endfor %}
+</ul>
+{% endblock %}

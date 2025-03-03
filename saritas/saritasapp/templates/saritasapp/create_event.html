@@ -1,0 +1,22 @@
+{% extends "saritasapp/base.html" %}
+{% block title %}Create Event{% endblock %}
+
+{% block content %}
+<h1>Create Event</h1>
+<form method="post">
+    {% csrf_token %}
+    <label>Title:</label>
+    <input type="text" name="title" required>
+
+    <label>Start Date:</label>
+    <input type="date" name="start_date" required>
+
+    <label>End Date:</label>
+    <input type="date" name="end_date" required>
+
+    <label>Notes:</label>
+    <textarea name="notes"></textarea>
+
+    <button type="submit">Save Event</button>
+</form>
+{% endblock %}
