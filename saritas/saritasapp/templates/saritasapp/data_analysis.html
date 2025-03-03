@@ -1,0 +1,114 @@
+{% extends "saritasapp/base.html" %}
+{% load static %}
+{% block title %}Data Analysis{% endblock %}
+
+{% block content %}
+<h1>Data Analysis</h1>
+
+<div class="stats">
+    <p><strong>Total Rentals:</strong> {{ total_rentals }}</p>
+    <p><strong>Total Customers:</strong> {{ total_customers }}</p>
+</div>
+
+<h2>Most Rented Items</h2>
+<ul>
+    {% for item in most_rented_items %}
+    <li>{{ item.name }} - {{ item.rental_count }} times</li>
+    {% endfor %}
+</ul>
+
+<h2>Rental & Income Statistics</h2>
+
+<!-- Period Selection -->
+<button onclick="showChart('weekly')">Weekly</button>
+<button onclick="showChart('monthly')">Monthly</button>
+<button onclick="showChart('yearly')">Yearly</button>
+
+<!-- Color Picker for Chart Customization -->
+<label for="colorPicker">Pick Chart Colors:</label>
+<input type="color" id="colorPicker" value="#FF6384" onchange="updateColors(this.value)">
+
+<!-- Pie Charts with Reduced Size -->
+<div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+    <canvas id="rentalPieChart" style="max-width: 300px;"></canvas>
+    <canvas id="incomePieChart" style="max-width: 300px;"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    var rentalPieCtx = document.getElementById('rentalPieChart').getContext('2d');
+    var incomePieCtx = document.getElementById('incomePieChart').getContext('2d');
+
+    var rentalChart, incomeChart;
+    var defaultColors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'];
+
+    function showChart(period) {
+        var rentalData = { labels: [], data: [] };
+        var incomeData = { labels: [], data: [] };
+
+        {% for week in weekly_rentals %}
+        if (period === 'weekly') {
+            rentalData.labels.push("Week {{ week.week }}");
+            rentalData.data.push({{ week.count }});
+            incomeData.labels.push("Week {{ week.week }}");
+            incomeData.data.push({{ week.income|default:0 }});
+        }
+        {% endfor %}
+
+        {% for month in monthly_rentals %}
+        if (period === 'monthly') {
+            rentalData.labels.push("Month {{ month.month }}");
+            rentalData.data.push({{ month.count }});
+            incomeData.labels.push("Month {{ month.month }}");
+            incomeData.data.push({{ month.income|default:0 }});
+        }
+        {% endfor %}
+
+        {% for year in yearly_rentals %}
+        if (period === 'yearly') {
+            rentalData.labels.push("Year {{ year.year }}");
+            rentalData.data.push({{ year.count }});
+            incomeData.labels.push("Year {{ year.year }}");
+            incomeData.data.push({{ year.income|default:0 }});
+        }
+        {% endfor %}
+
+        updatePieChart(rentalPieCtx, rentalChart, rentalData.labels, rentalData.data, "Rental Distribution");
+        updatePieChart(incomePieCtx, incomeChart, incomeData.labels, incomeData.data, "Income Distribution");
+    }
+
+    function updatePieChart(ctx, chartInstance, labels, data, title) {
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
+        chartInstance = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: defaultColors.slice(0, labels.length)
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' },
+                    title: { display: true, text: title }
+                }
+            }
+        });
+    }
+
+    function updateColors(newColor) {
+        defaultColors = defaultColors.map(() => newColor);  // Set all chart colors to the chosen color
+        showChart('weekly'); // Refresh chart with new colors
+    }
+
+    // Default chart load (weekly)
+    showChart('weekly');
+</script>
+
+{% endblock %}
+```
