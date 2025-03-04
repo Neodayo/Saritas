@@ -65,6 +65,83 @@
     {% endif %}
 </div>
 
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f8f9fa;
+        margin: 0;
+        padding: 20px;
+    }
+    .container {
+        max-width: 1000px;
+        margin: auto;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .card {
+        background: #ffffff;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .card img {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 10px;
+        margin-bottom: 10px;
+    }
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background: white;
+    }
+    .table th, .table td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: left;
+    }
+    .table th {
+        background-color: #007bff;
+        color: white;
+    }
+    .badge {
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 12px;
+    }
+    .bg-warning {
+        background-color: #ffc107;
+        color: #000;
+    }
+    .bg-success {
+        background-color: #28a745;
+        color: white;
+    }
+    .btn {
+        display: inline-block;
+        padding: 8px 12px;
+        text-decoration: none;
+        border-radius: 5px;
+        text-align: center;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+    .btn-secondary { background-color: #6c757d; color: white; }
+    .btn-success { background-color: #28a745; color: white; }
+    .btn-sm { padding: 5px 8px; font-size: 14px; }
+    .alert {
+        padding: 15px;
+        background-color: #d1ecf1;
+        color: #0c5460;
+        border-radius: 5px;
+        margin-top: 20px;
+    }
+</style>
+
 <!-- Success Message Alert -->
 {% if messages %}
     <div class="alert alert-info mt-3">
