@@ -299,13 +299,12 @@ def homepage(request):
 def individual(request):
     return render(request, 'saritasapp/individual.html')
 
-<<<<<<< Updated upstream
+
 def sign_up(request):
     return render(request, 'saritasapp/signup.html')
 
 def sign_in(request):
     return render(request, 'saritasapp/signin.html')
-=======
 
 #all views
 def profile_view(request):
@@ -318,5 +317,7 @@ def notification_view(request):
     return render(request, 'saritasapp/notification.html')
 
 def rental_tracker_view(request):
+
     return render(request, 'saritasapp/rental_tracker.html')
->>>>>>> Stashed changes
+
+ 
