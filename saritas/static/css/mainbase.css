@@ -14,10 +14,10 @@ body {
     top: 70px;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: center;    
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-    /* transition: all 0.3s ease-in-out; */
-    transition: 300ms ease-in-out;
+    transition: all 0.3s ease-in-out;
+    /* transition: 300ms ease-in-out; */
     will-change: width;
     overflow-x: hidden;
     overflow-y: auto;
@@ -118,14 +118,18 @@ a:hover {
     align-items: center;
     justify-content: space-between;
     z-index: 99;
+    
 }
 
 .logo {
+    font: bold;
     display: flex;
-    align-items: center;
+    justify-content: flex-start ;
+    /* align-items: center; */
     gap: 10px;
+    position: relative  ;
     margin-left: 50px; 
-    left: 25%;
+    left: 3%;
 }
 
 .logo img {
@@ -150,19 +154,24 @@ a:hover {
     display: flex;
     align-items: center;
     gap: 100px;
-    margin-right: 15px;
+    /* margin-right: 15px; */
     margin-left: auto;
-    justify-content: flex-end;
+    /* justify-content: flex-end; */
 }
 
-
 .header-link {
+    display: flex;
+    justify-content: flex-end;
+    /* align-items: center; */
+    /* gap: 8px; */
     text-decoration: none;
+    text-wrap: nowrap;
     color: black; 
-    font-size: 16px;
+    font-size: 18px;
+    font-weight: 600;
     background: rgba(255, 255, 255, 0.2);
-    padding: 5px 10px;
-    border-radius: 5px;
+    padding: 8px 16px;
+    border-radius: 8px;
     transition: 0.3s;
 }
 
