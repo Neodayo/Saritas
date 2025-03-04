@@ -1,11 +1,10 @@
-{%extends "saritasapp/base.html"%}
+
 {%load static%}
-{% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/saritas.css' %}">
-{% endblock %}
-{%block title%}Register{%endblock%}
+
+
 {%block content%}
-    <div class =bg-image></div>
+<link rel="stylesheet" href="{% static 'css/signup.css' %}">
+    <!-- <div class =bg-image></div> -->
 
     <div class="register-container">
         <div class="left-section">
@@ -39,7 +38,7 @@
                 <div id="confirm_password-error" class="alert"></div>
                 <a class="register-btn">Register</a>
                 <div id="register-error" class="alert"></div>
-                <p>Already have an account? <a href="Login.html"> Login Here</a></p>
+                <p>Already have an account? <a href="{% url 'saritasapp:sign_in' %}"> Login Here</a></p>
                 
 
                 <!-- Main Login Button cause submit is needed -->
@@ -49,62 +48,62 @@
                                                                
     </div>
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const form = document.querySelector("form"); // Selects the form correctly
-            const passwordField = document.querySelector('input[name="password"]');
-            const confirmPasswordField = document.querySelector('input[name="confirm_password"]');
-            const showPasswordCheckbox = document.getElementById("show-password");
-            const registerBtn = document.querySelector(".register-btn");
+        // document.addEventListener("DOMContentLoaded", function () {
+        //     const form = document.querySelector("form"); // Selects the form correctly
+        //     const passwordField = document.querySelector('input[name="password"]');
+        //     const confirmPasswordField = document.querySelector('input[name="confirm_password"]');
+        //     const showPasswordCheckbox = document.getElementById("show-password");
+        //     const registerBtn = document.querySelector(".register-btn");
     
-            if (showPasswordCheckbox) {
-                showPasswordCheckbox.addEventListener("change", function () {
-                    passwordField.type = this.checked ? "text" : "password";
-                    confirmPasswordField.type = this.checked ? "text" : "password";
-                });
-            }
+        //     if (showPasswordCheckbox) {
+        //         showPasswordCheckbox.addEventListener("change", function () {
+        //             passwordField.type = this.checked ? "text" : "password";
+        //             confirmPasswordField.type = this.checked ? "text" : "password";
+        //         });
+        //     }
     
-            registerBtn.addEventListener("click", function (e) {
-                e.preventDefault();
-                const email = document.querySelector('input[name="email"]').value.trim();
-                const pass = passwordField.value.trim();
-                const confirmPass = confirmPasswordField.value.trim();
-                const branch = document.querySelector("#branch").value;
+        //     registerBtn.addEventListener("click", function (e) {
+        //         e.preventDefault();
+        //         const email = document.querySelector('input[name="email"]').value.trim();
+        //         const pass = passwordField.value.trim();
+        //         const confirmPass = confirmPasswordField.value.trim();
+        //         const branch = document.querySelector("#branch").value;
     
-                let isValid = true;
-                let errorMessage = "";
+        //         let isValid = true;
+        //         let errorMessage = "";
 
-                const emailRegex = /^([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+)\.([a-zA-Z]{2,})$/;
-                if (!emailRegex.test(email)) {
-                    errorMessage += "⚠ Invalid email address format.\n";
-                    isValid = false;
-                }
+        //         const emailRegex = /^([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+)\.([a-zA-Z]{2,})$/;
+        //         if (!emailRegex.test(email)) {
+        //             errorMessage += "⚠ Invalid email address format.\n";
+        //             isValid = false;
+        //         }
     
-                const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/;
-                if (!passRegex.test(pass)) {
-                    errorMessage += "⚠ Password must be 8-20 characters, with uppercase, lowercase, number, and special character.\n";
-                    isValid = false;
-                }
+        //         const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/;
+        //         if (!passRegex.test(pass)) {
+        //             errorMessage += "⚠ Password must be 8-20 characters, with uppercase, lowercase, number, and special character.\n";
+        //             isValid = false;
+        //         }
     
-                if (pass !== confirmPass) {
-                    errorMessage += "⚠ Passwords do not match.\n";
-                    isValid = false;
-                }
+        //         if (pass !== confirmPass) {
+        //             errorMessage += "⚠ Passwords do not match.\n";
+        //             isValid = false;
+        //         }
     
-                if (branch === "") {
-                    errorMessage += "⚠ Please select a branch.\n";
-                    isValid = false;
-                }
+        //         if (branch === "") {
+        //             errorMessage += "⚠ Please select a branch.\n";
+        //             isValid = false;
+        //         }
     
-                if (!isValid) {
-                    alert(errorMessage);
-                    return;
-                }
+        //         if (!isValid) {
+        //             alert(errorMessage);
+        //             return;
+        //         }
     
-                const userData = { email, password: pass, branch };
-                localStorage.setItem(email, JSON.stringify(userData));
-                alert("✅ Registration successful! You can now log in.");
-                window.location.href = "login.html";
-            });
-        });
+        //         const userData = { email, password: pass, branch };
+        //         localStorage.setItem(email, JSON.stringify(userData));
+        //         alert("✅ Registration successful! You can now log in.");
+        //         window.location.href = "login.html";
+        //     });
+        // });
     </script>
 {%endblock%}

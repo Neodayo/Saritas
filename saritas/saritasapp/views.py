@@ -298,3 +298,9 @@ def homepage(request):
 
 def individual(request):
     return render(request, 'saritasapp/individual.html')
+
+def sign_up(request):
+    return render(request, 'saritasapp/signup.html')
+
+def sign_in(request):
+    return render(request, 'saritasapp/signin.html')

@@ -27,4 +27,6 @@ urlpatterns = [
     path("view-event/<int:event_id>/", views.view_event, name="view_event"),
     path("api/events/", views.get_events, name="api_events"),
     path("individual/", views.individual, name="individual"),
+    path("signup/", views.sign_up, name="sign_up"),
+    path("signin/", views.sign_in, name="sign_in"),
 ]
