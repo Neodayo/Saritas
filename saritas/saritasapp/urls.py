@@ -27,6 +27,15 @@ urlpatterns = [
     path("view-event/<int:event_id>/", views.view_event, name="view_event"),
     path("api/events/", views.get_events, name="api_events"),
     path("individual/", views.individual, name="individual"),
+<<<<<<< Updated upstream
     path("signup/", views.sign_up, name="sign_up"),
     path("signin/", views.sign_in, name="sign_in"),
+=======
+
+    #all views
+    path('profile/', views.profile_view, name='profile'),
+    path('receipt/', views.receipt_view, name='receipt'),
+    path('notifications/', views.notification_view, name='notifications'),
+    path('rental-tracker/', views.rental_tracker_view, name='rental_tracker'),
+>>>>>>> Stashed changes
 ]

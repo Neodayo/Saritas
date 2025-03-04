@@ -22,10 +22,10 @@
             <a href="{% url 'saritasapp:calendar' %}" class="nav-btn">
                 <span class="fas fa-calendar"></span> <text>Calendar of Event</text>
             </a>
-            <a href="" class="nav-btn">
+            <a href="{% url 'saritasapp:rental_tracker' %}" class="nav-btn">
                 <span class="fas fa-chart-line"></span> <text>Rental Tracker</text>
             </a>
-            <a href="" class="nav-btn">
+            <a href="{% url 'saritasapp:receipt' %}" class="nav-btn">
                 <span class="fas fa-receipt"></span> <text>Receipt</text>
             </a>
             <a href="{% url 'saritasapp:data_analysis' %}" class="nav-btn">
@@ -55,8 +55,8 @@
             </select>
      
             <a href="{% url 'saritasapp:inventory_list' %}" class="header-link"><i class="fas fa-home"></i></a>
-            <a href="l" class="header-link"><i class="fas fa-bell"></i></a>
-            <a href="" class="header-link"><i class="fas fa-user"></i></a>
+            <a href="{% url 'saritasapp:notifications' %}" class="header-link"><i class="fas fa-bell"></i></a>
+            <a href="{% url 'saritasapp:profile' %}" class="header-link"><i class="fas fa-user"></i></a>
         </div>
     </div>
 
