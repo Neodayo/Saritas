@@ -3,112 +3,203 @@
 {% block title %}Data Analysis{% endblock %}
 
 {% block content %}
-<h1>Data Analysis</h1>
+<style>
+    /* General Styling */
+    .data-container {
+        max-width: 900px;
+        margin: auto;
+        font-family: Arial, sans-serif;
+    }
+    
+    /* Stats Card */
+    .stats-card {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
 
-<div class="stats">
-    <p><strong>Total Rentals:</strong> {{ total_rentals }}</p>
-    <p><strong>Total Customers:</strong> {{ total_customers }}</p>
-</div>
+    .stats-card p {
+        font-size: 1.2em;
+        font-weight: bold;
+    }
 
-<h2>Most Rented Items</h2>
-<ul>
-    {% for item in most_rented_items %}
-    <li>{{ item.name }} - {{ item.rental_count }} times</li>
-    {% endfor %}
-</ul>
+    .highlight-yellow { color: #FFD700; }
+    .highlight-blue { color: #4169E1; }
 
-<h2>Rental & Income Statistics</h2>
+    /* Most Rented Items */
+    .most-rented {
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
 
-<!-- Period Selection -->
-<button onclick="showChart('weekly')">Weekly</button>
-<button onclick="showChart('monthly')">Monthly</button>
-<button onclick="showChart('yearly')">Yearly</button>
+    .most-rented ul {
+        padding-left: 20px;
+    }
 
-<!-- Color Picker for Chart Customization -->
-<label for="colorPicker">Pick Chart Colors:</label>
-<input type="color" id="colorPicker" value="#FF6384" onchange="updateColors(this.value)">
+    /* Buttons */
+    .btn-container {
+        text-align: center;
+        margin-bottom: 15px;
+    }
 
-<!-- Pie Charts with Reduced Size -->
-<div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
-    <canvas id="rentalPieChart" style="max-width: 300px;"></canvas>
-    <canvas id="incomePieChart" style="max-width: 300px;"></canvas>
+    .btn {
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1em;
+        margin: 5px;
+        transition: 0.3s;
+    }
+
+    .btn:hover {
+        transform: scale(1.05);
+    }
+
+    .btn-yellow { background: #FFD700; color: black; }
+    .btn-blue { background: #4169E1; color: white; }
+
+    /* Bar Chart */
+    .chart-container {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        margin-top: 20px;
+    }
+</style>
+
+<div class="data-container">
+    <h1>📊 Data Analysis</h1>
+
+    <div class="stats-card">
+        <p><span class="highlight-yellow">📅 Total Rentals:</span> {{ total_rentals }}</p>
+        <p><span class="highlight-blue">👥 Total Customers:</span> {{ total_customers }}</p>
+    </div>
+
+    <div class="most-rented">
+        <h2>🔥 Most Rented Items</h2>
+        <ul>
+            {% for item in most_rented_items %}
+            <li>{{ item.name }} - {{ item.rental_count }} times</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <h2>📈 Rental & Income Statistics</h2>
+
+    <!-- Period Selection -->
+    <div class="btn-container">
+        <button class="btn btn-yellow" onclick="loadData('weekly')">Weekly</button>
+        <button class="btn btn-blue" onclick="loadData('monthly')">Monthly</button>
+        <button class="btn btn-yellow" onclick="loadData('yearly')">Yearly</button>
+    </div>
+
+    <!-- Bar Chart -->
+    <div class="chart-container">
+        <canvas id="rentalIncomeChart"></canvas>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    var rentalPieCtx = document.getElementById('rentalPieChart').getContext('2d');
-    var incomePieCtx = document.getElementById('incomePieChart').getContext('2d');
+    var ctx = document.getElementById('rentalIncomeChart').getContext('2d');
+    var rentalIncomeChart;
 
-    var rentalChart, incomeChart;
-    var defaultColors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'];
+    // Initial Data (Weekly by Default)
+    var labels = [];
+    var rentalData = [];
+    var incomeData = [];
 
-    function showChart(period) {
-        var rentalData = { labels: [], data: [] };
-        var incomeData = { labels: [], data: [] };
+    function loadData(period) {
+        labels = [];
+        rentalData = [];
+        incomeData = [];
 
+        // Load Data Based on Period
         {% for week in weekly_rentals %}
         if (period === 'weekly') {
-            rentalData.labels.push("Week {{ week.week }}");
-            rentalData.data.push({{ week.count }});
-            incomeData.labels.push("Week {{ week.week }}");
-            incomeData.data.push({{ week.income|default:0 }});
+            labels.push("Week {{ week.week }}");
+            rentalData.push({{ week.count }});
+            incomeData.push({{ week.income|default:0 }});
         }
         {% endfor %}
 
         {% for month in monthly_rentals %}
         if (period === 'monthly') {
-            rentalData.labels.push("Month {{ month.month }}");
-            rentalData.data.push({{ month.count }});
-            incomeData.labels.push("Month {{ month.month }}");
-            incomeData.data.push({{ month.income|default:0 }});
+            labels.push("Month {{ month.month }}");
+            rentalData.push({{ month.count }});
+            incomeData.push({{ month.income|default:0 }});
         }
         {% endfor %}
 
         {% for year in yearly_rentals %}
         if (period === 'yearly') {
-            rentalData.labels.push("Year {{ year.year }}");
-            rentalData.data.push({{ year.count }});
-            incomeData.labels.push("Year {{ year.year }}");
-            incomeData.data.push({{ year.income|default:0 }});
+            labels.push("Year {{ year.year }}");
+            rentalData.push({{ year.count }});
+            incomeData.push({{ year.income|default:0 }});
         }
         {% endfor %}
 
-        updatePieChart(rentalPieCtx, rentalChart, rentalData.labels, rentalData.data, "Rental Distribution");
-        updatePieChart(incomePieCtx, incomeChart, incomeData.labels, incomeData.data, "Income Distribution");
+        updateBarChart();
     }
 
-    function updatePieChart(ctx, chartInstance, labels, data, title) {
-        if (chartInstance) {
-            chartInstance.destroy();
+    function updateBarChart() {
+        if (rentalIncomeChart) {
+            rentalIncomeChart.destroy();
         }
-        chartInstance = new Chart(ctx, {
-            type: 'pie',
+
+        rentalIncomeChart = new Chart(ctx, {
+            type: 'bar',
             data: {
                 labels: labels,
-                datasets: [{
-                    data: data,
-                    backgroundColor: defaultColors.slice(0, labels.length)
-                }]
+                datasets: [
+                    {
+                        label: "Rentals",
+                        data: rentalData,
+                        backgroundColor: "yellow",
+                        borderColor: "black",
+                        borderWidth: 1,
+                        barPercentage: 0.6,
+                        categoryPercentage: 1.0
+                    },
+                    {
+                        label: "Income",
+                        data: incomeData,
+                        backgroundColor: "blue",
+                        borderColor: "black",
+                        borderWidth: 1,
+                        barPercentage: 0.6,
+                        categoryPercentage: 1.0
+                    }
+                ]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                animation: {
+                    duration: 1000,
+                    easing: 'easeInOutQuad'
+                },
+                scales: {
+                    x: { stacked: false, categoryPercentage: 0.6, barPercentage: 0.9 },
+                    y: { beginAtZero: true }
+                },
                 plugins: {
-                    legend: { position: 'top' },
-                    title: { display: true, text: title }
+                    legend: { display: true },
+                    title: { display: true, text: "Rental & Income Distribution" },
+                    tooltip: { enabled: true }
                 }
             }
         });
     }
 
-    function updateColors(newColor) {
-        defaultColors = defaultColors.map(() => newColor);  // Set all chart colors to the chosen color
-        showChart('weekly'); // Refresh chart with new colors
-    }
-
-    // Default chart load (weekly)
-    showChart('weekly');
+    // Load default (weekly) chart on page load
+    loadData('weekly');
 </script>
 
 {% endblock %}
-```
