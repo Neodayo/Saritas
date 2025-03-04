@@ -1,7 +1,9 @@
 from django import forms
-from .models import Inventory, Category, User, Rental, Customer
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import User
+from .models import Inventory, Category, User, Rental, Customer, WardrobePackage, WardrobePackageItem, Branch
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
 
 class InventoryForm(forms.ModelForm):
     quantity = forms.IntegerField(min_value=1, label="Quantity")
@@ -62,3 +64,35 @@ class CustomerForm(forms.ModelForm):
             "phone": forms.TextInput(attrs={"class": "form-control", "placeholder": "Phone"}),
             "address": forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Address (Optional)"}),
         }
+
+class WardrobePackageForm(forms.ModelForm):
+    class Meta:
+        model = WardrobePackage
+        fields = ["name", "tier"]
+
+class WardrobePackageItemForm(forms.ModelForm):
+    class Meta:
+        model = WardrobePackageItem
+        fields = ["package", "inventory_item", "quantity"]
+
+class SignupForm(UserCreationForm):
+    name = forms.CharField(max_length=255, required=True)
+    email = forms.EmailField(required=True)
+    branch = forms.ModelChoiceField(queryset=Branch.objects.all(), required=False)  # Allow None
+    
+    class Meta:
+        model = User  # ✅ Make sure this is using the correct User model
+        fields = ["name", "username", "email", "branch", "password1", "password2"]
+    
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.name = self.cleaned_data["name"]
+        user.email = self.cleaned_data["email"]
+        user.branch = self.cleaned_data["branch"]
+        if commit:
+            user.save()
+        return user
+
+# Login Form
+class LoginForm(AuthenticationForm):
+    username = forms.EmailField(label="Email", required=True)

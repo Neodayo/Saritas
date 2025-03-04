@@ -6,6 +6,8 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.db import transaction
 
+
+# --- Branch Model ---
 class Branch(models.Model):
     branch_name = models.CharField(max_length=255, unique=True)
     location = models.CharField(max_length=255)
@@ -13,18 +15,19 @@ class Branch(models.Model):
     def __str__(self):
         return self.branch_name
 
+# --- User Model ---
 class User(AbstractUser):
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
-    branch = models.ForeignKey(Branch, null=True, on_delete=models.SET_NULL)
+    branch = models.ForeignKey("saritasapp.Branch", null=True, on_delete=models.SET_NULL)
     created_at = models.DateTimeField(auto_now_add=True)
-
-    USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["name", "username"]
+    USERNAME_FIELD = "username"
+    REQUIRED_FIELDS = ["name", "email"] 
 
     def __str__(self):
-        return self.name
+        return self.name if self.name else self.username
 
+# --- Customer Model ---
 class Customer(models.Model):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
@@ -37,6 +40,33 @@ class Customer(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
+# --- Category Model (For Inventory Items) ---
+class Category(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.name
+
+# --- Inventory Model ---
+class Inventory(models.Model):
+    name = models.CharField(max_length=255)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    color = models.CharField(max_length=50, blank=True)
+    quantity = models.IntegerField(default=0)
+    rental_price = models.DecimalField(max_digits=10, decimal_places=2)
+    purchase_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    available = models.BooleanField(default=True)
+    image = models.ImageField(upload_to="static/images/", null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        self.available = self.quantity > 0
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.name} ({self.color})" if self.color else self.name
+
+# --- Event Package & Pricing ---
 class EventPackage(models.Model):
     name = models.CharField(max_length=255)
     base_price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -92,35 +122,46 @@ class SelectedPackageItem(models.Model):
 def update_order_total(sender, instance, **kwargs):
     instance.order.calculate_total_price()
 
-class Category(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(blank=True)
+# --- Wardrobe Package (Connected to Inventory) ---
+class WardrobePackage(models.Model):
+    PACKAGE_TIERS = [
+        ("A", "Package A (₱12,000)"),
+        ("B", "Package B (₱15,000)"),
+        ("C", "Package C (₱18,000)"),
+    ]
 
-    def __str__(self):
-        return self.name
-
-class Inventory(models.Model):
     name = models.CharField(max_length=255)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    color = models.CharField(max_length=50, blank=True)
-    quantity = models.IntegerField(default=0)
-    rental_price = models.DecimalField(max_digits=10, decimal_places=2)
-    purchase_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    available = models.BooleanField(default=True)
-    image = models.ImageField(upload_to="static/images/", null=True, blank=True)
+    description = models.TextField(blank=True, null=True)  # Optional description
+    tier = models.CharField(max_length=1, choices=PACKAGE_TIERS)
+    base_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    refundable_deposit = models.DecimalField(max_digits=10, decimal_places=2, default=10000.00)
+    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Optional discount
+    STATUS_CHOICES = [
+        ("active", "Active"),
+        ("inactive", "Inactive"),
+    ]
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="active")
 
-    def save(self, *args, **kwargs):
-        self.available = self.quantity > 0
-        super().save(*args, **kwargs)
+    def final_price(self):
+        return self.base_price - self.discount
 
     def __str__(self):
-        return f"{self.name} ({self.color})" if self.color else self.name
+        return f"{self.name} - {self.get_tier_display()}"
 
-RENTAL_STATUS_CHOICES = (
-    ("Rented", "Rented"),
-    ("Returned", "Returned"),
-)
 
+class WardrobePackageItem(models.Model):
+    package = models.ForeignKey(WardrobePackage, on_delete=models.CASCADE, related_name="package_items")
+    inventory_item = models.ForeignKey(Inventory, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+
+    def clean(self):
+        if self.quantity > self.inventory_item.quantity:
+            raise ValidationError(f"Not enough stock for {self.inventory_item.name} in inventory.")
+
+    def __str__(self):
+        return f"{self.inventory_item.name} in {self.package.name}"
+
+# --- Rental System ---
 class Rental(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
@@ -128,35 +169,20 @@ class Rental(models.Model):
     rental_start = models.DateField()
     rental_end = models.DateField()
     deposit = models.DecimalField(max_digits=10, decimal_places=2, default=10000.00)
-    
-    RENTAL_STATUS_CHOICES = [
-        ("Rented", "Rented"),
-        ("Returned", "Returned"),
-    ]
-    status = models.CharField(max_length=10, choices=RENTAL_STATUS_CHOICES, default="Rented")
+    status = models.CharField(max_length=10, choices=[("Rented", "Rented"), ("Returned", "Returned")], default="Rented")
 
     def clean(self):
-        """Validation rules before saving."""
         if self.rental_end < self.rental_start:
             raise ValidationError("Return date must be after the rental start date.")
-
-        # Ensure inventory is available when renting
-        if self.status == "Rented":
-            inventory_quantity = Inventory.objects.filter(id=self.inventory.id).values_list("quantity", flat=True).first()
-            if inventory_quantity is not None and inventory_quantity <= 0:
-                raise ValidationError(f"{self.inventory.name} is out of stock.")
+        if self.status == "Rented" and self.inventory.quantity <= 0:
+            raise ValidationError(f"{self.inventory.name} is out of stock.")
 
     def save(self, *args, **kwargs):
-        """Handles inventory updates safely within a transaction."""
-        self.full_clean()  # Run validations
-
-        with transaction.atomic():  # Ensure database consistency
-            self.inventory.refresh_from_db()  # Get latest inventory state
-
-            if self.pk:  # Updating an existing rental
+        self.full_clean()
+        with transaction.atomic():
+            self.inventory.refresh_from_db()
+            if self.pk:
                 old_rental = Rental.objects.select_for_update().get(pk=self.pk)
-
-                # If status changes, update inventory accordingly
                 if old_rental.status != self.status:
                     if old_rental.status == "Rented" and self.status == "Returned":
                         Inventory.objects.filter(id=self.inventory.id).update(quantity=F("quantity") + 1)
@@ -164,16 +190,14 @@ class Rental(models.Model):
                         if self.inventory.quantity <= 0:
                             raise ValidationError(f"{self.inventory.name} is out of stock.")
                         Inventory.objects.filter(id=self.inventory.id).update(quantity=F("quantity") - 1)
-            else:  # Creating a new rental
+            else:
                 if self.inventory.quantity <= 0:
                     raise ValidationError(f"{self.inventory.name} is out of stock.")
                 Inventory.objects.filter(id=self.inventory.id).update(quantity=F("quantity") - 1)
-
-            super().save(*args, **kwargs)  # Save the rental instance
+            super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Rental #{self.id} - {self.status}"
-
 
 #Calendar to
 class Event(models.Model):

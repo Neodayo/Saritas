@@ -22,6 +22,44 @@
         <p><strong>Address:</strong> {{ customer.address }}</p>
     </div>
 
+    <!-- Availed Packages Section -->
+    <h3>Availed Packages</h3>
+    {% if customer_orders %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Package Name</th>
+                    <th>Type</th>
+                    <th>Total Price</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in customer_orders %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ order.package.name }}</td>
+                    <td>{{ order.package.get_package_type_display }}</td>
+                    <td>₱{{ order.total_price }}</td>
+                    <td>
+                        <span class="badge {% if order.status == 'Pending' %}bg-warning{% else %}bg-success{% endif %}">
+                            {{ order.status }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'saritasapp:order_details' order.id %}" class="btn btn-info btn-sm">View Details</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No packages availed by this customer.</p>
+    {% endif %}
+
+    <!-- Rental History Section -->
     <h3>Rental History</h3>
     {% if rentals %}
         <table class="table">

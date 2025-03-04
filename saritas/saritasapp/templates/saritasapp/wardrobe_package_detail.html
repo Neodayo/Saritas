@@ -1,0 +1,52 @@
+{% extends 'saritasapp/base.html' %}
+{% load static %}
+
+{% block title %}{{ package.name }}{% endblock %}
+
+{% block content %}
+<h2>{{ package.name }} - {{ package.get_tier_display }}</h2>
+<p><strong>Base Price:</strong> ₱{{ package.base_price }}</p>
+<p><strong>Refundable Deposit:</strong> ₱{{ package.refundable_deposit }}</p>
+
+<h3>Items in Package:</h3>
+<form method="post" action="{% url 'saritasapp:select_wardrobe_package' package.id %}">
+    {% csrf_token %}
+
+    <!-- Select Existing Customer -->
+    <label for="customer">Select Customer:</label>
+    <select name="customer_id" id="customer" required>
+        <option value="" disabled selected>Choose a customer</option>
+        {% for customer in customers %}
+        <option value="{{ customer.id }}">{{ customer.first_name }} {{ customer.last_name }}</option>
+        {% endfor %}
+    </select>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Select</th>
+                <th>Item Name</th>
+                <th>Quantity</th>
+                <th>Rental Price</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>
+                    <input type="checkbox" name="selected_items" value="{{ item.id }}" checked>
+                </td>
+                <td>{{ item.inventory_item.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>₱{{ item.inventory_item.rental_price }}</td>
+                <td>₱{{ item.inventory_item.rental_price|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <p><strong>Total Price:</strong> ₱{{ total_price }}</p>
+    <button type="submit">Select Package</button>
+</form>
+{% endblock %}

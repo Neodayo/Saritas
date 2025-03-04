@@ -1,0 +1,36 @@
+{% extends 'saritasapp/base.html' %}
+{% load static %}
+{% block title %}{{ customer.first_name }}'s Orders{% endblock %}
+
+{% block content %}
+<h2>{{ customer.first_name }} {{ customer.last_name }}'s Orders</h2>
+
+{% if orders %}
+<table border="1">
+    <thead>
+        <tr>
+            <th>Order ID</th>
+            <th>Package</th>
+            <th>Total Price</th>
+            <th>Status</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for order in orders %}
+        <tr>
+            <td>{{ order.id }}</td>
+            <td>{{ order.package.name }}</td>
+            <td>₱{{ order.total_price }}</td>
+            <td>{{ order.status }}</td>
+            <td>{{ order.created_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No orders yet for this customer.</p>
+{% endif %}
+
+<a href="{% url 'saritasapp:wardrobe_package_detail' package.id %}">Back to Packages</a>
+{% endblock %}
