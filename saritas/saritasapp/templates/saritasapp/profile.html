@@ -1,265 +1,47 @@
 {% extends "saritasapp/base.html" %}
 {% load static %}
-{% block title %}Profile {% endblock %}
+{% block title %}Profile{% endblock %}
 
 {% block content %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Profile</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .profile-container {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
-            width: 100%;
-            text-align: center;
-            position: relative;
-        }
-        .back-button {
-            position: absolute;
-            left: 15px;
-            top: 15px;
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-        }
-        .profile-image-container {
-            position: relative;
-            width: 120px;
-            height: 120px;
-            margin: 0 auto;
-        }
-        .profile-image {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: #ddd;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 40px;
-            color: #555;
-            cursor: pointer;
-        }
-        #profile-pic {
-            display: none;
-        }
-        .form-group {
-            text-align: left;
-            margin: 15px 0;
-        }
-        .form-group label {
-            font-weight: bold;
-        }
-        .input-container {
-            display: flex;
-            align-items: center;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            overflow: hidden;
-            background-color: white;
-        }
-        .input-container input {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            outline: none;
-            font-size: 16px;
-        }
-        .plus-icon {
-            background: green;
-            color: white;
-            padding: 10px 15px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-        }
-        .branch-list {
-            margin-top: 10px;
-        }
-        .branch-item {
-            display: flex;
-            justify-content: space-between;
-            background: #e9ecef;
-            padding: 8px;
-            border-radius: 5px;
-            margin-bottom: 5px;
-        }
-        .delete-branch {
-            background: red;
-            color: white;
-            border: none;
-            padding: 5px 8px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        .btn {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-            font-size: 16px;
-            margin-top: 10px;
-        }
-        .save-btn {
-            background: #007bff;
-            color: white;
-        }
-        .signout-btn {
-            background: #dc3545;
-            color: white;
-        }
-    </style>
-</head>
-<body>
-    <div class="profile-container">
-        <button class="back-button" onclick="history.back()"><i class="fas fa-arrow-left"></i></button>
-        <h2>Edit Profile</h2>
-        <div class="profile-image-container">
-            <label for="profile-pic">
-                <div class="profile-image" id="profileImage">
-                    <i class="fas fa-user"></i>
-                </div>
-            </label>
-        </div>
-        <input type="file" id="profile-pic" accept="image/*" onchange="previewImage(event)">
-        
-        <div class="form-group">
-            <label><i class="fas fa-user"></i> Full Name:</label>
-            <div class="input-container">
-                <input type="text" id="full-name" value="Admin name">
+<div class="profile-container">
+    <button class="back-button" onclick="history.back()"><i class="fas fa-arrow-left"></i></button>
+    <h2>Edit Profile</h2>
+    <div class="profile-image-container">
+        <label for="profile-pic">
+            <div class="profile-image" id="profileImage">
+                <i class="fas fa-user"></i>
             </div>
-        </div>
-        
-        <div class="form-group">
-            <label><i class="fas fa-envelope"></i> Email Address:</label>
-            <div class="input-container">
-                <input type="email" id="email" value="admin@gmail.com">
-            </div>
-        </div>
-        
-        <div class="form-group">
-            <label><i class="fas fa-map-marker-alt"></i> Branch Location:</label>
-            <div class="input-container">
-                <input type="text" id="branch-location" value="Branch Location">
-                <span class="plus-icon" onclick="addBranch()">+</span>
-            </div>
-        </div>
-        <div class="branch-list" id="branch-list"></div>
-        
-        <button class="btn save-btn" onclick="saveProfile()">Save Changes</button>
-        <button class="btn signout-btn" onclick="signOut()">Sign Out</button>
+        </label>
     </div>
+    <input type="file" id="profile-pic" accept="image/*" onchange="previewImage(event)">
+    
+    <div class="form-group">
+        <label><i class="fas fa-user"></i> Full Name:</label>
+        <div class="input-container">
+            <input type="text" id="full-name" value="Admin name">
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label><i class="fas fa-envelope"></i> Email Address:</label>
+        <div class="input-container">
+            <input type="email" id="email" value="admin@gmail.com">
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label><i class="fas fa-map-marker-alt"></i> Branch Location:</label>
+        <div class="input-container">
+            <input type="text" id="branch-location" value="Branch Location">
+            <span class="plus-icon" onclick="addBranch()">+</span>
+        </div>
+    </div>
+    <div class="branch-list" id="branch-list"></div>
+    
+    <button class="btn save-btn" onclick="saveProfile()">Save Changes</button>
+    <button class="btn signout-btn" onclick="signOut()">Sign Out</button>
+</div>
 
-    <script>
-        // Load saved profile data from localStorage
-        window.onload = function() {
-            const savedProfile = JSON.parse(localStorage.getItem("profileData")) || {};
-            document.getElementById("full-name").value = savedProfile.fullName || "ADMIN NAME";
-            document.getElementById("email").value = savedProfile.email || "admin@gmail.com";
-
-            if (savedProfile.profileImage) {
-                document.getElementById("profileImage").style.background = `url(${savedProfile.profileImage}) center/cover no-repeat`;
-                document.getElementById("profileImage").innerHTML = "";
-            }
-
-            if (savedProfile.branches) {
-                savedProfile.branches.forEach(branch => addBranch(branch));
-            }
-        };
-
-        function previewImage(event) {
-            const profileImage = document.getElementById("profileImage");
-            const file = event.target.files[0];
-
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    profileImage.style.background = `url(${e.target.result}) center/cover no-repeat`;
-                    profileImage.innerHTML = "";
-                    saveToLocalStorage("profileImage", e.target.result);
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function saveProfile() {
-            const fullName = document.getElementById("full-name").value;
-            const email = document.getElementById("email").value;
-
-            if (fullName.trim() === "" || email.trim() === "") {
-                alert("Please fill out all fields.");
-                return;
-            }
-
-            saveToLocalStorage("fullName", fullName);
-            saveToLocalStorage("email", email);
-            alert("Profile updated successfully!");
-        }
-
-        function addBranch(branchName = null) {
-            const branchInput = document.getElementById("branch-location");
-            const branchList = document.getElementById("branch-list");
-            const branchValue = branchName || branchInput.value.trim();
-
-            if (branchValue === "" || branchValue === "Branch Location") {
-                alert("Please enter a valid branch location.");
-                return;
-            }
-
-            const branchItem = document.createElement("div");
-            branchItem.className = "branch-item";
-            branchItem.innerHTML = `
-                <span>${branchValue}</span>
-                <button class="delete-branch" onclick="removeBranch(this)">x</button>
-            `;
-            branchList.appendChild(branchItem);
-
-            branchInput.value = "";
-            saveBranches();
-        }
-
-        function removeBranch(button) {
-            button.parentElement.remove();
-            saveBranches();
-        }
-
-        function saveBranches() {
-            const branches = Array.from(document.querySelectorAll(".branch-item span")).map(span => span.textContent);
-            saveToLocalStorage("branches", branches);
-        }
-
-        function saveToLocalStorage(key, value) {
-            let profileData = JSON.parse(localStorage.getItem("profileData")) || {};
-            profileData[key] = value;
-            localStorage.setItem("profileData", JSON.stringify(profileData));
-        }
-
-        function signOut() {
-            if (confirm("Are you sure you want to sign out?")) {
-                window.location.href = "login.html";
-            }
-        }
-    </script>
-</body>
-</html>
+<link rel="stylesheet" href="{% static 'css/profile.css' %}">
+<script src="{% static 'js/profile.js' %}"></script>
 {% endblock %}

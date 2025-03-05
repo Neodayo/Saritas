@@ -3,111 +3,121 @@
 {% block title %}Receipt{% endblock %}
 
 {% block content %}
+<div class="receipt-container">
+    <div class="payment-details">
+        <span class="success">✔ Receipt Success!</span>
+        <h2>₱ <input type="text" id="input-amount" value="XX,XXX"></h2>
+        <button onclick="downloadPDF()">Get PDF Receipt</button>
+        <h3>Payment Details</h3>
+        <p><strong>Name:</strong> <input type="text" id="customer-name"></p>
+        <p><strong>Contact Number:</strong> <input type="text" id="customer-number"></p>
+        <p><strong>Payment Time:</strong> <input type="text" id="payment-time"></p>
+        <p><strong>Date of Event:</strong> <input type="text" id="event-date"></p>
+        <p><strong>Date for Pick-up:</strong> <input type="text" id="pickup-date"></p>
+        <p><strong>Due Date of Return:</strong> <input type="text" id="return-date"></p>
+        <p><strong>Down Payment (Refundable):</strong> <input type="text" id="down-payment"></p>
+        <p><strong>Payment Method:</strong> <input type="text" id="payment-method"></p>
+    </div>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receipt</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-        .receipt-container {
-            max-width: 800px;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            margin: 0 auto;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .success {
-            color: green;
-            font-weight: bold;
-        }
-        .payment-details, .measures {
-            margin-top: 20px;
-        }
-        .measures div {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        .measures p {
-            flex: 1 1 45%;
-        }
-        .remarks {
-            margin-top: 20px;
-            font-style: italic;
-        }
-        button {
-            margin-top: 10px;
-            padding: 10px 15px;
-            border: none;
-            background: #007bff;
-            color: white;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-    </style>
-    <script>
-        function downloadPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.text(document.querySelector('.receipt-container').innerText, 10, 10);
-            doc.save("receipt.pdf");
-        }
-    </script>
-</head>
-<body>
-    <div class="receipt-container">
-        <div class="header">
-            <span class="success">✔ Receipt Success!</span>
-            <h2>₱ <input type="text" id="input-amount" value="XX,XXX"></h2>
-            <button onclick="downloadPDF()">Get PDF Receipt</button>
-        </div>
-        <div class="payment-details">
-            <h3>Payment Details</h3>
-            <p><strong>Name:</strong> <input type="text" id="customer-name"></p>
-            <p><strong>Contact Number:</strong> <input type="text" id="customer-number"></p>
-            <p><strong>Payment Time:</strong> <input type="text" id="payment-time"></p>
-            <p><strong>Date of Event:</strong> <input type="text" id="event-date"></p>
-            <p><strong>Date for Pick-up:</strong> <input type="text" id="pickup-date"></p>
-            <p><strong>Due Date of Return:</strong> <input type="text" id="return-date"></p>
-            <p><strong>Down Payment (Refundable):</strong> <input type="text" id="down-payment"></p>
-            <p><strong>Payment Method:</strong> <input type="text" id="payment-method"></p>
-        </div>
-        <div class="measures">
-            <h3>MEASURES:</h3>
-            <div>
-                <p><strong>Shoulder (S):</strong> <input type="text" id="shoulder"></p>
-                <p><strong>Bust (B):</strong> <input type="text" id="bust"></p>
-                <p><strong>Front (F):</strong> <input type="text" id="front"></p>
-                <p><strong>Width (W):</strong> <input type="text" id="width"></p>
-                <p><strong>Waist (W):</strong> <input type="text" id="waist"></p>
-                <p><strong>Hips (H):</strong> <input type="text" id="hips"></p>
-                <p><strong>Arm Length (A):</strong> <input type="text" id="arm-length"></p>
-                <p><strong>Bust Depth (D):</strong> <input type="text" id="bust-depth"></p>
-                <p><strong>Bust Distance (D):</strong> <input type="text" id="bust-distance"></p>
-                <p><strong>Length (D):</strong> <input type="text" id="length"></p>
-                <p><strong>Lower Circumference (L):</strong> <input type="text" id="lower-circumference"></p>
-                <p><strong>Crotch (CR):</strong> <input type="text" id="crotch"></p>
-            </div>
-        </div>
-        <div class="remarks">
-            <h3>Remarks:</h3>
-            <textarea id="remarks"></textarea>
+    <div class="measures">
+        <h3>MEASURES:</h3>
+        <div>
+            <p><strong>Shoulder (S):</strong> <input type="text" id="shoulder"></p>
+            <p><strong>Bust (B):</strong> <input type="text" id="bust"></p>
+            <p><strong>Front (F):</strong> <input type="text" id="front"></p>
+            <p><strong>Width (W):</strong> <input type="text" id="width"></p>
+            <p><strong>Waist (W):</strong> <input type="text" id="waist"></p>
+            <p><strong>Hips (H):</strong> <input type="text" id="hips"></p>
+            <p><strong>Arm Length (A):</strong> <input type="text" id="arm-length"></p>
+            <p><strong>Bust Depth (D):</strong> <input type="text" id="bust-depth"></p>
+            <p><strong>Bust Distance (D):</strong> <input type="text" id="bust-distance"></p>
+            <p><strong>Length (D):</strong> <input type="text" id="length"></p>
+            <p><strong>Lower Circumference (L):</strong> <input type="text" id="lower-circumference"></p>
+            <p><strong>Crotch (CR):</strong> <input type="text" id="crotch"></p>
         </div>
     </div>
-</body>
-</html>
+
+    <div class="remarks">
+        <h3>Remarks:</h3>
+        <textarea id="remarks"></textarea>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+    function downloadPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.text(document.querySelector('.receipt-container').innerText, 10, 10);
+        doc.save("receipt.pdf");
+    }
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .receipt-container {
+        max-width: 800px;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        margin: 20px auto;
+    }
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .success {
+        color: green;
+        font-weight: bold;
+    }
+    .payment-details, .measures {
+        margin-top: 20px;
+    }
+    .measures div {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    .measures p {
+        flex: 1 1 45%;
+    }
+    .remarks {
+        margin-top: 20px;
+        font-style: italic;
+    }
+    button {
+        margin-top: 10px;
+        padding: 10px 15px;
+        border: none;
+        background: #007bff;
+        color: white;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+    h2 input {
+        font-size: 1.2em;
+        text-align: center;
+        border: none;
+        background: transparent;
+        width: 120px;
+    }
+    p input {
+        border: 1px solid #ccc;
+        padding: 5px;
+        border-radius: 5px;
+        width: 200px;
+    }
+    .remarks textarea {
+        width: 100%;
+        height: 100px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 10px;
+    }
+</style>
 {% endblock %}
