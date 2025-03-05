@@ -1,0 +1,40 @@
+
+{%load static%}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/saritas.css' %}">
+{% endblock %}
+{%block content%}
+<link rel="stylesheet" href="{% static 'css/signin.css' %}">
+<body>
+
+    
+    <!-- <div class =bg-image></div> -->
+
+    <div class="login-container">
+        <div class="left-section">
+            <a href="" class="back-button">
+                <img src="<-" alt="Back" class ="back-button-image">  </a>
+            <h1><span class="brand-name">Sarita's</span> 
+                <br>
+                Wedding Creations
+                <br>
+                & Event Stylist
+            </h1>
+        </div>
+
+
+        <div class="right-section">
+            <form>
+                <input type="email" placeholder="Admin@gmail.com" required>
+                <input type="password" placeholder="Password" required>
+                <a href="{%url 'saritasapp:homepage' %}" class="login-btn">Log in</a>
+
+
+                <!-- Main Login Button cause submit is needed -->
+                <!-- <button type="submit" class="login-btn">Log in</button> -->
+            </form>
+        </div>
+    </div>
+</body>
+</html>
+{%endblock%}

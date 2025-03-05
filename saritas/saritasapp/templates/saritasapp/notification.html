@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="Notifications-Applicant.css">
+    <title>Notifications-Applicant</title>
+</head>
+<body>
+    
+<div class="wrapper">
+        <div class="header">
+            <h4>Notifications</h4>
+            <button class="exit-button">&times;</button>
+        </div>
+    <div class="toast notif1">
+        <div class="circle"></div>
+        <div class="container-2">
+            <p>Notification1</A></p>
+        </div>
+        
+    </div>
+    <div class="toast notif2">
+        <div class="circle"></div>
+        <div class="container-2">
+            <p>Notification2</p>
+            
+        </div>
+     
+    </div>
+    <div class="toast notif3">
+        <div class="circle"></div>
+        <div class="container-2">
+            <p>Notification3</p>
+            
+        </div>
+        
+    </div>
+    <div class="toast notif4">
+        <div class="circle"></div>
+        <div class="container-2">
+            <p>Notification4</p>
+        </div>
+   
+    </div>
+</div>
+
+<style>
+
+*{
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    border: none;
+    font-family: "Poppins", Arial;
+    font-size: 14px;
+}
+body{
+    background-color: #f8f6f6;
+}
+.wrapper{
+    width: 350px;
+    position: center;
+    translate: translate(-50%,-50%);
+    top: 50%;
+    left: 50%;
+    border: 2px solid;
+    border-radius: 10px;
+    padding: 10px;
+    background-color: #dfe3eb;
+}
+.toast{
+    width: 100%;
+    height: 80px;
+    padding: 0px;
+    background-color: #f9f4f4;
+    border-radius: 8px;
+    display: grid;
+    grid-template-columns: 0.8fr 6fr 0.5fr;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+    align-items: center;
+}
+.notif1 .circle{
+    background-color: #36e54e;
+}
+.notif2 .circle{
+    background-color: #f326e1;
+}
+.notif3 .circle{
+    background-color: rgb(255, 0, 0);
+}
+.notif4 .circle{
+    background-color: rgb(80, 159, 255);
+}
+
+.toast:not(:last-child){
+    margin-bottom: 8px;
+}
+.container-1,.container-2{
+    align-self: center;
+} 
+.container-1 i{
+    font-size: 35px;
+}
+
+.container-2 {
+    align-self: center;
+    margin-left: 15px;
+}
+.container-2 p:first-child{
+    color: #030303;
+    font-weight: 600;
+    font-size: 16px;
+}
+.container-2 p:last-child{
+    font-size: 14px;
+    font-weight: 400;
+    color: #656565;
+}
+.circle{
+    width: 30px;
+    height: 35px;
+    border-radius: 50%;
+    margin-left: 10px; 
+}
+h4 {
+    font-size: 35px;
+    font-weight: bold;
+    font-family: sans-serif; 
+    color: #070e2e; 
+}
+.header {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 14px 0; 
+}
+.exit-button {
+    background-color: transparent; 
+    border: 3px solid #fa0707;
+    border-radius: 5px; 
+    padding: 6px 13px; 
+    font-size: 22px; 
+    cursor: pointer; 
+    color: #ff0707; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+}
+
+.exit-button:hover {
+    background-color: #f0f0f0; 
+    border-color: #000; 
+}
+
+.toast button {
+    background-color: transparent;
+    font-size: 25px;
+    color: #d1d1d1;
+    line-height: 2;
+    cursor: pointer;
+}
+</style>
+</body>
+</html>

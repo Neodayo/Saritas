@@ -1,0 +1,63 @@
+
+{% extends "saritasapp/base.html" %}
+{% load static %}
+
+{% block title %}Individual Page{% endblock %}
+
+{% block extra_css %}
+    <!-- <link rel="stylesheet" href="{% static 'css/add_inventory.css' %}"> -->
+{% endblock %}
+
+{% block content %}
+<style> 
+    body { 
+        font-family: Arial, sans-serif;
+        background-color: #ffffff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 20px 0; 
+        padding: 10px;
+        box-sizing: border-box;
+}
+
+    .container-sort {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        text-decoration: none;
+        color:inherit
+
+    }
+
+    .container {
+        cursor: pointer;
+        border: 2px solid #ccc;
+        padding: 10px;
+        text-align: center;
+        flex: 1;                  
+        transition: background 0.3s;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        box-sizing: border-box;
+        text-decoration: none;
+        
+        width: 100%; 
+        max-width: 400px; 
+        min-height: 150px; 
+        min-width: 150px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+    }
+</style>
+
+<div class="main-container">
+    
+    
+</div>
+
+
+{%endblock%}
