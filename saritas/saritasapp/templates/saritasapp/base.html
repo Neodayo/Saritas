@@ -41,19 +41,18 @@
 
     <!-- Header -->
     <div class="header">
-        <div class="header-items">
+        <button id="toggle-btn">☰</button>
             <div class="logo">
                 <img src="{% static 'images/Logo.png' %}" alt="Wedding Creations & Event Stylist">
-                <span>Wedding Creations & Event Stylist</span>
+                <span> Wedding<br>Creations &<br> Event Stylist</span>
             </div>
+            <div class="header-items">
             <a href="{% url 'saritasapp:individual' %}" class="header-link">Made to Order</a>
-            
             <select name="Packages" id="Package" class="header-link">
                 <option value="">Packages</option>
                 <option value="Wardrobe Packages">Wardrobe Packages</option>
                 <option value="Wedding Packages">Wedding Packages</option>
             </select>
-     
             <a href="{% url 'saritasapp:inventory_list' %}" class="header-link"><i class="fas fa-home"></i></a>
             <a href="{% url 'saritasapp:notifications' %}" class="header-link"><i class="fas fa-bell"></i></a>
             <a href="{% url 'saritasapp:profile' %}" class="header-link"><i class="fas fa-user"></i></a>
@@ -66,7 +65,7 @@
         {% endblock %}
     </div>
 
-    <button id="toggle-btn">☰</button>
+    
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
