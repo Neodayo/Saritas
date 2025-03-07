@@ -183,3 +183,34 @@ class Event(models.Model):
 
     def __str__(self):
         return self.title
+    
+#recipt
+
+
+class Receipt(models.Model):
+    customer_name = models.CharField(max_length=255)
+    customer_number = models.CharField(max_length=20)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, blank=True, null=True)
+    down_payment = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, blank=True, null=True)
+    
+    # Measurements (Set default=0.00 for decimal fields)
+    shoulder = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, blank=True, null=True)
+    bust = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, blank=True, null=True)
+    front = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, blank=True, null=True)
+    width = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, blank=True, null=True)
+    waist = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, blank=True, null=True)
+    hips = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, blank=True, null=True)
+    arm_length = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, blank=True, null=True)
+    bust_depth = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, blank=True, null=True)
+    bust_distance = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, blank=True, null=True)
+    length = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, blank=True, null=True)
+    lower_circumference = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, blank=True, null=True)
+    crotch = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, blank=True, null=True)
+
+    payment_time = models.DateTimeField(null=True, blank=True)
+    event_date = models.DateField(null=True, blank=True)
+    pickup_date = models.DateField(null=True, blank=True)
+    return_date = models.DateField(null=True, blank=True)
+    payment_method = models.CharField(max_length=50, choices=[('Cash', 'Cash'), ('Credit Card', 'Credit Card'), ('Bank Transfer', 'Bank Transfer')])
+    remarks = models.TextField(blank=True, null=True)
+

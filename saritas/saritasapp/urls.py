@@ -1,5 +1,6 @@
 from django.urls import path
-from . import views  
+from . import views 
+from .views import receipt_detail, update_receipt, generate_receipt_pdf
 
 app_name = 'saritasapp'
 
@@ -34,4 +35,8 @@ urlpatterns = [
     path('receipt/', views.receipt_view, name='receipt'),
     path('notifications/', views.notification_view, name='notifications'),
     path('rental-tracker/', views.rental_tracker_view, name='rental_tracker'),
+    #receipt
+    path('receipt/<int:receipt_id>/', receipt_detail, name='receipt-detail'),
+    path('receipt/<int:receipt_id>/update/', update_receipt, name='receipt-update'),
+    path('receipt/<int:receipt_id>/pdf/', generate_receipt_pdf, name='receipt-pdf'),
 ]
