@@ -35,6 +35,7 @@ urlpatterns = [
     path('receipt/', views.receipt_view, name='receipt'),
     path('notifications/', views.notification_view, name='notifications'),
     path('rental-tracker/', views.rental_tracker_view, name='rental_tracker'),
+    path('reservation/', views.reservation_view, name='reservation'),
     #receipt
     path('receipt/<int:receipt_id>/', receipt_detail, name='receipt-detail'),
     path('receipt/<int:receipt_id>/update/', update_receipt, name='receipt-update'),

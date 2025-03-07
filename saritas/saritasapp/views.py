@@ -320,6 +320,10 @@ def rental_tracker_view(request):
 
     return render(request, 'saritasapp/rental_tracker.html')
 
+def reservation_view(request):
+
+    return render(request, 'saritasapp/reservation.html')
+
 
  #receipt
 from django.shortcuts import render, get_object_or_404, redirect
