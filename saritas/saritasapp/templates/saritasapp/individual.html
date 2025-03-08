@@ -59,18 +59,18 @@
         <form action="{% url 'saritasapp:receipt' %}" method="GET">
         <h3>MEASURES:</h3>
         <div>
-            <p><strong>Shoulder (S):</strong> <input type="text" id="shoulder"></p>
-            <p><strong>Bust (B):</strong> <input type="text" id="bust"></p>
-            <p><strong>Front (F):</strong> <input type="text" id="front"></p>
-            <p><strong>Width (W):</strong> <input type="text" id="width"></p>
-            <p><strong>Waist (W):</strong> <input type="text" id="waist"></p>
-            <p><strong>Hips (H):</strong> <input type="text" id="hips"></p>
-            <p><strong>Arm Length (A):</strong> <input type="text" id="arm-length"></p>
-            <p><strong>Bust Depth (D):</strong> <input type="text" id="bust-depth"></p>
-            <p><strong>Bust Distance (D):</strong> <input type="text" id="bust-distance"></p>
-            <p><strong>Length (D):</strong> <input type="text" id="length"></p>
-            <p><strong>Lower Circumference (L):</strong> <input type="text" id="lower-circumference"></p>
-            <p><strong>Crotch (CR):</strong> <input type="text" id="crotch"></p>
+            <p><strong>Shoulder (S):</strong> <input type="text" id="shoulder" class="input-field"></p>
+            <p><strong>Bust (B):</strong> <input type="text" id="bust" class="input-field"></p>
+            <p><strong>Front (F):</strong> <input type="text" id="front" class="input-field"></p>
+            <p><strong>Width (W):</strong> <input type="text" id="width" class="input-field"></p>
+            <p><strong>Waist (W):</strong> <input type="text" id="waist" class="input-field"></p>
+            <p><strong>Hips (H):</strong> <input type="text" id="hips" class="input-field"></p>
+            <p><strong>Arm Length (A):</strong> <input type="text" id="arm-length" class="input-field"></p>
+            <p><strong>Bust Depth (D):</strong> <input type="text" id="bust-depth" class="input-field"></p>
+            <p><strong>Bust Distance (D):</strong> <input type="text" id="bust-distance" class="input-field"></p>
+            <p><strong>Length (D):</strong> <input type="text" id="length" class="input-field"></p>
+            <p><strong>Lower Circumference (L):</strong> <input type="text" id="lower-circumference"class="input-field"></p>
+            <p><strong>Crotch (CR):</strong> <input type="text" id="crotch" class="input-field"></p>
 
             <button type="submit">Submit</button>
         </form>
@@ -78,6 +78,25 @@
     </div>
     
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const inputs = document.querySelectorAll('.input-field');
 
+        inputs.forEach((input, index) => {
+            input.addEventListener('keydown', function (event) {
+                
+                if (event.key === 'Enter') {
+                    event.preventDefault(); 
+                    const nextInput = inputs[index + 1];
 
+                    if (nextInput) {
+                        nextInput.focus();
+                    } else {
+                        document.getElementById('measureForm').submit();
+                    }
+                }
+            });
+        });
+    });
+</script>
 {%endblock%}
