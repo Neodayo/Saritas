@@ -56,6 +56,7 @@
 
 <div class="main-container">
     <div class="measures">
+        <form action="{% url 'saritasapp:receipt' %}" method="GET">
         <h3>MEASURES:</h3>
         <div>
             <p><strong>Shoulder (S):</strong> <input type="text" id="shoulder"></p>
@@ -70,6 +71,9 @@
             <p><strong>Length (D):</strong> <input type="text" id="length"></p>
             <p><strong>Lower Circumference (L):</strong> <input type="text" id="lower-circumference"></p>
             <p><strong>Crotch (CR):</strong> <input type="text" id="crotch"></p>
+
+            <button type="submit">Submit</button>
+        </form>
         </div>
     </div>
     

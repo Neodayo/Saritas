@@ -9,7 +9,7 @@
         <div class="payment-details">
             <span class="success">✔ Receipt Success!</span>
             <h2>₱ <input type="text" id="input-amount" name="amount" value="{{ receipt.amount }}"></h2>
-            <button type="button" onclick="window.location.href='{% url 'saritasapp:receipt-pdf' receipt.id %}'">
+            <button class="buttons" type="button" onclick="window.location.href='{% url 'saritasapp:receipt-pdf' receipt.id %}'">
                 Download PDF Receipt
             </button>
             
@@ -53,7 +53,7 @@
             <textarea id="remarks" name="remarks">{{ receipt.remarks }}</textarea>
         </div>
 
-        <button type="submit">Save Changes</button>
+        <button class="buttons" type="submit">Save Changes</button>
     </form>
 </div>
 {% endblock %}
@@ -94,7 +94,7 @@
         margin-top: 20px;
         font-style: italic;
     }
-    button {
+    .buttons {
         margin-top: 10px;
         padding: 10px 15px;
         border: none;

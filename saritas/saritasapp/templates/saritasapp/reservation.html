@@ -1,6 +1,6 @@
 {% extends "saritasapp/base.html" %}
 {% load static %}
-{% block title %}Event Calendar{% endblock %}
+{% block title %}Reservation{% endblock %}
 
 {% block content %}
 
@@ -19,7 +19,7 @@
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
-    button {
+    .add-res {
         background-color: #28a745;
         color: white;
         border: none;
@@ -28,10 +28,10 @@
         cursor: pointer;
         font-size: 16px;
     }
-    button:hover {
+    .add-res:hover {
         background-color: #218838;
     }
-    .search-bar .add-bar {
+    .top-containers {
         padding: 8px;
         margin: 10px 0;
         width: 100%;
@@ -39,13 +39,38 @@
         border-radius: 5px;
 
     }
-    /* input, select {
-        padding: 8px;
-        margin: 10px 0;
-        width: 100%;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-    } */
+    .search-bar {
+    width: 60%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+    transition: 0.3s ease-in-out;
+    }
+
+    .search-bar:focus {
+    border-color: #6f7b88;
+    box-shadow: 0 0 5px rgba(104, 120, 138, 0.5);
+    }
+    .select-bar {
+    width: 15%; 
+    padding: 8px 12px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+    transition: 0.3s ease-in-out;
+    box-sizing: border-box; 
+    appearance: none; 
+    background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%236f7b88"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 10px center; 
+    background-size: 20px;
+    }
+
+    .select-bar:focus {
+    border-color: #6f7b88;
+    box-shadow: 0 0 5px rgba(104, 120, 138, 0.5);
+    }
     table {
         width: 100%;
         border-collapse: collapse;
@@ -94,19 +119,23 @@
         background-color: #0056b3;
     }
 </style>
+
+
 <div class="container">
+
    
-        <button class="add-bar" onclick="addReservation()">+ ADD RESERVATION</button>
+        <button class="add-res" onclick="addReservation()">+ ADD RESERVATION</button>
+        <div class="top-containers">
         <input type="text" class="search-bar" id="search" placeholder="Quick search" onkeyup="searchTable()">
     </input>    
-            <select id="statusFilter" onchange="filterStatus()">
+            <select class="select-bar" id="statusFilter" onchange="filterStatus()">
                 <option value="">All</option>
                 <option value="Upcoming">Upcoming</option>
                 <option value="Ongoing">Ongoing</option>
                 <option value="Past">Past</option>
             </select>
       
-    
+    </div>
     <table id="reservationTable">
         <thead>
             <tr>
