@@ -1,16 +1,4 @@
-/* Reset and general styling */
-* {
-    padding: 0;
-    margin: 0;
-    box-sizing: border-box;
-    font-family: "Poppins", Arial, sans-serif;
-    font-size: 14px;
-}
 
-/* Background */
-body {
-    background-color: #f8f6f6;
-}
 
 /* Centering the notification frame */
 .wrapper {

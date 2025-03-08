@@ -40,8 +40,9 @@
     </div>
 </div>
 
-
+{% block extra_css%}
 <link rel="stylesheet" href="{% static 'css/notifications.css' %}">
+{% endblock %}
 
 <script>
     function closeProfile() {
