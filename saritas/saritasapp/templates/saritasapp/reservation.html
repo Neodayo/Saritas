@@ -3,6 +3,7 @@
 {% block title %}Event Calendar{% endblock %}
 
 {% block content %}
+
 <style>
     body {
         font-family: 'Poppins', sans-serif;
@@ -30,13 +31,21 @@
     button:hover {
         background-color: #218838;
     }
-    input, select {
+    .search-bar .add-bar {
         padding: 8px;
         margin: 10px 0;
         width: 100%;
         border: 1px solid #ccc;
         border-radius: 5px;
+
     }
+    /* input, select {
+        padding: 8px;
+        margin: 10px 0;
+        width: 100%;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    } */
     table {
         width: 100%;
         border-collapse: collapse;
@@ -86,14 +95,18 @@
     }
 </style>
 <div class="container">
-    <button onclick="addReservation()">+ ADD RESERVATION</button>
-    <input type="text" id="search" placeholder="Quick search" onkeyup="searchTable()">
-    <select id="statusFilter" onchange="filterStatus()">
-        <option value="">All</option>
-        <option value="Upcoming">Upcoming</option>
-        <option value="Ongoing">Ongoing</option>
-        <option value="Past">Past</option>
-    </select>
+   
+        <button class="add-bar" onclick="addReservation()">+ ADD RESERVATION</button>
+        <input type="text" class="search-bar" id="search" placeholder="Quick search" onkeyup="searchTable()">
+    </input>    
+            <select id="statusFilter" onchange="filterStatus()">
+                <option value="">All</option>
+                <option value="Upcoming">Upcoming</option>
+                <option value="Ongoing">Ongoing</option>
+                <option value="Past">Past</option>
+            </select>
+      
+    
     <table id="reservationTable">
         <thead>
             <tr>
