@@ -186,6 +186,22 @@ a {
     white-space: nowrap; 
 }
 
+.header-link-text {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: black;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: 0.3s;
+    white-space: nowrap; 
+}
+.header-link-text:hover {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.212);
+}
 .header-link i {
     font-size: 20px;
     color: black;
