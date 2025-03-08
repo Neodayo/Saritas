@@ -1,13 +1,11 @@
 from django.urls import path
-from . import views  
+from . import views 
+from .views import receipt_detail, update_receipt, generate_receipt_pdf
 
 app_name = 'saritasapp'
 
 urlpatterns = [
-    path("signup/", views.signup_view, name="signup"),
-    path("login/", views.login_view, name="login"),
-    path("logout/", views.logout_view, name="logout"),
-    path('dashboard/', views.dashboard, name='dashboard'), 
+    path('', views.homepage, name='homepage'),
     path('add-inventory/', views.add_inventory, name='add_inventory'),
     path('inventory/', views.inventory_view, name='inventory_list'),
     path('add-category/', views.add_category, name='add_category'),
@@ -19,20 +17,27 @@ urlpatterns = [
     path("customer/list/", views.customer_list, name="customer_list"),
     path('customers/<int:customer_id>/', views.view_customer, name='view_customer'),
     path('rental/return/<int:rental_id>/', views.return_rental, name='return_rental'),
-    path("wardrobe-packages/", views.wardrobe_package_list, name="wardrobe_package_list"),
-    path("wardrobe-packages/<int:package_id>/", views.wardrobe_package_detail, name="wardrobe_package_detail"),
-    path("wardrobe-packages/<int:package_id>/select/", views.select_wardrobe_package, name="select_wardrobe_package"),
-    path("customer-orders/<int:customer_id>/", views.customer_orders, name="customer_orders"),
     #data analysis
     path('data-analysis/', views.data_analysis, name='data_analysis'),
     #calendar
-    path("api/events/", views.get_events, name="get_events"),
     path("calendar/", views.calendar_view, name="calendar"),
-    path("calendar/<int:year>/<int:month>/", views.calendar_view, name="calendar_by_month"),
     path("ongoing-events/", views.ongoing_events, name="ongoing_events"),
     path("upcoming-events/", views.upcoming_events, name="upcoming_events"),
     path("past-events/", views.past_events, name="past_events"),
     path("create-event/", views.create_event, name="create_event"),
     path("view-event/<int:event_id>/", views.view_event, name="view_event"),
     path("api/events/", views.get_events, name="api_events"),
+    path("individual/", views.individual, name="individual"),
+    path("signup/", views.sign_up, name="sign_up"),
+    path("signin/", views.sign_in, name="sign_in"),
+    #all views
+    path('profile/', views.profile_view, name='profile'),
+    path('receipt/', views.receipt_view, name='receipt'),
+    path('notifications/', views.notification_view, name='notifications'),
+    path('rental-tracker/', views.rental_tracker_view, name='rental_tracker'),
+    path('reservation/', views.reservation_view, name='reservation'),
+    #receipt
+    path('receipt/<int:receipt_id>/', receipt_detail, name='receipt-detail'),
+    path('receipt/<int:receipt_id>/update/', update_receipt, name='receipt-update'),
+    path('receipt/<int:receipt_id>/pdf/', generate_receipt_pdf, name='receipt-pdf'),
 ]

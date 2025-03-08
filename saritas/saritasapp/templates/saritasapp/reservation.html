@@ -1,0 +1,187 @@
+{% extends "saritasapp/base.html" %}
+{% load static %}
+{% block title %}Event Calendar{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 20px;
+    }
+    .container {
+        max-width: 1100px;
+        margin: auto;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    button {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    button:hover {
+        background-color: #218838;
+    }
+    input, select {
+        padding: 8px;
+        margin: 10px 0;
+        width: 100%;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background: white;
+    }
+    th, td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    th {
+        background-color: #007bff;
+        color: white;
+    }
+    tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    tr:hover {
+        background-color: #f1f1f1;
+    }
+    .status {
+        padding: 5px 10px;
+        border-radius: 15px;
+        color: white;
+        font-size: 14px;
+        display: inline-block;
+    }
+    .upcoming { background-color: #28a745; }
+    .ongoing { background-color: #ffc107; color: black; }
+    .past { background-color: #17a2b8; }
+    .pagination {
+        text-align: center;
+        margin-top: 20px;
+    }
+    .pagination button {
+        padding: 8px 12px;
+        margin: 5px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+    }
+    .pagination button:hover {
+        background-color: #0056b3;
+    }
+</style>
+<div class="container">
+    <button onclick="addReservation()">+ ADD RESERVATION</button>
+    <input type="text" id="search" placeholder="Quick search" onkeyup="searchTable()">
+    <select id="statusFilter" onchange="filterStatus()">
+        <option value="">All</option>
+        <option value="Upcoming">Upcoming</option>
+        <option value="Ongoing">Ongoing</option>
+        <option value="Past">Past</option>
+    </select>
+    <table id="reservationTable">
+        <thead>
+            <tr>
+                <th>Event Name</th>
+                <th>Event Venue</th>
+                <th>Client Details</th>
+                <th>Date of Event</th>
+                <th>Details</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            <!-- Dynamic rows will be inserted here -->
+        </tbody>
+    </table>
+    <div class="pagination" id="pagination"></div>
+</div>
+<script>
+    const reservations = [
+        { name: "Event 1", venue: "Place A", client: "John Doe (1234567890)", date: "03/15/2025", status: "Upcoming" },
+        { name: "Event 2", venue: "Place B", client: "Jane Smith (9876543210)", date: "03/10/2025", status: "Ongoing" },
+        { name: "Event 3", venue: "Place C", client: "Bob Brown (5556667777)", date: "02/20/2025", status: "Past" }
+    ];
+    let currentPage = 1;
+    const rowsPerPage = 2;
+
+    function displayTable() {
+        let tableBody = document.getElementById("tableBody");
+        tableBody.innerHTML = "";
+        let filteredData = filterStatus(true);
+        let start = (currentPage - 1) * rowsPerPage;
+        let end = start + rowsPerPage;
+        let paginatedData = filteredData.slice(start, end);
+        paginatedData.forEach(reservation => {
+            let row = `<tr>
+                <td>${reservation.name}</td>
+                <td>${reservation.venue}</td>
+                <td>${reservation.client}</td>
+                <td>${reservation.date}</td>
+                <td><a href="#">(VIEW DETAILS)</a></td>
+                <td><span class="status ${reservation.status.toLowerCase()}">${reservation.status}</span></td>
+            </tr>`;
+            tableBody.innerHTML += row;
+        });
+        displayPagination(filteredData.length);
+    }
+
+    function searchTable() {
+        let input = document.getElementById("search").value.toLowerCase();
+        let filteredData = reservations.filter(res =>
+            res.name.toLowerCase().includes(input) ||
+            res.venue.toLowerCase().includes(input) ||
+            res.client.toLowerCase().includes(input) ||
+            res.date.includes(input)
+        );
+        displayFilteredTable(filteredData);
+    }
+
+    function filterStatus(returnData = false) {
+        let status = document.getElementById("statusFilter").value;
+        let filteredData = reservations.filter(res => !status || res.status === status);
+        if (returnData) return filteredData;
+        displayFilteredTable(filteredData);
+    }
+
+    function displayFilteredTable(filteredData) {
+        currentPage = 1;
+        displayTable();
+    }
+
+    function displayPagination(totalRows) {
+        let pagination = document.getElementById("pagination");
+        pagination.innerHTML = "";
+        let totalPages = Math.ceil(totalRows / rowsPerPage);
+        for (let i = 1; i <= totalPages; i++) {
+            pagination.innerHTML += `<button onclick="changePage(${i})">${i}</button>`;
+        }
+    }
+
+    function changePage(page) {
+        currentPage = page;
+        displayTable();
+    }
+
+    function addReservation() {
+        alert("Add Reservation clicked");
+    }
+
+    displayTable();
+</script>
+{% endblock %}

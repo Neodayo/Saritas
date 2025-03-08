@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Branch, User, EventPackage, PackageItem, CustomerOrder, SelectedPackageItem, Inventory, Category, Rental, Customer, WardrobePackage, WardrobePackageItem, Event, WardrobePackageItem, WardrobePackageItem, WardrobePackageItem
+from .models import Receipt#receipt
+from .models import Branch, User, EventPackage, PackageItem, CustomerOrder, SelectedPackageItem, Inventory, Category
 # Register your models here.
 admin.site.register(Branch)
 admin.site.register(User)
@@ -9,12 +10,12 @@ admin.site.register(CustomerOrder)
 admin.site.register(SelectedPackageItem)
 admin.site.register(Inventory)
 admin.site.register(Category)
-admin.site.register(Rental)
-admin.site.register(Customer)
-admin.site.register(WardrobePackage)
-admin.site.register(WardrobePackageItem)
-admin.site.register(Event)
+#receipt
+from django.contrib import admin
+from .models import Receipt
 
-# Compare this snippet from saritas/saritasapp/forms.py:
-# from django import forms 
-# from .models import Inventory, Category
+@admin.register(Receipt)
+class ReceiptAdmin(admin.ModelAdmin):
+    list_display = ('customer_name', 'amount', 'payment_time', 'event_date', 'pickup_date', 'return_date')
+    search_fields = ('customer_name', 'customer_number')
+    list_filter = ('payment_method', 'event_date')

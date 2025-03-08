@@ -4,57 +4,61 @@
 
 {% block content %}
 <div class="receipt-container">
-    <div class="payment-details">
-        <span class="success">✔ Receipt Success!</span>
-        <h2>₱ <input type="text" id="input-amount" value="XX,XXX"></h2>
-        <button onclick="downloadPDF()">Get PDF Receipt</button>
-        <h3>Payment Details</h3>
-        <p><strong>Name:</strong> <input type="text" id="customer-name"></p>
-        <p><strong>Contact Number:</strong> <input type="text" id="customer-number"></p>
-        <p><strong>Payment Time:</strong> <input type="text" id="payment-time"></p>
-        <p><strong>Date of Event:</strong> <input type="text" id="event-date"></p>
-        <p><strong>Date for Pick-up:</strong> <input type="text" id="pickup-date"></p>
-        <p><strong>Due Date of Return:</strong> <input type="text" id="return-date"></p>
-        <p><strong>Down Payment (Refundable):</strong> <input type="text" id="down-payment"></p>
-        <p><strong>Payment Method:</strong> <input type="text" id="payment-method"></p>
-    </div>
+    <form method="POST" action="{% url 'saritasapp:receipt-update' receipt.id %}">
+        {% csrf_token %}
+        <div class="payment-details">
+            <span class="success">✔ Receipt Success!</span>
+            <h2>₱ <input type="text" id="input-amount" name="amount" value="{{ receipt.amount }}"></h2>
+            <button type="button" onclick="window.location.href='{% url 'saritasapp:receipt-pdf' receipt.id %}'">
+                Download PDF Receipt
+            </button>
+            
+            
 
-    <div class="measures">
-        <h3>MEASURES:</h3>
-        <div>
-            <p><strong>Shoulder (S):</strong> <input type="text" id="shoulder"></p>
-            <p><strong>Bust (B):</strong> <input type="text" id="bust"></p>
-            <p><strong>Front (F):</strong> <input type="text" id="front"></p>
-            <p><strong>Width (W):</strong> <input type="text" id="width"></p>
-            <p><strong>Waist (W):</strong> <input type="text" id="waist"></p>
-            <p><strong>Hips (H):</strong> <input type="text" id="hips"></p>
-            <p><strong>Arm Length (A):</strong> <input type="text" id="arm-length"></p>
-            <p><strong>Bust Depth (D):</strong> <input type="text" id="bust-depth"></p>
-            <p><strong>Bust Distance (D):</strong> <input type="text" id="bust-distance"></p>
-            <p><strong>Length (D):</strong> <input type="text" id="length"></p>
-            <p><strong>Lower Circumference (L):</strong> <input type="text" id="lower-circumference"></p>
-            <p><strong>Crotch (CR):</strong> <input type="text" id="crotch"></p>
+            <h3>Payment Details</h3>
+            <p><strong>Name:</strong> <input type="text" id="customer-name" name="customer_name" value="{{ receipt.customer_name }}"></p>
+            <p><strong>Contact Number:</strong> <input type="text" id="customer-number" name="customer_number" value="{{ receipt.customer_number }}"></p>
+            <p><strong>Payment Time:</strong> <input type="datetime-local" id="payment-time" name="payment_time" value="{{ receipt.payment_time|date:'Y-m-d\TH:i' }}"></p>
+            <p><strong>Date of Event:</strong> <input type="date" id="event-date" name="event_date" value="{{ receipt.event_date|date:'Y-m-d' }}"></p>
+            <p><strong>Date for Pick-up:</strong> <input type="date" id="pickup-date" name="pickup_date" value="{{ receipt.pickup_date|date:'Y-m-d' }}"></p>
+            <p><strong>Due Date of Return:</strong> <input type="date" id="return-date" name="return_date" value="{{ receipt.return_date|date:'Y-m-d' }}"></p>
+            <p><strong>Down Payment:</strong> <input type="text" id="down-payment" name="down_payment" value="{{ receipt.down_payment }}"></p>
+            <p><strong>Payment Method:</strong> 
+                <select id="payment-method" name="payment_method">
+                    <option value="Cash" {% if receipt.payment_method == "Cash" %}selected{% endif %}>Cash</option>
+                    <option value="Credit Card" {% if receipt.payment_method == "Credit Card" %}selected{% endif %}>Credit Card</option>
+                    <option value="Bank Transfer" {% if receipt.payment_method == "Bank Transfer" %}selected{% endif %}>Bank Transfer</option>
+                </select>
+            </p>
         </div>
-    </div>
 
-    <div class="remarks">
-        <h3>Remarks:</h3>
-        <textarea id="remarks"></textarea>
-    </div>
+        <div class="measures">
+            <h3>MEASUREMENTS:</h3>
+            <p><strong>Shoulder:</strong> <input type="text" name="shoulder" value="{{ receipt.shoulder }}"></p>
+            <p><strong>Bust:</strong> <input type="text" name="bust" value="{{ receipt.bust }}"></p>
+            <p><strong>Front:</strong> <input type="text" name="front" value="{{ receipt.front }}"></p>
+            <p><strong>Width:</strong> <input type="text" name="width" value="{{ receipt.width }}"></p>
+            <p><strong>Waist:</strong> <input type="text" name="waist" value="{{ receipt.waist }}"></p>
+            <p><strong>Hips:</strong> <input type="text" name="hips" value="{{ receipt.hips }}"></p>
+            <p><strong>Arm Length:</strong> <input type="text" name="arm_length" value="{{ receipt.arm_length }}"></p>
+            <p><strong>Bust Depth:</strong> <input type="text" name="bust_depth" value="{{ receipt.bust_depth }}"></p>
+            <p><strong>Bust Distance:</strong> <input type="text" name="bust_distance" value="{{ receipt.bust_distance }}"></p>
+            <p><strong>Length:</strong> <input type="text" name="length" value="{{ receipt.length }}"></p>
+            <p><strong>Lower Circumference:</strong> <input type="text" name="lower_circumference" value="{{ receipt.lower_circumference }}"></p>
+            <p><strong>Crotch:</strong> <input type="text" name="crotch" value="{{ receipt.crotch }}"></p>
+        </div>
+
+        <div class="remarks">
+            <h3>Remarks:</h3>
+            <textarea id="remarks" name="remarks">{{ receipt.remarks }}</textarea>
+        </div>
+
+        <button type="submit">Save Changes</button>
+    </form>
 </div>
 {% endblock %}
 
-{% block extra_scripts %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script>
-    function downloadPDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        doc.text(document.querySelector('.receipt-container').innerText, 10, 10);
-        doc.save("receipt.pdf");
-    }
-</script>
-{% endblock %}
+
 
 {% block extra_css %}
 <style>

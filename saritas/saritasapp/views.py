@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import InventoryForm, CategoryForm, RentalForm, CustomerForm, WardrobePackageForm, WardrobePackageItemForm
-from .models import Customer, Inventory, Category, Rental, User, WardrobePackage, WardrobePackageItem, CustomerOrder, SelectedPackageItem, Event
+from .forms import InventoryForm, CategoryForm, RentalForm, CustomerForm
+from .models import Customer, Inventory, Category, Rental, User
 from django.utils.timezone import now
-from django.db.models import F, Q  ,Count , Sum
+from django.db.models import F, Q  ,Count , Sum#new
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from django.contrib import messages
@@ -13,21 +13,12 @@ from django.utils.timezone import now #new
 from datetime import timedelta #new
 from .models import Rental, Customer, Inventory #new
 from django.db.models.functions import ExtractWeek, ExtractMonth, ExtractYear #new
-from django.contrib.auth import login, authenticate, logout #new
-from .forms import SignupForm, LoginForm #new
-from django.contrib.auth.decorators import login_required #new
-from django.http import JsonResponse #new
 # for calendar
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.timezone import now
 from .models import Event
 from django.http import JsonResponse
 from datetime import date
-import calendar
-
-@login_required
-def dashboard(request):
-    return render(request, 'dashboard.html')
 
 def add_inventory(request):
     categories = Category.objects.all()
@@ -191,12 +182,10 @@ def customer_list(request):
 def view_customer(request, customer_id):
     customer = get_object_or_404(Customer, id=customer_id)
     rentals = Rental.objects.filter(customer=customer)
-    customer_orders = CustomerOrder.objects.filter(customer=customer)
 
     return render(request, 'saritasapp/view_customer.html', {
         'customer': customer,
         'rentals': rentals,
-        "customer_orders": customer_orders,
     })
 def return_rental(request, rental_id):
     rental = get_object_or_404(Rental, id=rental_id)
@@ -261,24 +250,8 @@ def data_analysis(request):
 
 
 #calnder
-def calendar_view(request, year=None, month=None):
-    if year is None or month is None:
-        today = date.today()
-        year, month = today.year, today.month
-
-    # Generate the month calendar
-    cal = calendar.HTMLCalendar().formatmonth(year, month)
-
-    # Fix: Use `start__year` and `start__month` instead of `date`
-    events = Event.objects.filter(start__year=year, start__month=month)
-
-    context = {
-        "calendar": cal,
-        "events": events,
-        "year": year,
-        "month": month,
-    }
-    return render(request, "saritasapp/calendar.html", context)
+def calendar_view(request):
+    return render(request, "saritasapp/calendar.html")
 
 def ongoing_events(request):
     events = Event.objects.filter(start_date__lte=now().date(), end_date__gte=now().date())
@@ -307,142 +280,207 @@ def view_event(request, event_id):
     return render(request, "saritasapp/view_event.html", {"event": event})
 
 def get_events(request):
-    events = Event.objects.all().values("id", "title", "start", "end")
-    event_list = list(events)
+    events = Event.objects.all()
+    events_data = [
+        {
+            "id": event.id,
+            "title": event.title,
+            "start": event.start_date.strftime("%Y-%m-%d"),
+            "end": event.end_date.strftime("%Y-%m-%d"),
+        }
+        for event in events
+    ]
+    return JsonResponse(events_data, safe=False)
 
-    return JsonResponse(event_list, safe=False)
+#Default Homepage Views
+def homepage(request):
+    return render(request, 'saritasapp/base.html')
 
-def wardrobe_package_list(request):
-    packages = WardrobePackage.objects.filter(status="active")  # Show only active packages
-    return render(request, "saritasapp/wardrobe_package_list.html", {"packages": packages})
+def individual(request):
+    return render(request, 'saritasapp/individual.html')
 
-def wardrobe_package_detail(request, package_id):
-    """Displays details of a specific wardrobe package and allows item selection."""
-    package = get_object_or_404(WardrobePackage, id=package_id)
-    items = WardrobePackageItem.objects.filter(package=package)
 
-    total_price = package.base_price + sum(item.inventory_item.rental_price * item.quantity for item in items)
+def sign_up(request):
+    return render(request, 'saritasapp/signup.html')
 
-    return render(
-        request,
-        "saritasapp/wardrobe_package_detail.html",
-        {"package": package, "items": items, "total_price": total_price},
-    )
+def sign_in(request):
+    return render(request, 'saritasapp/signin.html')
 
-def select_wardrobe_package(request, package_id):
-    """Assigns a selected Wardrobe Package to an existing customer and creates an order."""
-    package = get_object_or_404(WardrobePackage, id=package_id)
+#all views
+def profile_view(request):
+    return render(request, 'saritasapp/profile.html')
+
+def receipt_view(request):
+    return render(request, 'saritasapp/receipt.html')
+
+def notification_view(request):
+    return render(request, 'saritasapp/notification.html')
+
+def rental_tracker_view(request):
+
+    return render(request, 'saritasapp/rental_tracker.html')
+
+def reservation_view(request):
+
+    return render(request, 'saritasapp/reservation.html')
+
+
+ #receipt
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import HttpResponse
+from .models import Receipt
+from datetime import datetime
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Spacer, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
+
+def receipt_detail(request, receipt_id):
+    """Display receipt details."""
+    receipt = get_object_or_404(Receipt, id=receipt_id)
+    return render(request, "saritasapp/receipt.html", {"receipt": receipt})
+
+def update_receipt(request, receipt_id):
+    """Update receipt details."""
+    receipt = get_object_or_404(Receipt, id=receipt_id)
 
     if request.method == "POST":
-        customer_email = request.POST.get("customer_email")  # Get email from form
-        user = request.user  # Get the logged-in user (sales clerk)
-
-        # Find the customer by email
         try:
-            customer = Customer.objects.get(email=customer_email)
-        except Customer.DoesNotExist:
-            messages.error(request, "Customer not found! Please check the email and try again.")
-            return redirect("saritasapp:wardrobe_package_detail", package_id=package.id)
+            # Ensure decimal fields have valid values (default to 0 if empty)
+            amount_str = request.POST.get("amount", "").strip()
+            down_payment_str = request.POST.get("down_payment", "").strip()
 
-        # Create a new order for the customer
-        order = CustomerOrder.objects.create(
-            customer=customer,
-            user=user,  # Sales clerk processing the order
-            package=package,
-            total_price=package.final_price(),  # Using the discounted price if any
-            status="Pending"
-        )
+            receipt.amount = float(amount_str) if amount_str else 0.00
+            receipt.down_payment = float(down_payment_str) if down_payment_str else 0.00
 
-        messages.success(request, f"Package '{package.name}' added to {customer.first_name}'s orders!")
-        return redirect("saritasapp:customer_orders", customer_id=customer.id)  # Redirect to customer's order page
+            # Text fields
+            receipt.customer_name = request.POST.get("customer_name", "").strip()
+            receipt.customer_number = request.POST.get("customer_number", "").strip()
+            receipt.payment_method = request.POST.get("payment_method", "").strip()
+            receipt.remarks = request.POST.get("remarks", "").strip()
 
-    return redirect("saritasapp:wardrobe_package_detail", package_id=package.id)
+            # Convert DateTime fields
+            payment_time_str = request.POST.get("payment_time")
+            if payment_time_str:
+                try:
+                    receipt.payment_time = datetime.strptime(payment_time_str, "%Y-%m-%dT%H:%M")
+                except ValueError:
+                    return render(request, "saritasapp/receipt.html", {
+                        "receipt": receipt,
+                        "error": "Invalid payment time format. Please use YYYY-MM-DD HH:MM."
+                    })
 
-def wardrobe_package_detail(request, package_id):
-    package = get_object_or_404(WardrobePackage, id=package_id)
-    items = WardrobePackageItem.objects.filter(package=package)
-    customers = Customer.objects.all()  # Fetch all existing customers
+            # Convert Date fields
+            date_fields = ["event_date", "pickup_date", "return_date"]
+            for field in date_fields:
+                date_str = request.POST.get(field)
+                if date_str:
+                    try:
+                        setattr(receipt, field, datetime.strptime(date_str, "%Y-%m-%d").date())
+                    except ValueError:
+                        return render(request, "saritasapp/receipt.html", {
+                            "receipt": receipt,
+                            "error": f"Invalid format for {field}. Please use YYYY-MM-DD."
+                        })
 
-    # Calculate total price
-    total_price = package.base_price
+            # Measurements (Ensure empty values are handled correctly)
+            measurement_fields = [
+                "shoulder", "bust", "front", "width", "waist", "hips",
+                "arm_length", "bust_depth", "bust_distance", "length",
+                "lower_circumference", "crotch"
+            ]
+            for field in measurement_fields:
+                setattr(receipt, field, request.POST.get(field, "").strip())
 
-    if request.method == "POST":
-        customer_id = request.POST.get("customer_id")
-        selected_item_ids = request.POST.getlist("selected_items")
+            # Save updated receipt
+            receipt.save()
+            return redirect("saritasapp:receipt-detail", receipt_id=receipt.id)
 
-        if not customer_id:
-            messages.error(request, "Please select a customer.")
-            return redirect("saritasapp:wardrobe_package_detail", package_id=package.id)
+        except ValueError as e:
+            return render(request, "saritasapp/receipt.html", {
+                "receipt": receipt,
+                "error": f"Invalid input: {str(e)}"
+            })
 
-        customer = get_object_or_404(Customer, id=customer_id)
-        user = request.user if request.user.is_authenticated else None  # Get logged-in user
+    return render(request, "saritasapp/receipt.html", {"receipt": receipt})
 
-        # Create a new order
-        order = CustomerOrder.objects.create(
-            customer=customer,
-            user=user,
-            package=package,
-            total_price=package.base_price,  # Initial price
-            status="Pending",
-        )
 
-        # Add selected items to the order
-        for item_id in selected_item_ids:
-            item = get_object_or_404(WardrobePackageItem, id=item_id)
-            SelectedPackageItem.objects.create(order=order, item=item.inventory_item, selected=True)
+def generate_receipt_pdf(request, receipt_id):
+    """Generate a professional-looking PDF receipt."""
+    receipt = get_object_or_404(Receipt, id=receipt_id)
 
-        # Recalculate the total price
-        order.calculate_total_price()
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="receipt_{receipt_id}.pdf"'
 
-        messages.success(request, "Package successfully added to customer's orders.")
-        return redirect("saritasapp:customer_orders", customer_id=customer.id)  # Redirect to customer's orders page
+    doc = SimpleDocTemplate(response, pagesize=letter)
+    elements = []
+    styles = getSampleStyleSheet()
 
-    return render(request, "saritasapp/wardrobe_package_detail.html", {
-        "package": package,
-        "items": items,
-        "customers": customers,
-        "total_price": total_price,
-    })
+    # Title
+    elements.append(Paragraph("<b>Official Receipt</b>", styles["Title"]))
+    elements.append(Spacer(1, 12))
 
-def customer_orders(request, customer_id):
-    customer = get_object_or_404(Customer, id=customer_id)
-    orders = CustomerOrder.objects.filter(customer=customer)
+    # Receipt details
+    details = [
+        ["Receipt ID:", receipt.id],
+        ["Name:", receipt.customer_name],
+        ["Contact:", receipt.customer_number],
+        ["Amount:", f"₱{receipt.amount:,.2f}"],
+        ["Down Payment:", f"₱{receipt.down_payment:,.2f}"],
+        ["Payment Method:", receipt.payment_method],
+        ["Event Date:", receipt.event_date.strftime("%Y-%m-%d")],
+        ["Pickup Date:", receipt.pickup_date.strftime("%Y-%m-%d")],
+        ["Return Date:", receipt.return_date.strftime("%Y-%m-%d")],
+        ["Remarks:", receipt.remarks if receipt.remarks else "N/A"]
+    ]
 
-    return render(request, "saritasapp/customer_orders.html", {
-        "customer": customer,
-        "orders": orders,
-    })
-def signup_view(request):
-    if request.method == "POST":
-        form = SignupForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            messages.success(request, "Account created successfully!")
-            return redirect("saritasapp:dashboard")  # Change to your main page
-    else:
-        form = SignupForm()
-    return render(request, "saritasapp/signup.html", {"form": form})
+    table = Table(details, colWidths=[150, 300])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+        ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+        ("GRID", (0, 0), (-1, -1), 1, colors.black)
+    ]))
 
-# Login View
-def login_view(request):
-    if request.method == "POST":
-        form = LoginForm(request, data=request.POST)
-        if form.is_valid():
-            email = form.cleaned_data["username"]
-            password = form.cleaned_data["password"]
-            user = authenticate(request, username=email, password=password)
-            if user:
-                login(request, user)
-                messages.success(request, "Logged in successfully!")
-                return redirect("saritasapp:dashboard")  # Change to your main page
-        messages.error(request, "Invalid email or password.")
-    else:
-        form = LoginForm()
-    return render(request, "saritasapp/login.html", {"form": form})
+    elements.append(table)
+    elements.append(Spacer(1, 12))
 
-# Logout View
-def logout_view(request):
-    logout(request)
-    messages.info(request, "Logged out successfully.")
-    return redirect("saritasapp:login")
+    # Measurements
+    elements.append(Paragraph("<b>Measurements:</b>", styles["Heading2"]))
+    measurement_data = [
+        ["Shoulder:", receipt.shoulder],
+        ["Bust:", receipt.bust],
+        ["Front:", receipt.front],
+        ["Width:", receipt.width],
+        ["Waist:", receipt.waist],
+        ["Hips:", receipt.hips],
+        ["Arm Length:", receipt.arm_length],
+        ["Bust Depth:", receipt.bust_depth],
+        ["Bust Distance:", receipt.bust_distance],
+        ["Length:", receipt.length],
+        ["Lower Circumference:", receipt.lower_circumference],
+        ["Crotch:", receipt.crotch]
+    ]
+
+    measurement_table = Table(measurement_data, colWidths=[150, 300])
+    measurement_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ("GRID", (0, 0), (-1, -1), 1, colors.black)
+    ]))
+
+    elements.append(measurement_table)
+    elements.append(Spacer(1, 12))
+
+    # Signature Section
+    elements.append(Spacer(1, 24))
+    elements.append(Paragraph("__________________________", styles["Normal"]))
+    elements.append(Paragraph("Authorized Signature", styles["Italic"]))
+
+    # Build PDF
+    doc.build(elements)
+    return response

@@ -1,16 +1,17 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Dashboard{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'css/mainbase.css' %}">
-    <link href="https://fonts.googleapis.com/css2?family=Rouge+Script&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    {% block extra_css %}{% endblock %}
-</head>
+    <head>
+        {% load static %}
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}Dashboard{% endblock %}</title>
+        <link rel="stylesheet" href="{% static 'css/mainbase.css' %}">
+        <link href="https://fonts.googleapis.com/css2?family=Rouge+Script&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+        {% block extra_css %}{% endblock %}
+    </head>    
 <body>
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
@@ -19,42 +20,47 @@
                 <span class="fas fa-box"></span> <text>Inventory</text>
             </a>
             <a href="{% url 'saritasapp:calendar' %}" class="nav-btn">
-                <span class="fas fa-calendar"></span> <text>Calendar of Events</text>
+                <span class="fas fa-calendar"></span> <text>Calendar of Event</text>
             </a>
-            <a href="" class="nav-btn">
+            <a href="{% url 'saritasapp:rental_tracker' %}" class="nav-btn">
                 <span class="fas fa-chart-line"></span> <text>Rental Tracker</text>
             </a>
-            <a href="" class="nav-btn">
-                <span class="fas fa-receipt"></span> <text>Receipts</text>
+            <a href="{% url 'saritasapp:receipt-detail' receipt_id=1 %}" class="nav-btn">
+                <span class="fas fa-receipt"></span> <text>Receipt</text>
             </a>
-            <a href="" class="nav-btn">
+            <a href="{% url 'saritasapp:data_analysis' %}" class="nav-btn">
                 <span class="fas fa-chart-bar"></span> <text>Data Analysis</text>
             </a>
+            
             <a href="{% url 'saritasapp:customer_list' %}" class="nav-btn">
-                <span class="fas fa-users"></span> <text>Customer Records</text>
+                <span class="fas fa-chart-bar"></span> <text>Customer Records</text>
+            </a>
+
+            <a href="{% url 'saritasapp:reservation' %}" class="nav-btn">
+                <span class="fas fa-chart-bar"></span> <text>Reservation</text>
             </a>
         </div>
     </div>
+    
 
     <!-- Header -->
     <div class="header">
-        <div class="header-items">
+        <button id="toggle-btn">☰</button>
             <div class="logo">
                 <img src="{% static 'images/Logo.png' %}" alt="Wedding Creations & Event Stylist">
-                <span>Wedding Creations & Event Stylist</span>
+                <span> Wedding<br>Creations &<br> Event Stylist</span>
             </div>
-            <a href="#" class="header-link">Individual</a>
+            <div class="header-items">
+            <a href="{% url 'saritasapp:individual' %}" class="header-link">Made to Order</a>
             <select name="Packages" id="Package" class="header-link">
                 <option value="">Packages</option>
-                <option value="{% url 'saritasapp:wardrobe_package_list' %}">Wardrobe Packages</option>
-                <option value="">Wedding Packages</option>
+                <option value="Wardrobe Packages">Wardrobe Packages</option>
+                <option value="Wedding Packages">Wedding Packages</option>
             </select>
-     
-            <a href="#" class="header-link"><i class="fas fa-home"></i></a>
-            <a href="#" class="header-link"><i class="fas fa-bell"></i></a>
-            <a href="#" class="header-link"><i class="fas fa-user"></i></a>
+            <a href="{% url 'saritasapp:inventory_list' %}" class="header-link"><i class="fas fa-home"></i></a>
+            <a href="{% url 'saritasapp:notifications' %}" class="header-link"><i class="fas fa-bell"></i></a>
+            <a href="{% url 'saritasapp:profile' %}" class="header-link"><i class="fas fa-user"></i></a>
         </div>
-        <a href="{% url 'saritasapp:logout' %}" class="btn btn-danger">Logout</a>
     </div>
 
     <!-- Main Content Area -->
@@ -63,23 +69,15 @@
         {% endblock %}
     </div>
 
-    <button id="toggle-btn">☰</button>
+    
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const sidebar = document.getElementById("sidebar");
             const toggleBtn = document.getElementById("toggle-btn");
-            const packageSelect = document.getElementById("packageSelect");
 
             toggleBtn.addEventListener("click", function () {
                 sidebar.classList.toggle("collapsed");
-            });
-
-            // Redirect when a package is selected
-            packageSelect.addEventListener("change", function () {
-                if (this.value) {
-                    window.location.href = this.value;
-                }
             });
         });
     </script>
