@@ -423,17 +423,18 @@ def generate_receipt_pdf(request, receipt_id):
 
     # Receipt details
     details = [
-        ["Receipt ID:", receipt.id],
-        ["Name:", receipt.customer_name],
-        ["Contact:", receipt.customer_number],
-        ["Amount:", f"₱{receipt.amount:,.2f}"],
-        ["Down Payment:", f"₱{receipt.down_payment:,.2f}"],
-        ["Payment Method:", receipt.payment_method],
-        ["Event Date:", receipt.event_date.strftime("%Y-%m-%d")],
-        ["Pickup Date:", receipt.pickup_date.strftime("%Y-%m-%d")],
-        ["Return Date:", receipt.return_date.strftime("%Y-%m-%d")],
-        ["Remarks:", receipt.remarks if receipt.remarks else "N/A"]
-    ]
+    ["Receipt ID:", receipt.id],
+    ["Name:", receipt.customer_name],
+    ["Contact:", receipt.customer_number],
+    ["Amount:", f"₱{receipt.amount:,.2f}"],
+    ["Down Payment:", f"₱{receipt.down_payment:,.2f}"],
+    ["Payment Method:", receipt.payment_method],
+    ["Event Date:", receipt.event_date.strftime("%Y-%m-%d") if receipt.event_date else "N/A"],
+    ["Pickup Date:", receipt.pickup_date.strftime("%Y-%m-%d") if receipt.pickup_date else "N/A"],
+    ["Return Date:", receipt.return_date.strftime("%Y-%m-%d") if receipt.return_date else "N/A"],
+    ["Remarks:", receipt.remarks if receipt.remarks else "N/A"]
+]
+
 
     table = Table(details, colWidths=[150, 300])
     table.setStyle(TableStyle([
