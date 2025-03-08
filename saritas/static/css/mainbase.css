@@ -103,6 +103,7 @@ a {
 
 #toggle-btn:hover {
     background-color: gray;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.212);
 }
 /* ---------- LOGO CONTAINER ---------- */
 .logo-container {
@@ -172,6 +173,32 @@ a {
     text-decoration: underline;
 } 
 
+/* Select made to transparent, remove if not liked */
+.header select {
+    background-color: transparent; 
+    color: black; 
+    font-size: 16px; 
+    font-weight: 600; 
+    padding: 8px 16px; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    appearance: none; 
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%236f7b88"><path d="M7 10l5 5 5-5z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 48px; 
+
+}
+.header select option {
+    background: white;
+    color: black; 
+}
+
+.header select:hover {
+    text-decoration: underline;
+} 
+
+
 .header-link {
     display: flex;
     align-items: center;
@@ -206,4 +233,3 @@ a {
     font-size: 20px;
     color: black;
 }
-
