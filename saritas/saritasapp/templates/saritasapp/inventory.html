@@ -51,13 +51,30 @@
         .inventory-card a:hover {
             background: #0056b3;
         }
+
+        .ref-additem a{
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        
+        .ref-additem:hover a {
+            background: #0056b3;
+
+        }
     </style>
 {% endblock %}
 
 {% block content %}
     <h1>Inventory</h1>
 
-    <a href="{% url 'saritasapp:add_inventory' %}" class="btn btn-primary">Add New Item</a>
+    <div class="ref-additem">
+        <a href="{% url 'saritasapp:add_inventory' %}" class="btn btn-primary">Add New Item</a>
+    </div>
 
     <label for="category">Filter by Category:</label>
     <select id="category" name="category" onchange="filterInventory()">
