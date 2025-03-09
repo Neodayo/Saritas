@@ -62,6 +62,13 @@
                         <a href="{% url 'saritasapp:homepage' %}" class="header-link"><i class="fas fa-home"></i></a>
                         <a href="{% url 'saritasapp:notifications' %}" class="header-link"><i class="fas fa-bell"></i></a>
                         <a href="{% url 'saritasapp:profile' %}" class="header-link"><i class="fas fa-user"></i></a>
+
+                        <!-- Login/Logout Button -->
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'saritasapp:logout' %}" class="header-link">Logout</a>
+                        {% else %}
+                            <a href="{% url 'saritasapp:sign_in' %}" class="header-link">Login</a>
+                        {% endif %}
                 </div>
     </div>
 

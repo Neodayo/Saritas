@@ -1,20 +1,19 @@
-
-{%load static%}
+{% load static %}
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'css/saritas.css' %}">
 {% endblock %}
-{%block content%}
+
+{% block content %}
 <link rel="stylesheet" href="{% static 'css/signin.css' %}">
+
 <body>
-
-    
-    <!-- <div class =bg-image></div> -->
-
     <div class="login-container">
         <div class="left-section">
-            <a href="" class="back-button">
-                <img src="<-" alt="Back" class ="back-button-image">  </a>
-            <h1><span class="brand-name">Sarita's</span> 
+            <a href="{% url 'saritasapp:homepage' %}" class="back-button">
+                <img src="{% static 'image/back-arrow.png' %}" alt="Back" class="back-button-image">
+            </a>
+            <h1>
+                <span class="brand-name">Sarita's</span> 
                 <br>
                 Wedding Creations
                 <br>
@@ -22,19 +21,32 @@
             </h1>
         </div>
 
-
         <div class="right-section">
-            <form>
-                <input type="email" placeholder="Admin@gmail.com" required>
-                <input type="password" placeholder="Password" required>
-                <a href="{%url 'saritasapp:homepage' %}" class="login-btn">Log in</a>
+            <form method="post">
+                {% csrf_token %}
 
+                <!-- Display Form Errors -->
+                {% if form.errors %}
+                <div class="error-message">
+                    <p>Invalid username or password. Please try again.</p>
+                </div>
+                {% endif %}
 
-                <!-- Main Login Button cause submit is needed -->
-                <!-- <button type="submit" class="login-btn">Log in</button> -->
+                <!-- Username Field -->
+                <input type="text" name="username" placeholder="Enter your username" required>
+
+                <!-- Password Field -->
+                <input type="password" name="password" placeholder="Password" required>
+
+                <button type="submit" class="login-btn">Log in</button>
             </form>
+
+            <p class="signup-link">
+                Don't have an account? 
+                <a href="{% url 'saritasapp:sign_up' %}">Sign up here</a>
+            </p>
         </div>
     </div>
 </body>
 </html>
-{%endblock%}
+{% endblock %}

@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views 
 from .views import receipt_detail, update_receipt, generate_receipt_pdf
+from django.contrib.auth import views as auth_views
+
 
 app_name = 'saritasapp'
 
@@ -30,14 +32,19 @@ urlpatterns = [
     path("individual/", views.individual, name="individual"),
     path("signup/", views.sign_up, name="sign_up"),
     path("signin/", views.sign_in, name="sign_in"),
-    #all views
+    path('login/', auth_views.LoginView.as_view(template_name='saritasapp/login.html'), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('dashboard/', views.dashboard, name='dashboard'),
     path('profile/', views.profile_view, name='profile'),
     path('receipt/', views.receipt_view, name='receipt'),
     path('notifications/', views.notification_view, name='notifications'),
     path('rental-tracker/', views.rental_tracker_view, name='rental_tracker'),
     path('reservation/', views.reservation_view, name='reservation'),
-    #receipt
     path('receipt/<int:receipt_id>/', receipt_detail, name='receipt-detail'),
     path('receipt/<int:receipt_id>/update/', update_receipt, name='receipt-update'),
     path('receipt/<int:receipt_id>/pdf/', generate_receipt_pdf, name='receipt-pdf'),
+    path('wardrobe-packages/', views.wardrobe_package_list, name='wardrobe_package_list'),
+    path('wardrobe-packages/<int:package_id>/', views.wardrobe_package_view, name='wardrobe_package_detail'),
+    path('wardrobe-packages/<int:package_id>/', views.wardrobe_package_view, name='wardrobe_package_detail'),
+    path('wardrobe-packages/<int:package_id>/select/', views.wardrobe_package_view, name='select_wardrobe_package'),
 ]

@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import InventoryForm, CategoryForm, RentalForm, CustomerForm
-from .models import Customer, Inventory, Category, Rental, User
+from .models import Customer, Inventory, Category, Rental, User, WardrobePackage, Receipt
 from django.utils.timezone import now
 from django.db.models import F, Q  ,Count , Sum#new
 from django.db import transaction
@@ -19,7 +19,26 @@ from django.utils.timezone import now
 from .models import Event
 from django.http import JsonResponse
 from datetime import date
+from django.contrib.auth import login
+from .forms import SignUpForm, LoginForm
+from django.contrib.auth import authenticate
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import HttpResponse
+from .models import Receipt
+from datetime import datetime
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Spacer, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
+from django.contrib import messages
+from .forms import SignUpForm, LoginForm 
+from .models import User
+from django.contrib.auth.decorators import login_required
 
+@login_required
 def add_inventory(request):
     categories = Category.objects.all()
 
@@ -36,6 +55,7 @@ def add_inventory(request):
 
     return render(request, 'saritasapp/add_inventory.html', {'form': form, 'categories': categories})
 
+@login_required
 def inventory_list(request):
     categories = Category.objects.all()
     selected_category = request.GET.get('category', '')
@@ -51,7 +71,7 @@ def inventory_list(request):
         'selected_category': selected_category,
     })
 
-
+@login_required
 def add_category(request):
     if request.method == 'POST':
         form = CategoryForm(request.POST)
@@ -63,10 +83,12 @@ def add_category(request):
     
     return render(request, 'saritasapp/add_category.html', {'form': form})
 
+@login_required
 def view_inventory(request, item_id):
     item = get_object_or_404(Inventory, id=item_id)
     return render(request, 'saritasapp/view_inventory.html', {'item': item})
 
+@login_required
 def edit_inventory(request, item_id):
     item = get_object_or_404(Inventory, id=item_id)
     categories = Category.objects.all()
@@ -87,7 +109,7 @@ def edit_inventory(request, item_id):
         'categories': categories,
         'item': item  # ✅ Pass the item to the template
     })
-
+@login_required
 def delete_inventory(request, item_id):
     item = get_object_or_404(Inventory, id=item_id)
     
@@ -97,6 +119,7 @@ def delete_inventory(request, item_id):
 
     return render(request, 'saritasapp/confirm_delete.html', {'item': item})
 
+@login_required
 def inventory_view(request):
     categories = Category.objects.all()
     selected_category = request.GET.get('category', '')
@@ -109,6 +132,7 @@ def inventory_view(request):
         'selected_category': selected_category
     })
 
+@login_required
 def rent_item(request, inventory_id):
     inventory_item = get_object_or_404(Inventory, id=inventory_id)
     customers = Customer.objects.all()
@@ -147,6 +171,7 @@ def rent_item(request, inventory_id):
     }
     return render(request, "saritasapp/rent_item.html", context)
 
+@login_required
 def add_customer(request):
     if request.method == "POST":
         form = CustomerForm(request.POST, request.FILES)
@@ -161,6 +186,7 @@ def add_customer(request):
 
     return render(request, "saritasapp/add_customer.html", {"form": form})
 
+@login_required
 def customer_list(request):
     query = request.GET.get('q', '')  # Get search query
     status_filter = request.GET.get('status', 'all')  # Get status filter
@@ -179,6 +205,7 @@ def customer_list(request):
 
     return render(request, 'saritasapp/customer_list.html', {'customers': customers, 'filter_status': status_filter})
 
+@login_required
 def view_customer(request, customer_id):
     customer = get_object_or_404(Customer, id=customer_id)
     rentals = Rental.objects.filter(customer=customer)
@@ -187,6 +214,8 @@ def view_customer(request, customer_id):
         'customer': customer,
         'rentals': rentals,
     })
+
+@login_required
 def return_rental(request, rental_id):
     rental = get_object_or_404(Rental, id=rental_id)
 
@@ -206,6 +235,7 @@ def return_rental(request, rental_id):
 
 
 #data_analysis
+@login_required
 def data_analysis(request):
     # Total rentals and customers
     total_rentals = Rental.objects.count()
@@ -250,21 +280,26 @@ def data_analysis(request):
 
 
 #calnder
+@login_required
 def calendar_view(request):
     return render(request, "saritasapp/calendar.html")
 
+@login_required
 def ongoing_events(request):
     events = Event.objects.filter(start_date__lte=now().date(), end_date__gte=now().date())
     return render(request, "saritasapp/ongoing_events.html", {"events": events})
 
+@login_required
 def upcoming_events(request):
     events = Event.objects.filter(start_date__gt=now().date())
     return render(request, "saritasapp/upcoming_events.html", {"events": events})
 
+@login_required
 def past_events(request):
     events = Event.objects.filter(end_date__lt=now().date())
     return render(request, "saritasapp/past_events.html", {"events": events})
 
+@login_required
 def create_event(request):
     if request.method == "POST":
         title = request.POST.get("title")
@@ -275,10 +310,12 @@ def create_event(request):
         return redirect("calendar")
     return render(request, "saritasapp/create_event.html")
 
+@login_required
 def view_event(request, event_id):
     event = get_object_or_404(Event, id=event_id)
     return render(request, "saritasapp/view_event.html", {"event": event})
 
+@login_required
 def get_events(request):
     events = Event.objects.all()
     events_data = [
@@ -300,47 +337,76 @@ def individual(request):
     return render(request, 'saritasapp/individual.html')
 
 
+# SIGN UP VIEW
 def sign_up(request):
-    return render(request, 'saritasapp/signup.html')
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)  # Auto-login after signup
+            messages.success(request, "Account created successfully!")
+            return redirect('saritasapp:dashboard')
+        else:
+            messages.error(request, "Error creating account. Please check the form.")
+    else:
+        form = SignUpForm()
+    
+    return render(request, 'saritasapp/signup.html', {'form': form})
 
+# LOGIN VIEW
 def sign_in(request):
-    return render(request, 'saritasapp/signin.html')
+    if request.method == 'POST':
+        form = LoginForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            messages.success(request, "Successfully logged in!")
+            return redirect('saritasapp:dashboard')
+        else:
+            messages.error(request, "Invalid username or password.")
+    else:
+        form = LoginForm()
+
+    return render(request, 'saritasapp/signin.html', {'form': form})
+
+# DASHBOARD VIEW (Example)
+@login_required
+def dashboard(request):
+    return render(request, 'saritasapp/dashboard.html')
+
 
 #all views
+@login_required
 def profile_view(request):
     return render(request, 'saritasapp/profile.html')
 
+@login_required
 def receipt_view(request):
     return render(request, 'saritasapp/receipt.html')
 
+@login_required
 def notification_view(request):
     return render(request, 'saritasapp/notification.html')
 
+@login_required
 def rental_tracker_view(request):
 
     return render(request, 'saritasapp/rental_tracker.html')
 
+@login_required
 def reservation_view(request):
 
     return render(request, 'saritasapp/reservation.html')
 
 
  #receipt
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse
-from .models import Receipt
-from datetime import datetime
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Spacer, Paragraph
-from reportlab.lib.styles import getSampleStyleSheet
-
+@login_required
 def receipt_detail(request, receipt_id):
     """Display receipt details."""
     receipt = get_object_or_404(Receipt, id=receipt_id)
     return render(request, "saritasapp/receipt.html", {"receipt": receipt})
 
+@login_required
 def update_receipt(request, receipt_id):
     """Update receipt details."""
     receipt = get_object_or_404(Receipt, id=receipt_id)
@@ -405,7 +471,7 @@ def update_receipt(request, receipt_id):
 
     return render(request, "saritasapp/receipt.html", {"receipt": receipt})
 
-
+@login_required
 def generate_receipt_pdf(request, receipt_id):
     """Generate a professional-looking PDF receipt."""
     receipt = get_object_or_404(Receipt, id=receipt_id)
@@ -485,3 +551,76 @@ def generate_receipt_pdf(request, receipt_id):
     # Build PDF
     doc.build(elements)
     return response
+
+@login_required
+def wardrobe_package_view(request, package_id):
+    package = get_object_or_404(WardrobePackage, id=package_id)
+
+    # Organizing inventory by category for better display
+    inventory = {}
+    items = Inventory.objects.filter(package=package)
+    for item in items:
+        if item.category not in inventory:
+            inventory[item.category] = []
+        inventory[item.category].append(item)
+
+    # Calculate total price including refundable deposit
+    total_price = package.base_price + package.refundable_deposit + sum(item.rental_price for item in items)
+
+    context = {
+        'package': package,
+        'inventory': inventory,
+        'total_price': total_price,
+    }
+
+    if request.method == 'POST':
+        selected_items = request.POST.getlist('wardrobe_items')
+        selected_item_prices = Inventory.objects.filter(id__in=selected_items).values_list('rental_price', flat=True)
+        total_price = package.base_price + package.refundable_deposit + sum(selected_item_prices)
+
+        context['total_price'] = total_price
+
+    return render(request, 'saritasapp/wardrobe_package.html', context)
+
+@login_required
+def wardrobe_package_list(request):
+    packages = WardrobePackage.objects.filter(status='active')  # Only show active packages
+    return render(request, 'saritasapp/wardrobe_package_list.html', {'packages': packages})
+
+@login_required
+def wardrobe_package_view(request, package_id):
+    package = get_object_or_404(WardrobePackage, id=package_id)
+    customers = Customer.objects.all()
+
+    # Organizing inventory items by category
+    items = Inventory.objects.filter(package=package)
+
+    # Calculate total price including refundable deposit
+    total_price = package.base_price + package.refundable_deposit + sum(item.rental_price for item in items)
+
+    context = {
+        'package': package,
+        'customers': customers,
+        'items': items,
+        'total_price': total_price,
+    }
+
+    if request.method == 'POST':
+        selected_items = request.POST.getlist('selected_items')
+        customer_id = request.POST.get('customer_id')
+
+        if not customer_id:
+            context['error'] = "Please select a customer."
+            return render(request, 'saritasapp/wardrobe_package.html', context)
+
+        selected_item_prices = Inventory.objects.filter(id__in=selected_items).values_list('rental_price', flat=True)
+        total_price = package.base_price + package.refundable_deposit + sum(selected_item_prices)
+
+        # You can optionally save the selected package to the customer's record here
+        # For example:
+        # CustomerPackage.objects.create(customer_id=customer_id, package=package, total_price=total_price)
+
+        context['total_price'] = total_price
+        context['success'] = "Package selected successfully!"
+
+    return render(request, 'saritasapp/wardrobe_package.html', context)

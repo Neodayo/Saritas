@@ -75,24 +75,16 @@ class WardrobePackageItemForm(forms.ModelForm):
         model = WardrobePackageItem
         fields = ["package", "inventory_item", "quantity"]
 
-class SignupForm(UserCreationForm):
+class SignUpForm(UserCreationForm):
     name = forms.CharField(max_length=255, required=True)
-    email = forms.EmailField(required=True)
-    branch = forms.ModelChoiceField(queryset=Branch.objects.all(), required=False)  # Allow None
-    
-    class Meta:
-        model = User  # ✅ Make sure this is using the correct User model
-        fields = ["name", "username", "email", "branch", "password1", "password2"]
-    
-    def save(self, commit=True):
-        user = super().save(commit=False)
-        user.name = self.cleaned_data["name"]
-        user.email = self.cleaned_data["email"]
-        user.branch = self.cleaned_data["branch"]
-        if commit:
-            user.save()
-        return user
+    email = forms.EmailField(max_length=254, required=True)
+    branch = forms.ModelChoiceField(queryset=Branch.objects.all(), required=True)
 
-# Login Form
+    class Meta:
+        model = User
+        fields = ['username', 'name', 'email', 'branch', 'password1', 'password2']
+
 class LoginForm(AuthenticationForm):
-    username = forms.EmailField(label="Email", required=True)
+    username = forms.CharField(label="Username", widget=forms.TextInput(attrs={'class': 'form-control'}))
+    password = forms.CharField(label="Password", widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+

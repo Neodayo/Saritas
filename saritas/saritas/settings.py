@@ -137,3 +137,4 @@ AUTH_USER_MODEL = "saritasapp.User"
 
 # Ensure media folder exists
 MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
+LOGOUT_REDIRECT_URL = '/'
