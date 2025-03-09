@@ -14,6 +14,7 @@ from datetime import timedelta #new
 from .models import Rental, Customer, Inventory #new
 from django.db.models.functions import ExtractWeek, ExtractMonth, ExtractYear #new
 # for calendar
+# for calendar
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.timezone import now
 from .models import Event
@@ -681,3 +682,64 @@ def receipt_detail(request, receipt_id):
     """Display receipt details."""
     receipt = get_object_or_404(Receipt, id=receipt_id) 
     return render(request, "saritasapp/receipt.html", {"receipt": receipt})
+
+#calnder
+from django.shortcuts import render, get_object_or_404, redirect
+from django.utils.timezone import now
+from .models import Event
+from django.http import JsonResponse
+
+def calendar_view(request):
+    events = Event.objects.all()
+    return render(request, "saritasapp/calendar.html", {"events": events})
+
+def view_event(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    return render(request, "saritasapp/view_event.html", {"event": event})
+
+def create_event(request):
+    if request.method == "POST":
+        title = request.POST.get("title")
+        venue = request.POST.get("venue") 
+        start_date = request.POST.get("start_date")
+        end_date = request.POST.get("end_date")
+        notes = request.POST.get("notes")
+
+        
+        Event.objects.create(
+            title=title,
+            venue=venue,  
+            start_date=start_date, 
+            end_date=end_date,
+            notes=notes
+        )
+        return redirect("saritasapp:calendar")
+
+    return render(request, "saritasapp/create_event.html")
+
+
+def ongoing_events(request):
+    events = Event.objects.filter(start_date__lte=now().date(), end_date__gte=now().date())
+    return render(request, "saritasapp/ongoing_events.html", {"events": events})
+
+def upcoming_events(request):
+    events = Event.objects.filter(start_date__gt=now().date()) 
+    return render(request, "saritasapp/upcoming_events.html", {"events": events})
+
+def past_events(request):
+    events = Event.objects.filter(end_date__lt=now().date())  
+    return render(request, "saritasapp/past_events.html", {"events": events})
+
+def get_events(request):
+    events = Event.objects.all()
+    events_data = [
+        {
+            "id": event.id,
+            "title": event.title,
+            "start": event.start_date.strftime("%Y-%m-%d"),  
+            "end": event.end_date.strftime("%Y-%m-%d") if event.end_date else None, 
+        }
+        for event in events
+    ]
+    return JsonResponse(events_data, safe=False)
+

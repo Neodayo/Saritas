@@ -1,27 +1,129 @@
 {% extends "saritasapp/base.html" %}
+{% load static %}
 {% block title %}Event Calendar{% endblock %}
 
 {% block content %}
 <h1>Event Calendar</h1>
 
-<!-- Navigation for changing month -->
-<a href="{% url 'saritasapp:calendar_by_month' year|add:-1 month %}">Previous</a> |
-<a href="{% url 'saritasapp:calendar_by_month' year|add:1 month %}">Next</a>
-
-
-<!-- Display the Calendar -->
-<div>
-    {{ calendar|safe }}
+<!-- Tabs -->
+<div class="tabs">
+    <button class="tab-button active" onclick="window.location.href='{% url 'saritasapp:calendar' %}'">Calendar</button>
+    <button class="tab-button" onclick="window.location.href='{% url 'saritasapp:ongoing_events' %}'">Ongoing</button>
+    <button class="tab-button" onclick="window.location.href='{% url 'saritasapp:upcoming_events' %}'">Upcoming</button>
+    <button class="tab-button" onclick="window.location.href='{% url 'saritasapp:past_events' %}'">Past</button>
 </div>
 
-<!-- Event List -->
-<h2>Events</h2>
-<ul>
-    {% for event in events %}
-        <li>{{ event.date }} - {{ event.title }}</li>
-    {% empty %}
-        <li>No events this month.</li>
-    {% endfor %}
-</ul>
+<!-- Calendar -->
+<div id="calendar"></div>
+
+<!-- Create Event Button -->
+<a href="{% url 'saritasapp:create_event' %}" class="create-event-btn">Create an Event</a>
+
+<!-- FullCalendar.js -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.css">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    var calendarEl = document.getElementById("calendar");
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: "dayGridMonth",
+        headerToolbar: {
+            left: "prev,next today",
+            center: "title",
+        },
+        events: "{% url 'saritasapp:api_events' %}",
+        dateClick: function (info) {
+            window.location.href = "/create-event/?date=" + info.dateStr;
+        },
+        eventClick: function (info) {
+            window.location.href = "/view-event/" + info.event.id;
+        }
+    });
+    calendar.render();
+});
+</script>
+
+
+<style>
+    
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f9f9f9;
+        text-align: center;
+    }
+
+    h1 {
+        color: #333;
+        margin-bottom: 20px;
+    }
+
+    /* Tabs */
+    .tabs {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .tab-button {
+        background: #D4AF37; /*samplw Gold */
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        cursor: pointer;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: bold;
+        transition: background 0.3s;
+    }
+
+    .tab-button.active, .tab-button:hover {
+        background: #B8860B; /* Darker gold */
+    }
+
+    
+    #calendar {
+        max-width: 900px;
+        margin: auto;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    
+    .create-event-btn {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 12px 20px;
+        background: #D4AF37; 
+        color: white;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 8px;
+        transition: background 0.3s;
+    }
+
+    .create-event-btn:hover {
+        background: #B8860B; 
+    }
+
+    
+    @media (max-width: 768px) {
+        .tab-button {
+            width: 100%;
+            text-align: center;
+        }
+
+        #calendar {
+            width: 95%;
+        }
+    }
+</style>
 
 {% endblock %}

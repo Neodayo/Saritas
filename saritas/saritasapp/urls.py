@@ -26,7 +26,7 @@ urlpatterns = [
     #calendar
     path("calendar/", views.calendar_view, name="calendar"),
     path("ongoing-events/", views.ongoing_events, name="ongoing_events"),
-    path("upcoming-events/", views.upcoming_events, name="upcoming_events"),    
+    path("upcoming-events/", views.upcoming_events, name="upcoming_events"),
     path("past-events/", views.past_events, name="past_events"),
     path("create-event/", views.create_event, name="create_event"),
     path("view-event/<int:event_id>/", views.view_event, name="view_event"),

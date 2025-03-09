@@ -200,10 +200,14 @@ class Rental(models.Model):
         return f"Rental #{self.id} - {self.status}"
 
 #Calendar to
+
+
 class Event(models.Model):
     title = models.CharField(max_length=200)
-    start = models.DateField()
-    end = models.DateField(null=True, blank=True)
+    venue = models.CharField(max_length=255)  # Ensure this exists
+    start_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
+    notes = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.title

@@ -2,21 +2,76 @@
 {% block title %}Create Event{% endblock %}
 
 {% block content %}
-<h1>Create Event</h1>
-<form method="post">
-    {% csrf_token %}
-    <label>Title:</label>
-    <input type="text" name="title" required>
+<div class="form-container">
+    <h1>Create Event</h1>
+    <form method="post">
+        {% csrf_token %}
+        
+        <label>Event Title:</label>
+        <input type="text" name="title" required>
 
-    <label>Start Date:</label>
-    <input type="date" name="start_date" required>
+        <label>Event Venue:</label>
+        <input type="text" name="venue" required>
 
-    <label>End Date:</label>
-    <input type="date" name="end_date" required>
+        <label>Event Start Date:</label>
+        <input type="date" name="start_date" required>
 
-    <label>Notes:</label>
-    <textarea name="notes"></textarea>
+        <label>Event End Date:</label>
+        <input type="date" name="end_date" required>
 
-    <button type="submit">Save Event</button>
-</form>
+        <label>Notes:</label>
+        <textarea name="notes"></textarea>
+
+        <button type="submit" class="gold-button">Save Event</button>
+    </form>
+
+    <a href="{% url 'saritasapp:calendar' %}" class="gold-button">Back to Calendar</a>
+</div>
+
+<style>
+    .form-container {
+        max-width: 500px;
+        margin: auto;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    label {
+        display: block;
+        font-weight: bold;
+        margin-top: 10px;
+        text-align: left;
+    }
+
+    input, textarea {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+
+    .gold-button {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 12px 20px;
+        background: #D4AF37;
+        color: white;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 8px;
+        transition: background 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .gold-button:hover {
+        background: #B8860B;
+    }
+</style>
 {% endblock %}

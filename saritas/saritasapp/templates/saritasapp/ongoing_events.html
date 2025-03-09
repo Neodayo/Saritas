@@ -2,12 +2,50 @@
 {% block title %}Ongoing Events{% endblock %}
 
 {% block content %}
-<h1>Ongoing Events</h1>
-<ul>
-    {% for event in events %}
-        <li>{{ event.title }} ({{ event.start_date }} - {{ event.end_date }})</li>
-    {% empty %}
-        <p>No ongoing events.</p>
-    {% endfor %}
-</ul>
+<div class="event-container">
+    <h1>Ongoing Events</h1>
+    <ul class="event-list">
+        {% for event in events %}
+            <li><strong>{{ event.title }}</strong> ({{ event.venue }}) - {{ event.start_date }} to {{ event.end_date }}</li>
+        {% empty %}
+            <p>No ongoing events.</p>
+        {% endfor %}
+    </ul>
+
+    <a href="{% url 'saritasapp:calendar' %}" class="gold-button">Back</a>
+</div>
+
+<style>
+    .event-container {
+        text-align: center;
+        padding: 20px;
+        background: white;
+        max-width: 600px;
+        margin: auto;
+        border-radius: 10px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .event-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .gold-button {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 12px 20px;
+        background: #D4AF37;
+        color: white;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 8px;
+        transition: background 0.3s;
+    }
+
+    .gold-button:hover {
+        background: #B8860B;
+    }
+</style>
 {% endblock %}

@@ -1,11 +1,42 @@
 {% extends "saritasapp/base.html" %}
-{% load static %}
 {% block title %}View Event{% endblock %}
 
 {% block content %}
-<h1>{{ event.title }}</h1>
-<p><strong>Date:</strong> {{ event.start_date }} - {{ event.end_date }}</p>
-<p><strong>Notes:</strong> {{ event.notes }}</p>
+<div class="event-container">
+    <h1>{{ event.title }}</h1>
+    <p><strong>📍 Venue:</strong> {{ event.venue }}</p>
+    <p><strong>📅 Date:</strong> {{ event.start_date }} - {{ event.end_date }}</p>
+    <p><strong>📝 Notes:</strong> {{ event.notes }}</p>
 
-<a href="{% url 'calendar' %}">Back to Calendar</a>
+    <a href="{% url 'saritasapp:calendar' %}" class="gold-button">Back to Calendar</a>
+</div>
+
+<style>
+    .event-container {
+        text-align: center;
+        padding: 20px;
+        background: white;
+        max-width: 600px;
+        margin: auto;
+        border-radius: 10px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .gold-button {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 12px 20px;
+        background: #D4AF37;
+        color: white;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 8px;
+        transition: background 0.3s;
+    }
+
+    .gold-button:hover {
+        background: #B8860B;
+    }
+</style>
 {% endblock %}
