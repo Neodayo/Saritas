@@ -1,0 +1,111 @@
+
+{% extends "saritasapp/base.html" %}
+{% load static %}
+
+{% block title %}made-to-order{% endblock %}
+
+{% block extra_css %}
+    <!-- <link rel="stylesheet" href="{% static 'css/add_inventory.css' %}"> -->
+{% endblock %}
+
+{% block content %}
+<style> 
+    body { 
+        font-family: Arial, sans-serif;
+        background-color: #ffffff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 20px 0; 
+        padding: 10px;
+        box-sizing: border-box;
+}
+
+    .container-sort {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        text-decoration: none;
+        color:inherit
+
+    }
+
+    .container {
+        cursor: pointer;
+        border: 2px solid #ccc;
+        padding: 10px;
+        text-align: center;
+        flex: 1;                  
+        transition: background 0.3s;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        box-sizing: border-box;
+        text-decoration: none;
+        
+        width: 100%; 
+        max-width: 400px; 
+        min-height: 150px; 
+        min-width: 150px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+    }
+</style>
+
+<div class="main-container">
+    <div class="measures">
+        {% if receipt and receipt.id %}
+            <form action="{% url 'saritasapp:receipt-update' receipt.id %}" method="GET">
+        {% else %}
+            <form action="#" method="GET">  <!-- Prevents error if receipt is missing -->
+        {% endif %}
+        
+            <h3>MEASUREMENTS:</h3>
+            <p><strong>Shoulder:</strong> <input type="text" name="shoulder" value="{{ receipt.shoulder }}"></p>
+            <p><strong>Bust:</strong> <input type="text" name="bust" value="{{ receipt.bust }}"></p>
+            <p><strong>Front:</strong> <input type="text" name="front" value="{{ receipt.front }}"></p>
+            <p><strong>Width:</strong> <input type="text" name="width" value="{{ receipt.width }}"></p>
+            <p><strong>Waist:</strong> <input type="text" name="waist" value="{{ receipt.waist }}"></p>
+            <p><strong>Hips:</strong> <input type="text" name="hips" value="{{ receipt.hips }}"></p>
+            <p><strong>Arm Length:</strong> <input type="text" name="arm_length" value="{{ receipt.arm_length }}"></p>
+            <p><strong>Bust Depth:</strong> <input type="text" name="bust_depth" value="{{ receipt.bust_depth }}"></p>
+            <p><strong>Bust Distance:</strong> <input type="text" name="bust_distance" value="{{ receipt.bust_distance }}"></p>
+            <p><strong>Length:</strong> <input type="text" name="length" value="{{ receipt.length }}"></p>
+            <p><strong>Lower Circumference:</strong> <input type="text" name="lower_circumference" value="{{ receipt.lower_circumference }}"></p>
+            <p><strong>Crotch:</strong> <input type="text" name="crotch" value="{{ receipt.crotch }}"></p>
+        
+            <div class="remarks">
+                <h3>Remarks:</h3>
+                <textarea id="remarks" name="remarks">{{ receipt.remarks }}</textarea>
+            </div>
+
+            <button class="buttons" type="submit">Submit</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const inputs = document.querySelectorAll('.input-field');
+
+        inputs.forEach((input, index) => {
+            input.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault(); 
+                    const nextInput = inputs[index + 1];
+
+                    if (nextInput) {
+                        nextInput.focus();
+                    } else {
+                        document.querySelector('form').submit();
+                    }
+                }
+            });
+        });
+    });
+</script>
+
+
+{%endblock%}

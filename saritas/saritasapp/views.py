@@ -333,8 +333,8 @@ def get_events(request):
 def homepage(request):
     return render(request, 'saritasapp/base.html')
 
-def individual(request):
-    return render(request, 'saritasapp/individual.html')
+def made_to_order(request):
+    return render(request, 'saritasapp/made_to_order.html')
 
 
 # SIGN UP VIEW
@@ -402,9 +402,28 @@ def reservation_view(request):
  #receipt
 @login_required
 def receipt_detail(request, receipt_id):
-    """Display receipt details."""
+    """Display receipt details with support for dynamically updating measurements."""
+    
     receipt = get_object_or_404(Receipt, id=receipt_id)
-    return render(request, "saritasapp/receipt.html", {"receipt": receipt})
+
+    # Capture measurement values from GET request if present
+    measurement_fields = [
+        "shoulder", "bust", "front", "width", "waist", "hips",
+        "arm_length", "bust_depth", "bust_distance", "length",
+        "lower_circumference", "crotch", "remarks"
+    ]
+    
+    # Create a dictionary to store updated measurement values
+    updated_measurements = {field: request.GET.get(field, getattr(receipt, field, "")) for field in measurement_fields}
+
+    context = {
+        "receipt": receipt,
+        "measurements": updated_measurements,  # Pass both receipt and updated values
+    }
+
+    return render(request, "saritasapp/receipt.html", context)
+
+
 
 @login_required
 def update_receipt(request, receipt_id):
@@ -552,6 +571,7 @@ def generate_receipt_pdf(request, receipt_id):
     doc.build(elements)
     return response
 
+
 @login_required
 def wardrobe_package_view(request, package_id):
     package = get_object_or_404(WardrobePackage, id=package_id)
@@ -624,3 +644,40 @@ def wardrobe_package_view(request, package_id):
         context['success'] = "Package selected successfully!"
 
     return render(request, 'saritasapp/wardrobe_package.html', context)
+
+#made to order
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Receipt
+
+def made_to_order_view(request):
+    """Handles made-to-order page and saves measurements."""
+    
+    # Get the latest receipt or create a new one
+    receipt = Receipt.objects.order_by('-id').first() or Receipt.objects.create()
+
+    if request.method == "POST":
+        # Update receipt with submitted measurements
+        receipt.shoulder = request.POST.get("shoulder")
+        receipt.bust = request.POST.get("bust")
+        receipt.front = request.POST.get("front")
+        receipt.width = request.POST.get("width")
+        receipt.waist = request.POST.get("waist")
+        receipt.hips = request.POST.get("hips")
+        receipt.arm_length = request.POST.get("arm_length")
+        receipt.bust_depth = request.POST.get("bust_depth")
+        receipt.bust_distance = request.POST.get("bust_distance")
+        receipt.length = request.POST.get("length")
+        receipt.lower_circumference = request.POST.get("lower_circumference")
+        receipt.crotch = request.POST.get("crotch")
+        receipt.remarks = request.POST.get("remarks")
+        receipt.save()
+
+        # Redirect to receipt detail page
+        return redirect("saritasapp:receipt-detail", receipt_id=receipt.id)
+
+    return render(request, "saritasapp/made_to_order.html", {"receipt": receipt})
+
+def receipt_detail(request, receipt_id):
+    """Display receipt details."""
+    receipt = get_object_or_404(Receipt, id=receipt_id) 
+    return render(request, "saritasapp/receipt.html", {"receipt": receipt})

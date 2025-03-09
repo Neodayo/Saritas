@@ -2,6 +2,8 @@ from django.urls import path
 from . import views 
 from .views import receipt_detail, update_receipt, generate_receipt_pdf
 from django.contrib.auth import views as auth_views
+from .views import update_receipt, receipt_detail
+from .views import made_to_order_view
 
 
 app_name = 'saritasapp'
@@ -24,12 +26,15 @@ urlpatterns = [
     #calendar
     path("calendar/", views.calendar_view, name="calendar"),
     path("ongoing-events/", views.ongoing_events, name="ongoing_events"),
-    path("upcoming-events/", views.upcoming_events, name="upcoming_events"),
+    path("upcoming-events/", views.upcoming_events, name="upcoming_events"),    
     path("past-events/", views.past_events, name="past_events"),
     path("create-event/", views.create_event, name="create_event"),
     path("view-event/<int:event_id>/", views.view_event, name="view_event"),
     path("api/events/", views.get_events, name="api_events"),
-    path("individual/", views.individual, name="individual"),
+    #made to oreders
+    path("made_to_order/", made_to_order_view, name="made_to_order"),
+    
+    #login and signup
     path("signup/", views.sign_up, name="sign_up"),
     path("signin/", views.sign_in, name="sign_in"),
     path('login/', auth_views.LoginView.as_view(template_name='saritasapp/login.html'), name='login'),
