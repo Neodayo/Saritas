@@ -150,6 +150,7 @@ a {
     justify-content: space-between;
     z-index: 102;
     width: 100%;
+    border-bottom: 1px solid #6f7b88;  
 }
 
 /* ---------- HEADER ITEMS ---------- */
