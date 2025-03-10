@@ -1,4 +1,3 @@
-
 {% extends "saritasapp/base.html" %}
 {% load static %}
 
@@ -20,15 +19,14 @@
         margin: 20px 0; 
         padding: 10px;
         box-sizing: border-box;
-}
+    }
 
     .container-sort {
         display: flex;
         gap: 20px;
         justify-content: center;
         text-decoration: none;
-        color:inherit
-
+        color: inherit;
     }
 
     .container {
@@ -57,10 +55,11 @@
 <div class="main-container">
     <div class="measures">
         {% if receipt and receipt.id %}
-            <form action="{% url 'saritasapp:receipt-update' receipt.id %}" method="GET">
+            <form action="{% url 'saritasapp:receipt-update' receipt.id %}" method="POST">
         {% else %}
-            <form action="#" method="GET">  <!-- Prevents error if receipt is missing -->
+            <form action="#" method="POST">
         {% endif %}
+            {% csrf_token %}
         
             <h3>MEASUREMENTS:</h3>
             <p><strong>Shoulder:</strong> <input type="text" name="shoulder" value="{{ receipt.shoulder }}"></p>
@@ -88,7 +87,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const inputs = document.querySelectorAll('.input-field');
+        const inputs = document.querySelectorAll('input[type="text"], textarea');
 
         inputs.forEach((input, index) => {
             input.addEventListener('keydown', function (event) {
@@ -107,5 +106,4 @@
     });
 </script>
 
-
-{%endblock%}
+{% endblock %}

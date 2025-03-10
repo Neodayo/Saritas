@@ -31,9 +31,12 @@ urlpatterns = [
     path("create-event/", views.create_event, name="create_event"),
     path("view-event/<int:event_id>/", views.view_event, name="view_event"),
     path("api/events/", views.get_events, name="api_events"),
-    #made to oreders
+    #made to oreders,Receipt
     path("made_to_order/", made_to_order_view, name="made_to_order"),
-    
+    path('receipt/', views.receipt_view, name='receipt'),
+    path('receipt/<int:receipt_id>/', receipt_detail, name='receipt-detail'),
+    path('receipt/<int:receipt_id>/update/', update_receipt, name='receipt-update'),
+    path('receipt/<int:receipt_id>/pdf/', generate_receipt_pdf, name='receipt-pdf'),
     #login and signup
     path("signup/", views.sign_up, name="sign_up"),
     path("signin/", views.sign_in, name="sign_in"),
@@ -41,13 +44,9 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('profile/', views.profile_view, name='profile'),
-    path('receipt/', views.receipt_view, name='receipt'),
     path('notifications/', views.notification_view, name='notifications'),
     path('rental-tracker/', views.rental_tracker_view, name='rental_tracker'),
     path('reservation/', views.reservation_view, name='reservation'),
-    path('receipt/<int:receipt_id>/', receipt_detail, name='receipt-detail'),
-    path('receipt/<int:receipt_id>/update/', update_receipt, name='receipt-update'),
-    path('receipt/<int:receipt_id>/pdf/', generate_receipt_pdf, name='receipt-pdf'),
     path('wardrobe-packages/', views.wardrobe_package_list, name='wardrobe_package_list'),
     path('wardrobe-packages/<int:package_id>/', views.wardrobe_package_view, name='wardrobe_package_detail'),
     path('wardrobe-packages/<int:package_id>/', views.wardrobe_package_view, name='wardrobe_package_detail'),

@@ -15,6 +15,19 @@ from .models import Rental, Customer, Inventory #new
 from django.db.models.functions import ExtractWeek, ExtractMonth, ExtractYear #new
 # for calendar
 # for calendar
+#receipt
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
+from datetime import datetime
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Spacer, Paragraph
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from .models import Receipt
+
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.timezone import now
 from .models import Event
@@ -399,88 +412,50 @@ def reservation_view(request):
 
     return render(request, 'saritasapp/reservation.html')
 
-
- #receipt
-@login_required
-def receipt_detail(request, receipt_id):
-    """Display receipt details with support for dynamically updating measurements."""
-    
-    receipt = get_object_or_404(Receipt, id=receipt_id)
-
-    # Capture measurement values from GET request if present
-    measurement_fields = [
-        "shoulder", "bust", "front", "width", "waist", "hips",
-        "arm_length", "bust_depth", "bust_distance", "length",
-        "lower_circumference", "crotch", "remarks"
-    ]
-    
-    # Create a dictionary to store updated measurement values
-    updated_measurements = {field: request.GET.get(field, getattr(receipt, field, "")) for field in measurement_fields}
-
-    context = {
-        "receipt": receipt,
-        "measurements": updated_measurements,  # Pass both receipt and updated values
-    }
-
-    return render(request, "saritasapp/receipt.html", context)
-
-
-
+#Receipt
 @login_required
 def update_receipt(request, receipt_id):
-    """Update receipt details."""
+    """Update receipt details and ensure new fields are saved properly."""
     receipt = get_object_or_404(Receipt, id=receipt_id)
 
     if request.method == "POST":
         try:
-            # Ensure decimal fields have valid values (default to 0 if empty)
-            amount_str = request.POST.get("amount", "").strip()
-            down_payment_str = request.POST.get("down_payment", "").strip()
+            receipt.amount = float(request.POST.get("amount", receipt.amount) or receipt.amount)
+            receipt.down_payment = float(request.POST.get("down_payment", receipt.down_payment) or receipt.down_payment)
+            receipt.customer_name = request.POST.get("customer_name", receipt.customer_name).strip()
+            receipt.customer_number = request.POST.get("customer_number", receipt.customer_number).strip()
+            receipt.payment_method = request.POST.get("payment_method", receipt.payment_method).strip()
+            receipt.remarks = request.POST.get("remarks", receipt.remarks).strip()
 
-            receipt.amount = float(amount_str) if amount_str else 0.00
-            receipt.down_payment = float(down_payment_str) if down_payment_str else 0.00
-
-            # Text fields
-            receipt.customer_name = request.POST.get("customer_name", "").strip()
-            receipt.customer_number = request.POST.get("customer_number", "").strip()
-            receipt.payment_method = request.POST.get("payment_method", "").strip()
-            receipt.remarks = request.POST.get("remarks", "").strip()
-
-            # Convert DateTime fields
-            payment_time_str = request.POST.get("payment_time")
-            if payment_time_str:
-                try:
-                    receipt.payment_time = datetime.strptime(payment_time_str, "%Y-%m-%dT%H:%M")
-                except ValueError:
-                    return render(request, "saritasapp/receipt.html", {
-                        "receipt": receipt,
-                        "error": "Invalid payment time format. Please use YYYY-MM-DD HH:MM."
-                    })
-
-            # Convert Date fields
-            date_fields = ["event_date", "pickup_date", "return_date"]
-            for field in date_fields:
-                date_str = request.POST.get(field)
-                if date_str:
+            date_fields = {
+                "payment_time": "%Y-%m-%dT%H:%M",
+                "event_date": "%Y-%m-%d",
+                "pickup_date": "%Y-%m-%d",
+                "return_date": "%Y-%m-%d",
+            }
+            for field, format in date_fields.items():
+                date_value = request.POST.get(field, "").strip()
+                if date_value:  
                     try:
-                        setattr(receipt, field, datetime.strptime(date_str, "%Y-%m-%d").date())
+                        setattr(receipt, field, datetime.strptime(date_value, format))
                     except ValueError:
                         return render(request, "saritasapp/receipt.html", {
                             "receipt": receipt,
-                            "error": f"Invalid format for {field}. Please use YYYY-MM-DD."
+                            "error": f"Invalid format for {field}. Please use {format}."
                         })
 
-            # Measurements (Ensure empty values are handled correctly)
             measurement_fields = [
                 "shoulder", "bust", "front", "width", "waist", "hips",
                 "arm_length", "bust_depth", "bust_distance", "length",
                 "lower_circumference", "crotch"
             ]
             for field in measurement_fields:
-                setattr(receipt, field, request.POST.get(field, "").strip())
+                value = request.POST.get(field, "").strip()
+                setattr(receipt, field, float(value) if value.replace('.', '', 1).isdigit() else getattr(receipt, field))
 
-            # Save updated receipt
+            
             receipt.save()
+
             return redirect("saritasapp:receipt-detail", receipt_id=receipt.id)
 
         except ValueError as e:
@@ -493,7 +468,7 @@ def update_receipt(request, receipt_id):
 
 @login_required
 def generate_receipt_pdf(request, receipt_id):
-    """Generate a professional-looking PDF receipt."""
+    """Generate and download a PDF receipt with all details."""
     receipt = get_object_or_404(Receipt, id=receipt_id)
 
     response = HttpResponse(content_type="application/pdf")
@@ -503,24 +478,23 @@ def generate_receipt_pdf(request, receipt_id):
     elements = []
     styles = getSampleStyleSheet()
 
-    # Title
+    # Title psrt
     elements.append(Paragraph("<b>Official Receipt</b>", styles["Title"]))
     elements.append(Spacer(1, 12))
 
-    # Receipt details
+    # Receipt detils
     details = [
-    ["Receipt ID:", receipt.id],
-    ["Name:", receipt.customer_name],
-    ["Contact:", receipt.customer_number],
-    ["Amount:", f"₱{receipt.amount:,.2f}"],
-    ["Down Payment:", f"₱{receipt.down_payment:,.2f}"],
-    ["Payment Method:", receipt.payment_method],
-    ["Event Date:", receipt.event_date.strftime("%Y-%m-%d") if receipt.event_date else "N/A"],
-    ["Pickup Date:", receipt.pickup_date.strftime("%Y-%m-%d") if receipt.pickup_date else "N/A"],
-    ["Return Date:", receipt.return_date.strftime("%Y-%m-%d") if receipt.return_date else "N/A"],
-    ["Remarks:", receipt.remarks if receipt.remarks else "N/A"]
-]
-
+         ["Receipt ID:", receipt.id],
+        ["Name:", receipt.customer_name or "N/A"],  
+        ["Contact:", receipt.customer_number or "N/A"],
+        ["Amount:", f"₱{receipt.amount:,.2f}"],
+        ["Down Payment:", f"₱{receipt.down_payment:,.2f}"],
+        ["Payment Method:", receipt.payment_method or "N/A"],
+        ["Event Date:", receipt.event_date.strftime("%Y-%m-%d") if receipt.event_date else "N/A"],
+        ["Pickup Date:", receipt.pickup_date.strftime("%Y-%m-%d") if receipt.pickup_date else "N/A"],
+        ["Return Date:", receipt.return_date.strftime("%Y-%m-%d") if receipt.return_date else "N/A"],
+        ["Remarks:", receipt.remarks if receipt.remarks else "N/A"]
+    ]
 
     table = Table(details, colWidths=[150, 300])
     table.setStyle(TableStyle([
@@ -539,18 +513,18 @@ def generate_receipt_pdf(request, receipt_id):
     # Measurements
     elements.append(Paragraph("<b>Measurements:</b>", styles["Heading2"]))
     measurement_data = [
-        ["Shoulder:", receipt.shoulder],
-        ["Bust:", receipt.bust],
-        ["Front:", receipt.front],
-        ["Width:", receipt.width],
-        ["Waist:", receipt.waist],
-        ["Hips:", receipt.hips],
-        ["Arm Length:", receipt.arm_length],
-        ["Bust Depth:", receipt.bust_depth],
-        ["Bust Distance:", receipt.bust_distance],
-        ["Length:", receipt.length],
-        ["Lower Circumference:", receipt.lower_circumference],
-        ["Crotch:", receipt.crotch]
+        ["Shoulder:", receipt.shoulder or "N/A"],
+        ["Bust:", receipt.bust or "N/A"],
+        ["Front:", receipt.front or "N/A"],
+        ["Width:", receipt.width or "N/A"],
+        ["Waist:", receipt.waist or "N/A"],
+        ["Hips:", receipt.hips or "N/A"],
+        ["Arm Length:", receipt.arm_length or "N/A"],
+        ["Bust Depth:", receipt.bust_depth or "N/A"],
+        ["Bust Distance:", receipt.bust_distance or "N/A"],
+        ["Length:", receipt.length or "N/A"],
+        ["Lower Circumference:", receipt.lower_circumference or "N/A"],
+        ["Crotch:", receipt.crotch or "N/A"]
     ]
 
     measurement_table = Table(measurement_data, colWidths=[150, 300])
@@ -563,7 +537,7 @@ def generate_receipt_pdf(request, receipt_id):
     elements.append(measurement_table)
     elements.append(Spacer(1, 12))
 
-    # Signature Section
+    
     elements.append(Spacer(1, 24))
     elements.append(Paragraph("__________________________", styles["Normal"]))
     elements.append(Paragraph("Authorized Signature", styles["Italic"]))
