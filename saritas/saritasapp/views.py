@@ -249,6 +249,14 @@ def return_rental(request, rental_id):
 
 
 #data_analysis
+from django.shortcuts import render
+from django.db.models import Count, Sum
+from django.contrib.auth.decorators import login_required
+from django.db.models.functions import ExtractWeek, ExtractMonth, ExtractYear
+import plotly.graph_objects as go
+from datetime import datetime, timedelta
+from .models import Rental, Customer, Inventory
+
 @login_required
 def data_analysis(request):
     # Total rentals and customers
@@ -256,40 +264,137 @@ def data_analysis(request):
     total_customers = Customer.objects.count()
 
     # Most rented items
-    most_rented_items = Inventory.objects.annotate(rental_count=Count('rental')).order_by('-rental_count')[:5]
+    most_rented_items = (
+        Inventory.objects.annotate(rental_count=Count('rental'))
+        .order_by('-rental_count')[:5]
+    )
 
-    # Weekly rentals & income
+    # Get the last 5 weeks dynamically
+    today = datetime.today()
+    last_5_weeks = [(today - timedelta(weeks=i)).isocalendar()[1] for i in range(5)]
+    
+    # Weekly rentals & income (last 5 weeks)
     weekly_rentals = (
         Rental.objects.annotate(week=ExtractWeek('rental_start'))
+        .filter(week__in=last_5_weeks)
         .values('week')
-        .annotate(count=Count('id'), income=Sum('inventory__rental_price'))
+        .annotate(
+            count=Count('id'),
+            income=Sum('inventory__rental_price')
+        )
         .order_by('week')
     )
 
-    # Monthly rentals & income
-    monthly_rentals = (
+    # Monthly rentals & income (full 12 months)
+    month_names = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ]
+    
+    monthly_rentals = {month: {'count': 0, 'income': 0} for month in month_names}
+    monthly_data = (
         Rental.objects.annotate(month=ExtractMonth('rental_start'))
         .values('month')
-        .annotate(count=Count('id'), income=Sum('inventory__rental_price'))
-        .order_by('month')
+        .annotate(
+            count=Count('id'),
+            income=Sum('inventory__rental_price')
+        )
     )
 
-    # Yearly rentals & income
+    for entry in monthly_data:
+        month_index = entry['month'] - 1
+        month_name = month_names[month_index]
+        monthly_rentals[month_name] = {
+            'count': entry['count'],
+            'income': entry['income'] or 0,
+        }
+
+    monthly_rentals_list = [{'month': key, **value} for key, value in monthly_rentals.items()]
+
+    # Yearly rentals & income (all available years)
     yearly_rentals = (
         Rental.objects.annotate(year=ExtractYear('rental_start'))
         .values('year')
-        .annotate(count=Count('id'), income=Sum('inventory__rental_price'))
+        .annotate(
+            count=Count('id'),
+            income=Sum('inventory__rental_price')
+        )
         .order_by('year')
+    )
+
+    # Function to determine max digits dynamically
+    def get_max_digits(data, key):
+        max_value = max((entry[key] or 0) for entry in data) if data else 0
+        max_digits = len(str(max_value)) + 1  # One extra digit
+        return max_digits
+
+    # Apply max digits formatting
+    max_digits_weekly = get_max_digits(weekly_rentals, 'count')
+    max_digits_monthly = get_max_digits(monthly_rentals_list, 'count')
+    max_digits_yearly = get_max_digits(yearly_rentals, 'count')
+
+    # Function to create bar charts with dynamic X-axis scaling
+    def create_chart(x_values, y_values, title, color, y_label):
+        max_digits = len(str(max(y_values) if y_values else 0)) + 1
+        y_max = 10 ** max_digits  # Round up based on max digits
+
+        fig = go.Figure()
+        fig.add_trace(go.Bar(x=x_values, y=y_values, name=title, marker_color=color))
+
+        fig.update_layout(
+            title=title,
+            xaxis_title="Time Period",
+            yaxis_title=y_label,
+            yaxis=dict(range=[0, y_max])
+        )
+        return fig.to_html(full_html=False)
+
+    # Income charts
+    weekly_income_chart = create_chart(
+        [entry['week'] for entry in weekly_rentals],
+        [entry['income'] for entry in weekly_rentals],
+        "Weekly Income", 'green', "Income (₱)"
+    )
+    monthly_income_chart = create_chart(
+        [entry['month'] for entry in monthly_rentals_list],
+        [entry['income'] for entry in monthly_rentals_list],
+        "Monthly Income", 'blue', "Income (₱)"
+    )
+    yearly_income_chart = create_chart(
+        [entry['year'] for entry in yearly_rentals],
+        [entry['income'] for entry in yearly_rentals],
+        "Yearly Income", 'red', "Income (₱)"
+    )
+
+    # Rental count charts
+    weekly_rental_chart = create_chart(
+        [entry['week'] for entry in weekly_rentals],
+        [entry['count'] for entry in weekly_rentals],
+        "Weekly Rentals", 'orange', "Number of Rentals"
+    )
+    monthly_rental_chart = create_chart(
+        [entry['month'] for entry in monthly_rentals_list],
+        [entry['count'] for entry in monthly_rentals_list],
+        "Monthly Rentals", 'purple', "Number of Rentals"
+    )
+    yearly_rental_chart = create_chart(
+        [entry['year'] for entry in yearly_rentals],
+        [entry['count'] for entry in yearly_rentals],
+        "Yearly Rentals", 'brown', "Number of Rentals"
     )
 
     context = {
         'total_rentals': total_rentals,
         'total_customers': total_customers,
         'most_rented_items': most_rented_items,
-        'weekly_rentals': weekly_rentals,
-        'monthly_rentals': monthly_rentals,
-        'yearly_rentals': yearly_rentals,
+        'weekly_income_chart': weekly_income_chart,
+        'monthly_income_chart': monthly_income_chart,
+        'yearly_income_chart': yearly_income_chart,
+        'weekly_rental_chart': weekly_rental_chart,
+        'monthly_rental_chart': monthly_rental_chart,
+        'yearly_rental_chart': yearly_rental_chart,
     }
+
     return render(request, 'saritasapp/data_analysis.html', context)
 
 

@@ -1,25 +1,110 @@
 {% extends "saritasapp/base.html" %}
 {% load static %}
+
 {% block title %}Data Analysis{% endblock %}
 
 {% block content %}
-<h1>Data Analysis</h1>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f8f9fa;
+    }
+    .container {
+        max-width: 1200px;
+        margin: auto;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .gold-button {
+        background-color: #d4af37;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    .gold-button:hover {
+        background-color: #b99329;
+    }
+    .stats {
+        display: flex;
+        justify-content: space-between;
+        background: #fff3cd;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .charts-container {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+    .chart-box {
+        width: 48%;
+        background: #ffffff;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+    select {
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        margin-bottom: 20px;
+    }
+</style>
 
-<div class="stats">
-    <p><strong>Total Rentals:</strong> {{ total_rentals }}</p>
-    <p><strong>Total Customers:</strong> {{ total_customers }}</p>
+<div class="container">
+    <h1 style="color: #d4af37; text-align: center;">Data Analysis</h1>
+
+    <div class="stats">
+        <p><strong>Total Rentals:</strong> {{ total_rentals }}</p>
+        <p><strong>Total Customers:</strong> {{ total_customers }}</p>
+    </div>
+
+    <h2>Most Rented Items</h2>
+    <ul>
+        {% for item in most_rented_items %}
+            <li>{{ item.name }} - Rented {{ item.rental_count }} times</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Rental & Income Statistics</h2>
+    <label for="time-period">Select Period:</label>
+    <select id="time-period">
+        <option value="weekly" selected>Weekly (Last 5 Weeks)</option>
+        <option value="monthly">Monthly (12 Months)</option>
+        <option value="yearly">Yearly (All Years)</option>
+    </select>
+
+    <div class="charts-container">
+        <div class="chart-box" id="weekly-income-chart">{{ weekly_income_chart|safe }}</div>
+        <div class="chart-box" id="weekly-rental-chart">{{ weekly_rental_chart|safe }}</div>
+        <div class="chart-box" id="monthly-income-chart" style="display:none;">{{ monthly_income_chart|safe }}</div>
+        <div class="chart-box" id="monthly-rental-chart" style="display:none;">{{ monthly_rental_chart|safe }}</div>
+        <div class="chart-box" id="yearly-income-chart" style="display:none;">{{ yearly_income_chart|safe }}</div>
+        <div class="chart-box" id="yearly-rental-chart" style="display:none;">{{ yearly_rental_chart|safe }}</div>
+    </div>
 </div>
 
-<h2>Most Rented Items</h2>
-<ul>
-    {% for item in most_rented_items %}
-    <li>{{ item.name }} - {{ item.rental_count }} times</li>
-    {% endfor %}
-</ul>
-
-<h2>Rental & Income Statistics</h2>
-
-<!-- Period Selection -->
-
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("#time-period").change(function() {
+            var selectedPeriod = $(this).val();
+            $(".chart-box").hide();
+            if (selectedPeriod === "weekly") {
+                $("#weekly-income-chart, #weekly-rental-chart").show();
+            } else if (selectedPeriod === "monthly") {
+                $("#monthly-income-chart, #monthly-rental-chart").show();
+            } else {
+                $("#yearly-income-chart, #yearly-rental-chart").show();
+            }
+        });
+    });
+</script>
 {% endblock %}
-```
