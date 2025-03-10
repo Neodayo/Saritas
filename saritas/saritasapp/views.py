@@ -700,24 +700,27 @@ def view_event(request, event_id):
 def create_event(request):
     if request.method == "POST":
         title = request.POST.get("title")
-        venue = request.POST.get("venue") 
+        venue = request.POST.get("venue")
         start_date = request.POST.get("start_date")
         end_date = request.POST.get("end_date")
         notes = request.POST.get("notes")
 
-        
+        # Validate required fields
+        if not title or not venue or not start_date:
+            return render(request, "saritasapp/create_event.html", {"error": "All fields are required"})
+
+        # Save event
         Event.objects.create(
             title=title,
-            venue=venue,  
-            start_date=start_date, 
+            venue=venue,
+            start_date=start_date,
             end_date=end_date,
             notes=notes
         )
-        return redirect("saritasapp:calendar")
+
+        return redirect("saritasapp:calendar")  # Redirect after saving
 
     return render(request, "saritasapp/create_event.html")
-
-
 def ongoing_events(request):
     events = Event.objects.filter(start_date__lte=now().date(), end_date__gte=now().date())
     return render(request, "saritasapp/ongoing_events.html", {"events": events})

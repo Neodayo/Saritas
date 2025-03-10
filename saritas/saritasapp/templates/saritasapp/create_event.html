@@ -1,10 +1,13 @@
-{% extends "saritasapp/base.html" %}
+{% extends "saritasapp/base.html" %} 
 {% block title %}Create Event{% endblock %}
 
 {% block content %}
 <div class="form-container">
     <h1>Create Event</h1>
-    <form method="post">
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+    <form method="post" action="{% url 'saritasapp:create_event' %}">
         {% csrf_token %}
         
         <label>Event Title:</label>
@@ -17,7 +20,7 @@
         <input type="date" name="start_date" required>
 
         <label>Event End Date:</label>
-        <input type="date" name="end_date" required>
+        <input type="date" name="end_date">
 
         <label>Notes:</label>
         <textarea name="notes"></textarea>
