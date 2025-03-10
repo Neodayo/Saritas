@@ -1,22 +1,15 @@
-:root{
-    --primary-color: #11121a;
-    --hover-color: #272832;
-    --accent-color: #0071FF;
-    --text-color: #c9c9c9;
-    --hover-color: #FFD700;
-  }
-
 body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
-    background-color: white;
+    background-color: #EAEAEA;
+    background-attachment: fixed;
 }
 /*---------SIDEBAR AREA----------*/
 .sidebar {
     width: 200px;
     height: 100vh;
-    background: linear-gradient(180deg, #272832, #4A4C59); /* #eee8aa */
+    background: #EAEAEA;
     position: fixed;
     left: 0;
     top: 70px;
@@ -50,7 +43,7 @@ body {
     padding: 10px 1em;
     font-size: 14px;
     font-weight: bolder;
-    background: #F7E7CE;
+    background: #AD974F; 
     border: none;
     cursor: pointer;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
@@ -60,7 +53,7 @@ body {
 }
 a {
     display: block;
-    color: rgb(43, 43, 43);
+    color: white  ;
     padding: 12px;
     text-align: center;
     border-radius: 5px;
@@ -72,8 +65,8 @@ a {
 
 .sidebar a:hover {
     
-    background-color: #305c8b;  /*#0056b3 */
-    color: #ffffff;
+    background-color: #9E8729;  
+    color: #9E8729;
 }
 
 
@@ -99,7 +92,8 @@ a {
     position: fixed;
     top: 20px;
     left: 20px;
-    background: #F7E7CE;/* #eee8aa */
+    background: white;/* #eee8aa */
+    color: black;
     border: none;
     padding: 8px 12px;
     font-size: 18px;
@@ -110,7 +104,7 @@ a {
 }
 
 #toggle-btn:hover {
-    background-color: #272832;
+    background-color: #AD974F;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.212);
 }
 /* ---------- LOGO CONTAINER ---------- */
@@ -140,7 +134,7 @@ a {
 .logo span {
     font-size: 16px;
     font-weight: bold;
-    color: #c9c9c9;
+    color: black;
     white-space: nowrap; 
     display: block;
 }
@@ -153,8 +147,8 @@ a {
     right: 0;
     height: 70px;
     padding: 10px 20px;
-    background: linear-gradient(45deg, #272832, #4A4C59, #F7E7CE);
-    color: #000000;
+    background: #EAEAEA;
+    color: black ;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -179,15 +173,15 @@ a {
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.212);
 }
-
-/* .made-to-order:hover {
+/* 
+.made-to-order:hover {
     text-decoration: underline;
 }  */
 
 /* Select made to transparent, remove if not liked */
 .header select {
     background-color: transparent; 
-    color: #000000; 
+    color: black; 
     font-size: 16px; 
     font-weight: 600; 
     padding: 8px 16px; 
@@ -202,7 +196,7 @@ a {
 }
 .header select option {
     background: white;
-    color: #000000;
+    color: black;
 }
 
 /* .header select:hover {
@@ -215,7 +209,7 @@ a {
     align-items: center;
     gap: 8px;
     text-decoration: none;
-    color: #000000;
+    color: black;
     font-size: 16px;
     font-weight: 600;
     padding: 8px 16px;
@@ -229,7 +223,7 @@ a {
     align-items: center;
     gap: 8px;
     text-decoration: none;
-    color: #000000;
+    color: black;
     font-size: 16px;
     font-weight: 600;
     padding: 8px 16px;
