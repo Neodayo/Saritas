@@ -1,3 +1,11 @@
+:root{
+    --primary-color: #11121a;
+    --hover-color: #272832;
+    --accent-color: #0071FF;
+    --text-color: #c9c9c9;
+    --hover-color: #FFD700;
+  }
+
 body {
     margin: 0;
     padding: 0;
@@ -8,7 +16,7 @@ body {
 .sidebar {
     width: 200px;
     height: 100vh;
-    background: #929292; /* #eee8aa */
+    background: linear-gradient(180deg, #272832, #4A4C59); /* #eee8aa */
     position: fixed;
     left: 0;
     top: 70px;
@@ -42,7 +50,7 @@ body {
     padding: 10px 1em;
     font-size: 14px;
     font-weight: bolder;
-    background: #ffffff;
+    background: #F7E7CE;
     border: none;
     cursor: pointer;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
@@ -91,7 +99,7 @@ a {
     position: fixed;
     top: 20px;
     left: 20px;
-    background: #ffffff;/* #eee8aa */
+    background: #F7E7CE;/* #eee8aa */
     border: none;
     padding: 8px 12px;
     font-size: 18px;
@@ -102,7 +110,7 @@ a {
 }
 
 #toggle-btn:hover {
-    background-color: gray;
+    background-color: #272832;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.212);
 }
 /* ---------- LOGO CONTAINER ---------- */
@@ -119,6 +127,7 @@ a {
     align-items: center;
     gap: 10px;
     margin-left: 50px;
+    
 }
 
 .logo img {
@@ -131,7 +140,7 @@ a {
 .logo span {
     font-size: 16px;
     font-weight: bold;
-    color: black;
+    color: #c9c9c9;
     white-space: nowrap; 
     display: block;
 }
@@ -144,13 +153,14 @@ a {
     right: 0;
     height: 70px;
     padding: 10px 20px;
-    background-color: #929292;
+    background: linear-gradient(45deg, #272832, #4A4C59, #F7E7CE);
+    color: #000000;
     display: flex;
     align-items: center;
     justify-content: space-between;
     z-index: 102;
     width: 100%;
-    border-bottom: 1px solid #6f7b88;  
+    border-bottom: 1px solid #272832;  
 }
 
 /* ---------- HEADER ITEMS ---------- */
@@ -170,14 +180,14 @@ a {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.212);
 }
 
-.made-to-order:hover {
+/* .made-to-order:hover {
     text-decoration: underline;
-} 
+}  */
 
 /* Select made to transparent, remove if not liked */
 .header select {
     background-color: transparent; 
-    color: black; 
+    color: #000000; 
     font-size: 16px; 
     font-weight: 600; 
     padding: 8px 16px; 
@@ -192,12 +202,12 @@ a {
 }
 .header select option {
     background: white;
-    color: black; 
+    color: #000000;
 }
 
-.header select:hover {
+/* .header select:hover {
     text-decoration: underline;
-} 
+}  */
 
 
 .header-link {
@@ -205,7 +215,7 @@ a {
     align-items: center;
     gap: 8px;
     text-decoration: none;
-    color: black;
+    color: #000000;
     font-size: 16px;
     font-weight: 600;
     padding: 8px 16px;
@@ -219,7 +229,7 @@ a {
     align-items: center;
     gap: 8px;
     text-decoration: none;
-    color: black;
+    color: #000000;
     font-size: 16px;
     font-weight: 600;
     padding: 8px 16px;
