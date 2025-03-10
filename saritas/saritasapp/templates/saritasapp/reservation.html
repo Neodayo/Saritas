@@ -6,136 +6,176 @@
 
 <style>
     body {
-        font-family: 'Poppins', sans-serif;
-        background-color: #f4f4f4;
+        font-family: 'Arial', sans-serif;
+        background-color: #EAEAEA;
         margin: 0;
         padding: 20px;
     }
+
     .container {
         max-width: 1100px;
         margin: auto;
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        background: #ffffff;
+        padding: 30px 40px;
+        border-radius: 16px;
     }
+
     .add-res {
-        background-color: #28a745;
+        background-color: #231F20;
         color: white;
         border: none;
-        padding: 10px 15px;
-        border-radius: 5px;
+        padding: 10px 18px;
+        border-radius: 6px;
+        font-size: 15px;
+        font-weight: 600;
         cursor: pointer;
-        font-size: 16px;
+        transition: background 0.3s ease;
     }
+
     .add-res:hover {
-        background-color: #218838;
+        background-color: #333;
     }
+
     .top-containers {
-        padding: 8px;
-        margin: 10px 0;
-        width: 100%;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-
-    }
-    .search-bar {
-    width: 60%;
-    padding: 10px;
-    font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    outline: none;
-    transition: 0.3s ease-in-out;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin: 25px 0;
+        justify-content: space-between;
     }
 
-    .search-bar:focus {
-    border-color: #6f7b88;
-    box-shadow: 0 0 5px rgba(104, 120, 138, 0.5);
-    }
+    .search-bar,
     .select-bar {
-    width: 15%; 
-    padding: 8px 12px;
-    font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    outline: none;
-    transition: 0.3s ease-in-out;
-    box-sizing: border-box; 
-    appearance: none; 
-    background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%236f7b88"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 10px center; 
-    background-size: 20px;
+        padding: 10px 14px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 15px;
+        flex: 1;
+        max-width: 350px;
     }
 
+    .search-bar:focus,
     .select-bar:focus {
-    border-color: #6f7b88;
-    box-shadow: 0 0 5px rgba(104, 120, 138, 0.5);
+        border-color: #AD974F;
+        box-shadow: 0 0 5px rgba(173, 151, 79, 0.5);
+        outline: none;
     }
+
     table {
         width: 100%;
         border-collapse: collapse;
         margin-top: 20px;
         background: white;
     }
+
     th, td {
-        padding: 12px;
+        padding: 12px 15px;
         text-align: left;
         border-bottom: 1px solid #ddd;
+        font-size: 14px;
     }
+
     th {
-        background-color: #007bff;
+        background-color: #8E793E;
         color: white;
     }
+
     tr:nth-child(even) {
         background-color: #f9f9f9;
     }
+
     tr:hover {
         background-color: #f1f1f1;
     }
+
     .status {
-        padding: 5px 10px;
-        border-radius: 15px;
-        color: white;
-        font-size: 14px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
         display: inline-block;
+        text-transform: uppercase;
     }
-    .upcoming { background-color: #28a745; }
-    .ongoing { background-color: #ffc107; color: black; }
-    .past { background-color: #17a2b8; }
+
+    .upcoming {
+        background-color: #8E793E;
+        color: white;
+    }
+
+    .ongoing {
+        background-color: #AD974F;
+        color: white;
+    }
+
+    .past {
+        background-color: #231F20;
+        color: white;
+    }
+
     .pagination {
         text-align: center;
-        margin-top: 20px;
+        margin-top: 30px;
     }
+
     .pagination button {
-        padding: 8px 12px;
-        margin: 5px;
+        padding: 8px 14px;
+        margin: 0 4px;
         border: none;
-        border-radius: 5px;
+        border-radius: 6px;
         cursor: pointer;
-        background-color: #007bff;
+        background-color: #AD974F;
         color: white;
+        font-weight: bold;
+        transition: background 0.3s ease;
     }
+
     .pagination button:hover {
-        background-color: #0056b3;
+        background-color: #8E793E;
+    }
+
+    /* Style for View Details button */
+    .view-details {
+        background-color: #AD974F;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        transition: background 0.3s ease, transform 0.2s ease;
+    }
+
+    .view-details:hover {
+        background-color: #8E793E;
+        transform: scale(1.05);
+    }
+
+    @media (max-width: 768px) {
+        .top-containers {
+            flex-direction: column;
+        }
+
+        .search-bar,
+        .select-bar {
+            max-width: 100%;
+        }
     }
 </style>
 
-
 <div class="container">
+    <button class="add-res" onclick="addReservation()">+ Add Reservation</button>
 
-   
-        <button class="add-res" onclick="addReservation()">+ ADD RESERVATION</button>
-        <div class="top-containers">
-        <input type="text" class="search-bar" id="search" placeholder="Quick search" onkeyup="searchTable()">
-    </input>    
-            <select class="select-bar" id="statusFilter" onchange="filterStatus()">
-                <option value="">All</option>
-                <option value="Upcoming">Upcoming</option>
-                <option value="Ongoing">Ongoing</option>
-                <option value="Past">Past</option>
-            </select>
-      
+    <div class="top-containers">
+        <input type="text" class="search-bar" id="search" placeholder="Quick search..." onkeyup="searchTable()">
+        <select class="select-bar" id="statusFilter" onchange="filterStatus()">
+            <option value="">All</option>
+            <option value="Upcoming">Upcoming</option>
+            <option value="Ongoing">Ongoing</option>
+            <option value="Past">Past</option>
+        </select>
     </div>
+
     <table id="reservationTable">
         <thead>
             <tr>
@@ -153,11 +193,12 @@
     </table>
     <div class="pagination" id="pagination"></div>
 </div>
+
 <script>
     const reservations = [
-        { name: "Event 1", venue: "Place A", client: "John Doe (1234567890)", date: "03/15/2025", status: "Upcoming" },
-        { name: "Event 2", venue: "Place B", client: "Jane Smith (9876543210)", date: "03/10/2025", status: "Ongoing" },
-        { name: "Event 3", venue: "Place C", client: "Bob Brown (5556667777)", date: "02/20/2025", status: "Past" }
+        { name: "Wedding Gala", venue: "Grand Hall", client: "Anna Dela Cruz (09171234567)", date: "03/18/2025", status: "Upcoming" },
+        { name: "Birthday Bash", venue: "Seaside Venue", client: "Mark Reyes (0999888777)", date: "03/10/2025", status: "Ongoing" },
+        { name: "Anniversary", venue: "Rosewood Garden", client: "Liza & John (09090001122)", date: "02/20/2025", status: "Past" }
     ];
     let currentPage = 1;
     const rowsPerPage = 2;
@@ -175,7 +216,7 @@
                 <td>${reservation.venue}</td>
                 <td>${reservation.client}</td>
                 <td>${reservation.date}</td>
-                <td><a href="#">(VIEW DETAILS)</a></td>
+                <td><a href="#" class="view-details">View Details</a></td>
                 <td><span class="status ${reservation.status.toLowerCase()}">${reservation.status}</span></td>
             </tr>`;
             tableBody.innerHTML += row;
@@ -226,4 +267,5 @@
 
     displayTable();
 </script>
+
 {% endblock %}
