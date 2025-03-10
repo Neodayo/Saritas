@@ -1,46 +1,35 @@
 {% load static %}
-{% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/saritas.css' %}">
-{% endblock %}
 
-{% block content %}
-<link rel="stylesheet" href="{% static 'css/signin.css' %}">
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign In</title>
+    <link rel="stylesheet" href="{% static 'css/signin.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Allura&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+</head>
 <body>
     <div class="login-container">
         <div class="left-section">
-            <a href="{% url 'saritasapp:homepage' %}" class="back-button">
-                <img src="{% static 'image/back-arrow.png' %}" alt="Back" class="back-button-image">
-            </a>
+            <a href="{% url 'saritasapp:homepage' %}" class="back-button">← Back</a>
             <h1>
-                <span class="brand-name">Sarita's</span> 
-                <br>
-                Wedding Creations
-                <br>
-                & Event Stylist
+                <span class="brand-name">Sarita's</span><br>
+                <span class="brand-sub">Wedding Creations<br>& Event Stylist</span>
             </h1>
         </div>
 
         <div class="right-section">
             <form method="post">
                 {% csrf_token %}
-
-                <!-- Display Form Errors -->
                 {% if form.errors %}
                 <div class="error-message">
                     <p>Invalid username or password. Please try again.</p>
                 </div>
                 {% endif %}
-
-                <!-- Username Field -->
                 <input type="text" name="username" placeholder="Enter your username" required>
-
-                <!-- Password Field -->
                 <input type="password" name="password" placeholder="Password" required>
-
                 <button type="submit" class="login-btn">Log in</button>
             </form>
-
             <p class="signup-link">
                 Don't have an account? 
                 <a href="{% url 'saritasapp:sign_up' %}">Sign up here</a>
@@ -49,4 +38,3 @@
     </div>
 </body>
 </html>
-{% endblock %}
