@@ -2,48 +2,94 @@
 {% block title %}Upcoming Events{% endblock %}
 
 {% block content %}
-<h1>Upcoming Events</h1>
-<ul>
-    {% for event in events %}
-        <li><strong>{{ event.title }}</strong> ({{ event.venue }}) - {{ event.start_date }}</li>
-    {% empty %}
-        <p>No upcoming events.</p>
-    {% endfor %}
-</ul>
+<div class="event-container">
+    <h1 class="heading">Upcoming Events</h1>
+    <ul class="event-list">
+        {% for event in events %}
+            <li class="event-item">
+                <strong>{{ event.title }}</strong> 
+                <span class="event-venue">({{ event.venue }})</span> – 
+                <span class="event-dates">{{ event.start_date }}</span>
+            </li>
+        {% empty %}
+            <p class="no-events">No upcoming events.</p>
+        {% endfor %}
+    </ul>
 
-<a href="{% url 'saritasapp:calendar' %}" class="back-button">Back to Calendar</a>
+    <a href="{% url 'saritasapp:calendar' %}" class="gold-button">Back to Calendar</a>
+</div>
 
 <style>
+    body {
+        background-color: #f9f9f9;
+    }
+
     .event-container {
         text-align: center;
-        padding: 20px;
-        background: white;
-        max-width: 600px;
-        margin: auto;
-        border-radius: 10px;
-        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        background: #ffffff;
+        max-width: 700px;
+        margin: 40px auto;
+        border-radius: 15px;
+        box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.15);
+        border: 1px solid #EAEAEA;
+    }
+
+    .heading {
+        font-size: 2em;
+        margin-bottom: 25px;
+        color: #231F20;
+        font-weight: bold;
     }
 
     .event-list {
         list-style: none;
         padding: 0;
+        text-align: left;
+    }
+
+    .event-item {
+        background-color: #EAEAEA;
+        margin: 10px 0;
+        padding: 15px 20px;
+        border-left: 5px solid #8E793E;
+        border-radius: 8px;
+        font-size: 16px;
+        color: #231F20;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .event-venue {
+        color: #8E793E;
+        font-style: italic;
+    }
+
+    .event-dates {
+        color: #555;
+    }
+
+    .no-events {
+        font-style: italic;
+        color: #999;
     }
 
     .gold-button {
         display: inline-block;
-        margin-top: 20px;
-        padding: 12px 20px;
-        background: #D4AF37;
-        color: white;
+        margin-top: 30px;
+        padding: 12px 24px;
+        background: #8E793E;
+        color: #fff;
         text-decoration: none;
         font-size: 16px;
         font-weight: bold;
-        border-radius: 8px;
-        transition: background 0.3s;
+        border-radius: 10px;
+        transition: background 0.3s ease;
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     .gold-button:hover {
-        background: #B8860B;
+        background: #AD974F;
+        color: #fff;
     }
 </style>
 {% endblock %}
