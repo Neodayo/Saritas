@@ -4,19 +4,23 @@
 {% block title %}Edit Inventory Item{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/add_inventory.css' %}">
-{% endblock%}
-{% block content%}
-    <div class="container">
-        <h1>Edit Inventory Item</h1>
+    <link rel="stylesheet" href="{% static 'css/edit_inventory.css' %}">
+{% endblock %}
 
-        <form method="POST" action="{% url 'saritasapp:edit_inventory' item.id %}" enctype="multipart/form-data">
-            {% csrf_token %}
+{% block content %}
+<div class="edit-container">
+    <h1 class="title">Edit Inventory Item</h1>
 
-            <label for="name">Item Name:</label>
+    <form method="POST" action="{% url 'saritasapp:edit_inventory' item.id %}" enctype="multipart/form-data" class="edit-form">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="name">Item Name</label>
             <input type="text" id="name" name="name" value="{{ item.name }}" required>
+        </div>
 
-            <label for="category">Category:</label>
+        <div class="form-group">
+            <label for="category">Category</label>
             <select id="category" name="category" required>
                 {% for category in categories %}
                     <option value="{{ category.id }}" {% if item.category and item.category.id == category.id %}selected{% endif %}>
@@ -24,52 +28,60 @@
                     </option>
                 {% endfor %}
             </select>
+        </div>
 
-            <label for="quantity">Quantity:</label>
+        <div class="form-group">
+            <label for="quantity">Quantity</label>
             <input type="number" id="quantity" name="quantity" value="{{ item.quantity }}" min="0" required>
+        </div>
 
-            <label for="rental_price">Rental Price (₱):</label>
+        <div class="form-group">
+            <label for="rental_price">Rental Price (₱)</label>
             <input type="number" id="rental_price" name="rental_price" step="0.01" value="{{ item.rental_price }}" required>
+        </div>
 
-            <label for="purchase_price">Purchase Price (₱):</label>
+        <div class="form-group">
+            <label for="purchase_price">Purchase Price (₱)</label>
             <input type="number" id="purchase_price" name="purchase_price" step="0.01" value="{{ item.purchase_price }}">
+        </div>
 
-            <label for="available" class="checkbox-label">
-                <input type="checkbox" id="available" name="available" {% if item.available %}checked{% endif %}>
-                Available for Rental
-            </label>
+        <div class="form-group checkbox-group">
+            <input type="checkbox" id="available" name="available" {% if item.available %}checked{% endif %}>
+            <label for="available">Available for Rental</label>
+        </div>
 
-            <!-- Image Upload -->
-            <label for="image">Upload Image:</label>
+        <div class="form-group">
+            <label for="image">Upload Image</label>
             <input type="file" id="image" name="image" accept="image/*" onchange="previewImage(event)">
-            
-            <div class="image-preview">
-                {% if item.image %}
-                    <img id="preview" src="{{ item.image.url }}" alt="Item Image">
-                {% else %}
-                    <img id="preview" style="display:none;">
-                {% endif %}
-            </div>
+        </div>
 
-            <button type="submit" class="submit-btn">Update Item</button>
-        </form>
-    </div>
+        <div class="image-preview">
+            {% if item.image %}
+                <img id="preview" src="{{ item.image.url }}" alt="Item Image">
+            {% else %}
+                <img id="preview" style="display: none;">
+            {% endif %}
+        </div>
 
-    <script>
-        function previewImage(event) {
-            const preview = document.getElementById("preview");
-            const file = event.target.files[0];
+        <button type="submit" class="submit-btn">Update Item</button>
+    </form>
+</div>
 
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    preview.src = e.target.result;
-                    preview.style.display = "block";
-                };
-                reader.readAsDataURL(file);
-            } else {
-                preview.style.display = "none";
-            }
+<script>
+    function previewImage(event) {
+        const preview = document.getElementById("preview");
+        const file = event.target.files[0];
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = "block";
+            };
+            reader.readAsDataURL(file);
+        } else {
+            preview.style.display = "none";
         }
-    </script>
+    }
+</script>
 {% endblock %}

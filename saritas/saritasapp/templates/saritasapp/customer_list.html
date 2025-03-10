@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2 class="text-center mb-4">Customer List</h2>
+    <h2 class="text-center mb-4" style="color: #8E793E;">Customer List</h2>
 
     <!-- Search & Filter Section -->
     <div class="filter-container">
@@ -16,7 +16,7 @@
             </form>
         </div>
         <div class="filter-box">
-            <label for="status-filter"><strong>Filter by Rental Status:</strong></label>
+            <label for="status-filter"><strong style="color: #231F20;">Rental Status:</strong></label>
             <select id="status-filter" class="filter-select">
                 <option value="{% url 'saritasapp:customer_list' %}" {% if filter_status == 'all' %}selected{% endif %}>All</option>
                 <option value="{% url 'saritasapp:customer_list' %}?status=renting" {% if filter_status == 'renting' %}selected{% endif %}>Renting</option>
@@ -57,7 +57,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" class="text-muted">No customers found.</td>
+                    <td colspan="5" class="text-muted text-center">No customers found.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -66,96 +66,104 @@
 
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #EAEAEA;
         }
+
         .container {
             max-width: 1200px;
             margin: auto;
             background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 12px rgba(0, 0, 0, 0.06);
         }
+
         .filter-container {
             display: flex;
             align-items: center;
             gap: 15px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
-        .search-box {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex: 1;
-        }
-        .filter-box {
+
+        .search-box, .filter-box, .add-button {
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        .add-button {
-            margin-left: auto;
-        }
+
         .search-input, .filter-select {
             padding: 10px;
             border: 1px solid #ccc;
-            border-radius: 5px;
-            flex: 1;
+            border-radius: 8px;
+            font-size: 14px;
+            width: 100%;
+            max-width: 200px;
         }
+
         .btn-primary, .btn-success, .btn-info {
             display: inline-flex;
             align-items: center;
-            padding: 10px 15px;
+            padding: 10px 16px;
+            border-radius: 8px;
             border: none;
-            border-radius: 5px;
             text-decoration: none;
             color: white;
-            text-align: center;
+            font-weight: bold;
             cursor: pointer;
-            white-space: nowrap;
+            transition: background 0.3s ease;
         }
-        .btn-primary { background-color: #007bff; }
-        .btn-success { background-color: #28a745; }
-        .btn-info { background-color: #17a2b8; }
-        .table-responsive {
-            overflow-x: auto;
-        }
+
+        .btn-primary { background-color: #8E793E; }
+        .btn-primary:hover { background-color: #AD974F; }
+
+        .btn-success { background-color: #231F20; }
+        .btn-success:hover { background-color: #333333; }
+
+        .btn-info { background-color: #AD974F; }
+        .btn-info:hover { background-color: #8E793E; }
+
         .custom-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
         }
+
         .custom-table th, .custom-table td {
-            border: 1px solid #ddd;
-            padding: 10px;
+            border: 1px solid #ccc;
+            padding: 12px;
             text-align: left;
         }
+
         .custom-table th {
-            background-color: #007bff;
+            background-color: #8E793E;
             color: white;
         }
+
+        .custom-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .custom-table tr:hover {
+            background-color: #f1f1f1;
+        }
+
         @media (max-width: 768px) {
             .filter-container {
                 flex-direction: column;
                 align-items: stretch;
             }
-            .add-button {
-                margin-left: 0;
-                margin-top: 10px;
-            }
         }
     </style>
 
-    <!-- JavaScript for Filter Selection -->
+    <!-- JS: Status filter onchange -->
     <script>
         document.getElementById("status-filter").addEventListener("change", function() {
             const url = new URL(this.value, window.location.origin);
             const params = new URLSearchParams(window.location.search);
             if (params.has("q")) {
-                url.searchParams.set("q", params.get("q")); // Preserve search query
+                url.searchParams.set("q", params.get("q"));
             }
             window.location.href = url.href;
         });
