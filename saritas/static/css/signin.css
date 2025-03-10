@@ -1,133 +1,195 @@
-    /* General Styles */
-    body {
-        font-family: 'Arial', sans-serif;
-        margin: 0;
-        padding: 0;
-        height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        /* background: url('/Images/StoreFront.jpg') no-repeat center center/cover;     */
-        backdrop-filter: blur(8px); 
-    }
+@import url('https://fonts.googleapis.com/css2?family=Allura&family=Playfair+Display:wght@400;700&display=swap');
+
+
+body {
+    font-family: 'Playfair Display', serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #EAEAEA; 
+}
+
+
+/* Login container */
+.login-container {
+    width: 90%;
+    max-width: 1000px;
+    height: 600px;
+    display: flex;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    position: relative;
     
-      
-    /* Login Container */
-    .login-container {
-        width: 80%;
-        max-width: 900px;
-        height: 500px;
-        display: flex;
-        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-        border-radius: 10px;
-        overflow: hidden;
-    }
-    
-    /* Left Section */
-    .left-section {
-        width: 50%;
-        background: rgba(0, 0, 0, 0.5);
-        color: white;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        padding: 20px;
-        text-align: center;
-    }
-    
-    .brand-name {
-        font-family: 'Rouge Script', cursive; 
-    font-size: 100px; 
+    background: url("{% static 'images/background.png' %}") no-repeat center center;
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+
+
+/* Left section */
+.left-section {
+    width: 60%;
+    background: url("{% static 'images/background.png' %}") no-repeat center center;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    text-align: center;
+    flex-direction: column;
+    position: relative;
+}
+
+
+.brand-name {
+    font-family: 'Allura', cursive;
+    font-size: 90px;
+    color: #231F20;
+    font-weight: 400;
+    text-shadow:
+        0 2px 4px #AD974F,
+        1px 1px 2px #AD974F,
+        -1px -1px 2px #AD974F;
+    margin-bottom: 10px;
+}
+
+.brand-sub {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    color: #231F20;
     font-weight: 700;
-    color: #efbf04;
-    text-shadow: 1px 1px 8px #000000;
+    line-height: 1.4;
+}
+
+/* Right section */
+.right-section {
+    width: 40%;
+    background-color: rgba(255, 255, 255, 0.95);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 40px;
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+}
+
+/* Form styling */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+input {
+    padding: 14px 20px;
+    font-size: 16px;
+    border: 2px solid #AD974F;
+    border-radius: 30px;
+    outline: none;
+    transition: border 0.3s;
+}
+
+input:focus {
+    border-color: #8E793E;
+}
+
+/* Login button */
+.login-btn {
+    background-color: #231F20;
+    color: #AD974F;
+    font-weight: bold;
+    font-size: 16px;
+    padding: 12px;
+    border: 2px solid #AD974F;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.login-btn:hover {
+    background-color: #8E793E;
+    color: white;
+    box-shadow: 0 4px 10px rgba(141, 121, 62, 0.4);
+}
+
+/* Sign Up link */
+.signup-link {
+    margin-top: 20px;
+    text-align: center;
+    color: #231F20;
+    font-size: 14px;
+}
+
+.signup-link a {
+    color: #8E793E;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.signup-link a:hover {
+    text-decoration: underline;
+}
+
+/* Back button */
+.back-button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    padding: 8px 16px;
+    background-color: #AD974F;
+    color: #231F20;
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 20px;
+    text-decoration: none;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.back-button:hover {
+    background-color: #8E793E;
+    color: white;
+}
+
+/* Error Message */
+.error-message {
+    background-color: rgba(255, 0, 0, 0.1);
+    color: #B00020;
+    padding: 10px 15px;
+    border-radius: 10px;
+    border: 1px solid #B00020;
+    text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .login-container {
+        flex-direction: column;
+        height: auto;
     }
-    
-    h1{
-        font-family: 'Montaga', serif;
-        font-size: 30px;
-        text-shadow: 1px 1px 8px #1d5fee;
-    }
-    
-    /* Back Button */
-    .back-button {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        background: none;
-        border: none;
-        cursor: pointer;
-        display: inline-block;
-        padding: 5px
-    }
-    
-    .back-button-image { 
-        width: 50px;       
-        height: auto;      
-        vertical-align: middle; 
-    }
-    
-    .back-button:hover .back-button-image {
-        background: rgb(185, 150, 150);
-        color: white;
-        opacity: 0.7;
-    }
-    
-    /* Right Section */
+
+    .left-section,
     .right-section {
-        width: 50%;
-        background: rgba(255, 255, 255, 0.8);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        padding: 40px;
-    }
-    
-    form {
-        display: flex;
-        flex-direction: column;
-        width: 80%;
-    }
-    
-    Input {
         width: 100%;
-        padding: 12px;
-        margin: 10px 0;
-        border: 2px solid gold;
-        border-radius: 20px;
-        font-size: 16px;
+        padding: 20px;
     }
-    .login-btn {
-        font-size: 15px;
-        font-weight: bold;
-        background-color: white;
-        color: black;
-        padding: 12px 30px; 
-        border: 2px solid gold; 
-        border-radius: 20px; 
-        cursor: pointer;
-        display: block;
-        width: 100px;
-        text-align: center;
-        margin: 0px auto;
+
+    .brand-name {
+        font-size: 60px;
     }
-    
-    .login-btn:hover {
-        background: black;
-        color: white;
+
+    .brand-sub {
+        font-size: 22px;
     }
-    
-    /* Mobile Responsiveness */
-    @media (max-width: 768px) {
-        .login-container {
-            flex-direction: column;
-            height: auto;
-        }
-        .left-section, .right-section {
-            width: 100%;
-            padding: 30px;
-        }
+
+    .back-button {
+        font-size: 13px;
+        padding: 6px 14px;
     }
-    
+}
