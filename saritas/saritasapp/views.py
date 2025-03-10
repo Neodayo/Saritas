@@ -452,6 +452,7 @@ def get_events(request):
 def homepage(request):
     return render(request, 'saritasapp/base.html')
 
+@login_required
 def made_to_order(request):
     return render(request, 'saritasapp/made_to_order.html')
 
@@ -487,6 +488,8 @@ def sign_in(request):
         form = LoginForm()
 
     return render(request, 'saritasapp/signin.html', {'form': form})
+
+
 
 # DASHBOARD VIEW (Example)
 @login_required
@@ -729,6 +732,7 @@ def wardrobe_package_view(request, package_id):
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Receipt
 
+@login_required
 def made_to_order_view(request):
     """Handles made-to-order page and saves measurements."""
     
@@ -757,6 +761,7 @@ def made_to_order_view(request):
 
     return render(request, "saritasapp/made_to_order.html", {"receipt": receipt})
 
+@login_required
 def receipt_detail(request, receipt_id):
     """Display receipt details."""
     receipt = get_object_or_404(Receipt, id=receipt_id) 
@@ -768,14 +773,17 @@ from django.utils.timezone import now
 from .models import Event
 from django.http import JsonResponse
 
+@login_required
 def calendar_view(request):
     events = Event.objects.all()
     return render(request, "saritasapp/calendar.html", {"events": events})
 
+@login_required
 def view_event(request, event_id):
     event = get_object_or_404(Event, id=event_id)
     return render(request, "saritasapp/view_event.html", {"event": event})
 
+@login_required
 def create_event(request):
     if request.method == "POST":
         title = request.POST.get("title")
@@ -800,18 +808,23 @@ def create_event(request):
         return redirect("saritasapp:calendar")  # Redirect after saving
 
     return render(request, "saritasapp/create_event.html")
+
+@login_required
 def ongoing_events(request):
     events = Event.objects.filter(start_date__lte=now().date(), end_date__gte=now().date())
     return render(request, "saritasapp/ongoing_events.html", {"events": events})
 
+@login_required
 def upcoming_events(request):
     events = Event.objects.filter(start_date__gt=now().date()) 
     return render(request, "saritasapp/upcoming_events.html", {"events": events})
 
+@login_required
 def past_events(request):
     events = Event.objects.filter(end_date__lt=now().date())  
     return render(request, "saritasapp/past_events.html", {"events": events})
 
+@login_required
 def get_events(request):
     events = Event.objects.all()
     events_data = [
