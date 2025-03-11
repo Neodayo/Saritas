@@ -1,6 +1,55 @@
-{% extends 'saritasapp/base.html' %}
+
 
 {% block content %}
-<h2>You have been logged out successfully.</h2>
-<a href="{% url 'saritasapp:login' %}">Login again</a>
+<div class="logout-container">
+    <h2 class="logout-heading">You have been logged out successfully.</h2>
+    <a href="{% url 'saritasapp:sign_in' %}" class="logout-link">Login again</a>
+</div>
+
+<style>
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-image: linear-gradient(rgba(128, 128, 128, 0.700), rgba(128, 128, 128, 0.625)), url("/static/images/background.jpg");
+
+    /* background-attachment: fixed; */
+}
+    .logout-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 60vh;
+        text-align: center;
+        background: #f9f9f9;
+        border-radius: 16px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        padding: 40px;
+        max-width: 500px;
+        margin: 50px auto;
+    }
+
+    .logout-heading {
+        font-size: 2rem;
+        color: #333;
+        margin-bottom: 20px;
+    }
+
+    .logout-link {
+        display: inline-block;
+        padding: 10px 20px;
+        margin-top: 20px;
+        text-decoration: none;
+        color: white;
+        background-color: #AD974F;
+        border-radius: 8px;
+        transition: background 0.3s ease;
+    }
+
+    .logout-link:hover {
+        background-color: #9E8729;
+    }
+</style>
 {% endblock %}
