@@ -170,7 +170,7 @@ class Rental(models.Model):
     rental_end = models.DateField()
     deposit = models.DecimalField(max_digits=10, decimal_places=2, default=10000.00)
     status = models.CharField(max_length=10, choices=[("Rented", "Rented"), ("Returned", "Returned")], default="Rented")
-
+ 
     def clean(self):
         if self.rental_end < self.rental_start:
             raise ValidationError("Return date must be after the rental start date.")
