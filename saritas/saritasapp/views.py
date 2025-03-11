@@ -52,6 +52,7 @@ from .forms import SignUpForm, LoginForm
 from .models import User
 from django.contrib.auth.decorators import login_required
 
+
 @login_required
 def add_inventory(request):
     categories = Category.objects.all()
@@ -511,11 +512,6 @@ def notification_view(request):
     return render(request, 'saritasapp/notification.html')
 
 @login_required
-def rental_tracker_view(request):
-
-    return render(request, 'saritasapp/rental_tracker.html')
-
-@login_required
 def reservation_view(request):
 
     return render(request, 'saritasapp/reservation.html')
@@ -838,3 +834,18 @@ def get_events(request):
     ]
     return JsonResponse(events_data, safe=False)
 
+def rental_tracker(request):
+    status_filter = request.GET.get('status')
+    today = now().date()
+
+    rentals = Rental.objects.select_related('customer', 'inventory')
+
+    if status_filter == "Overdue":
+        rentals = rentals.filter(rental_end__lt=today, status="Rented")
+    elif status_filter:
+        rentals = rentals.filter(status=status_filter)
+
+    return render(request, 'saritasapp/rental_tracker.html', {
+        'rentals': rentals,
+        'today': today
+    })

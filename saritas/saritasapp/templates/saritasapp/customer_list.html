@@ -2,30 +2,21 @@
 {% block title %}Customer List{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2 class="text-center mb-4">Customer List</h2>
+<div class="main-container">
+    <h2 class="page-title">Customer List</h2>
 
     <!-- Search & Filter Section -->
     <div class="filter-container">
-        <div class="search-box">
-            <form method="GET" action="{% url 'saritasapp:customer_list' %}">
-                <input type="text" name="q" class="search-input" placeholder="Search by name..." value="{{ request.GET.q }}">
-                <button type="submit" class="btn-primary">
-                    <i class="fas fa-search"></i> Search
-                </button>
-            </form>
-        </div>
-        <div class="filter-box">
-            <label for="status-filter"><strong>Filter by Rental Status:</strong></label>
-            <select id="status-filter" class="filter-select">
-                <option value="{% url 'saritasapp:customer_list' %}" {% if filter_status == 'all' %}selected{% endif %}>All</option>
-                <option value="{% url 'saritasapp:customer_list' %}?status=renting" {% if filter_status == 'renting' %}selected{% endif %}>Renting</option>
-                <option value="{% url 'saritasapp:customer_list' %}?status=returned" {% if filter_status == 'returned' %}selected{% endif %}>Returned</option>
-            </select>
-        </div>
+        <form method="GET" action="{% url 'saritasapp:customer_list' %}" class="search-box">
+            <input type="text" name="q" class="search-input" placeholder="Search by name..." value="{{ request.GET.q }}">
+            <button type="submit" class="btn-primary">
+                <i class="fas fa-search"></i> Search
+            </button>
+        </form>
+
         <div class="add-button">
             <a href="{% url 'saritasapp:add_customer' %}" class="btn-success">
-                <i class="fas fa-user-plus"></i> Add New Customer
+                <i class="fas fa-user-plus"></i> Add Customer
             </a>
         </div>
     </div>
@@ -57,7 +48,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" class="text-muted">No customers found.</td>
+                    <td colspan="5" class="text-muted text-center">No customers found.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -67,95 +58,151 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background-color: #EAEAEA;
             margin: 0;
-            padding: 20px;
+            padding: 0;
         }
-        .container {
-            max-width: 1200px;
-            margin: auto;
+
+        .main-container {
+            max-width: 1100px;
             background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 30px 40px;
+            border-radius: 20px; /* rounded edges */
+            margin: 40px auto;
+            box-shadow: none; /* no shadow */
         }
+
+        .page-title {
+            text-align: center;
+            font-size: 32px;
+            font-weight: bold;
+            color: #8E793E;
+            margin-bottom: 30px;
+        }
+
         .filter-container {
             display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
             align-items: center;
             gap: 15px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
-        .search-box {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex: 1;
-        }
-        .filter-box {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+
+        .search-box,
+        .filter-box,
         .add-button {
-            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        .search-input, .filter-select {
-            padding: 10px;
+
+        .search-input,
+        .filter-select {
+            padding: 10px 14px;
             border: 1px solid #ccc;
-            border-radius: 5px;
-            flex: 1;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 220px;
         }
-        .btn-primary, .btn-success, .btn-info {
+
+        .btn-primary,
+        .btn-success,
+        .btn-info {
             display: inline-flex;
             align-items: center;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
+            gap: 5px;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
             text-decoration: none;
-            color: white;
-            text-align: center;
+            border: none;
             cursor: pointer;
-            white-space: nowrap;
+            transition: background 0.3s ease;
+            color: #fff;
         }
-        .btn-primary { background-color: #007bff; }
-        .btn-success { background-color: #28a745; }
-        .btn-info { background-color: #17a2b8; }
+
+        .btn-primary {
+            background-color: #8E793E;
+        }
+
+        .btn-primary:hover {
+            background-color: #AD974F;
+        }
+
+        .btn-success {
+            background-color: #231F20;
+        }
+
+        .btn-success:hover {
+            background-color: #333;
+        }
+
+        .btn-info {
+            background-color: #AD974F;
+        }
+
+        .btn-info:hover {
+            background-color: #8E793E;
+        }
+
         .table-responsive {
             overflow-x: auto;
         }
+
         .custom-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-top: 15px;
         }
-        .custom-table th, .custom-table td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
+
+        .custom-table th,
+        .custom-table td {
+            padding: 12px 15px;
+            border: 1px solid #ccc;
+            font-size: 14px;
         }
+
         .custom-table th {
-            background-color: #007bff;
+            background-color: #8E793E;
             color: white;
         }
+
+        .custom-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .custom-table tr:hover {
+            background-color: #f2f2f2;
+        }
+
         @media (max-width: 768px) {
             .filter-container {
                 flex-direction: column;
                 align-items: stretch;
             }
+
+            .search-box,
+            .filter-box,
             .add-button {
-                margin-left: 0;
-                margin-top: 10px;
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .search-input,
+            .filter-select {
+                width: 100%;
             }
         }
     </style>
 
-    <!-- JavaScript for Filter Selection -->
     <script>
-        document.getElementById("status-filter").addEventListener("change", function() {
+        document.getElementById("status-filter").addEventListener("change", function () {
             const url = new URL(this.value, window.location.origin);
             const params = new URLSearchParams(window.location.search);
             if (params.has("q")) {
-                url.searchParams.set("q", params.get("q")); // Preserve search query
+                url.searchParams.set("q", params.get("q"));
             }
             window.location.href = url.href;
         });

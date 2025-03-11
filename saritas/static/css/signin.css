@@ -10,6 +10,7 @@ body {
     align-items: center;
     justify-content: center;
     background-color: #EAEAEA; 
+    background-image: static('images/background.jpg');
 }
 
 
@@ -23,10 +24,12 @@ body {
     overflow: hidden;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
     position: relative;
-    
-    background: url("{% static 'images/background.png' %}") no-repeat center center;
+
+    background-image: linear-gradient(rgba(128, 128, 128, 0.700), rgba(128, 128, 128, 0.625)), url("/static/images/background.jpg");
     background-size: cover;
     background-attachment: fixed;
+    background-repeat: no-repeat; /* Added to ensure no repeat */
+    background-position: center center; /* Added to center the image */
 }
 
 
@@ -34,7 +37,7 @@ body {
 /* Left section */
 .left-section {
     width: 60%;
-    background: url("{% static 'images/background.png' %}") no-repeat center center;
+    background: url("{% static '.../static/images/background.jpg' %}") no-repeat center center;
     background-size: cover;
     background-position: center;
     display: flex;
@@ -65,6 +68,7 @@ body {
     color: #231F20;
     font-weight: 700;
     line-height: 1.4;
+    
 }
 
 /* Right section */

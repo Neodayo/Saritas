@@ -6,162 +6,121 @@
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'css/add_inventory.css' %}">
     <style>
-        body { 
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 75vh;
-            margin-top: 0;
-            padding: 10px;
-            box-sizing: border-box;
-        }
-        
         .container {
             background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: none;
             width: 100%;
-            max-width: 850px; 
+            max-width: 800px;
             box-sizing: border-box;
         }
-        
-        
-        h1 {
+    
+        .container h1 {
             text-align: center;
-            margin-bottom: 20px;
-            font-size: 22px;
+            margin-bottom: 25px;
+            font-size: 26px;
+            color: #8E793E;
         }
-        
-        
-        .form-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        
-        
-        .form-group {
-            flex: 1 1 calc(50% - 10px); 
+    
+        .container form {
             display: flex;
             flex-direction: column;
+            gap: 15px;
         }
-        
-        .form-group-full {
-            flex: 1 1 100%; 
-        }
-        
-        label {
+    
+        .container label {
             font-weight: bold;
-            margin-bottom: 5px;
+            color: #34495e;
+            margin-bottom: 6px;
         }
-        
-        input {
-            width: 100%;
-            padding: 10px;
+    
+        .container input[type="text"],
+        .container input[type="number"],
+        .container input[type="file"],
+        .container select {
+            padding: 12px;
             border: 1px solid #ccc;
-            border-radius: 5px;
+            border-radius: 8px;
             font-size: 14px;
-        }
-        
-
-        .category-bar select {
+            box-sizing: border-box;
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 14px;
         }
-        
-        
-        .checkbox-group {
+    
+        .container .category-bar select {
+            background-color: white;
+        }
+    
+        .container .checkbox-group {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 10px;
         }
-        
-        
-        .btn {
-            width: 100%;
-            background-color: #1957dd;
+    
+        .container .btn {
+            background-color: #8E793E;
             color: white;
-            padding: 10px;
+            padding: 12px;
             border: none;
-            border-radius: 5px;
-            cursor: pointer;
+            border-radius: 8px;
             font-size: 16px;
-            transition: 0.3s;
-        }
-        
-        .btn:hover {
-            background-color: #19c499;
-        }
-        
-        
-        .back-link {
-            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
             margin-top: 10px;
         }
-        
-        .btn-secondary {
-            display: inline-block;
-            background-color: #6c757d;
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            text-decoration: none;
-            font-size: 14px;
-            transition: 0.3s;
+    
+        .container .btn:hover {
+            background-color: #AD974F;
         }
-        
-        .btn-secondary:hover {
-            background-color: #5a6268;
-        }
-        
-        
-        .category-link {
+    
+        .container .category-link {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             font-size: 14px;
+            color: #231F20;
         }
-        
-        .category-link a {
+    
+        .container .category-link a {
+            color: #8E793E;
             text-decoration: none;
-            color: #007bff;
+            font-weight: bold;
         }
-        
-        .category-link a:hover {
+    
+        .container .category-link a:hover {
             text-decoration: underline;
         }
-        
-        
+    
+        .container .back-link a {
+            display: inline-block;
+            margin-top: 20px;
+            background-color: #231F20;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+            text-align: center;
+        }
+    
+        .container .back-link a:hover {
+            background-color: #333;
+        }
+    
         @media (max-width: 600px) {
-            .form-group {
-                flex: 1 1 100%; 
-            }
-        
             .container {
-                padding: 15px;
-                max-width: 100%;
+                padding: 20px;
             }
-        
-            .btn {
+    
+            .container .btn {
                 font-size: 14px;
-                padding: 8px;
-            }
-        
-            .btn-secondary {
-                font-size: 12px;
-                padding: 8px;
             }
         }
-        
-        
-        </style>
+    </style>
+    
+    
 
 {% endblock %}
 

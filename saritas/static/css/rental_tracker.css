@@ -1,0 +1,96 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    padding: 20px;
+}
+.container {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+.search-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.search-bar input {
+    flex: 1;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+.filter {
+    margin-left: 10px;
+    padding: 5px;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+.status {
+    padding: 5px 10px;
+    border-radius: 15px;
+    text-align: center;
+    width: 80px;
+}
+.returned {
+    background-color: #28a745;
+    color: white;
+}
+.pending {
+    background-color: #c3e6cb;
+    color: #155724;
+}
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+.pagination button {
+    padding: 5px 10px;
+    margin: 0 5px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+}
+.pagination .active {
+    background-color: #007bff;
+    color: white;
+}
+.btn-primary,
+.btn-success,
+.btn-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    color: #fff;
+}
+
+.btn-primary {
+    background-color: #8E793E;
+}
+
+.btn-primary:hover {
+    background-color: #AD974F;
+}
+.btn-info {
+    background-color: #AD974F;
+}
+
+.btn-info:hover {
+    background-color: #8E793E;
+}

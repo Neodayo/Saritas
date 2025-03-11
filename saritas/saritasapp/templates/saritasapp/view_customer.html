@@ -5,25 +5,36 @@
 
 {% block content %}
 <div class="container">
-    <h2>Customer Details</h2>
-    <a href="{% url 'saritasapp:customer_list' %}" class="btn btn-secondary mb-3">Back to Customer List</a>
+    <!-- Centered Customer Details -->
+    <h2 class="text-center" style="color: #8E793E; font-family: Arial, sans-serif;">Customer Details</h2>
+    
+    <!-- Improved Back Button -->
+    <a href="{% url 'saritasapp:customer_list' %}" class="btn btn-back mb-3">
+        <i class="fa fa-arrow-left"></i> Back to Customer List
+    </a>
 
-    <div class="card p-3 mb-3">
-        <h4>{{ customer.first_name }} {{ customer.last_name }}</h4>
-        
-        {% if customer.image %}
-            <img src="{{ customer.image.url }}" alt="{{ customer.first_name }}">
-        {% else %}
-            <img src="{% static 'image/default-placeholder.png' %}" alt="No image available">
-        {% endif %}
-
-        <p><strong>Email:</strong> {{ customer.email }}</p>
-        <p><strong>Phone:</strong> {{ customer.phone }}</p>
-        <p><strong>Address:</strong> {{ customer.address }}</p>
+    <div class="card p-4 mb-4" style="background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+        <div class="row">
+            <!-- Customer Image -->
+            <div class="col-md-4 text-center">
+                {% if customer.image %}
+                    <img src="{{ customer.image.url }}" alt="{{ customer.first_name }}" class="customer-image">
+                {% else %}
+                    <img src="{% static 'image/default-placeholder.png' %}" alt="No image available" class="customer-image">
+                {% endif %}
+            </div>
+            <!-- Customer Info -->
+            <div class="col-md-8">
+                <h4>{{ customer.first_name }} {{ customer.last_name }}</h4>
+                <p><strong>Email:</strong> {{ customer.email }}</p>
+                <p><strong>Phone:</strong> {{ customer.phone }}</p>
+                <p><strong>Address:</strong> {{ customer.address }}</p>
+            </div>
+        </div>
     </div>
 
     <!-- Availed Packages Section -->
-    <h3>Availed Packages</h3>
+    <h3 class="mt-4" style="color: #8E793E;">Availed Packages</h3>
     {% if customer_orders %}
         <table class="table">
             <thead>
@@ -49,7 +60,9 @@
                         </span>
                     </td>
                     <td>
-                        <a href="{% url 'saritasapp:order_details' order.id %}" class="btn btn-info btn-sm">View Details</a>
+                        <a href="{% url 'saritasapp:order_details' order.id %}" class="btn btn-info btn-sm">
+                            <i class="fa fa-eye"></i> View Details
+                        </a>
                     </td>
                 </tr>
                 {% endfor %}
@@ -60,7 +73,7 @@
     {% endif %}
 
     <!-- Rental History Section -->
-    <h3>Rental History</h3>
+    <h3 class="mt-4" style="color: #8E793E;">Rental History</h3>
     {% if rentals %}
         <table class="table">
             <thead>
@@ -103,74 +116,122 @@
     {% endif %}
 </div>
 
+<!-- Custom Styles -->
 <style>
     body {
         font-family: Arial, sans-serif;
-        background-color: #f8f9fa;
+        background-color: #EAEAEA;
         margin: 0;
         padding: 20px;
     }
+
     .container {
         max-width: 1000px;
         margin: auto;
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        background: #ffffff;
+        padding: 30px;
+        border-radius: 16px;
     }
+
+    .text-center {
+        text-align: center;
+    }
+
     .card {
         background: #ffffff;
-        border-radius: 10px;
-        padding: 20px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
-    .card img {
+
+    .customer-image {
         width: 150px;
         height: 150px;
         object-fit: cover;
-        border-radius: 10px;
+        border-radius: 50%;
         margin-bottom: 10px;
     }
+
     .table {
         width: 100%;
         border-collapse: collapse;
         margin-top: 20px;
         background: white;
     }
+
     .table th, .table td {
         border: 1px solid #ddd;
-        padding: 10px;
+        padding: 12px 15px;
         text-align: left;
+        font-size: 14px;
     }
+
     .table th {
-        background-color: #007bff;
+        background-color: #8E793E;
         color: white;
     }
+
     .badge {
-        padding: 5px 10px;
-        border-radius: 5px;
-        font-size: 12px;
+        padding: 6px 12px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 600;
     }
+
     .bg-warning {
         background-color: #ffc107;
         color: #000;
     }
+
     .bg-success {
         background-color: #28a745;
         color: white;
     }
+
     .btn {
         display: inline-block;
-        padding: 8px 12px;
+        padding: 10px 20px;
         text-decoration: none;
-        border-radius: 5px;
-        text-align: center;
+        border-radius: 6px;
         cursor: pointer;
-        margin-top: 10px;
+        text-align: center;
     }
-    .btn-secondary { background-color: #6c757d; color: white; }
-    .btn-success { background-color: #28a745; color: white; }
-    .btn-sm { padding: 5px 8px; font-size: 14px; }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .btn-info {
+        background-color: #17a2b8;
+        color: white;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .btn-back {
+        background-color: #8E793E;
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    .btn-sm {
+        padding: 5px 10px;
+        font-size: 14px;
+    }
+
+    .fa-eye {
+        margin-right: 5px;
+    }
+
+    .fa-arrow-left {
+        margin-right: 5px;
+    }
+
     .alert {
         padding: 15px;
         background-color: #d1ecf1;
