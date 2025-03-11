@@ -16,16 +16,18 @@ class Branch(models.Model):
         return self.branch_name
 
 # --- User Model ---
+# models.py
 class User(AbstractUser):
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     branch = models.ForeignKey("saritasapp.Branch", null=True, on_delete=models.SET_NULL)
+    profile_pic = models.ImageField(upload_to="profile_pics/", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = ["name", "email"] 
 
     def __str__(self):
-        return self.name if self.name else self.username
+        return self.username
+
+# --- User Model ---
 
 # --- Customer Model ---
 class Customer(models.Model):

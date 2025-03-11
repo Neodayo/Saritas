@@ -1,9 +1,11 @@
 from django.urls import path
-from . import views 
+from .import views 
 from .views import receipt_detail, update_receipt, generate_receipt_pdf
 from django.contrib.auth import views as auth_views
 from .views import update_receipt, receipt_detail
 from .views import made_to_order_view
+from .views import profile_view, sign_out
+from .views import render
 
 
 app_name = 'saritasapp'
@@ -43,7 +45,11 @@ urlpatterns = [
     path('login/', auth_views.LoginView.as_view(template_name='saritasapp/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('dashboard/', views.dashboard, name='dashboard'),
-    path('profile/', views.profile_view, name='profile'),
+    #profile
+    path("profile/", profile_view, name="profile"),
+    path("logout/", sign_out, name="logout"),  # ✅ Handles logout
+    path("logout_page/", lambda request: render(request, "saritasapp/logout.html"), name="logout_page"),
+        # ✅ Logout confirmation
     path('notifications/', views.notification_view, name='notifications'),
     path('rental-tracker/', views.rental_tracker, name='rental_tracker'),
     path('reservation/', views.reservation_view, name='reservation'),

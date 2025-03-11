@@ -6,42 +6,69 @@
 <div class="profile-container">
     <button class="back-button" onclick="history.back()"><i class="fas fa-arrow-left"></i></button>
     <h2>Edit Profile</h2>
-    <div class="profile-image-container">
-        <label for="profile-pic">
-            <div class="profile-image" id="profileImage">
-                <i class="fas fa-user"></i>
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="profile-image-container">
+            <label for="profile-pic">
+                {% if user.profile_pic %}
+                    <img src="{{ user.profile_pics.url }}" class="profile-image" id="profileImage">
+                {% else %}
+                    <div class="profile-image" id="profileImage"><i class="fas fa-user"></i></div>
+                {% endif %}
+            </label>
+        </div>
+        <input type="file" id="profile-pic" name="profile_pic" accept="image/*" onchange="previewImage(event)">
+
+        <div class="form-group">
+            <label><i class="fas fa-user"></i> Full Name:</label>
+            <div class="input-container">
+                <input type="text" name="name" value="{{ user.name }}">
             </div>
-        </label>
-    </div>
-    <input type="file" id="profile-pic" accept="image/*" onchange="previewImage(event)">
-    
-    <div class="form-group">
-        <label><i class="fas fa-user"></i> Full Name:</label>
-        <div class="input-container">
-            <input type="text" id="full-name" value="Admin name">
         </div>
-    </div>
-    
-    <div class="form-group">
-        <label><i class="fas fa-envelope"></i> Email Address:</label>
-        <div class="input-container">
-            <input type="email" id="email" value="admin@gmail.com">
+
+        <div class="form-group">
+            <label><i class="fas fa-envelope"></i> Email Address:</label>
+            <div class="input-container">
+                <input type="email" name="email" value="{{ user.email }}">
+            </div>
         </div>
-    </div>
-    
-    <div class="form-group">
-        <label><i class="fas fa-map-marker-alt"></i> Branch Location:</label>
-        <div class="input-container">
-            <input type="text" id="branch-location" value="Branch Location">
-            <span class="plus-icon" onclick="addBranch()">+</span>
+
+        <div class="form-group">
+            <label><i class="fas fa-map-marker-alt"></i> Branch Location:</label>
+            <div class="input-container">
+                <select name="branch">
+                    {% for branch in form.branch.field.queryset %}
+                        <option value="{{ branch.id }}" {% if branch == user.branch %}selected{% endif %}>
+                            {{ branch.branch_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
         </div>
-    </div>
-    <div class="branch-list" id="branch-list"></div>
+
+        <button type="submit" class="btn save-btn">Save Changes</button>
+    </form>
+
+    <form method="post" action="{% url 'saritasapp:logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn signout-btn">Sign Out</button>
+    </form>
     
-    <button class="btn save-btn" onclick="saveProfile()">Save Changes</button>
-    <button class="btn signout-btn" onclick="signOut()">Sign Out</button>
 </div>
 
 <link rel="stylesheet" href="{% static 'css/profile.css' %}">
-<script src="{% static 'js/profile.js' %}"></script>
+
+<script>
+function previewImage(event) {
+    var reader = new FileReader();
+    reader.onload = function() {
+        var output = document.getElementById('profileImage');
+        output.src = reader.result;
+    };
+    reader.readAsDataURL(event.target.files[0]);
+}
+</script>
+
 {% endblock %}

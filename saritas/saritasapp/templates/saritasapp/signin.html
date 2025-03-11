@@ -22,9 +22,14 @@
             <form method="post">
                 {% csrf_token %}
                 {% if form.errors %}
-                <div class="error-message">
-                    <p>Invalid username or password. Please try again.</p>
-                </div>
+                {% if messages %}
+                        <div class="error-message">
+                            {% for message in messages %}
+                                <p>{{ message }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
                 {% endif %}
                 <input type="text" name="username" placeholder="Enter your username" required>
                 <input type="password" name="password" placeholder="Password" required>
