@@ -1,6 +1,6 @@
 from django.contrib import admin
-from .models import Receipt#receipt
-from .models import Branch, User, EventPackage, PackageItem, CustomerOrder, SelectedPackageItem, Inventory, Category
+from .models import Branch, User, Receipt, EventPackage, Rental, PackageItem, CustomerOrder, SelectedPackageItem, Inventory, Category, WardrobePackage, WardrobePackageItem, Customer, Event
+
 # Register your models here.
 admin.site.register(Branch)
 admin.site.register(User)
@@ -10,9 +10,14 @@ admin.site.register(CustomerOrder)
 admin.site.register(SelectedPackageItem)
 admin.site.register(Inventory)
 admin.site.register(Category)
+admin.site.register(WardrobePackage)
+admin.site.register(WardrobePackageItem)
+admin.site.register(Customer)
+admin.site.register(Event)
+admin.site.register(Rental)
+
+
 #receipt
-from django.contrib import admin
-from .models import Receipt
 
 @admin.register(Receipt)
 class ReceiptAdmin(admin.ModelAdmin):
