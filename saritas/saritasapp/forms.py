@@ -39,6 +39,12 @@ class RentalForm(forms.ModelForm):
             "rental_end": forms.DateInput(attrs={"type": "date"}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance.pk:  # Only when creating a new rental
+            self.fields['status'].initial = 'Renting'
+            self.fields['status'].widget = forms.HiddenInput()  # Hide the field on creation
+
     def clean(self):
         cleaned_data = super().clean()
         rental_start = cleaned_data.get("rental_start")
@@ -52,6 +58,7 @@ class RentalForm(forms.ModelForm):
             raise forms.ValidationError(f"{inventory.name} is out of stock.")
         
         return cleaned_data
+
 
 class CustomerForm(forms.ModelForm):
     class Meta:

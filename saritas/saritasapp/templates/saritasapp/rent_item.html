@@ -58,8 +58,13 @@
 
     <script>
         function setToday() {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById("rental_start").value = today;
+            const today = new Date();
+            const localDate = today.toLocaleDateString('en-CA'); // 'en-CA' format is YYYY-MM-DD
+            document.getElementById("rental_start").value = localDate;
+
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById("rental_end").value = tomorrow.toLocaleDateString('en-CA');
         }
     </script>
 {% endblock %}

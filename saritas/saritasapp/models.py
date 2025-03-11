@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.db import transaction
+from django.utils.timezone import now
 
 
 # --- Branch Model ---
@@ -169,35 +170,50 @@ class Rental(models.Model):
     rental_start = models.DateField()
     rental_end = models.DateField()
     deposit = models.DecimalField(max_digits=10, decimal_places=2, default=10000.00)
-    status = models.CharField(max_length=10, choices=[("Rented", "Rented"), ("Returned", "Returned")], default="Rented")
- 
+    status = models.CharField(
+        max_length=10, 
+        choices=[
+            ("Renting", "Renting"), 
+            ("Returned", "Returned"),
+            ("Overdue", "Overdue")
+        ], 
+        default="Renting"
+    )
+
     def clean(self):
         if self.rental_end < self.rental_start:
             raise ValidationError("Return date must be after the rental start date.")
-        if self.status == "Rented" and self.inventory.quantity <= 0:
+        if self.status == "Renting" and self.inventory.quantity <= 0:
             raise ValidationError(f"{self.inventory.name} is out of stock.")
 
     def save(self, *args, **kwargs):
         self.full_clean()
+
+        # Automatically mark 'Overdue' if the rental end date has passed
+        if self.status == "Renting" and self.rental_end < now().date():
+            self.status = "Overdue"
+
         with transaction.atomic():
             self.inventory.refresh_from_db()
+
             if self.pk:
                 old_rental = Rental.objects.select_for_update().get(pk=self.pk)
+
                 if old_rental.status != self.status:
-                    if old_rental.status == "Rented" and self.status == "Returned":
+                    if old_rental.status in ["Renting", "Overdue"] and self.status == "Returned":
                         Inventory.objects.filter(id=self.inventory.id).update(quantity=F("quantity") + 1)
-                    elif old_rental.status == "Returned" and self.status == "Rented":
+                    elif old_rental.status == "Returned" and self.status in ["Renting", "Overdue"]:
                         if self.inventory.quantity <= 0:
                             raise ValidationError(f"{self.inventory.name} is out of stock.")
                         Inventory.objects.filter(id=self.inventory.id).update(quantity=F("quantity") - 1)
+
             else:
                 if self.inventory.quantity <= 0:
                     raise ValidationError(f"{self.inventory.name} is out of stock.")
                 Inventory.objects.filter(id=self.inventory.id).update(quantity=F("quantity") - 1)
+
             super().save(*args, **kwargs)
 
-    def __str__(self):
-        return f"Rental #{self.id} - {self.status}"
 
 #Calendar to
 

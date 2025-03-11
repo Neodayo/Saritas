@@ -223,30 +223,34 @@ def customer_list(request):
 @login_required
 def view_customer(request, customer_id):
     customer = get_object_or_404(Customer, id=customer_id)
+    
+    # Automatically update overdue rentals
+    today = now().date()
     rentals = Rental.objects.filter(customer=customer)
+    rentals.filter(status="Renting", rental_end__lt=today).update(status="Overdue")
 
     return render(request, 'saritasapp/view_customer.html', {
         'customer': customer,
         'rentals': rentals,
-    })
+    })  
 
 @login_required
 def return_rental(request, rental_id):
     rental = get_object_or_404(Rental, id=rental_id)
-
-    if rental.status == 'Rented':
-        inventory_item = rental.inventory
-        inventory_item.quantity += 1  # Use 'quantity' instead of 'stock_quantity'
-        inventory_item.save()
-
+    
+    if rental.status in ['Renting', 'Overdue']:
         rental.status = 'Returned'
-        rental.save()
-
-        messages.success(request, f"Rental for {inventory_item.name} has been marked as returned.")
+        
+        rental.inventory.quantity += 1  
+        rental.inventory.save()  
+        
+        rental.save() 
+        messages.success(request, f"{rental.inventory.name} has been marked as 'Returned'.")
     else:
-        messages.warning(request, "This rental is already returned.")
+        messages.warning(request, "This item has already been returned.")
+    
+    return redirect('saritasapp:view_customer', rental.customer.id)
 
-    return redirect('saritasapp:view_customer', customer_id=rental.customer.id)
 
 
 #data_analysis
@@ -838,17 +842,27 @@ def rental_tracker(request):
     status_filter = request.GET.get('status')
     today = now().date()
 
+    # Automatically mark overdue rentals before filtering
+    Rental.objects.filter(
+        rental_end__lt=today,
+        status="Renting"
+    ).update(status="Overdue")
+
+    # Base query with related data for efficient joins
     rentals = Rental.objects.select_related('customer', 'inventory')
 
-    if status_filter == "Overdue":
-        rentals = rentals.filter(rental_end__lt=today, status="Rented")
-    elif status_filter:
+    # Apply status filter if provided
+    if status_filter:
         rentals = rentals.filter(status=status_filter)
+
+    # Order rentals by start date for consistency
+    rentals = rentals.order_by('rental_start')
 
     return render(request, 'saritasapp/rental_tracker.html', {
         'rentals': rentals,
         'today': today
     })
+
 
 #profile
 from django.shortcuts import render, redirect
@@ -881,6 +895,6 @@ def sign_out(request):
     """Logs out the user and redirects to logout page"""
     if request.method == "POST" or request.method == "GET":  # ✅ Allow both GET & POST
         logout(request)
-        return redirect("saritasapp:logout_page")  # ✅ Redirect to logout confirmation page
+        return redirect("saritasapp:logout")  # ✅ Redirect to logout confirmation page
     
     return redirect("saritasapp:profile")  # If another method is used

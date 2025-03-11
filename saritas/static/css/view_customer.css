@@ -1,0 +1,121 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #EAEAEA;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1000px;
+    margin: auto;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 16px;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.customer-image {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-bottom: 10px;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: white;
+}
+
+.table th, .table td {
+    border: 1px solid #ddd;
+    padding: 12px 15px;
+    text-align: left;
+    font-size: 14px;
+}
+
+.table th {
+    background-color: #8E793E;
+    color: white;
+}
+
+.badge {
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.bg-warning {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.bg-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-info {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.btn-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-back {
+    background-color: #8E793E;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.btn-sm {
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+.fa-eye {
+    margin-right: 5px;
+}
+
+.fa-arrow-left {
+    margin-right: 5px;
+}
+
+.alert {
+    padding: 15px;
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border-radius: 5px;
+    margin-top: 20px;
+}
