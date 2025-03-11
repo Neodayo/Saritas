@@ -1,0 +1,192 @@
+{% extends "saritasapp/base.html" %}
+{% load static %}
+
+{% block title %}Packages{% endblock %}
+
+{% block extra_css %}
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f8f8f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        h1 {
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 22px;
+        }
+
+        .package-container {
+            display: flex; /* Enable Flexbox */
+            gap: 20px; /* Space between packages */
+        }
+
+        .package-box {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 320px;
+            flex: 1; /* Makes boxes flexible and share available space */
+        }
+
+        .package-box h2 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .package-box p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .package-box ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .package-box li {
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .package-box input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        .avail-btn {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #9E8729;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .avail-btn:hover {
+            background-color: #AD974F;
+        }
+
+        .select-all {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+<h1 class="inventory-title">Packages</h1>
+<div class="package-container">
+    <!-- Package 1 -->
+    <div class="package-box">
+        <div class="select-all">
+            <h2>Package A</h2>
+            <label>
+                <input type="checkbox" class="selectAll"> SELECT ALL
+            </label>
+        </div>
+        <p>Price: 12,000</p>
+        <p>Deposit: 10,000 (Refundable)</p>
+
+        <p><strong>Inclusions:</strong></p>
+        <ul>
+            <li><input type="checkbox"> Bridal Gown</li>
+            <li><input type="checkbox"> Groom's Tuxedo</li>
+            <li><input type="checkbox"> Maid of Honor</li>
+            <li><input type="checkbox"> Bestman</li>
+            <li><input type="checkbox"> Bridesmaids</li>
+            <li><input type="checkbox"> Groomsmen</li>
+            <li><input type="checkbox"> Flower Girls</li>
+            <li><input type="checkbox"> Bearers</li>
+            <li><input type="checkbox"> Free Use of Wedding Accessories</li>
+        </ul>
+
+        <p><strong>Others:</strong> __________</p>
+
+        <a href="#" class="avail-btn">+ Avail</a>
+    </div>
+
+    <!-- Package 2 -->
+    <div class="package-box">
+        <div class="select-all">
+            <h2>Package B</h2>
+            <label>
+                <input type="checkbox" class="selectAll"> SELECT ALL
+            </label>
+        </div>
+        <p>Price: 12,000</p>
+        <p>Deposit: 10,000 (Refundable)</p>
+
+        <p><strong>Inclusions:</strong></p>
+        <ul>
+            <li><input type="checkbox"> Bridal Gown</li>
+            <li><input type="checkbox"> Groom's Tuxedo</li>
+            <li><input type="checkbox"> Maid of Honor</li>
+            <li><input type="checkbox"> Bestman</li>
+            <li><input type="checkbox"> Bridesmaids</li>
+            <li><input type="checkbox"> Groomsmen</li>
+            <li><input type="checkbox"> Flower Girls</li>
+            <li><input type="checkbox"> Bearers</li>
+            <li><input type="checkbox"> Free Use of Wedding Accessories</li>
+        </ul>
+
+        <p><strong>Others:</strong> __________</p>
+
+        <a href="#" class="avail-btn">+ Avail</a>
+    </div>
+
+    <!-- Package 3 -->
+    <div class="package-box">
+        <div class="select-all">
+            <h2>Package C</h2>
+            <label>
+                <input type="checkbox" class="selectAll"> SELECT ALL
+            </label>
+        </div>
+        <p>Price: 15,000</p>
+        <p>Deposit: 10,000 (Refundable)</p>
+
+        <p><strong>Inclusions:</strong></p>
+        <ul>
+            <li><input type="checkbox"> Bridal Gown</li>
+            <li><input type="checkbox"> Groom's Tuxedo</li>
+            <li><input type="checkbox"> Maid of Honor</li>
+            <li><input type="checkbox"> Bestman</li>
+            <li><input type="checkbox"> Bridesmaids</li>
+            <li><input type="checkbox"> Groomsmen</li>
+            <li><input type="checkbox"> Flower Girls</li>
+            <li><input type="checkbox"> Bearers</li>
+            <li><input type="checkbox"> Free Use of Wedding Accessories</li>
+        </ul>
+
+        <p><strong>Others:</strong> __________</p>
+
+        <a href="#" class="avail-btn">+ Avail</a>
+    </div>
+</div>
+
+<script>
+    // Select all checkboxes for each package
+    document.querySelectorAll(".selectAll").forEach(selectAll => {
+        selectAll.addEventListener("change", function() {
+            const packageBox = this.closest(".package-box");
+            const checkboxes = packageBox.querySelectorAll("input[type='checkbox']");
+            checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+        });
+    });
+</script>
+
+{% endblock %}

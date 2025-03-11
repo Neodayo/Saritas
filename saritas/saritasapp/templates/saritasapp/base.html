@@ -54,10 +54,16 @@
                     <div class="made-to-order">
                         <a href="{% url 'saritasapp:made_to_order' %}" class="header-link-text">Made to Order</a>
                     </div>
-                        <select name="Packages" id="Package" class="header-link-text">
+                        <!-- <select name="Packages" id="Package" class="header-link-text">
                             <option value="">Packages</option>
                             <option value="Wardrobe Packages">Wardrobe Packages</option>
-                            <option value="Wedding Packages">Wedding Packages</option>
+                            <option value="Wedding Packages">Wedding Packages</option> -->
+
+                            <select id="Package" class="header-link-text" onchange="navigateToPage()">
+                                <option value="">Packages</option>
+                                <option value="{% url 'saritasapp:packages' %}">Wardrobe Packages</option>
+                                <!-- <option value="Wedding Packages">Wedding Packages</option> -->
+                            </select>
                         </select>
                         <a href="{% url 'saritasapp:homepage' %}" class="header-link"><i class="fas fa-home"></i></a>
                         <a href="{% url 'saritasapp:notifications' %}" class="header-link"><i class="fas fa-bell"></i></a>
@@ -93,6 +99,13 @@
                 sidebar.classList.toggle("collapsed");
             });
         });
+
+        function navigateToPage() {
+        const selectedValue = document.getElementById("Package").value;
+        if (selectedValue) {
+            window.location.href = selectedValue; // Redirect to the selected URL
+        }
+    }
     </script>
 </body>
 </html>
