@@ -1,54 +1,84 @@
 {% extends "saritasapp/base.html" %}
 {% load static %}
 
-{% block title %}made-to-order{% endblock %}
+{% block title %}Made-to-Order{% endblock %}
 
 {% block extra_css %}
     <!-- <link rel="stylesheet" href="{% static 'css/add_inventory.css' %}"> -->
 {% endblock %}
 
 {% block content %}
-<style> 
-    body { 
+<style>
+    body {
         font-family: Arial, sans-serif;
         background-color: #ffffff;
         display: flex;
         justify-content: center;
         align-items: center;
         min-height: 100vh;
-        margin: 20px 0; 
-        padding: 10px;
+        margin: 0;
+        padding: 20px;
         box-sizing: border-box;
     }
 
-    .container-sort {
-        display: flex;
-        gap: 20px;
-        justify-content: center;
-        text-decoration: none;
-        color: inherit;
+    .main-container {
+        background-color: #dfd9bc; /* Gold background */
+        border: 3px solid whitesmoke; /* Darker gold border */
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        max-width: 500px;
+        width: 100%;
+        text-align: left;
     }
 
-    .container {
-        cursor: pointer;
-        border: 2px solid #ccc;
-        padding: 10px;
+    h3 {
         text-align: center;
-        flex: 1;                  
-        transition: background 0.3s;
-        background: white;
-        border-radius: 10px;
-        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-        box-sizing: border-box;
-        text-decoration: none;
-        
-        width: 100%; 
-        max-width: 400px; 
-        min-height: 150px; 
-        min-width: 150px; 
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
+        color: #333;
+        margin-bottom: 15px;
+    }
+
+    p {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 10px 0;
+    }
+
+    input[type="text"], textarea {
+        width: 60%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+
+    .remarks {
+        margin-top: 15px;
+    }
+
+    textarea {
+        width: 95%;
+        height: 80px;
+        resize: none;
+    }
+
+    .buttons {
+        display: block;
+        width: 200px; /* Set the width to auto to fit the content */
+        margin: 15px auto; /* Center the button */
+        background-color:#8E793E ; /* Dark gold */
+        color: white;
+        border: none;
+        padding: 8px 16px; /* Smaller padding for a smaller button */
+        font-size: 14px; /* Smaller font size */
+        border-radius: 5px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    .buttons:hover {
+        background-color: #8B6508;
     }
 </style>
 
@@ -60,8 +90,8 @@
             <form action="#" method="POST">
         {% endif %}
             {% csrf_token %}
-        
-            <h3>MEASUREMENTS:</h3>
+            
+            <h3>MEASUREMENTS</h3>
             <p><strong>Shoulder:</strong> <input type="text" name="shoulder" value="{{ receipt.shoulder }}"></p>
             <p><strong>Bust:</strong> <input type="text" name="bust" value="{{ receipt.bust }}"></p>
             <p><strong>Front:</strong> <input type="text" name="front" value="{{ receipt.front }}"></p>
@@ -74,12 +104,12 @@
             <p><strong>Length:</strong> <input type="text" name="length" value="{{ receipt.length }}"></p>
             <p><strong>Lower Circumference:</strong> <input type="text" name="lower_circumference" value="{{ receipt.lower_circumference }}"></p>
             <p><strong>Crotch:</strong> <input type="text" name="crotch" value="{{ receipt.crotch }}"></p>
-        
+            
             <div class="remarks">
-                <h3>Remarks:</h3>
+                <h3>Remarks</h3>
                 <textarea id="remarks" name="remarks">{{ receipt.remarks }}</textarea>
             </div>
-
+            
             <button class="buttons" type="submit">Submit</button>
         </form>
     </div>
@@ -88,13 +118,13 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const inputs = document.querySelectorAll('input[type="text"], textarea');
-
+        
         inputs.forEach((input, index) => {
             input.addEventListener('keydown', function (event) {
                 if (event.key === 'Enter') {
-                    event.preventDefault(); 
+                    event.preventDefault();
                     const nextInput = inputs[index + 1];
-
+                    
                     if (nextInput) {
                         nextInput.focus();
                     } else {
@@ -105,5 +135,4 @@
         });
     });
 </script>
-
 {% endblock %}
