@@ -76,13 +76,35 @@ class WardrobePackageItemForm(forms.ModelForm):
         fields = ["package", "inventory_item", "quantity"]
 
 class SignUpForm(UserCreationForm):
-    name = forms.CharField(max_length=255, required=True)
-    email = forms.EmailField(max_length=254, required=True)
-    branch = forms.ModelChoiceField(queryset=Branch.objects.all(), required=True)
+    name = forms.CharField(
+        max_length=255,
+        required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Full Name'})
+    )
+    email = forms.EmailField(
+        max_length=254,
+        required=True,
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email Address'})
+    )
+    branch = forms.ModelChoiceField(
+        queryset=Branch.objects.all(),
+        required=True,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    password1 = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Password'})
+    )
+    password2 = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirm Password'})
+    )
 
     class Meta:
         model = User
         fields = ['username', 'name', 'email', 'branch', 'password1', 'password2']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Username'}),
+        }
+
 
 class LoginForm(AuthenticationForm):
     username = forms.CharField(label="Username", widget=forms.TextInput(attrs={'class': 'form-control'}))
