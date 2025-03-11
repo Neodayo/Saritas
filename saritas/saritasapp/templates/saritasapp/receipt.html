@@ -22,7 +22,7 @@
             <p><strong>Due Date of Return:</strong> <input type="date" id="return-date" name="return_date" value="{{ receipt.return_date|date:'Y-m-d' }}"></p>
             <p><strong>Down Payment:</strong> <input type="text" id="down-payment" name="down_payment" value="{{ receipt.down_payment }}"></p>
             <p><strong>Payment Method:</strong> 
-                <select id="payment-method" name="payment_method">
+                <select class="receipt-select" id="payment-method" name="payment_method">
                     <option value="Cash" {% if receipt.payment_method == "Cash" %}selected{% endif %}>Cash</option>
                     <option value="Credit Card" {% if receipt.payment_method == "Credit Card" %}selected{% endif %}>Credit Card</option>
                     <option value="Bank Transfer" {% if receipt.payment_method == "Bank Transfer" %}selected{% endif %}>Bank Transfer</option>
@@ -32,15 +32,18 @@
 
         <h3>Measurements</h3>
         <div class="measures">
-            <p><strong>Shoulder:</strong><input type="text" name="shoulder" value="1.00"></p>
-            <p><strong>Front:</strong><input type="text" name="front" value="1.00"></p>
-            <p><strong>Bust:</strong><input type="text" name="bust" value="1.00"></p>
-            <p><strong>Width:</strong><input type="text" name="width" value="1.00"></p>
-            <p><strong>Waist:</strong><input type="text" name="waist" value="1.00"></p>
-            <p><strong>Hips:</strong><input type="text" name="hips" value="1.00"></p>
-            <p><strong>Arm Length:</strong><input type="text" name="arm_length" value="1.00"></p>
-            <p><strong>Bust Depth:</strong><input type="text" name="bust_depth" value="1.00"></p>
-            <p><strong>Bust Distance:</strong><input type="text" name="bust_distance" value="1.00"></p>
+            <p><strong>Shoulder:</strong> <input type="text" name="shoulder" value="{{ receipt.shoulder }}"></p>
+            <p><strong>Bust:</strong> <input type="text" name="bust" value="{{ receipt.bust }}"></p>
+            <p><strong>Front:</strong> <input type="text" name="front" value="{{ receipt.front }}"></p>
+            <p><strong>Width:</strong> <input type="text" name="width" value="{{ receipt.width }}"></p>
+            <p><strong>Waist:</strong> <input type="text" name="waist" value="{{ receipt.waist }}"></p>
+            <p><strong>Hips:</strong> <input type="text" name="hips" value="{{ receipt.hips }}"></p>
+            <p><strong>Arm Length:</strong> <input type="text" name="arm_length" value="{{ receipt.arm_length }}"></p>
+            <p><strong>Bust Depth:</strong> <input type="text" name="bust_depth" value="{{ receipt.bust_depth }}"></p>
+            <p><strong>Bust Distance:</strong> <input type="text" name="bust_distance" value="{{ receipt.bust_distance }}"></p>
+            <p><strong>Length:</strong> <input type="text" name="length" value="{{ receipt.length }}"></p>
+            <p><strong>Lower Circumference:</strong> <input type="text" name="lower_circumference" value="{{ receipt.lower_circumference }}"></p>
+            <p><strong>Crotch:</strong> <input type="text" name="crotch" value="{{ receipt.crotch }}"></p>
         </div>
 
         <div class="remarks">
@@ -129,7 +132,7 @@
         font-size: 1rem;
     }
 
-    p input, select, input[type="datetime-local"], input[type="date"] {
+    p input, .receipt-select, input[type="datetime-local"], input[type="date"] {
         flex: 1;
         padding: 10px 12px;
         border-radius: 10px;

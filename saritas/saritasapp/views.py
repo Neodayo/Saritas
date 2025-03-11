@@ -491,7 +491,6 @@ def sign_in(request):
     return render(request, 'saritasapp/signin.html', {'form': form})
 
 
-
 # DASHBOARD VIEW (Example)
 @login_required
 def dashboard(request):
@@ -834,6 +833,7 @@ def get_events(request):
     ]
     return JsonResponse(events_data, safe=False)
 
+
 def rental_tracker(request):
     status_filter = request.GET.get('status')
     today = now().date()
@@ -849,3 +849,38 @@ def rental_tracker(request):
         'rentals': rentals,
         'today': today
     })
+
+#profile
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout
+from django.contrib import messages
+from .models import User
+from .forms import EditProfileForm
+
+@login_required
+def profile_view(request):
+    """Handles profile updates"""
+    user = request.user  # Get the logged-in user
+    
+    if request.method == "POST":
+        form = EditProfileForm(request.POST, request.FILES, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Profile updated successfully!")
+            return redirect("saritasapp:profile")  # ✅ Correct app namespace
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = EditProfileForm(instance=user)
+
+    return render(request, "saritasapp/profile.html", {"form": form, "user": user})
+
+@login_required
+def sign_out(request):
+    """Logs out the user and redirects to logout page"""
+    if request.method == "POST" or request.method == "GET":  # ✅ Allow both GET & POST
+        logout(request)
+        return redirect("saritasapp:logout_page")  # ✅ Redirect to logout confirmation page
+    
+    return redirect("saritasapp:profile")  # If another method is used

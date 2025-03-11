@@ -110,3 +110,14 @@ class LoginForm(AuthenticationForm):
     username = forms.CharField(label="Username", widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(label="Password", widget=forms.PasswordInput(attrs={'class': 'form-control'}))
 
+
+#profile
+from django import forms
+from .models import User, Branch
+
+class EditProfileForm(forms.ModelForm):
+    branch = forms.ModelChoiceField(queryset=Branch.objects.all(), required=True)
+
+    class Meta:
+        model = User
+        fields = ["name", "email", "branch", "profile_pic"]
