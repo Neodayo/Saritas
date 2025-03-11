@@ -9,8 +9,10 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #EAEAEA; 
+    background-color: #EAEAEA;
     background-image: static('images/background.jpg');
+
+    
 }
 
 
