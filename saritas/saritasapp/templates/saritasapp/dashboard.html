@@ -4,6 +4,32 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
+<style>
+    .alert {
+    padding: 12px 20px;
+    border-radius: 8px; 
+    margin-bottom: 20px; 
+}
+
+.alert-success {
+    background-color: #e6f9f0; 
+    color: #2e856e; 
+}
+
+.alert-error {
+    background-color: #ffeaea; 
+    color: #d9534f; 
+}
+</style>
+
+{% if messages %}
+{% for message in messages %}
+    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+        {{ message }}
+    </div>
+{% endfor %}
+{% endif %}
+
 <h1>Dashboard</h1>
 <p>Welcome, {{ user.username }}!</p>
 {% endblock %}
