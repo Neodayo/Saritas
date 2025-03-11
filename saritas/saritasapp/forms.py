@@ -1,9 +1,17 @@
 from django import forms
-from .models import Inventory, Category, User, Rental, Customer, WardrobePackage, WardrobePackageItem, Branch
+from .models import Inventory, Category, User, Rental, Customer, WardrobePackage, WardrobePackageItem, Branch, Event
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
+class EventForm(forms.ModelForm):
+    class Meta:
+        model = Event
+        fields = ['title', 'venue', 'start_date', 'end_date', 'notes']
+        widgets = {
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'type': 'date'}),
+        }
 
 class InventoryForm(forms.ModelForm):
     quantity = forms.IntegerField(min_value=1, label="Quantity")

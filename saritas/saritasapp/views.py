@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import InventoryForm, CategoryForm, RentalForm, CustomerForm
+from .forms import InventoryForm, CategoryForm, RentalForm, CustomerForm, EventForm
 from .models import Customer, Inventory, Category, Rental, User, WardrobePackage, Receipt
 from django.utils.timezone import now
 from django.db.models import F, Q  ,Count , Sum#new
@@ -124,6 +124,7 @@ def edit_inventory(request, item_id):
         'categories': categories,
         'item': item  # ✅ Pass the item to the template
     })
+
 @login_required
 def delete_inventory(request, item_id):
     item = get_object_or_404(Inventory, id=item_id)
@@ -898,3 +899,30 @@ def sign_out(request):
         return redirect("saritasapp:logout")  # ✅ Redirect to logout confirmation page
     
     return redirect("saritasapp:profile")  # If another method is used
+
+@login_required
+def edit_event(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+
+    if request.method == 'POST':
+        form = EventForm(request.POST, instance=event)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Event updated successfully.')
+            return redirect('saritasapp:view_event', event_id=event.id)
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = EventForm(instance=event)
+
+    return render(request, 'saritasapp/edit_event.html', {'form': form, 'event': event})
+
+def delete_event(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+
+    if request.method == 'POST':
+        event.delete()
+        messages.success(request, f"Event '{event.title}' has been successfully deleted.")
+        return redirect('saritasapp:calendar')
+
+    return render(request, 'saritasapp/confirm_delete_event.html', {'event': event})

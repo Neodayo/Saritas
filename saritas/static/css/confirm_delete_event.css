@@ -1,0 +1,47 @@
+.event-container, .delete-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: #f9f9f9;
+    padding: 20px;
+    border: 2px solid #8E793E;
+    border-radius: 12px;
+}
+
+h1, h2 {
+    text-align: center;
+    color: #8E793E;
+    margin-bottom: 20px;
+}
+
+p {
+    margin-bottom: 10px;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.gold-button {
+    background-color: #8E793E;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.gold-button:hover {
+    background-color: #705A2B;
+}
+
+.gold-button.danger {
+    background-color: #D9534F;
+}
+
+.gold-button.danger:hover {
+    background-color: #C9302C;
+}

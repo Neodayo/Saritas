@@ -1,6 +1,9 @@
 {% extends "saritasapp/base.html" %}
+{%load static%}
 {% block title %}View Event{% endblock %}
-
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/view_event.css' %}">
+{% endblock %}
 {% block content %}
 <div class="event-container">
     <h1>{{ event.title }}</h1>
@@ -9,54 +12,9 @@
     <p><strong>📝 Notes:</strong> {{ event.notes }}</p>
 
     <div class="button-group">
-        <a href="#" class="gold-button">Edit</a>
-        <a href="#" class="gold-button delete-btn">Delete</a>
+        <a href="{% url 'saritasapp:edit_event' event.id %}" class="gold-button">Edit</a>
         <a href="{% url 'saritasapp:calendar' %}" class="gold-button">Back to Calendar</a>
+        <a href="{% url 'saritasapp:delete_event' event.id %}" class="gold-button delete-btn">Delete</a>
     </div>
 </div>
-
-<style>
-    .event-container {
-        text-align: center;
-        padding: 20px;
-        background: white;
-        max-width: 600px;
-        margin: auto;
-        border-radius: 10px;
-        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    .button-group {
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-        margin-top: 25px;
-        flex-wrap: wrap;
-    }
-
-    .gold-button {
-        padding: 12px 20px;
-        background: #D4AF37;
-        color: white;
-        text-decoration: none;
-        font-size: 16px;
-        font-weight: bold;
-        border-radius: 8px;
-        transition: background 0.3s ease;
-        min-width: 130px;
-        text-align: center;
-    }
-
-    .gold-button:hover {
-        background: #B8860B;
-    }
-
-    .delete-btn {
-        background: #8B0000;
-    }
-
-    .delete-btn:hover {
-        background: #5A0000;
-    }
-</style>
 {% endblock %}

@@ -33,6 +33,8 @@ urlpatterns = [
     path("create-event/", views.create_event, name="create_event"),
     path("view-event/<int:event_id>/", views.view_event, name="view_event"),
     path("api/events/", views.get_events, name="api_events"),
+    path('event/<int:event_id>/edit/', views.edit_event, name='edit_event'),
+    path('event/<int:event_id>/delete/', views.delete_event, name='delete_event'),
     #made to oreders,Receipt
     path("made_to_order/", made_to_order_view, name="made_to_order"),
     path('receipt/', views.receipt_view, name='receipt'),

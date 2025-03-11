@@ -1,0 +1,40 @@
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: #f9f9f9;
+    padding: 20px;
+    border: 2px solid #8E793E;
+    border-radius: 12px;
+}
+
+h2.page-title {
+    text-align: center;
+    color: #8E793E;
+    margin-bottom: 20px;
+}
+
+.event-form input,
+.event-form select,
+.event-form textarea {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+.btn-primary {
+    background-color: #8E793E;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-back {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: #8E793E;
+    text-decoration: none;
+}
