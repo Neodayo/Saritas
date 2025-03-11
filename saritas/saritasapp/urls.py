@@ -46,8 +46,8 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('dashboard/', views.dashboard, name='dashboard'),
     #profile
-    path("profile/", profile_view, name="profile"),
-    path("logout/", sign_out, name="logout"),  # ✅ Handles logout
+    path("profile/", views.profile_view, name="profile"),
+    path("logout/", views.sign_out, name="logout"),  # ✅ Handles logout
     path("logout_page/", lambda request: render(request, "saritasapp/logout.html"), name="logout_page"),
         # ✅ Logout confirmation
     path('notifications/', views.notification_view, name='notifications'),

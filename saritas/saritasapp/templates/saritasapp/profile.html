@@ -9,18 +9,6 @@
 
     <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
-
-        <div class="profile-image-container">
-            <label for="profile-pic">
-                {% if user.profile_pic %}
-                    <img src="{{ user.profile_pics.url }}" class="profile-image" id="profileImage">
-                {% else %}
-                    <div class="profile-image" id="profileImage"><i class="fas fa-user"></i></div>
-                {% endif %}
-            </label>
-        </div>
-        <input type="file" id="profile-pic" name="profile_pic" accept="image/*" onchange="previewImage(event)">
-
         <div class="form-group">
             <label><i class="fas fa-user"></i> Full Name:</label>
             <div class="input-container">

@@ -833,7 +833,7 @@ def get_events(request):
     ]
     return JsonResponse(events_data, safe=False)
 
-
+@login_required
 def rental_tracker(request):
     status_filter = request.GET.get('status')
     today = now().date()

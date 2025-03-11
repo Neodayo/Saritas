@@ -120,4 +120,4 @@ class EditProfileForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ["name", "email", "branch", "profile_pic"]
+        fields = ["name", "email", "branch"]
