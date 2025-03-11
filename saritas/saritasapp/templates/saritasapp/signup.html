@@ -1,14 +1,54 @@
-{% extends "saritasapp/base.html" %}
+{% load static %}
+
 {% block title %}Sign Up{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/signup.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="container">
-    <h2>Sign Up</h2>
-    <form method="POST">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Sign Up</button>
-    </form>
-    <p>Already have an account? <a href="{% url 'saritasapp:sign_in' %}">Log in</a></p>
+<div class="container mt-5">
+    <div class="card shadow-lg p-4 rounded-3">
+        <h2 class="text-center mb-4">Create an Account</h2>
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                {{ form.username.label_tag }}
+                {{ form.username }}
+            </div>
+
+            <div class="mb-3">
+                {{ form.name.label_tag }}
+                {{ form.name }}
+            </div>
+
+            <div class="mb-3">
+                {{ form.email.label_tag }}
+                {{ form.email }}
+            </div>
+
+            <div class="mb-3">
+                {{ form.branch.label_tag }}
+                {{ form.branch }}
+            </div>
+
+            <div class="mb-3">
+                {{ form.password1.label_tag }}
+                {{ form.password1 }}
+            </div>
+
+            <div class="mb-3">
+                {{ form.password2.label_tag }}
+                {{ form.password2 }}
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Sign Up</button>
+        </form>
+        <p class="text-center mt-3">
+            Already have an account? <a href="{% url 'saritasapp:sign_in' %}">Log in</a>
+        </p>
+    </div>
 </div>
 {% endblock %}
+
