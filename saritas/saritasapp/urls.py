@@ -43,11 +43,11 @@ urlpatterns = [
     path("signup/", views.sign_up, name="sign_up"),
     path("signin/", views.sign_in, name="sign_in"),
     path('login/', auth_views.LoginView.as_view(template_name='saritasapp/login.html'), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('logout/', auth_views.LogoutView.as_view(next_page='saritasapp:logout_page'), name='logout'),
     path('dashboard/', views.dashboard, name='dashboard'),
     #profile
     path("profile/", views.profile_view, name="profile"),
-    path("logout/", views.sign_out, name="logout"),  # ✅ Handles logout
+    path("logout/", views.sign_out, name="logout"), 
     path("logout_page/", lambda request: render(request, "saritasapp/logout.html"), name="logout_page"),
         # ✅ Logout confirmation
     path('notifications/', views.notification_view, name='notifications'),

@@ -2,7 +2,8 @@ body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
-    background-color: #EAEAEA;
+    background-image: linear-gradient(rgba(128, 128, 128, 0.700), rgba(128, 128, 128, 0.625)), url("/static/images/background.jpg");
+
     background-attachment: fixed;
 }
 /*---------SIDEBAR AREA----------*/
