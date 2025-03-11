@@ -901,6 +901,7 @@ def sign_out(request):
     return redirect("saritasapp:profile")  # If another method is used
 
 @login_required
+
 def edit_event(request, event_id):
     event = get_object_or_404(Event, id=event_id)
 
@@ -926,3 +927,6 @@ def delete_event(request, event_id):
         return redirect('saritasapp:calendar')
 
     return render(request, 'saritasapp/confirm_delete_event.html', {'event': event})
+
+def packages(request):
+    return render(request, 'saritasapp/package.html')

@@ -11,7 +11,7 @@ from .views import render
 app_name = 'saritasapp'
 
 urlpatterns = [
-    path('', views.homepage, name='homepage'),
+    path('', views.sign_in, name='homepage'),
     path('add-inventory/', views.add_inventory, name='add_inventory'),
     path('inventory/', views.inventory_view, name='inventory_list'),
     path('add-category/', views.add_category, name='add_category'),
@@ -59,4 +59,7 @@ urlpatterns = [
     path('wardrobe-packages/<int:package_id>/', views.wardrobe_package_view, name='wardrobe_package_detail'),
     path('wardrobe-packages/<int:package_id>/', views.wardrobe_package_view, name='wardrobe_package_detail'),
     path('wardrobe-packages/<int:package_id>/select/', views.wardrobe_package_view, name='select_wardrobe_package'),
+    #packages
+    path('packages/', views.packages, name='packages'),
+
 ]
