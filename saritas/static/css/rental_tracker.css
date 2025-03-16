@@ -94,3 +94,7 @@ th, td {
 .btn-info:hover {
     background-color: #8E793E;
 }
+.custom-table {
+    background-color: #8E793E;
+    color: white;
+}

@@ -167,7 +167,7 @@ def rent_item(request, inventory_id):
                 inventory=inventory_item,
                 rental_start=rental_start,
                 rental_end=rental_end,
-                status="Rented",
+                status="Renting",
                 deposit=inventory_item.rental_price * 2  # Example deposit logic
             )
 

@@ -5,8 +5,6 @@ from django.core.exceptions import ValidationError
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.db import transaction
-from django.utils.timezone import now
-
 
 # --- Branch Model ---
 class Branch(models.Model):
@@ -20,23 +18,25 @@ class Branch(models.Model):
 class User(AbstractUser):
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
-    branch = models.ForeignKey("saritasapp.Branch", null=True, on_delete=models.SET_NULL)
+    branch = models.ForeignKey(Branch, null=True, on_delete=models.SET_NULL, related_name="users")
     created_at = models.DateTimeField(auto_now_add=True)
+
     USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = ["name", "email"] 
+    REQUIRED_FIELDS = ["name", "email"]
 
     def __str__(self):
         return self.name if self.name else self.username
 
 # --- Customer Model ---
 class Customer(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="customer", null=True, blank=True)
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=15, unique=True)
     address = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    image = models.ImageField(upload_to="static/images/", null=True, blank=True)
+    image = models.ImageField(upload_to="customers/", null=True, blank=True)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
@@ -49,23 +49,43 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+# --- Color Model ---
+class Color(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.name
+
+# --- Size Model ---
+class Size(models.Model):
+    name = models.CharField(max_length=10, unique=True)
+
+    def __str__(self):
+        return self.name
+
 # --- Inventory Model ---
 class Inventory(models.Model):
     name = models.CharField(max_length=255)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    color = models.CharField(max_length=50, blank=True)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="items")
+    color = models.ForeignKey(Color, null=True, blank=True, on_delete=models.SET_NULL, related_name="inventory_items")
+    size = models.ForeignKey(Size, null=True, blank=True, on_delete=models.SET_NULL, related_name="inventory_items")
     quantity = models.IntegerField(default=0)
     rental_price = models.DecimalField(max_digits=10, decimal_places=2)
     purchase_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     available = models.BooleanField(default=True)
-    image = models.ImageField(upload_to="static/images/", null=True, blank=True)
+    image = models.ImageField(upload_to="inventory/", null=True, blank=True)
 
     def save(self, *args, **kwargs):
         self.available = self.quantity > 0
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.name} ({self.color})" if self.color else self.name
+        details = [self.name]
+        if self.color:
+            details.append(f"Color: {self.color}")
+        if self.size:
+            details.append(f"Size: {self.size}")
+        return " - ".join(details)
 
 # --- Event Package & Pricing ---
 class EventPackage(models.Model):
@@ -77,51 +97,33 @@ class EventPackage(models.Model):
         return self.name
 
 class PackageItem(models.Model):
-    package = models.ForeignKey(EventPackage, on_delete=models.CASCADE)
+    SERVICE_TYPES = [
+        ("internal", "Provided by Sarita's"),
+        ("external", "Outsourced Service"),
+    ]
+    package = models.ForeignKey(EventPackage, on_delete=models.CASCADE, related_name="items")
     name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    service_type = models.CharField(max_length=10, choices=SERVICE_TYPES, default="internal")
+    acquired = models.BooleanField(default=False)  # For external services
 
     def __str__(self):
-        return self.name
-
-ORDER_STATUS_CHOICES = (
-    ("Pending", "Pending"),
-    ("Confirmed", "Confirmed"),
-    ("Completed", "Completed"),
-    ("Cancelled", "Cancelled"),
-)
-
-class CustomerOrder(models.Model):
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    package = models.ForeignKey(EventPackage, on_delete=models.CASCADE)
-    total_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    status = models.CharField(max_length=10, choices=ORDER_STATUS_CHOICES, default="Pending")
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def calculate_total_price(self):
-        total_price = (
-            self.package.base_price +
-            (self.selected_items.filter(selected=True).aggregate(total=Sum("item__price"))["total"] or 0)
-        )
-        self.total_price = total_price
-        self.save(update_fields=["total_price"])
-
-    def __str__(self):
-        return f"Order #{self.id} - {self.status}"
+        return f"{self.name} ({self.get_service_type_display()})"
 
 class SelectedPackageItem(models.Model):
-    order = models.ForeignKey(CustomerOrder, related_name="selected_items", on_delete=models.CASCADE)
+    order = models.ForeignKey("CustomerOrder", related_name="selected_items", on_delete=models.CASCADE)
     item = models.ForeignKey(PackageItem, on_delete=models.CASCADE)
     selected = models.BooleanField(default=True)
 
+    def save(self, *args, **kwargs):
+        # Automatically set 'acquired' to True for external services when selected
+        if self.item.service_type == "external" and self.selected:
+            self.item.acquired = True
+            self.item.save()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"Order {self.order.id} - Item {self.item.name} - {'Selected' if self.selected else 'Not Selected'}"
-
-@receiver(post_save, sender=SelectedPackageItem)
-@receiver(post_delete, sender=SelectedPackageItem)
-def update_order_total(sender, instance, **kwargs):
-    instance.order.calculate_total_price()
 
 # --- Wardrobe Package (Connected to Inventory) ---
 class WardrobePackage(models.Model):
@@ -130,13 +132,12 @@ class WardrobePackage(models.Model):
         ("B", "Package B (₱15,000)"),
         ("C", "Package C (₱18,000)"),
     ]
-
     name = models.CharField(max_length=255)
-    description = models.TextField(blank=True, null=True)  # Optional description
+    description = models.TextField(blank=True, null=True)
     tier = models.CharField(max_length=1, choices=PACKAGE_TIERS)
     base_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     refundable_deposit = models.DecimalField(max_digits=10, decimal_places=2, default=10000.00)
-    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Optional discount
+    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     STATUS_CHOICES = [
         ("active", "Active"),
         ("inactive", "Inactive"),
@@ -148,7 +149,6 @@ class WardrobePackage(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.get_tier_display()}"
-
 
 class WardrobePackageItem(models.Model):
     package = models.ForeignKey(WardrobePackage, on_delete=models.CASCADE, related_name="package_items")
@@ -162,82 +162,120 @@ class WardrobePackageItem(models.Model):
     def __str__(self):
         return f"{self.inventory_item.name} in {self.package.name}"
 
+class SelectedWardrobeItem(models.Model):
+    order = models.ForeignKey("CustomerOrder", related_name="selected_wardrobe_items", on_delete=models.CASCADE)
+    wardrobe_package_item = models.ForeignKey(WardrobePackageItem, on_delete=models.CASCADE)
+    selected_quantity = models.PositiveIntegerField(default=0)
+
+    def clean(self):
+        if self.selected_quantity > self.wardrobe_package_item.inventory_item.quantity:
+            raise ValidationError(
+                f"Not enough stock for {self.wardrobe_package_item.inventory_item.name}. Available: {self.wardrobe_package_item.inventory_item.quantity}"
+            )
+
+    def __str__(self):
+        return f"Order {self.order.id} - {self.wardrobe_package_item.inventory_item.name} - Quantity: {self.selected_quantity}"
+
+# --- Order System ---
+ORDER_STATUS_CHOICES = (
+    ("Pending", "Pending"),
+    ("Confirmed", "Confirmed"),
+    ("Completed", "Completed"),
+    ("Cancelled", "Cancelled"),
+)
+
+class CustomerOrder(models.Model):
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="orders")
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="handled_orders")
+    package = models.ForeignKey(EventPackage, null=True, blank=True, on_delete=models.SET_NULL, related_name="orders")
+    wardrobe_package = models.ForeignKey(WardrobePackage, null=True, blank=True, on_delete=models.SET_NULL, related_name="orders")
+    total_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    status = models.CharField(max_length=10, choices=ORDER_STATUS_CHOICES, default="Pending")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def calculate_total_price(self):
+        # Calculate total price from selected wedding package items
+        wedding_total = sum(
+            item.item.price for item in self.selected_items.filter(selected=True)
+        )
+        # Calculate total price from selected wardrobe package items
+        wardrobe_total = sum(
+            item.selected_quantity * item.wardrobe_package_item.inventory_item.rental_price
+            for item in self.selected_wardrobe_items.all()
+        )
+        self.total_price = wedding_total + wardrobe_total
+        self.save(update_fields=["total_price"])
+
+    def __str__(self):
+        return f"Order #{self.id} - {self.status}"
+
+@receiver(post_save, sender=SelectedPackageItem)
+@receiver(post_delete, sender=SelectedPackageItem)
+def update_order_total(sender, instance, **kwargs):
+    instance.order.calculate_total_price()
+
+@receiver(post_save, sender=SelectedWardrobeItem)
+@receiver(post_delete, sender=SelectedWardrobeItem)
+def update_order_total(sender, instance, **kwargs):
+    instance.order.calculate_total_price()
+
 # --- Rental System ---
 class Rental(models.Model):
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    inventory = models.ForeignKey(Inventory, on_delete=models.CASCADE)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="rentals")
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="managed_rentals")
+    inventory = models.ForeignKey(Inventory, on_delete=models.CASCADE, related_name="rentals")
     rental_start = models.DateField()
     rental_end = models.DateField()
     deposit = models.DecimalField(max_digits=10, decimal_places=2, default=10000.00)
-    status = models.CharField(
-        max_length=10, 
-        choices=[
-            ("Renting", "Renting"), 
-            ("Returned", "Returned"),
-            ("Overdue", "Overdue")
-        ], 
-        default="Renting"
-    )
+    status = models.CharField(max_length=10, choices=[("Rented", "Rented"), ("Returned", "Returned")], default="Rented")
 
     def clean(self):
         if self.rental_end < self.rental_start:
             raise ValidationError("Return date must be after the rental start date.")
-        if self.status == "Renting" and self.inventory.quantity <= 0:
+        if self.status == "Rented" and self.inventory.quantity <= 0:
             raise ValidationError(f"{self.inventory.name} is out of stock.")
 
     def save(self, *args, **kwargs):
         self.full_clean()
-
-        # Automatically mark 'Overdue' if the rental end date has passed
-        if self.status == "Renting" and self.rental_end < now().date():
-            self.status = "Overdue"
-
         with transaction.atomic():
             self.inventory.refresh_from_db()
-
             if self.pk:
                 old_rental = Rental.objects.select_for_update().get(pk=self.pk)
-
                 if old_rental.status != self.status:
-                    if old_rental.status in ["Renting", "Overdue"] and self.status == "Returned":
+                    if old_rental.status == "Rented" and self.status == "Returned":
                         Inventory.objects.filter(id=self.inventory.id).update(quantity=F("quantity") + 1)
-                    elif old_rental.status == "Returned" and self.status in ["Renting", "Overdue"]:
+                    elif old_rental.status == "Returned" and self.status == "Rented":
                         if self.inventory.quantity <= 0:
                             raise ValidationError(f"{self.inventory.name} is out of stock.")
                         Inventory.objects.filter(id=self.inventory.id).update(quantity=F("quantity") - 1)
-
             else:
                 if self.inventory.quantity <= 0:
                     raise ValidationError(f"{self.inventory.name} is out of stock.")
                 Inventory.objects.filter(id=self.inventory.id).update(quantity=F("quantity") - 1)
-
             super().save(*args, **kwargs)
 
+    def __str__(self):
+        return f"Rental #{self.id} - {self.status}"
 
-#Calendar to
-
-
+# --- Calendar/Event Model ---
 class Event(models.Model):
     title = models.CharField(max_length=200)
-    venue = models.CharField(max_length=255)  # Ensure this exists
+    venue = models.CharField(max_length=255)
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
     notes = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.title
-    
-#recipt
 
-
+# --- Receipt Model ---
 class Receipt(models.Model):
     customer_name = models.CharField(max_length=255)
     customer_number = models.CharField(max_length=20)
     amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, blank=True, null=True)
     down_payment = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, blank=True, null=True)
-    
-    # Measurements (Set default=0.00 for decimal fields)
+
+    # Measurements
     shoulder = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, blank=True, null=True)
     bust = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, blank=True, null=True)
     front = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, blank=True, null=True)
@@ -255,6 +293,12 @@ class Receipt(models.Model):
     event_date = models.DateField(null=True, blank=True)
     pickup_date = models.DateField(null=True, blank=True)
     return_date = models.DateField(null=True, blank=True)
-    payment_method = models.CharField(max_length=50, choices=[('Cash', 'Cash'), ('Credit Card', 'Credit Card'), ('Bank Transfer', 'Bank Transfer')])
+    payment_method = models.CharField(
+        max_length=50,
+        choices=[('Cash', 'Cash'), ('Credit Card', 'Credit Card'), ('Bank Transfer', 'Bank Transfer')]
+    )
     remarks = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Receipt for {self.customer_name}"
 
