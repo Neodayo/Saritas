@@ -1,0 +1,16 @@
+{% extends "saritasapp/base.html" %}
+{% block title %}Add Size{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Add New Size</h1>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn">Add Size</button>
+    </form>
+    <div class="back-link">
+        <a href="{% url 'saritasapp:add_inventory' %}">Back to Inventory</a>
+    </div>
+</div>
+{% endblock %}

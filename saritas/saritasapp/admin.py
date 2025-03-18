@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Branch, User, Receipt, EventPackage, Rental, PackageItem, CustomerOrder, SelectedPackageItem, Inventory, Category, WardrobePackage, WardrobePackageItem, Customer, Event
+from .models import Branch, User, Receipt, EventPackage, Rental, PackageItem, CustomerOrder, SelectedPackageItem, Inventory, Category, WardrobePackage, WardrobePackageItem, Customer, Event, Color, Size
 
 # Register your models here.
 admin.site.register(Branch)
@@ -15,6 +15,9 @@ admin.site.register(WardrobePackageItem)
 admin.site.register(Customer)
 admin.site.register(Event)
 admin.site.register(Rental)
+admin.site.register(Color)
+admin.site.register(Size)
+
 
 
 #receipt

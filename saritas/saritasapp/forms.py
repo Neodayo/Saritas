@@ -1,5 +1,5 @@
 from django import forms
-from .models import Inventory, Category, User, Rental, Customer, WardrobePackage, WardrobePackageItem, Branch, Event
+from .models import Inventory, Category, User, Rental, Customer, WardrobePackage, WardrobePackageItem, Branch, Event, Color, Size
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -19,17 +19,68 @@ class InventoryForm(forms.ModelForm):
     purchase_price = forms.DecimalField(
         min_value=0, max_digits=10, decimal_places=2, required=False, label="Purchase Price"
     )
-    image = forms.ImageField(required=False, label="Upload Image")
+    size = forms.ModelChoiceField(queryset=Size.objects.all(), required=False, label="Size")
+    image = forms.ImageField(required=True, label="Upload Image")
 
     class Meta:
         model = Inventory
-        fields = ['name', 'category', 'color', 'quantity', 'rental_price', 'purchase_price', 'available', 'image']
+        fields = [
+            'name', 'category', 'color', 'size', 
+            'quantity', 'rental_price', 'purchase_price', 
+            'available', 'image'
+        ]
         labels = {
             'name': 'Item Name',
             'category': 'Category',
             'color': 'Color',
+            'size': 'Size',
             'available': 'Available for Rent?',
         }
+
+    # Correct placement of clean() method
+    def clean(self):
+        cleaned_data = super().clean()
+
+        # Check if required fields are filled
+        required_fields = ['name', 'category', 'color', 'quantity', 'rental_price']
+        for field in required_fields:
+            if not cleaned_data.get(field):
+                self.add_error(field, f"{field.replace('_', ' ').capitalize()} is required.")
+
+        return cleaned_data
+
+    # Correctly placed clean_image() method for image validation
+    def clean_image(self):
+        image = self.cleaned_data.get('image')
+        if not image:
+            raise forms.ValidationError("Image field must not be empty.")
+        return image
+
+
+
+
+class ColorForm(forms.ModelForm):
+    class Meta:
+        model = Color
+        fields = ['name']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter color name'
+            })
+        }
+
+class SizeForm(forms.ModelForm):
+    class Meta:
+        model = Size
+        fields = ['name']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter size name'
+            })
+        }
+
 
 class CategoryForm(forms.ModelForm):
     name = forms.CharField(max_length=255, label="Category Name")

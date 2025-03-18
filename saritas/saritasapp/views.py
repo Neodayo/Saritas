@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import InventoryForm, CategoryForm, RentalForm, CustomerForm, EventForm
-from .models import Customer, Inventory, Category, Rental, User, WardrobePackage, Receipt
+from .forms import InventoryForm, CategoryForm, RentalForm, CustomerForm, EventForm, ColorForm, SizeForm
+from .models import Customer, Inventory, Category, Rental, User, WardrobePackage, Receipt, Color, Size
 from django.utils.timezone import now
 from django.db.models import F, Q  ,Count , Sum#new
 from django.db import transaction
@@ -56,34 +56,30 @@ from django.contrib.auth.decorators import login_required
 @login_required
 def add_inventory(request):
     categories = Category.objects.all()
+    sizes = Size.objects.all() 
+    colors = Color.objects.all()
 
     if request.method == 'POST':
         form = InventoryForm(request.POST, request.FILES)
         if form.is_valid():
-            inventory_item = form.save(commit=False)
-            inventory_item.purchase_price = float(request.POST.get('purchase_price', '0') or 0)  # Ensure numerical conversion
-            inventory_item.available = 'available' in request.POST  # Proper boolean handling
-            inventory_item.save()
+            form.save()  # No need to manually handle `purchase_price` and `available` now
             return redirect('saritasapp:inventory_list')
+        else:
+            # Display error messages in the template if form is invalid
+            return render(request, 'saritasapp/add_inventory.html', {
+                'form': form,
+                'categories': categories,
+                'sizes': sizes,
+                'colors': colors,
+            })
     else:
         form = InventoryForm()
 
-    return render(request, 'saritasapp/add_inventory.html', {'form': form, 'categories': categories})
-
-@login_required
-def inventory_list(request):
-    categories = Category.objects.all()
-    selected_category = request.GET.get('category', '')
-
-    if selected_category:
-        inventory_items = Inventory.objects.filter(category_id=selected_category)
-    else:
-        inventory_items = Inventory.objects.all()
-
-    return render(request, 'saritasapp/inventory.html', {
+    return render(request, 'saritasapp/add_inventory.html', {
+        'form': form,
         'categories': categories,
-        'inventory_items': inventory_items,
-        'selected_category': selected_category,
+        'colors': colors,
+        'sizes': sizes
     })
 
 @login_required
@@ -99,21 +95,46 @@ def add_category(request):
     return render(request, 'saritasapp/add_category.html', {'form': form})
 
 @login_required
-def view_inventory(request, item_id):
+def add_color(request):
+    if request.method == 'POST':
+        form = ColorForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('saritasapp:add_inventory')
+    else:
+        form = ColorForm()
+    return render(request, 'saritasapp/add_color.html', {'form': form})
+
+@login_required
+def add_size(request):
+    if request.method == 'POST':
+        form = SizeForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('saritasapp:add_inventory')
+    else:
+        form = SizeForm()
+    return render(request, 'saritasapp/add_size.html', {'form': form})
+
+
+@login_required
+def view_item(request, item_id):
     item = get_object_or_404(Inventory, id=item_id)
-    return render(request, 'saritasapp/view_inventory.html', {'item': item})
+    return render(request, 'saritasapp/view_item.html', {'item': item})
 
 @login_required
 def edit_inventory(request, item_id):
     item = get_object_or_404(Inventory, id=item_id)
     categories = Category.objects.all()
+    colors = Color.objects.all()
+    sizes = Size.objects.all()
 
     if request.method == 'POST':
         form = InventoryForm(request.POST, request.FILES, instance=item)
         if form.is_valid():
             item = form.save(commit=False)
-            item.purchase_price = float(request.POST.get('purchase_price', '0') or 0)  # Ensure numerical conversion
-            item.available = 'available' in request.POST  # Proper boolean handling
+            item.purchase_price = float(request.POST.get('purchase_price', '0') or 0) 
+            item.available = 'available' in request.POST  
             item.save()
             return redirect('saritasapp:inventory_list')
     else:
@@ -122,7 +143,9 @@ def edit_inventory(request, item_id):
     return render(request, 'saritasapp/edit_inventory.html', {
         'form': form,
         'categories': categories,
-        'item': item  # ✅ Pass the item to the template
+        'colors': colors,
+        'sizes': sizes,
+        'item': item 
     })
 
 @login_required
@@ -138,15 +161,44 @@ def delete_inventory(request, item_id):
 @login_required
 def inventory_view(request):
     categories = Category.objects.all()
-    selected_category = request.GET.get('category', '')
+    colors = Color.objects.all()
+    sizes = Size.objects.all()
 
-    inventory_items = Inventory.objects.filter(category_id=selected_category) if selected_category else Inventory.objects.all()
+    selected_category = request.GET.get('category', '')
+    selected_color = request.GET.get('color', '')
+    selected_size = request.GET.get('size', '')
+    sort = request.GET.get('sort', '')
+
+    inventory_items = Inventory.objects.all()
+
+    if selected_category:
+        inventory_items = inventory_items.filter(category_id=selected_category)
+    if selected_color:
+        inventory_items = inventory_items.filter(color_id=selected_color)
+    if selected_size:
+        inventory_items = inventory_items.filter(size_id=selected_size)
+
+    if sort == 'name_asc':
+        inventory_items = inventory_items.order_by('name')
+    elif sort == 'name_desc':
+        inventory_items = inventory_items.order_by('-name')
+    elif sort == 'price_asc':
+        inventory_items = inventory_items.order_by('purchase_price')
+    elif sort == 'price_desc':
+        inventory_items = inventory_items.order_by('-purchase_price')
 
     return render(request, 'saritasapp/inventory.html', {
         'categories': categories,
+        'colors': colors,
+        'sizes': sizes,
         'inventory_items': inventory_items,
-        'selected_category': selected_category
+        'selected_category': selected_category,
+        'selected_color': selected_color,
+        'selected_size': selected_size,
+        'sort': sort
     })
+
+
 
 @login_required
 def rent_item(request, inventory_id):

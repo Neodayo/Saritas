@@ -5,175 +5,135 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'css/add_inventory.css' %}">
-    <style>
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: none;
-            width: 100%;
-            max-width: 800px;
-            box-sizing: border-box;
-        }
-    
-        .container h1 {
-            text-align: center;
-            margin-bottom: 25px;
-            font-size: 26px;
-            color: #8E793E;
-        }
-    
-        .container form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-    
-        .container label {
-            font-weight: bold;
-            color: #34495e;
-            margin-bottom: 6px;
-        }
-    
-        .container input[type="text"],
-        .container input[type="number"],
-        .container input[type="file"],
-        .container select {
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 14px;
-            box-sizing: border-box;
-            width: 100%;
-        }
-    
-        .container .category-bar select {
-            background-color: white;
-        }
-    
-        .container .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-    
-        .container .btn {
-            background-color: #8E793E;
-            color: white;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            width: 100%;
-            margin-top: 10px;
-        }
-    
-        .container .btn:hover {
-            background-color: #AD974F;
-        }
-    
-        .container .category-link {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            font-size: 14px;
-            color: #231F20;
-        }
-    
-        .container .category-link a {
-            color: #8E793E;
-            text-decoration: none;
-            font-weight: bold;
-        }
-    
-        .container .category-link a:hover {
-            text-decoration: underline;
-        }
-    
-        .container .back-link a {
-            display: inline-block;
-            margin-top: 20px;
-            background-color: #231F20;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            text-decoration: none;
-            transition: background-color 0.3s ease;
-            text-align: center;
-        }
-    
-        .container .back-link a:hover {
-            background-color: #333;
-        }
-    
-        @media (max-width: 600px) {
-            .container {
-                padding: 20px;
-            }
-    
-            .container .btn {
-                font-size: 14px;
-            }
-        }
-    </style>
-    
-    
-
 {% endblock %}
 
 {% block content %}
 <div class="container">
     <h1>Add New Inventory Item</h1>
+
     <form method="POST" action="{% url 'saritasapp:add_inventory' %}" enctype="multipart/form-data">
         {% csrf_token %}
+
+        <!-- Display non-field errors (e.g., form-wide issues) -->
+        {% if form.non_field_errors %}
+            <div class="error-message" style="color: red;">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
 
         <div>
             <label for="name">Name:</label>
             <input type="text" id="name" name="name" required>
+            {% if form.name.errors %}
+                <div class="error-message" style="color: red;">
+                    {{ form.name.errors|striptags }}
+                </div>
+            {% endif %}
+
             <label for="category">Category:</label>
         </div>
+
         <div class="category-bar">
             <select id="category" name="category" required>
-                {% if categories %}
-                    {% for category in categories %}
-                        <option value="{{ category.id }}">{{ category.name }}</option>
-                    {% endfor %}
-                {% else %}
-                    <option disabled>No categories available</option>
-                {% endif %}
+                <option value="" selected>-- Select Category --</option>
+                {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.name }}</option>
+                {% endfor %}
             </select>
+            {% if form.category.errors %}
+                <div class="error-message" style="color: red;">
+                    {{ form.category.errors|striptags }}
+                </div>
+            {% endif %}
         </div>
+
         <div class="category-link">
             <span>Manage categories:</span>
             <a href="{% url 'saritasapp:add_category' %}" target="_blank">Add new category</a>
         </div>
 
         <label for="color">Color:</label>
-        <input type="text" id="color" name="color">
+        <div class="category-bar">
+            <select id="color" name="color">
+                <option value="" selected>-- Select Color --</option>
+                {% for color in colors %}
+                    <option value="{{ color.id }}">{{ color.name }}</option>
+                {% endfor %}
+            </select>
+            {% if form.color.errors %}
+                <div class="error-message" style="color: red;">
+                    {{ form.color.errors|striptags }}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="category-link">
+            <span>Manage colors:</span>
+            <a href="{% url 'saritasapp:add_color' %}" target="_blank">Add new color</a>
+        </div>
+
+        <label for="size">Size:</label>
+        <div class="category-bar">
+            <select id="size" name="size">
+                <option value="" selected>-- Select Size --</option>
+                {% for size in sizes %}
+                    <option value="{{ size.id }}">{{ size.name }}</option>
+                {% endfor %}
+            </select>
+            {% if form.size.errors %}
+                <div class="error-message" style="color: red;">
+                    {{ form.size.errors|striptags }}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="category-link">
+            <span>Manage sizes:</span>
+            <a href="{% url 'saritasapp:add_size' %}" target="_blank">Add new size</a>
+        </div>
 
         <label for="quantity">Quantity:</label>
         <input type="number" id="quantity" name="quantity" required>
+        {% if form.quantity.errors %}
+            <div class="error-message" style="color: red;">
+                {{ form.quantity.errors|striptags }}
+            </div>
+        {% endif %}
 
         <label for="rental_price">Rental Price:</label>
         <input type="number" id="rental_price" name="rental_price" step="0.01" required>
+        {% if form.rental_price.errors %}
+            <div class="error-message" style="color: red;">
+                {{ form.rental_price.errors|striptags }}
+            </div>
+        {% endif %}
 
         <label for="purchase_price">Purchase Price:</label>
         <input type="number" id="purchase_price" name="purchase_price" step="0.01">
+        {% if form.purchase_price.errors %}
+            <div class="error-message" style="color: red;">
+                {{ form.purchase_price.errors|striptags }}
+            </div>
+        {% endif %}
 
         <label for="available">Available:</label>
-        <input type="checkbox" id="available" name="available">
+        <input type="checkbox" id="available" name="available" checked>        
 
         <label for="image">Upload Image:</label>
-        <input type="file" id="image" name="image">
+        <input type="file" id="image" name="image" required>
+        {% if form.image.errors %}
+            <div class="error-message" style="color: red;">
+                {{ form.image.errors|striptags }}
+            </div>
+        {% endif %}        
 
         <button type="submit" class="btn">Add Item</button>
     </form>
-    <a href="{% url 'saritasapp:inventory_list' %}">Back</a>
 
+    <div class="back-link">
+        <a href="{% url 'saritasapp:inventory_list' %}">Back</a>
+    </div>
 </div>
-
-
 {% endblock %}

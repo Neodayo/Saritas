@@ -5,154 +5,6 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'css/inventory.css' %}">
-    <style>
-        body {
-            background-color: #EAEAEA;
-            font-family: 'Segoe UI', sans-serif;
-            color: #231F20;
-        }
-
-        .inventory-title {
-            color: #8E793E;
-            font-size: 36px;
-            font-weight: bold;
-            text-align: center;
-            margin: 30px auto 20px;
-        }
-
-        .controls-container {
-            max-width: 1100px;
-            margin: 0 auto 30px;
-            padding: 0 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        .ref-additem a {
-            padding: 12px 28px;
-            font-size: 16px;
-            background-color: #8E793E;
-            border: none;
-            border-radius: 10px;
-            font-weight: bold;
-            text-decoration: none;
-            color: white;
-            transition: all 0.3s ease;
-            width: fit-content;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
-        }
-
-        .ref-additem a:hover {
-            background-color: #AD974F;
-            color: #231F20;
-        }
-
-        .filter-category {
-            text-align: right;
-        }
-
-        .filter-category label {
-            font-weight: 600;
-            color: #231F20;
-            font-size: 15px;
-            font-family: 'Poppins', sans-serif;
-            display: block;
-            margin-bottom: 6px;
-        }
-
-        .filter-category select {
-            padding: 10px 14px;
-            font-size: 16px;
-            border: 1px solid #AD974F;
-            border-radius: 8px;
-            background-color: white;
-            color: #231F20;
-            cursor: pointer;
-            width: 200px;
-            text-align: center;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='10'%20height='6'%3E%3Cpath%20fill='%238E793E'%20d='M0%200l5%205%205-5z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 10px center;
-            background-size: 12px;
-        }
-
-        .inventory-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
-            padding: 20px 0;
-        }
-
-        .inventory-card {
-            width: 250px;
-            border: 1px solid #AD974F;
-            border-radius: 12px;
-            overflow: hidden;
-            background: white;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            padding: 15px;
-            transition: transform 0.3s ease;
-        }
-
-        .inventory-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-        }
-
-        .inventory-card img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-
-        .inventory-card h3 {
-            margin: 12px 0 8px;
-            font-size: 20px;
-            color: #231F20;
-        }
-
-        .inventory-card p {
-            margin: 4px 0;
-            font-size: 14px;
-            color: #231F20;
-        }
-
-        .inventory-card a {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 8px 14px;
-            background: #8E793E;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-            transition: background 0.3s ease;
-        }
-
-        .inventory-card a:hover {
-            background: #AD974F;
-            color: #231F20;
-        }
-
-        @media (max-width: 768px) {
-            .controls-container {
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-            }
-
-            .filter-category {
-                text-align: center;
-            }
-        }
-    </style>
 {% endblock %}
 
 {% block content %}
@@ -174,9 +26,49 @@
                 {% endfor %}
             </select>
         </div>
+
+        <div class="filter-color">
+            <label for="color">Filter by Color:</label>
+            <select id="color" name="color" onchange="filterInventory()">
+                <option value="">All</option>
+                {% for color in colors %}
+                    <option value="{{ color.id }}" {% if selected_color == color.id|stringformat:"s" %}selected{% endif %}>
+                        {{ color.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-size">
+            <label for="size">Filter by Size:</label>
+            <select id="size" name="size" onchange="filterInventory()">
+                <option value="">All</option>
+                {% for size in sizes %}
+                    <option value="{{ size.id }}" {% if selected_size == size.id|stringformat:"s" %}selected{% endif %}>
+                        {{ size.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <button type="button" onclick="clearFilters()" class="">Clear Filters</button>
+        </div>
+        
+
+        <div class="sort-by">
+            <label for="sort">Sort by:</label>
+            <select id="sort" name="sort" onchange="filterInventory()">
+                <option value="">Default</option>
+                <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>Name (A-Z)</option>
+                <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>Name (Z-A)</option>
+                <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price (Low to High)</option>
+                <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price (High to Low)</option>
+            </select>
+        </div>
     </div>
 
     <div class="inventory-container">
+        {% if inventory_items %}
         {% for item in inventory_items %}
             <div class="inventory-card">
                 {% if item.image %}
@@ -186,26 +78,44 @@
                 {% endif %}
                 <h3>{{ item.name }}</h3>
                 <p><strong>Category:</strong> {{ item.category.name }}</p>
+                <p><strong>Color:</strong> {{ item.color.name|default:"N/A" }}</p>
+                <p><strong>Size:</strong> {{ item.size.name|default:"N/A" }}</p>
                 <p><strong>Quantity:</strong> {{ item.quantity }}</p>
                 <p><strong>Price:</strong> ₱{{ item.purchase_price }}</p>
                 <p><strong>Available:</strong> {{ item.available|yesno:"Yes,No" }}</p>
                 <a href="{% url 'saritasapp:view_inventory' item.id %}">View Details</a>
             </div>
-        {% empty %}
-            <p>No inventory items found.</p>
         {% endfor %}
+    {% else %}
+        <p>No inventory items found matching the selected criteria.</p>
+    {% endif %}
     </div>
 
     <script>
         function filterInventory() {
             const selectedCategory = document.getElementById("category").value;
-            let url = "{% url 'saritasapp:inventory_list' %}";
+            const selectedColor = document.getElementById("color").value;
+            const selectedSize = document.getElementById("size").value;
+            const selectedSort = document.getElementById("sort").value;
 
-            if (selectedCategory) {
-                url += "?category=" + encodeURIComponent(selectedCategory);
-            }
+            let url = "{% url 'saritasapp:inventory_list' %}?";
+
+            if (selectedCategory) url += "category=" + encodeURIComponent(selectedCategory) + "&";
+            if (selectedColor) url += "color=" + encodeURIComponent(selectedColor) + "&";
+            if (selectedSize) url += "size=" + encodeURIComponent(selectedSize) + "&";
+            if (selectedSort) url += "sort=" + encodeURIComponent(selectedSort);
 
             window.location.href = url;
         }
+        function clearFilters() {
+            document.getElementById("category").value = "";
+            document.getElementById("color").value = "";
+            document.getElementById("size").value = "";
+            document.getElementById("sort").value = "";
+            
+            filterInventory(); // Reuse the existing filter logic to refresh the page
+        }
+
     </script>
 {% endblock %}
+

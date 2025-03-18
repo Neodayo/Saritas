@@ -29,6 +29,30 @@
                 {% endfor %}
             </select>
         </div>
+        <div class="form-group">
+            <label for="color">Color</label>
+            <select id="color" name="color">
+                <option value="">Select a Color</option>
+                {% for color in colors %}
+                    <option value="{{ color.id }}" {% if item.color and item.color.id == color.id %}selected{% endif %}>
+                        {{ color.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="size">Size</label>
+            <select id="size" name="size">
+                <option value="">Select a Size</option>
+                {% for size in sizes %}
+                    <option value="{{ size.id }}" {% if item.size and item.size.id == size.id %}selected{% endif %}>
+                        {{ size.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        
 
         <div class="form-group">
             <label for="quantity">Quantity</label>
