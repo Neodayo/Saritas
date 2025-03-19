@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Saritas Customer Portal{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/customer_styles.css' %}">
+</head>
+<body>
+    <header>
+        <h1>Saritas Wedding Creations</h1>
+        {% if user.is_authenticated %}
+            <nav>
+                <a href="{% url 'customer_dashboard' %}">Dashboard</a>
+                <a href="{% url 'customer_logout' %}">Logout</a>
+            </nav>
+        {% endif %}
+    </header>
+    
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
