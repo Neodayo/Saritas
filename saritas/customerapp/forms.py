@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from saritasapp.models import User
+from django.contrib.auth.models import User
 from saritasapp.models import Customer
 
 class CustomerSignUpForm(UserCreationForm):
@@ -9,7 +9,7 @@ class CustomerSignUpForm(UserCreationForm):
     email = forms.EmailField(required=True)
     phone = forms.CharField(max_length=15, required=True)
     address = forms.CharField(widget=forms.Textarea, required=False)
-    image = forms.ImageField(required=True)
+    image = forms.ImageField(required=False)
 
     class Meta:
         model = User
