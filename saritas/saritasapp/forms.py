@@ -1,7 +1,9 @@
 from django import forms
-from .models import Inventory, Category, User, Rental, Customer, WardrobePackage, WardrobePackageItem, Branch, Event, Color, Size
+from .models import Inventory, Category, User, Rental, WardrobePackage, WardrobePackageItem, Branch, Event, Color, Size, Staff
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate
+from django.core.exceptions import ValidationError
+from django.db import transaction
 User = get_user_model()
 
 class EventForm(forms.ModelForm):
@@ -9,51 +11,64 @@ class EventForm(forms.ModelForm):
         model = Event
         fields = ['title', 'venue', 'start_date', 'end_date', 'notes']
         widgets = {
-            'start_date': forms.DateInput(attrs={'type': 'date'}),
-            'end_date': forms.DateInput(attrs={'type': 'date'}),
+            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'venue': forms.TextInput(attrs={'class': 'form-control'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
 class InventoryForm(forms.ModelForm):
-    quantity = forms.IntegerField(min_value=1, label="Quantity")
-    rental_price = forms.DecimalField(min_value=0, max_digits=10, decimal_places=2, label="Rental Price")
-    purchase_price = forms.DecimalField(
-        min_value=0, max_digits=10, decimal_places=2, required=False, label="Purchase Price"
+    quantity = forms.IntegerField(min_value=1, label="Quantity", widget=forms.NumberInput(attrs={'class': 'form-control'}))
+    rental_price = forms.DecimalField(
+        min_value=0, 
+        max_digits=10, 
+        decimal_places=2, 
+        label="Rental Price",
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
     )
-    size = forms.ModelChoiceField(queryset=Size.objects.all(), required=False, label="Size")
-    image = forms.ImageField(required=True, label="Upload Image")
+    purchase_price = forms.DecimalField(
+        min_value=0, 
+        max_digits=10, 
+        decimal_places=2, 
+        required=False, 
+        label="Purchase Price",
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    )
+    size = forms.ModelChoiceField(
+        queryset=Size.objects.all(), 
+        required=False, 
+        label="Size",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    image = forms.ImageField(
+        required=True, 
+        label="Upload Image",
+        widget=forms.ClearableFileInput(attrs={'class': 'form-control'})
+    )
 
     class Meta:
         model = Inventory
-        fields = [
-            'name', 'category', 'color', 'size', 
-            'quantity', 'rental_price', 'purchase_price', 
-            'available', 'image'
-        ]
-        labels = {
-            'name': 'Item Name',
-            'category': 'Category',
-            'color': 'Color',
-            'size': 'Size',
-            'available': 'Available for Rent?',
+        fields = ['name', 'category', 'color', 'size', 'quantity', 'rental_price', 'purchase_price', 'available', 'image']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'category': forms.Select(attrs={'class': 'form-select'}),
+            'color': forms.Select(attrs={'class': 'form-select'}),
+            'available': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
-    # Correct placement of clean() method
     def clean(self):
         cleaned_data = super().clean()
-
-        # Check if required fields are filled
         required_fields = ['name', 'category', 'color', 'quantity', 'rental_price']
         for field in required_fields:
             if not cleaned_data.get(field):
-                self.add_error(field, f"{field.replace('_', ' ').capitalize()} is required.")
-
+                self.add_error(field, f"{field.replace('_', ' ').title()} is required.")
         return cleaned_data
 
-    # Correctly placed clean_image() method for image validation
     def clean_image(self):
         image = self.cleaned_data.get('image')
         if not image:
-            raise forms.ValidationError("Image field must not be empty.")
+            raise ValidationError("Image field must not be empty.")
         return image
 
 
@@ -94,42 +109,22 @@ class RentalForm(forms.ModelForm):
         model = Rental
         fields = ["customer", "inventory", "rental_start", "rental_end", "status"]
         widgets = {
-            "rental_start": forms.DateInput(attrs={"type": "date"}),
-            "rental_end": forms.DateInput(attrs={"type": "date"}),
+            "customer": forms.Select(attrs={'class': 'form-select'}),
+            "inventory": forms.Select(attrs={'class': 'form-select'}),
+            "rental_start": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "rental_end": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "status": forms.Select(attrs={'class': 'form-select'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if not self.instance.pk:  # Only when creating a new rental
-            self.fields['status'].initial = 'Renting'
-            self.fields['status'].widget = forms.HiddenInput()  # Hide the field on creation
+        if not self.instance.pk:
+            self.fields['status'].initial = 'Rented'
+            self.fields['status'].widget = forms.HiddenInput()
 
     def clean(self):
         cleaned_data = super().clean()
-        rental_start = cleaned_data.get("rental_start")
-        rental_end = cleaned_data.get("rental_end")
-        inventory = cleaned_data.get("inventory")
 
-        if rental_end and rental_start and rental_end < rental_start:
-            raise forms.ValidationError("Return date must be after the rental start date.")
-
-        if inventory and inventory.quantity <= 0:
-            raise forms.ValidationError(f"{inventory.name} is out of stock.")
-        
-        return cleaned_data
-
-
-class CustomerForm(forms.ModelForm):
-    class Meta:
-        model = Customer
-        fields = ["first_name", "last_name", "email", "phone", "address", "image"]
-        widgets = {
-            "first_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "First Name"}),
-            "last_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Last Name"}),
-            "email": forms.EmailInput(attrs={"class": "form-control", "placeholder": "Email"}),
-            "phone": forms.TextInput(attrs={"class": "form-control", "placeholder": "Phone"}),
-            "address": forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Address (Optional)"}),
-        }
 
 class WardrobePackageForm(forms.ModelForm):
     class Meta:
@@ -141,49 +136,75 @@ class WardrobePackageItemForm(forms.ModelForm):
         model = WardrobePackageItem
         fields = ["package", "inventory_item", "quantity"]
 
-class SignUpForm(UserCreationForm):
-    name = forms.CharField(
-        max_length=255,
-        required=True,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Full Name'})
-    )
-    email = forms.EmailField(
-        max_length=254,
-        required=True,
-        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email Address'})
-    )
+class StaffSignUpForm(UserCreationForm):
     branch = forms.ModelChoiceField(
         queryset=Branch.objects.all(),
         required=True,
         widget=forms.Select(attrs={'class': 'form-select'})
     )
-    password1 = forms.CharField(
-        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Password'})
-    )
-    password2 = forms.CharField(
-        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirm Password'})
+    position = forms.CharField(
+        label="Position",
+        widget=forms.TextInput(attrs={'class': 'form-control'})
     )
 
     class Meta:
         model = User
-        fields = ['username', 'name', 'email', 'branch', 'password1', 'password2']
+        fields = ['username', 'first_name', 'last_name', 'email', 'branch', 'position', 'password1', 'password2']
         widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Username'}),
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
         }
 
+    @transaction.atomic
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.role = "staff"
+        if commit:
+            user.save()
+            Staff.objects.create(
+                user=user,
+                branch=self.cleaned_data['branch'],
+                position=self.cleaned_data['position']
+            )
+        return user
+
+class AdminSignUpForm(UserCreationForm):
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+        }
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.is_superuser = True
+        user.is_staff = True
+        if commit:
+            user.save()
+        return user
+
+class EditProfileForm(forms.ModelForm):
+    branch = forms.ModelChoiceField(
+        queryset=Branch.objects.all(),
+        required=True,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'branch']
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+        }
 
 class LoginForm(AuthenticationForm):
     username = forms.CharField(label="Username", widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(label="Password", widget=forms.PasswordInput(attrs={'class': 'form-control'}))
-
-
-#profile
-from django import forms
-from .models import User, Branch
-
-class EditProfileForm(forms.ModelForm):
-    branch = forms.ModelChoiceField(queryset=Branch.objects.all(), required=True)
-
-    class Meta:
-        model = User
-        fields = ["name", "email", "branch"]

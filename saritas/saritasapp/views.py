@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import InventoryForm, CategoryForm, RentalForm, CustomerForm, EventForm, ColorForm, SizeForm
+from .forms import InventoryForm, CategoryForm, RentalForm, EventForm, ColorForm, SizeForm
 from .models import Customer, Inventory, Category, Rental, User, WardrobePackage, Receipt, Color, Size
 from django.utils.timezone import now
 from django.db.models import F, Q  ,Count , Sum#new
@@ -18,7 +18,7 @@ from django.db.models.functions import ExtractWeek, ExtractMonth, ExtractYear #n
 #receipt
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from datetime import datetime
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
@@ -26,17 +26,14 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Spacer, Par
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from .models import Receipt
-
-
-from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from .forms import StaffSignUpForm, AdminSignUpForm, LoginForm
 from django.utils.timezone import now
 from .models import Event
 from django.http import JsonResponse
 from datetime import date
 from django.contrib.auth import login
-from .forms import SignUpForm, LoginForm
-from django.contrib.auth import authenticate
-from django.shortcuts import render, get_object_or_404, redirect
+from .forms import LoginForm
 from django.http import HttpResponse
 from .models import Receipt
 from datetime import datetime
@@ -46,9 +43,8 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Spacer, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login
 from django.contrib import messages
-from .forms import SignUpForm, LoginForm 
+from .forms import LoginForm 
 from .models import User
 from django.contrib.auth.decorators import login_required
 
@@ -304,7 +300,9 @@ def return_rental(request, rental_id):
     
     return redirect('saritasapp:view_customer', rental.customer.id)
 
-
+def manage_staff(request):
+    staff = User.objects.filter(role='Staff')
+    return render(request, 'saritasapp/manage_staff.html', {'staff': staff})
 
 #data_analysis
 from django.shortcuts import render
@@ -515,31 +513,50 @@ def made_to_order(request):
     return render(request, 'saritasapp/made_to_order.html')
 
 
-# SIGN UP VIEW
+# --- Staff Signup ---
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
 def sign_up(request):
     if request.method == 'POST':
-        form = SignUpForm(request.POST)
+        form = StaffSignUpForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user)  # Auto-login after signup
-            messages.success(request, "Account created successfully!")
+            form.save()
+            messages.success(request, "Staff account created successfully!")
             return redirect('saritasapp:dashboard')
-        else:
-            messages.error(request, "Error creating account. Please check the form.")
     else:
-        form = SignUpForm()
-    
+        form = StaffSignUpForm()
+
     return render(request, 'saritasapp/signup.html', {'form': form})
 
-# LOGIN VIEW
+
+# --- Admin Signup ---
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_signup(request):
+    if request.method == 'POST':
+        form = AdminSignUpForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Admin account created successfully!")
+            return redirect('saritasapp:dashboard')
+    else:
+        form = AdminSignUpForm()
+
+    return render(request, 'saritasapp/admin_signup.html', {'form': form})
+
+
+# --- Login View ---
 def sign_in(request):
     if request.method == 'POST':
         form = LoginForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
-            login(request, user)
-            messages.success(request, "Successfully logged in!")
-            return redirect('saritasapp:dashboard')
+            if user.is_superuser or user.is_staff_user:
+                login(request, user)
+                messages.success(request, "Successfully logged in!")
+                return redirect('saritasapp:dashboard')
+            else:
+                messages.error(request, "Unauthorized access. Staff or admin accounts only.")
         else:
             messages.error(request, "Invalid username or password.")
     else:
@@ -548,10 +565,18 @@ def sign_in(request):
     return render(request, 'saritasapp/signin.html', {'form': form})
 
 
-# DASHBOARD VIEW (Example)
+# --- Dashboard View ---
 @login_required
 def dashboard(request):
     return render(request, 'saritasapp/dashboard.html')
+
+
+# --- Logout View ---
+@login_required
+def logout_view(request):
+    logout(request)
+    messages.info(request, "You have been logged out.")
+    return redirect('saritasapp:sign_in')
 
 
 #all views
@@ -982,3 +1007,4 @@ def delete_event(request, event_id):
 
 def packages(request):
     return render(request, 'saritasapp/package.html')
+

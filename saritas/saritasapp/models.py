@@ -1,12 +1,12 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.db.models import F, Sum
-from django.core.exceptions import ValidationError
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.db import transaction
+from django.db.models import F
+from django.core.exceptions import ValidationError
 
-# --- Branch Model ---
+
 class Branch(models.Model):
     branch_name = models.CharField(max_length=255, unique=True)
     location = models.CharField(max_length=255)
@@ -14,32 +14,50 @@ class Branch(models.Model):
     def __str__(self):
         return self.branch_name
 
-# --- User Model ---
 class User(AbstractUser):
-    name = models.CharField(max_length=255)
+    ROLE_CHOICES = [
+        ('staff', 'Staff'),
+        ('customer', 'Customer'),
+    ]
+
     email = models.EmailField(unique=True)
-    branch = models.ForeignKey(Branch, null=True, on_delete=models.SET_NULL, related_name="users")
+    branch = models.ForeignKey(Branch, null=True, blank=True, on_delete=models.SET_NULL)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='customer')
     created_at = models.DateTimeField(auto_now_add=True)
 
     USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = ["name", "email"]
+    REQUIRED_FIELDS = ["email"]
 
     def __str__(self):
-        return self.name if self.name else self.username
+        return f"{self.username} - {self.get_role_display()}"
 
-# --- Customer Model ---
+    @property
+    def is_admin(self):
+        return self.is_superuser
+
+    @property
+    def is_staff_user(self):
+        return self.role == 'staff'
+
+class Staff(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="staff_profile")
+    position = models.CharField(max_length=100)
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.user.username} ({self.position})"
+
 class Customer(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="customer", null=True, blank=True)
-    first_name = models.CharField(max_length=255)
-    last_name = models.CharField(max_length=255)
-    email = models.EmailField(unique=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="customer_profile")
     phone = models.CharField(max_length=15, unique=True)
     address = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     image = models.ImageField(upload_to="customers/", null=True, blank=True)
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+        return f"{self.user.first_name} {self.user.last_name}"
+
+
 
 # --- Category Model (For Inventory Items) ---
 class Category(models.Model):

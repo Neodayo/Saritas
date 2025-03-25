@@ -1,0 +1,39 @@
+{% extends 'saritasapp/base.html' %}
+{% load static %}
+{% block title %}Manage Staff{% endblock %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/manage_staff.css' %}">
+{% endblock %}
+{% block content %}
+<body>
+    {% if user.is_superuser %}
+    <div class="text-right mb-3">
+        <a href="{% url 'saritasapp:sign_up' %}" class="btn btn-primary">Sign Up New Staff</a>
+    </div>
+    {% endif %}
+    <div class="container mt-5">
+        <h2 class="mb-4">Staff Management</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for staff in staff_list %}
+                <tr>
+                    <td>{{ staff.id }}</td>
+                    <td>{{ staff.name }}</td>
+                    <td>{{ staff.email }}</td>
+                    <td>{{ staff.role }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+{% endblock %} 

@@ -25,6 +25,7 @@ urlpatterns = [
     path("customer/list/", views.customer_list, name="customer_list"),
     path('customers/<int:customer_id>/', views.view_customer, name='view_customer'),
     path('rental/return/<int:rental_id>/', views.return_rental, name='return_rental'),
+    path('manage-staff/', views.manage_staff, name='manage_staff'),
     #data analysis
     path('data-analysis/', views.data_analysis, name='data_analysis'),
     #calendar
@@ -44,11 +45,11 @@ urlpatterns = [
     path('receipt/<int:receipt_id>/update/', update_receipt, name='receipt-update'),
     path('receipt/<int:receipt_id>/pdf/', generate_receipt_pdf, name='receipt-pdf'),
     #login and signup
-    path("signup/", views.sign_up, name="sign_up"),
-    path("signin/", views.sign_in, name="sign_in"),
-    path('login/', auth_views.LoginView.as_view(template_name='saritasapp/login.html'), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='saritasapp:logout_page'), name='logout'),
-    path('dashboard/', views.dashboard, name='dashboard'),
+    path("signup/", views.sign_up, name="signup"),
+    path("admin-signup/", views.admin_signup, name="admin_signup"),
+    path("login/", views.sign_in, name="sign_in"),
+    path("logout/", views.logout_view, name="logout"),
+    path("dashboard/", views.dashboard, name="dashboard"),
     #profile
     path("profile/", views.profile_view, name="profile"),
     path("logout/", views.sign_out, name="logout"), 
