@@ -6,6 +6,8 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
+from django.shortcuts import render
+from saritasapp.models import Inventory, Category, Color, Size
 
 def register(request):
     if request.method == 'POST':
@@ -52,3 +54,44 @@ def login_view(request):
 @login_required
 def customer_dashboard(request):
     return render(request, 'customerapp/dashboard.html')
+
+
+
+def wardrobe_view(request):
+    inventory_items = Inventory.objects.filter(available=True)
+
+    # Filtering
+    selected_category = request.GET.get('category')
+    selected_color = request.GET.get('color')
+    selected_size = request.GET.get('size')
+    sort = request.GET.get('sort')
+
+    if selected_category:
+        inventory_items = inventory_items.filter(category__id=selected_category)
+    if selected_color:
+        inventory_items = inventory_items.filter(color__id=selected_color)
+    if selected_size:
+        inventory_items = inventory_items.filter(size__id=selected_size)
+
+    # Sorting
+    if sort == "name_asc":
+        inventory_items = inventory_items.order_by("name")
+    elif sort == "name_desc":
+        inventory_items = inventory_items.order_by("-name")
+    elif sort == "price_asc":
+        inventory_items = inventory_items.order_by("purchase_price")
+    elif sort == "price_desc":
+        inventory_items = inventory_items.order_by("-purchase_price")
+
+    context = {
+        'inventory_items': inventory_items,
+        'categories': Category.objects.all(),
+        'colors': Color.objects.all(),
+        'sizes': Size.objects.all(),
+        'selected_category': selected_category,
+        'selected_color': selected_color,
+        'selected_size': selected_size,
+        'sort': sort
+    }
+
+    return render(request, 'customerapp/wardrobe.html', context)

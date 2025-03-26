@@ -58,10 +58,14 @@ def add_inventory(request):
     if request.method == 'POST':
         form = InventoryForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()  # No need to manually handle `purchase_price` and `available` now
+            inventory_item = form.save(commit=False)
+            
+            if inventory_item.reservation_price is None:
+                inventory_item.reservation_price = 0.00
+
+            inventory_item.save()
             return redirect('saritasapp:inventory_list')
         else:
-            # Display error messages in the template if form is invalid
             return render(request, 'saritasapp/add_inventory.html', {
                 'form': form,
                 'categories': categories,
@@ -77,6 +81,7 @@ def add_inventory(request):
         'colors': colors,
         'sizes': sizes
     })
+
 
 @login_required
 def add_category(request):

@@ -89,6 +89,7 @@ class Inventory(models.Model):
     size = models.ForeignKey(Size, null=True, blank=True, on_delete=models.SET_NULL, related_name="inventory_items")
     quantity = models.IntegerField(default=0)
     rental_price = models.DecimalField(max_digits=10, decimal_places=2)
+    reservation_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     purchase_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     available = models.BooleanField(default=True)
     image = models.ImageField(upload_to="inventory/", null=True, blank=True)

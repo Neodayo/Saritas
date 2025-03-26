@@ -1,4 +1,4 @@
-{% extends "saritasapp/base.html" %}
+{% extends "customerapp/base.html" %}
 {% load static %}
 
 {% block title %}Inventory{% endblock %}
@@ -11,10 +11,6 @@
     <h1 class="inventory-title">Inventory</h1>
 
     <div class="controls-container">
-        <div class="ref-additem">
-            <a href="{% url 'saritasapp:add_inventory' %}">Add New Item</a>
-        </div>
-
         <div class="filter-category">
             <label for="category">Filter by Category:</label>
             <select id="category" name="category" onchange="filterInventory()">
@@ -50,10 +46,6 @@
                 {% endfor %}
             </select>
         </div>
-        <div>
-            <button type="button" onclick="clearFilters()" class="">Clear Filters</button>
-        </div>
-        
 
         <div class="sort-by">
             <label for="sort">Sort by:</label>
@@ -65,29 +57,33 @@
                 <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price (High to Low)</option>
             </select>
         </div>
+
+        <div>
+            <button type="button" onclick="clearFilters()" class="">Clear Filters</button>
+        </div>
     </div>
 
     <div class="inventory-container">
         {% if inventory_items %}
-        {% for item in inventory_items %}
-            <div class="inventory-card">
-                {% if item.image %}
-                    <img src="{{ item.image.url }}" alt="{{ item.name }}">
-                {% else %}
-                    <img src="{% static 'image/default-placeholder.png' %}" alt="No image available">
-                {% endif %}
-                <h3>{{ item.name }}</h3>
-                <p><strong>Category:</strong> {{ item.category.name }}</p>
-                <p><strong>Color:</strong> {{ item.color.name|default:"N/A" }}</p>
-                <p><strong>Size:</strong> {{ item.size.name|default:"N/A" }}</p>
-                <p><strong>Quantity:</strong> {{ item.quantity }}</p>
-                <p><strong>Available:</strong> {{ item.available|yesno:"Yes,No" }}</p>
-                <a href="{% url 'saritasapp:view_inventory' item.id %}">View Details</a>
-            </div>
-        {% endfor %}
-    {% else %}
-        <p>No inventory items found matching the selected criteria.</p>
-    {% endif %}
+            {% for item in inventory_items %}
+                <div class="inventory-card">
+                    {% if item.image %}
+                        <img src="{{ item.image.url }}" alt="{{ item.name }}">
+                    {% else %}
+                        <img src="{% static 'image/default-placeholder.png' %}" alt="No image available">
+                    {% endif %}
+                    <h3>{{ item.name }}</h3>
+                    <p><strong>Category:</strong> {{ item.category.name }}</p>
+                    <p><strong>Color:</strong> {{ item.color.name|default:"N/A" }}</p>
+                    <p><strong>Size:</strong> {{ item.size.name|default:"N/A" }}</p>
+                    <p><strong>Quantity:</strong> {{ item.quantity }}</p>
+                    <p><strong>Price:</strong> ₱{{ item.purchase_price }}</p>
+                    <p><strong>Available:</strong> {{ item.available|yesno:"Yes,No" }}</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No inventory items found matching the selected criteria.</p>
+        {% endif %}
     </div>
 
     <script>
@@ -97,7 +93,7 @@
             const selectedSize = document.getElementById("size").value;
             const selectedSort = document.getElementById("sort").value;
 
-            let url = "{% url 'saritasapp:inventory_list' %}?";
+            let url = "{% url 'customerapp:wardrobe' %}?"  // Updated for customerapp
 
             if (selectedCategory) url += "category=" + encodeURIComponent(selectedCategory) + "&";
             if (selectedColor) url += "color=" + encodeURIComponent(selectedColor) + "&";
@@ -106,15 +102,14 @@
 
             window.location.href = url;
         }
+
         function clearFilters() {
             document.getElementById("category").value = "";
             document.getElementById("color").value = "";
             document.getElementById("size").value = "";
             document.getElementById("sort").value = "";
-            
+
             filterInventory(); // Reuse the existing filter logic to refresh the page
         }
-
     </script>
 {% endblock %}
-

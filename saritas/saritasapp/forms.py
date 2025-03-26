@@ -19,12 +19,24 @@ class EventForm(forms.ModelForm):
         }
 
 class InventoryForm(forms.ModelForm):
-    quantity = forms.IntegerField(min_value=1, label="Quantity", widget=forms.NumberInput(attrs={'class': 'form-control'}))
+    quantity = forms.IntegerField(
+        min_value=1, 
+        label="Quantity", 
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    )
     rental_price = forms.DecimalField(
         min_value=0, 
         max_digits=10, 
         decimal_places=2, 
         label="Rental Price",
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    )
+    reservation_price = forms.DecimalField(
+        min_value=0, 
+        max_digits=10, 
+        decimal_places=2, 
+        required=False, 
+        label="Reservation Price",
         widget=forms.NumberInput(attrs={'class': 'form-control'})
     )
     purchase_price = forms.DecimalField(
@@ -49,7 +61,11 @@ class InventoryForm(forms.ModelForm):
 
     class Meta:
         model = Inventory
-        fields = ['name', 'category', 'color', 'size', 'quantity', 'rental_price', 'purchase_price', 'available', 'image']
+        fields = [
+            'name', 'category', 'color', 'size', 'quantity', 
+            'rental_price', 'reservation_price', 'purchase_price', 
+            'available', 'image'
+        ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'category': forms.Select(attrs={'class': 'form-select'}),
