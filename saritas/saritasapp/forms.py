@@ -153,6 +153,7 @@ class WardrobePackageItemForm(forms.ModelForm):
         fields = ["package", "inventory_item", "quantity"]
 
 class StaffSignUpForm(UserCreationForm):
+    # Staff-specific fields (not part of User model)
     branch = forms.ModelChoiceField(
         queryset=Branch.objects.all(),
         required=True,
@@ -165,26 +166,26 @@ class StaffSignUpForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ['username', 'first_name', 'last_name', 'email', 'branch', 'position', 'password1', 'password2']
-        widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control'}),
-            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-        }
+        # Only include User model fields
+        fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2']
 
     @transaction.atomic
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.role = "staff"
+        user.role = 'staff'
+        
         if commit:
             user.save()
+            # Create Staff with form-specific fields
             Staff.objects.create(
                 user=user,
                 branch=self.cleaned_data['branch'],
                 position=self.cleaned_data['position']
             )
         return user
+
+
+
 
 class AdminSignUpForm(UserCreationForm):
     class Meta:

@@ -10,7 +10,7 @@
 <div class="register-container"> 
     <!-- Left Section -->
     <div class="left-section">
-        <a href="{% url 'saritasapp:sign_in' %}" class="back-button">← Back</a>
+        <a href="{% url 'saritasapp:manage_staff' %}" class="back-button">← Back</a>
         <span class="brand-name">Sarita's</span><br>
         <h1>Wedding Creations <br>& Event Stylist</h1>
     </div>
@@ -27,8 +27,13 @@
             </div>
 
             <div class="form-group">
-                {{ form.name.label_tag }}
-                {{ form.name }}
+                {{ form.first_name.label_tag }}
+                {{ form.first_name }}
+            </div>
+
+            <div class="form-group">
+                {{ form.last_name.label_tag }}
+                {{ form.last_name }}
             </div>
 
             <div class="form-group">

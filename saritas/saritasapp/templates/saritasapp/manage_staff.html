@@ -8,7 +8,7 @@
 <body>
     {% if user.is_superuser %}
     <div class="text-right mb-3">
-        <a href="{% url 'saritasapp:sign_up' %}" class="btn btn-primary">Sign Up New Staff</a>
+        <a href="{% url 'saritasapp:signup' %}" class="btn btn-primary">Sign Up New Staff</a>
     </div>
     {% endif %}
     <div class="container mt-5">
@@ -17,18 +17,28 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Name</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
                     <th>Email</th>
+                    <th>Phone</th>
                     <th>Role</th>
+                    <th>Address</th>
                 </tr>
             </thead>
             <tbody>
                 {% for staff in staff_list %}
                 <tr>
                     <td>{{ staff.id }}</td>
-                    <td>{{ staff.name }}</td>
+                    <td>{{ staff.first_name }}</td>
+                    <td>{{ staff.last_name }}</td>
                     <td>{{ staff.email }}</td>
+                    <td>{{ staff.phone }}</td>
                     <td>{{ staff.role }}</td>
+                    <td>{{ staff.address }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center">No staff found.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -36,4 +46,4 @@
     </div>
 </body>
 </html>
-{% endblock %} 
+{% endblock %}

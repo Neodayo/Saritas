@@ -59,13 +59,15 @@ def add_inventory(request):
         form = InventoryForm(request.POST, request.FILES)
         if form.is_valid():
             inventory_item = form.save(commit=False)
-            
+
+            # Ensure reservation_price is set properly (if blank, default to zero)
             if inventory_item.reservation_price is None:
                 inventory_item.reservation_price = 0.00
 
             inventory_item.save()
             return redirect('saritasapp:inventory_list')
         else:
+            # Display error messages in the template if form is invalid
             return render(request, 'saritasapp/add_inventory.html', {
                 'form': form,
                 'categories': categories,
@@ -81,6 +83,7 @@ def add_inventory(request):
         'colors': colors,
         'sizes': sizes
     })
+
 
 
 @login_required
@@ -517,21 +520,33 @@ def homepage(request):
 def made_to_order(request):
     return render(request, 'saritasapp/made_to_order.html')
 
-
+from django.db import IntegrityError, transaction
 # --- Staff Signup ---
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
-def sign_up(request):
+def staff_sign_up(request):
     if request.method == 'POST':
         form = StaffSignUpForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Staff account created successfully!")
-            return redirect('saritasapp:dashboard')
+            try:
+                with transaction.atomic():
+                    form.save()
+                messages.success(request, "Staff account created successfully!")
+                return redirect('saritasapp:dashboard')
+            except IntegrityError as e:
+                messages.error(request, f"Database error: {str(e)}")
+            except Exception as e:
+                messages.error(request, f"Error creating account: {str(e)}")
+        else:
+            # Show detailed form errors
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
     else:
         form = StaffSignUpForm()
 
     return render(request, 'saritasapp/signup.html', {'form': form})
+
 
 
 # --- Admin Signup ---
@@ -583,11 +598,6 @@ def logout_view(request):
     messages.info(request, "You have been logged out.")
     return redirect('saritasapp:sign_in')
 
-
-#all views
-@login_required
-def profile_view(request):
-    return render(request, 'saritasapp/profile.html')
 
 @login_required
 def receipt_view(request):

@@ -2,10 +2,7 @@ from django.urls import path
 from .import views 
 from .views import receipt_detail, update_receipt, generate_receipt_pdf
 from django.contrib.auth import views as auth_views
-from .views import update_receipt, receipt_detail
-from .views import made_to_order_view
-from .views import profile_view, sign_out
-from .views import render
+from .views import render, update_receipt, receipt_detail, made_to_order_view, staff_sign_up
 
 
 app_name = 'saritasapp'
@@ -45,7 +42,7 @@ urlpatterns = [
     path('receipt/<int:receipt_id>/update/', update_receipt, name='receipt-update'),
     path('receipt/<int:receipt_id>/pdf/', generate_receipt_pdf, name='receipt-pdf'),
     #login and signup
-    path("signup/", views.sign_up, name="signup"),
+    path("signup/", views.staff_sign_up, name="signup"),
     path("admin-signup/", views.admin_signup, name="admin_signup"),
     path("login/", views.sign_in, name="sign_in"),
     path("logout/", views.logout_view, name="logout"),

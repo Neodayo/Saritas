@@ -39,9 +39,16 @@ def login_view(request):
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password')
             user = authenticate(request, username=username, password=password)
+
             if user is not None:
+                # Restrict staff accounts
+                if user.role == 'staff':
+                    messages.error(request, "Staff accounts cannot log in here.")
+                    return redirect('customerapp:login')  # Redirect back to login page
+                
+                # Allow customer login
                 login(request, user)
-                return redirect('customerapp:dashboard')  # Redirect to your desired page
+                return redirect('customerapp:dashboard')
             else:
                 messages.error(request, "Invalid username or password.")
         else:
