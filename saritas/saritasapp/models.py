@@ -106,6 +106,7 @@ class Inventory(models.Model):
             details.append(f"Size: {self.size}")
         return " - ".join(details)
 
+
 # --- Event Package & Pricing ---
 class EventPackage(models.Model):
     name = models.CharField(max_length=255)
@@ -239,42 +240,73 @@ def update_order_total(sender, instance, **kwargs):
     instance.order.calculate_total_price()
 
 # --- Rental System ---
+from django.db import models, transaction
+from django.db.models import F
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from saritasapp.models import Customer, Inventory, User
+
 class Rental(models.Model):
+    STATUS_CHOICES = [
+        ("Rented", "Rented"),
+        ("Returned", "Returned"),
+        ("Overdue", "Overdue"),
+    ]
+
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="rentals")
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="managed_rentals")
     inventory = models.ForeignKey(Inventory, on_delete=models.CASCADE, related_name="rentals")
-    rental_start = models.DateField()
+    rental_start = models.DateField(default=timezone.now)
     rental_end = models.DateField()
     deposit = models.DecimalField(max_digits=10, decimal_places=2, default=10000.00)
-    status = models.CharField(max_length=10, choices=[("Rented", "Rented"), ("Returned", "Returned")], default="Rented")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="Rented")
 
     def clean(self):
+        """Validates rental dates and inventory availability."""
         if self.rental_end < self.rental_start:
             raise ValidationError("Return date must be after the rental start date.")
+
         if self.status == "Rented" and self.inventory.quantity <= 0:
             raise ValidationError(f"{self.inventory.name} is out of stock.")
 
     def save(self, *args, **kwargs):
+        """Handles inventory updates based on status changes."""
         self.full_clean()
+
         with transaction.atomic():
             self.inventory.refresh_from_db()
+
             if self.pk:
                 old_rental = Rental.objects.select_for_update().get(pk=self.pk)
                 if old_rental.status != self.status:
                     if old_rental.status == "Rented" and self.status == "Returned":
-                        Inventory.objects.filter(id=self.inventory.id).update(quantity=F("quantity") + 1)
+                        self.inventory.quantity += 1
                     elif old_rental.status == "Returned" and self.status == "Rented":
                         if self.inventory.quantity <= 0:
                             raise ValidationError(f"{self.inventory.name} is out of stock.")
-                        Inventory.objects.filter(id=self.inventory.id).update(quantity=F("quantity") - 1)
+                        self.inventory.quantity -= 1
             else:
                 if self.inventory.quantity <= 0:
                     raise ValidationError(f"{self.inventory.name} is out of stock.")
-                Inventory.objects.filter(id=self.inventory.id).update(quantity=F("quantity") - 1)
+                self.inventory.quantity -= 1
+
+            self.inventory.save()
             super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Rental #{self.id} - {self.status}"
+    
+# --- Reservation System---
+class Reservation(models.Model):
+    item = models.ForeignKey('Inventory', on_delete=models.CASCADE)
+    customer = models.ForeignKey('Customer', on_delete=models.CASCADE)
+    reservation_date = models.DateField()
+    return_date = models.DateField()
+    quantity = models.PositiveIntegerField()
+
+    def __str__(self):
+        return f"{self.customer} - {self.item} (Qty: {self.quantity})"
+
 
 # --- Calendar/Event Model ---
 class Event(models.Model):

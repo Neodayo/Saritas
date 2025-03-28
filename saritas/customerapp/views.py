@@ -1,13 +1,13 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .forms import CustomerRegistrationForm
+from .forms import CustomerRegistrationForm, RentalForm, ReservationForm
 from django.urls import reverse
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
 from django.shortcuts import render
-from saritasapp.models import Inventory, Category, Color, Size
+from saritasapp.models import Inventory, Category, Color, Size, Rental, Reservation
 
 def register(request):
     if request.method == 'POST':
@@ -61,8 +61,48 @@ def login_view(request):
 @login_required
 def customer_dashboard(request):
     return render(request, 'customerapp/dashboard.html')
+@login_required
+def item_detail(request, item_id):
+    item = get_object_or_404(Inventory, id=item_id)
+    return render(request, 'customerapp/view_item.html', {'item': item})
 
+@login_required
+def rent_item(request, inventory_id):
+    inventory_item = get_object_or_404(Inventory, id=inventory_id)
 
+    if request.method == 'POST':
+        form = RentalForm(request.POST)
+        if form.is_valid():
+            rental = form.save(commit=False)
+            rental.customer = request.user.customer  # Automatically assigns the logged-in customer
+            rental.deposit = inventory_item.deposit  # Set deposit from inventory data
+            rental.status = 'Pending'                # Mark rental as 'Pending' by default
+            rental.save()
+            messages.success(request, 'Your rental request has been submitted successfully.')
+            return redirect('customer_dashboard')   # Redirect to the customer's dashboard or desired page
+    else:
+        form = RentalForm()
+
+    return render(request, 'customerapp/rent_item.html', {'form': form, 'inventory_item': inventory_item})
+
+# Reserve Item View
+@login_required
+def reserve_item(request, item_id):
+    item = get_object_or_404(Inventory, id=item_id)
+
+    if request.method == 'POST':
+        form = ReservationForm(request.POST)
+        if form.is_valid():
+            reservation = form.save(commit=False)
+            reservation.item = item
+            reservation.customer = request.user.customer
+            reservation.save()
+            messages.success(request, f"{item.name} has been successfully reserved!")
+            return redirect('customerapp:wardrobe')
+    else:
+        form = ReservationForm()
+
+    return render(request, 'customerapp/reserve_item.html', {'form': form, 'item': item})
 
 def wardrobe_view(request):
     inventory_items = Inventory.objects.filter(available=True)

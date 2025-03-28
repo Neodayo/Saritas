@@ -1,5 +1,5 @@
 from django import forms
-from .models import Inventory, Category, User, Rental, WardrobePackage, WardrobePackageItem, Branch, Event, Color, Size, Staff
+from .models import Inventory, Category, User, WardrobePackage, WardrobePackageItem, Branch, Event, Color, Size, Staff
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model, authenticate
 from django.core.exceptions import ValidationError
@@ -120,26 +120,6 @@ class CategoryForm(forms.ModelForm):
         model = Category
         fields = ['name']
 
-class RentalForm(forms.ModelForm):
-    class Meta:
-        model = Rental
-        fields = ["customer", "inventory", "rental_start", "rental_end", "status"]
-        widgets = {
-            "customer": forms.Select(attrs={'class': 'form-select'}),
-            "inventory": forms.Select(attrs={'class': 'form-select'}),
-            "rental_start": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
-            "rental_end": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
-            "status": forms.Select(attrs={'class': 'form-select'}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if not self.instance.pk:
-            self.fields['status'].initial = 'Rented'
-            self.fields['status'].widget = forms.HiddenInput()
-
-    def clean(self):
-        cleaned_data = super().clean()
 
 
 class WardrobePackageForm(forms.ModelForm):

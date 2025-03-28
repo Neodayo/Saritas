@@ -1,0 +1,26 @@
+{% extends 'customerapp/base.html' %}
+{% load static %}
+
+{% block title %}Rent Item{% endblock %}
+    
+    {% block extra_css %}
+        <link rel="stylesheet" href="">
+    {% endblock %}
+
+{% block content %}
+<div class="rental-container">
+    <h2>Rent Item: {{ item.name }}</h2>
+    
+    {% if item.image %}
+        <img src="{{ item.image.url }}" alt="{{ item.name }}" class="item-image">
+    {% else %}
+        <img src="{% static 'image/default-placeholder.png' %}" alt="No image available" class="item-image">
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Submit Rental Request</button>
+    </form>
+</div>
+{% endblock %}

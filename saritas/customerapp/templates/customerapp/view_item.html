@@ -1,0 +1,73 @@
+{% extends "saritasapp/base.html" %}
+{% load static %}
+
+{% block title %}View Inventory{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/view_inventory.css' %}">
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'saritasapp:inventory_list' %}" class="btn btn-primary">Back</a>
+<div class="inventory-container">
+    <!-- Image that opens modal -->
+    <img src="{% if item.image %}{{ item.image.url }}{% else %}https://via.placeholder.com/300{% endif %}" 
+         alt="{{ item.name }}" 
+         class="inventory-image"
+         onclick="openModal()" />
+
+    <!-- Item details -->
+    <div class="inventory-details">
+        <h1>{{ item.name }}</h1>
+        <p><strong>Category:</strong> {{ item.category.name }}</p>
+        <p><strong>Color:</strong> {{ item.color }}</p>
+        <p><strong>Quantity:</strong> {{ item.quantity }}</p>
+        <p><strong>Rental Price:</strong> ₱{{ item.rental_price }}</p>
+        <p><strong>Reservation Price:</strong> {{ item.reservation_price }}</p>
+        <p><strong>Purchase Price:</strong> 
+
+            {% if item.purchase_price %}₱{{ item.purchase_price }}{% else %}N/A{% endif %}
+        </p>
+        <p><strong>Available:</strong> 
+            {% if item.available %}
+                <span class="available-status">✅ Yes</span>
+            {% else %}
+                <span style="color: red;">❌ No</span>
+            {% endif %}
+        </p>
+
+        <!-- View full image button -->
+        {% if item.image %}
+            <a href="{{ item.image.url }}" target="_blank" class="btn btn-primary">View Full Image</a>
+        {% endif %}
+
+        <!-- Rent button -->
+        {% if item.available and item.quantity > 0 %}
+            <a href="{% url 'customerapp:rental' item.id %}" class="btn btn-primary">Rent Item</a>
+            <a href="{% url 'customerapp:reservation' item.id %}" class="btn btn-primary">Reserve Item</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="imageModal" class="modal" onclick="closeModal()">
+    <span class="close">&times;</span>
+    <img class="modal-content" id="fullImage" alt="Full Image">
+</div>
+
+<!-- Modal Script -->
+<script>
+    function openModal() {
+        const modal = document.getElementById('imageModal');
+        const fullImage = document.getElementById('fullImage');
+        const imageUrl = "{{ item.image.url|default:'https://via.placeholder.com/300'|escapejs }}";
+
+        fullImage.src = imageUrl;
+        modal.style.display = "block";
+    }
+
+    function closeModal() {
+        document.getElementById('imageModal').style.display = "none";
+    }
+</script>
+{% endblock %}

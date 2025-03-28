@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import InventoryForm, CategoryForm, RentalForm, EventForm, ColorForm, SizeForm
+from .forms import InventoryForm, CategoryForm, EventForm, ColorForm, SizeForm
 from .models import Customer, Inventory, Category, Rental, User, WardrobePackage, Receipt, Color, Size
 from django.utils.timezone import now
 from django.db.models import F, Q  ,Count , Sum#new
@@ -201,62 +201,6 @@ def inventory_view(request):
         'selected_size': selected_size,
         'sort': sort
     })
-
-
-
-@login_required
-def rent_item(request, inventory_id):
-    inventory_item = get_object_or_404(Inventory, id=inventory_id)
-    customers = Customer.objects.all()
-    
-    if request.method == "POST":
-        customer_id = request.POST.get("customer")
-        rental_start = request.POST.get("rental_start")
-        rental_end = request.POST.get("rental_end")
-
-        customer = get_object_or_404(Customer, id=customer_id)
-
-        # Ensure there are available items to rent
-        if inventory_item.quantity > 0:
-            rental = Rental.objects.create(
-                customer=customer,
-                inventory=inventory_item,
-                rental_start=rental_start,
-                rental_end=rental_end,
-                status="Renting",
-                deposit=inventory_item.rental_price * 2  # Example deposit logic
-            )
-
-            # Reduce inventory quantity
-            inventory_item.quantity -= 1
-            inventory_item.save()
-
-            messages.success(request, f"{inventory_item.name} has been rented to {customer.first_name}.")
-            return redirect("saritasapp:view_customer", customer_id=customer.id)
-        else:
-            messages.error(request, "This item is out of stock.")
-
-    context = {
-        "inventory_item": inventory_item,
-        "customers": customers,
-        "today": date.today(),
-    }
-    return render(request, "saritasapp/rent_item.html", context)
-
-@login_required
-def add_customer(request):
-    if request.method == "POST":
-        form = CustomerForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Customer added successfully!")
-            return redirect("saritasapp:customer_list")  # Change to appropriate redirect
-        else:
-            messages.error(request, "There was an error adding the customer.")
-    else:
-        form = CustomerForm()
-
-    return render(request, "saritasapp/add_customer.html", {"form": form})
 
 @login_required
 def customer_list(request):

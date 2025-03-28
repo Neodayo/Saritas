@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
-from saritasapp.models import Customer, User, Branch
+from saritasapp.models import Customer, User, Rental, Reservation
 from django.db import transaction
 
 class CustomerRegistrationForm(UserCreationForm):
@@ -88,3 +88,43 @@ class CustomerRegistrationForm(UserCreationForm):
                 image=self.cleaned_data.get("image")
             )
         return user
+class RentalForm(forms.ModelForm):
+    class Meta:
+        model = Rental
+        fields = ['inventory', 'rental_start', 'rental_end']
+        widgets = {
+            'rental_start': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control',
+                'placeholder': 'Select start date'
+            }),
+            'rental_end': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control',
+                'placeholder': 'Select end date'
+            }),
+        }
+        labels = {
+            'rental_start': 'Rental Start Date',
+            'rental_end': 'Rental End Date',
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        rental_start = cleaned_data.get('rental_start')
+        rental_end = cleaned_data.get('rental_end')
+
+        if rental_start and rental_end:
+            if rental_start > rental_end:
+                raise forms.ValidationError("Rental end date must be after the start date.")
+
+        return cleaned_data
+
+class ReservationForm(forms.ModelForm):
+    class Meta:
+        model = Reservation
+        fields = ['reservation_date', 'return_date', 'quantity']
+        widgets = {
+            'reservation_date': forms.DateInput(attrs={'type': 'date'}),
+            'return_date': forms.DateInput(attrs={'type': 'date'}),
+        }
