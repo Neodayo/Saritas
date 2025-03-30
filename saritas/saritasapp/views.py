@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import InventoryForm, CategoryForm, EventForm, ColorForm, SizeForm
-from .models import Customer, Inventory, Category, Rental, User, WardrobePackage, Receipt, Color, Size
+from .models import Customer, Inventory, Category, Rental, User, WardrobePackage, Receipt, Color, Size, Staff
 from django.utils.timezone import now
 from django.db.models import F, Q  ,Count , Sum#new
 from django.db import transaction
@@ -252,9 +252,19 @@ def return_rental(request, rental_id):
     
     return redirect('saritasapp:view_customer', rental.customer.id)
 
+# views.py
+@login_required
 def manage_staff(request):
-    staff = User.objects.filter(role='Staff')
-    return render(request, 'saritasapp/manage_staff.html', {'staff': staff})
+    # Get all staff users with their related staff profiles
+    staff_list = User.objects.filter(
+        role='staff'
+    ).select_related('staff_profile').order_by('last_name', 'first_name')
+    
+    context = {
+        'staff_list': staff_list,
+        'user': request.user
+    }
+    return render(request, 'saritasapp/manage_staff.html', context)
 
 #data_analysis
 from django.shortcuts import render
