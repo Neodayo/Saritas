@@ -306,6 +306,69 @@ class Reservation(models.Model):
 
     def __str__(self):
         return f"{self.customer} - {self.item} (Qty: {self.quantity})"
+    
+    # --- Fitting Schedule System ---
+class FittingAppointment(models.Model):
+    STATUS_CHOICES = [
+        ('scheduled', 'Scheduled'),
+        ('completed', 'Completed'),
+        ('canceled', 'Canceled'),
+    ]
+
+    customer = models.ForeignKey(
+        Customer, 
+        on_delete=models.CASCADE,
+        related_name='fitting_appointments'
+    )
+    inventory_item = models.ForeignKey(
+        Inventory,
+        on_delete=models.CASCADE,
+        related_name='fitting_appointments'
+    )
+    branch = models.ForeignKey(
+        Branch,
+        on_delete=models.CASCADE,
+        related_name='fitting_appointments'
+    )
+    staff = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='managed_fittings'
+    )
+    scheduled_start = models.DateTimeField()
+    scheduled_end = models.DateTimeField()
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default='scheduled'
+    )
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        """Validate fitting schedule constraints"""
+        # Ensure fitting is in the future
+        if self.scheduled_start < timezone.now():
+            raise ValidationError("Fitting time must be in the future")
+            
+        # Check item availability
+        conflicting_rentals = self.inventory_item.rentals.filter(
+            rental_start__lte=self.scheduled_end,
+            rental_end__gte=self.scheduled_start,
+            status='Rented'
+        ).exists()
+        
+        if conflicting_rentals:
+            raise ValidationError("Item is rented during this time slot")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Fitting #{self.id} - {self.get_status_display()}"
 
 
 # --- Calendar/Event Model ---
