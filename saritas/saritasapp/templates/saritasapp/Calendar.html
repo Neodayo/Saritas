@@ -38,15 +38,16 @@ document.addEventListener("DOMContentLoaded", function () {
         },
         eventClick: function (info) {
             window.location.href = "/view-event/" + info.event.id;
+        },
+        dayCellContent: function(info) {
+            return { html: info.date.getDate().toString() }; // Ensures numbers appear in calendar
         }
     });
     calendar.render();
 });
 </script>
 
-
 <style>
-    
     body {
         font-family: Arial, sans-serif;
         margin: 0;
@@ -70,7 +71,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     .tab-button {
-        background: #D4AF37; /*samplw Gold */
+        background: #D4AF37;
         color: white;
         padding: 10px 15px;
         border: none;
@@ -82,10 +83,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     .tab-button.active, .tab-button:hover {
-        background: #B8860B; /* Darker gold */
+        background: #B8860B;
     }
 
-    
     #calendar {
         max-width: 900px;
         margin: auto;
@@ -95,7 +95,6 @@ document.addEventListener("DOMContentLoaded", function () {
         box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
     }
 
-    
     .create-event-btn {
         display: inline-block;
         margin-top: 20px;
@@ -110,10 +109,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     .create-event-btn:hover {
-        background: #B8860B; 
+        background: #B8860B;
     }
 
-    
     @media (max-width: 768px) {
         .tab-button {
             width: 100%;
