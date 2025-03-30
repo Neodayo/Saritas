@@ -2,18 +2,180 @@
 {% load static %}
 {% block title %}Manage Staff{% endblock %}
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/manage_staff.css' %}">
+    <link rel="stylesheet" href="{% static 'css/rental_tracker.css' %}">
+    <style>
+        /* Staff Management Styles - Matches Rental Tracker */
+        .staff-management-container {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.05);
+            margin: 20px auto;
+            max-width: 1200px;
+        }
+
+        .staff-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .staff-title {
+            color: #8E793E;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .staff-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .staff-table thead th {
+            background-color: #8E793E;
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .staff-table tbody td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+
+        .staff-table tbody tr:hover {
+            background-color: rgba(173, 151, 79, 0.05);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-edit {
+            background-color: #AD974F;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-edit:hover {
+            background-color: #8E793E;
+            transform: translateY(-1px);
+        }
+
+        .btn-delete {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-delete:hover {
+            background-color: #c0392b;
+            transform: translateY(-1px);
+        }
+
+        .btn-add-staff {
+            background-color: #8E793E;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-add-staff:hover {
+            background-color: #AD974F;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .empty-state {
+            padding: 40px 0;
+            text-align: center;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 50px;
+            color: #AD974F;
+            margin-bottom: 15px;
+        }
+
+        /* SIMPLIFIED POSITION STYLE */
+        .position-text {
+            font-size: 14px;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .staff-management-container {
+                padding: 15px;
+            }
+            
+            .staff-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .btn-edit, 
+            .btn-delete {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
 {% endblock %}
+
 {% block content %}
-<body>
-    {% if user.is_superuser %}
-    <div class="text-right mb-3">
-        <a href="{% url 'saritasapp:signup' %}" class="btn btn-primary">Sign Up New Staff</a>
+<div class="staff-management-container">
+    <div class="staff-header">
+        <h2 class="staff-title">
+            <i class="fas fa-users-cog"></i> Staff Management
+        </h2>
+        {% if user.is_superuser %}
+        <a href="{% url 'saritasapp:signup' %}" class="btn-add-staff">
+            <i class="fas fa-user-plus"></i> Add New Staff
+        </a>
+        {% endif %}
     </div>
-    {% endif %}
-    <div class="container mt-5">
-        <h2 class="mb-4">Staff Management</h2>
-        <table class="table table-bordered">
+
+    <div class="table-responsive">
+        <table class="staff-table">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -32,21 +194,34 @@
                     <td>{{ staff_user.username }}</td>
                     <td>{{ staff_user.get_full_name }}</td>
                     <td>{{ staff_user.email }}</td>
-                    <td>{{ staff_user.staff_profile.position }}</td>
+                    <td class="position-text">{{ staff_user.staff_profile.position }}</td>
                     <td>{{ staff_user.staff_profile.branch.branch_name }}</td>
                     <td>
-                        <a href="" class="btn btn-sm btn-info">Edit</a>
-                        <a href="" class="btn btn-sm btn-danger">Delete</a>
+                        <div class="action-buttons">
+                            <a href="#" class="btn-edit">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <a href="#" class="btn-delete">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </a>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" class="text-center">No staff found.</td>
+                    <td colspan="7" class="empty-state">
+                        <i class="fas fa-users-slash"></i>
+                        <p>No staff members found</p>
+                        {% if user.is_superuser %}
+                        <a href="{% url 'saritasapp:signup' %}" class="btn-add-staff">
+                            <i class="fas fa-user-plus"></i> Add First Staff Member
+                        </a>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-</body>
-</html>
+</div>
 {% endblock %}
