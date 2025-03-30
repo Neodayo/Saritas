@@ -3,7 +3,7 @@ from django.contrib import messages
 from .forms import CustomerRegistrationForm, RentalForm, ReservationForm
 from django.urls import reverse
 from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
 from django.shortcuts import render
@@ -142,3 +142,8 @@ def wardrobe_view(request):
     }
 
     return render(request, 'customerapp/wardrobe.html', context)
+
+def logout_view(request):
+    logout(request)
+    messages.success(request, "You have been logged out successfully.")
+    return redirect('saritasapp:sign_in')

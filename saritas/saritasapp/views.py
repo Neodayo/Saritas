@@ -525,12 +525,17 @@ def sign_in(request):
         form = LoginForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
-            if user.is_superuser or user.is_staff_user:
-                login(request, user)
-                messages.success(request, "Successfully logged in!")
-                return redirect('saritasapp:dashboard')
+            login(request, user)
+            messages.success(request, "Successfully logged in!")
+
+            # Redirect users based on role
+            if user.is_superuser:
+                return redirect('/admin/')  # Redirect to Django admin panel
+            elif user.is_staff_user:
+                return redirect('saritasapp:dashboard')  # Redirect staff to staff dashboard
             else:
-                messages.error(request, "Unauthorized access. Staff or admin accounts only.")
+                return redirect('customerapp:dashboard')  # Redirect customers to their dashboard
+                
         else:
             messages.error(request, "Invalid username or password.")
     else:

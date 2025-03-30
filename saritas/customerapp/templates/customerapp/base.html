@@ -65,10 +65,10 @@
             <a href="#" class="text-xl"><i class="fas fa-bell"></i></a>
             <a href="#" class="text-xl"><i class="fas fa-user"></i></a>
             {% if user.is_authenticated %}
-                <form method="post" action="">
+                <form method="post" action="{% url 'customerapp:logout' %}">
                     {% csrf_token %}
                     <button type="submit" class="text-lg">Logout</button>
-                </form>
+                </form>            
             {% else %}
                 <a href="#" class="text-lg">Login</a>
             {% endif %}
