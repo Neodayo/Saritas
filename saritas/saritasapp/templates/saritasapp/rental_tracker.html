@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="rental-container"> <!-- Changed class from 'container' to 'rental-container' to avoid conflict -->
     <h2>Rental Tracker</h2>
 
     <!-- Filter Form -->
@@ -32,10 +32,7 @@
                     <th>ID</th>
                     <th>Customer</th>
                     <th>Item</th>
-                    <th>
-                        Rental Start 
-                        <i class="fas fa-sort ms-1"></i>
-                    </th>
+                    <th>Rental Start <i class="fas fa-sort ms-1"></i></th>
                     <th>Rental End</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -59,12 +56,10 @@
                         {% endif %}
                     </td>
                     <td class="text-center">
-                        <a href="{% url 'saritasapp:view_customer' rental.customer.id %}" 
-                        class="btn-info">
+                        <a href="{% url 'saritasapp:view_customer' rental.customer.id %}" class="btn-info">
                         <i class="fas fa-user"></i> Customer
                         </a>
-                        <a href="{% url 'saritasapp:view_inventory' rental.inventory.id %}" 
-                        class="btn-info">
+                        <a href="{% url 'saritasapp:view_inventory' rental.inventory.id %}" class="btn-info">
                         <i class="fas fa-box"></i> Item
                         </a>
                     </td>
