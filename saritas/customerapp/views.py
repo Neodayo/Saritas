@@ -8,6 +8,34 @@ from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
 from django.shortcuts import render
 from saritasapp.models import Inventory, Category, Color, Size, Rental, Reservation
+from .models import WardrobePackage
+
+
+def homepage(request):
+    """Public homepage (no login required)"""
+    featured_items = Inventory.objects.filter(
+        available=True,
+        quantity__gt=0
+    ).order_by('?')[:8]
+    
+    categories = Category.objects.all()[:4]
+    
+    # Temporarily comment out the wardrobe packages query
+    # wardrobe_packages = WardrobePackage.objects.filter(
+    #     status='active'
+    # ).order_by('tier')[:3]
+    wardrobe_packages = []  # Empty list for now
+    
+    new_arrivals = Inventory.objects.filter(
+        available=True
+    ).order_by('-id')[:6]
+    
+    return render(request, 'customerapp/homepage.html', {
+        'featured_items': featured_items,
+        'categories': categories,
+        'wardrobe_packages': wardrobe_packages,
+        'new_arrivals': new_arrivals,
+    })
 
 def register(request):
     if request.method == 'POST':
@@ -147,3 +175,44 @@ def logout_view(request):
     logout(request)
     messages.success(request, "You have been logged out successfully.")
     return redirect('saritasapp:sign_in')
+
+@login_required
+def product_detail(request, pk):
+    """Detailed view for a single inventory item"""
+    item = get_object_or_404(Inventory, id=pk)
+    
+    # Check if item is available for rental
+    can_rent = item.available and item.quantity > 0
+    
+    context = {
+        'item': item,
+        'can_rent': can_rent,
+    }
+    return render(request, 'customerapp/product_detail.html', context)
+
+
+def category_view(request, pk):
+    """Show all items in a specific category"""
+    category = get_object_or_404(Category, id=pk)
+    items = Inventory.objects.filter(
+        category=category,
+        available=True
+    ).order_by('name')
+    
+    context = {
+        'category': category,
+        'items': items,
+    }
+    return render(request, 'customerapp/category.html', context)
+
+def package_detail(request, pk):
+    """Detailed view for a wardrobe package"""
+    package = get_object_or_404(WardrobePackage, id=pk)
+    package_items = package.package_items.all()
+    
+    context = {
+        'package': package,
+        'package_items': package_items,
+    }
+    return render(request, 'customerapp/package_detail.html', context)
+
