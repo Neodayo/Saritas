@@ -1,127 +1,239 @@
 {% extends "saritasapp/base.html" %}
 {% load static %}
+
 {% block title %}Event Calendar{% endblock %}
 
-{% block content %}
-<h1>Event Calendar</h1>
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.css">
+<style>
+    /* Main Wrapper */
+    .content-wrapper {
+        background-color: #f8f9fa;
+        min-height: calc(100vh - 70px);
+        padding: 20px;
+    }
 
-<!-- Tabs -->
-<div class="tabs">
-    <button class="tab-button active" onclick="window.location.href='{% url 'saritasapp:calendar' %}'">Calendar</button>
-    <button class="tab-button" onclick="window.location.href='{% url 'saritasapp:ongoing_events' %}'">Ongoing</button>
-    <button class="tab-button" onclick="window.location.href='{% url 'saritasapp:upcoming_events' %}'">Upcoming</button>
-    <button class="tab-button" onclick="window.location.href='{% url 'saritasapp:past_events' %}'">Past</button>
+    /* White Container */
+    .white-container {
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        padding: 25px;
+        margin: 0 auto;
+        max-width: 1200px;
+        position: relative;
+        border: 1px solid rgba(142, 121, 62, 0.15);
+    }
+
+    .white-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #8E793E, #AD974F);
+        border-radius: 12px 12px 0 0;
+    }
+
+    /* Header */
+    .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #eaeaea;
+    }
+
+    .calendar-header h1 {
+        color: #8E793E;
+        font-size: 28px;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .add-event-btn {
+        padding: 10px 20px;
+        background: #8E793E;
+        color: white;
+        border-radius: 6px;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .add-event-btn:hover {
+        background: #AD974F;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Filter/Tabs Row */
+    .filter-row {
+        margin-bottom: 25px;
+    }
+
+    .view-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .view-tab {
+        padding: 10px 20px;
+        background: #f8f8f8;
+        border: 1px solid #AD974F;
+        border-radius: 6px;
+        color: #231F20;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+    }
+
+    .view-tab.active, .view-tab:hover {
+        background: #8E793E;
+        color: white;
+    }
+
+    /* Calendar Styling */
+    #calendar {
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+    }
+
+    .fc .fc-toolbar-title {
+        color: #8E793E;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    .fc .fc-button {
+        background: #f8f8f8;
+        border: 1px solid #AD974F;
+        color: #231F20;
+        border-radius: 6px;
+        transition: all 0.3s;
+    }
+
+    .fc .fc-button:hover {
+        background: #8E793E;
+        color: white;
+    }
+
+    .fc .fc-button-primary:not(:disabled).fc-button-active {
+        background: #8E793E;
+        color: white;
+    }
+
+    .fc-event {
+        background: #8E793E;
+        border-color: #AD974F;
+        font-size: 13px;
+    }
+
+    .fc-daygrid-day-number {
+        color: #231F20;
+        font-weight: 500;
+    }
+
+    .fc-daygrid-day.fc-day-today {
+        background-color: rgba(142, 121, 62, 0.1);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .white-container {
+            padding: 15px;
+        }
+        
+        .calendar-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        
+        .view-tabs {
+            flex-direction: column;
+        }
+        
+        .view-tab {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        #calendar {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="white-container">
+        <div class="calendar-header">
+            <h1><i class="fas fa-calendar-alt"></i> Event Calendar</h1>
+            <a href="{% url 'saritasapp:create_event' %}" class="add-event-btn">
+                <i class="fas fa-plus"></i> Create Event
+            </a>
+        </div>
+
+        <div class="filter-row">
+            <div class="view-tabs">
+                <button class="view-tab active" onclick="window.location.href='{% url 'saritasapp:calendar' %}'">
+                    <i class="fas fa-calendar"></i> Calendar View
+                </button>
+                <button class="view-tab" onclick="window.location.href='{% url 'saritasapp:ongoing_events' %}'">
+                    <i class="fas fa-spinner"></i> Ongoing
+                </button>
+                <button class="view-tab" onclick="window.location.href='{% url 'saritasapp:upcoming_events' %}'">
+                    <i class="fas fa-clock"></i> Upcoming
+                </button>
+                <button class="view-tab" onclick="window.location.href='{% url 'saritasapp:past_events' %}'">
+                    <i class="fas fa-history"></i> Past
+                </button>
+            </div>
+        </div>
+
+        <div id="calendar"></div>
+    </div>
 </div>
 
-<!-- Calendar -->
-<div id="calendar"></div>
-
-<!-- Create Event Button -->
-<a href="{% url 'saritasapp:create_event' %}" class="create-event-btn">Create an Event</a>
-
-<!-- FullCalendar.js -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.css">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.js"></script>
-
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function() {
     var calendarEl = document.getElementById("calendar");
     var calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: "dayGridMonth",
         headerToolbar: {
             left: "prev,next today",
             center: "title",
+            right: ""
         },
         events: "{% url 'saritasapp:api_events' %}",
-        dateClick: function (info) {
+        eventBackgroundColor: "#8E793E",
+        eventBorderColor: "#AD974F",
+        dateClick: function(info) {
             window.location.href = "/create-event/?date=" + info.dateStr;
         },
-        eventClick: function (info) {
+        eventClick: function(info) {
             window.location.href = "/view-event/" + info.event.id;
         },
         dayCellContent: function(info) {
-            return { html: info.date.getDate().toString() }; // Ensures numbers appear in calendar
+            return { html: info.date.getDate().toString() };
         }
     });
     calendar.render();
 });
 </script>
-
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-        background-color: #f9f9f9;
-        text-align: center;
-    }
-
-    h1 {
-        color: #333;
-        margin-bottom: 20px;
-    }
-
-    /* Tabs */
-    .tabs {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-bottom: 15px;
-    }
-
-    .tab-button {
-        background: #D4AF37;
-        color: white;
-        padding: 10px 15px;
-        border: none;
-        cursor: pointer;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: bold;
-        transition: background 0.3s;
-    }
-
-    .tab-button.active, .tab-button:hover {
-        background: #B8860B;
-    }
-
-    #calendar {
-        max-width: 900px;
-        margin: auto;
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    .create-event-btn {
-        display: inline-block;
-        margin-top: 20px;
-        padding: 12px 20px;
-        background: #D4AF37; 
-        color: white;
-        text-decoration: none;
-        font-size: 16px;
-        font-weight: bold;
-        border-radius: 8px;
-        transition: background 0.3s;
-    }
-
-    .create-event-btn:hover {
-        background: #B8860B;
-    }
-
-    @media (max-width: 768px) {
-        .tab-button {
-            width: 100%;
-            text-align: center;
-        }
-
-        #calendar {
-            width: 95%;
-        }
-    }
-</style>
-
 {% endblock %}
