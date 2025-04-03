@@ -52,7 +52,13 @@ urlpatterns = [
         # ✅ Logout confirmation
     path('notifications/', views.notification_view, name='notifications'),
     path('rental-tracker/', views.rental_tracker, name='rental_tracker'),
+    path('rentals/approvals/', views.rental_approvals, name='rental_approvals'),
+    path('rentals/<int:rental_id>/<str:action>/', views.approve_rental, name='approve_rental'),
+    path('rentals/approvals/', views.rental_approvals, name='rental_approvals'),
+    path('rentals/<int:rental_id>/approve/', views.approve_rental, name='approve_rental'),
     path('reservation/', views.reservation_view, name='reservation'),
+    path('reservations/', views.view_reservations, name='view_reservations'),
+    path('reservations/<int:reservation_id>/update/<str:action>/', views.update_reservation, name='update_reservation'),
     path('wardrobe-packages/', views.wardrobe_package_list, name='wardrobe_package_list'),
     path('wardrobe-packages/<int:package_id>/', views.wardrobe_package_view, name='wardrobe_package_detail'),
     path('wardrobe-packages/<int:package_id>/', views.wardrobe_package_view, name='wardrobe_package_detail'),

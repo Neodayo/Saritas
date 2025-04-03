@@ -1,52 +1,38 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from .forms import InventoryForm, CategoryForm, EventForm, ColorForm, SizeForm
-from .models import Customer, Inventory, Category, Rental, User, WardrobePackage, Receipt, Color, Size, Staff
-from django.utils.timezone import now
-from django.db.models import F, Q  ,Count , Sum#new
-from django.db import transaction
-from django.core.exceptions import ValidationError
-from django.contrib import messages
-from datetime import date
-from calendar import month_name#new
-from django.db.models.functions import TruncMonth#new
-from django.utils.timezone import now #new
-from datetime import timedelta #new
-from .models import Rental, Customer, Inventory #new
-from django.db.models.functions import ExtractWeek, ExtractMonth, ExtractYear #new
-# for calendar
-# for calendar
-#receipt
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse
-from django.contrib.auth.decorators import login_required, user_passes_test
-from datetime import datetime
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Spacer, Paragraph
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet
-from .models import Receipt
-from django.contrib import messages
-from .forms import StaffSignUpForm, AdminSignUpForm, LoginForm
-from django.utils.timezone import now
-from .models import Event
+# Standard library imports
+from datetime import date, datetime, timedelta
+from calendar import month_name
+
+# Django core imports
+from django.shortcuts import render, redirect, get_object_or_404, HttpResponse
 from django.http import JsonResponse
-from datetime import date
-from django.contrib.auth import login
-from .forms import LoginForm
-from django.http import HttpResponse
-from .models import Receipt
-from datetime import datetime
-from reportlab.pdfgen import canvas
+from django.db.models import F, Q, Count, Sum
+from django.db import transaction
+from django.db.models.functions import TruncMonth, ExtractWeek, ExtractMonth, ExtractYear
+from django.core.exceptions import ValidationError, PermissionDenied
+from django.contrib import messages
+from django.utils import timezone
+from django.contrib.auth import login, logout
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.admin.views.decorators import staff_member_required
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
+# ReportLab imports (for PDF generation)
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
+from reportlab.pdfgen import canvas
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Spacer, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from .forms import LoginForm 
-from .models import User
-from django.contrib.auth.decorators import login_required
+
+# Local imports
+from .forms import (
+    InventoryForm, CategoryForm, EventForm, ColorForm, SizeForm,
+    StaffSignUpForm, AdminSignUpForm, LoginForm
+)
+from .models import (
+    Customer, Inventory, Category, Rental, Reservation, User, WardrobePackage,
+    Receipt, Color, Size, Staff, Event
+)
+
 
 
 @login_required
@@ -204,26 +190,54 @@ def inventory_view(request):
 
 @login_required
 def customer_list(request):
-    query = request.GET.get('q', '')  # Get search query
-    status_filter = request.GET.get('status', 'all')  # Get status filter
+    query = request.GET.get('q', '')
+    status_filter = request.GET.get('status', 'all')
+    page = request.GET.get('page', 1)
 
-    customers = Customer.objects.all()
+    # Base queryset - only customers (users with role='customer')
+    customers = Customer.objects.filter(user__role='customer')
+
+    # Annotate with active rental count
+    customers = customers.annotate(
+        active_rentals=Count(
+            'rentals',
+            filter=Q(rentals__status="Rented") & ~Q(rentals__status="Returned")
+        )
+    ).select_related('user').order_by('-created_at')
 
     # Apply search filter
     if query:
-        customers = customers.filter(first_name__icontains=query) | customers.filter(last_name__icontains=query)
+        customers = customers.filter(
+            Q(user__first_name__icontains=query) |
+            Q(user__last_name__icontains=query) |
+            Q(user__email__icontains=query) |
+            Q(phone__icontains=query)
+        )
 
-    # Apply rental status filter
-    if status_filter == 'renting':
-        customers = customers.filter(rental__status="Rented").distinct()
-    elif status_filter == 'returned':
-        customers = customers.filter(rental__status="Returned").distinct()
+    # Apply status filter
+    if status_filter == 'active':
+        customers = customers.filter(active_rentals__gt=0)
+    elif status_filter == 'past':
+        customers = customers.filter(active_rentals=0)
 
-    return render(request, 'saritasapp/customer_list.html', {'customers': customers, 'filter_status': status_filter})
+    # Pagination
+    paginator = Paginator(customers, 25)
+    try:
+        customers = paginator.page(page)
+    except PageNotAnInteger:
+        customers = paginator.page(1)
+    except EmptyPage:
+        customers = paginator.page(paginator.num_pages)
+
+    return render(request, 'saritasapp/customer_list.html', {
+        'customers': customers,
+        'query': query,
+        'status_filter': status_filter
+    })
 
 @login_required
 def view_customer(request, customer_id):
-    customer = get_object_or_404(Customer, id=customer_id)
+    customer = get_object_or_404(Customer.objects.select_related('user'), id=customer_id)
     
     # Automatically update overdue rentals
     today = now().date()
@@ -530,7 +544,7 @@ def sign_in(request):
 
             # Redirect users based on role
             if user.is_superuser:
-                return redirect('/admin/')  # Redirect to Django admin panel
+                return redirect('saritasapp:dashboard')  # Redirect to Django admin panel
             elif user.is_staff_user:
                 return redirect('saritasapp:dashboard')  # Redirect staff to staff dashboard
             else:
@@ -892,29 +906,210 @@ def get_events(request):
 @login_required
 def rental_tracker(request):
     status_filter = request.GET.get('status')
-    today = now().date()
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    today = timezone.now().date()
 
-    # Automatically mark overdue rentals before filtering
-    Rental.objects.filter(
-        rental_end__lt=today,
-        status="Renting"
-    ).update(status="Overdue")
+    # Automatically update statuses
+    with transaction.atomic():
+        # Mark overdue rentals
+        Rental.objects.filter(
+            rental_end__lt=today,
+            status="Renting"
+        ).update(status="Overdue")
+        
+        # Mark newly active rentals (Approved → Renting when start date arrives)
+        Rental.objects.filter(
+            rental_start__lte=today,
+            rental_end__gte=today,
+            status="Approved"
+        ).update(status="Renting")
 
-    # Base query with related data for efficient joins
-    rentals = Rental.objects.select_related('customer', 'inventory')
+    # Base query with optimized joins
+    rentals = Rental.objects.select_related(
+        'customer__user',
+        'inventory__category'
+    ).order_by('-rental_start')
 
-    # Apply status filter if provided
+    # Apply filters
     if status_filter:
         rentals = rentals.filter(status=status_filter)
+        
+    if start_date:
+        rentals = rentals.filter(rental_start__gte=start_date)
+        
+    if end_date:
+        rentals = rentals.filter(rental_end__lte=end_date)
 
-    # Order rentals by start date for consistency
-    rentals = rentals.order_by('rental_start')
+    # Pagination
+    page = request.GET.get('page', 1)
+    paginator = Paginator(rentals, 25)  # Show 25 rentals per page
+    
+    try:
+        rentals = paginator.page(page)
+    except PageNotAnInteger:
+        rentals = paginator.page(1)
+    except EmptyPage:
+        rentals = paginator.page(paginator.num_pages)
+
+    # Get counts for all statuses
+    status_counts = Rental.objects.aggregate(
+        pending=Count('pk', filter=Q(status='Pending')),
+        active=Count('pk', filter=Q(status='Renting')),
+        returned=Count('pk', filter=Q(status='Returned')),
+        overdue=Count('pk', filter=Q(status='Overdue'))
+    )
 
     return render(request, 'saritasapp/rental_tracker.html', {
         'rentals': rentals,
-        'today': today
+        'today': today,
+        'active_count': status_counts['active'],
+        'returned_count': status_counts['returned'],
+        'overdue_count': status_counts['overdue'],
+        'pending_count': status_counts['pending'],
+        'filter_status': status_filter,
+        'filter_start_date': start_date,
+        'filter_end_date': end_date,
     })
 
+@staff_member_required
+@login_required
+def rental_approvals(request):
+    # Get all pending rental requests with related data
+    pending_rentals = Rental.objects.filter(
+        status='Pending'
+    ).select_related(
+        'customer__user',
+        'inventory'
+    ).order_by('-created_at')  # Newest requests first
+    
+    # Counts for the dashboard
+    stats = {
+        'pending': pending_rentals.count(),
+        'approved': Rental.objects.filter(status='Approved').count(),
+        'rejected': Rental.objects.filter(status='Rejected').count(),
+    }
+    
+    return render(request, 'saritasapp/rental_approvals.html', {
+        'pending_rentals': pending_rentals,
+        'stats': stats,
+    })
+@staff_member_required
+@login_required
+def view_reservations(request):
+    status = request.GET.get('status', 'all')
+    
+    reservations = Reservation.objects.select_related(
+        'item',
+        'customer__user',
+        'approved_by'
+    ).order_by('-created_at')
+    
+    if status != 'all':
+        reservations = reservations.filter(status=status)
+    
+    context = {
+        'reservations': reservations,
+        'status': status,
+        'status_choices': Reservation.STATUS_CHOICES,
+    }
+    return render(request, 'saritasapp/view_reservation.html', context)
+
+
+@staff_member_required
+@login_required
+def update_reservation(request, reservation_id, action):
+    reservation = get_object_or_404(Reservation, id=reservation_id)
+    
+    try:
+        if action == 'approve':
+            reservation.approve(request.user)
+            messages.success(request, f"Reservation #{reservation_id} approved successfully.")
+        elif action == 'reject':
+            reservation.reject(request.user, request.POST.get('reason', ''))
+            messages.success(request, f"Reservation #{reservation_id} rejected.")
+        elif action == 'complete':
+            reservation.status = 'completed'
+            reservation.save()
+            
+            # Return items to inventory
+            reservation.item.quantity += reservation.quantity
+            reservation.item.save()
+            
+            messages.success(request, f"Reservation #{reservation_id} marked as completed.")
+        else:
+            messages.error(request, "Invalid action requested.")
+    except ValidationError as e:
+        messages.error(request, str(e))
+    
+    return redirect('customerapp:view_reservations')
+
+
+@staff_member_required
+@login_required
+def approve_rental(request, rental_id):
+    rental = get_object_or_404(Rental, id=rental_id, status='Pending')
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'approve':
+            # Check inventory availability
+            if rental.inventory.quantity <= 0:
+                messages.error(request, 'Cannot approve - item is out of stock!')
+                return redirect('saritasapp:rental_approvals')
+            
+            # Approve the rental
+            rental.status = 'Approved'
+            rental.approved_by = request.user
+            rental.approved_at = timezone.now()
+            
+            # Reduce inventory
+            rental.inventory.quantity -= 1
+            rental.inventory.save()
+            
+            messages.success(request, f'Rental #{rental.id} approved successfully!')
+            
+        elif action == 'reject':
+            rental.status = 'Rejected'
+            rental.rejection_reason = request.POST.get('rejection_reason', '')
+            messages.warning(request, f'Rental #{rental.id} has been rejected.')
+        
+        rental.save()
+        return redirect('saritasapp:rental_approvals')
+    
+    # For GET requests, show approval form
+    return render(request, 'saritasapp/approve_rental.html', {
+        'rental': rental,
+    })
+
+@staff_member_required
+@login_required
+def approve_rental(request, rental_id, action):
+    rental = get_object_or_404(Rental, id=rental_id, status='Pending')
+    
+    if action == 'approve':
+        # Check inventory availability
+        if rental.inventory.quantity <= 0:
+            messages.error(request, 'Cannot approve - item is out of stock!')
+            return redirect('saritasapp:rental_approvals')
+        
+        # Approve the rental
+        rental.status = 'Approved'
+        rental.approved_by = request.user
+        rental.approved_at = timezone.now()
+        
+        # Reduce inventory
+        rental.inventory.quantity -= 1
+        rental.inventory.save()
+        
+        messages.success(request, f'Rental #{rental_id} approved successfully!')
+    elif action == 'reject':
+        rental.status = 'Rejected'
+        messages.success(request, f'Rental #{rental_id} has been rejected.')
+    
+    rental.save()
+    return redirect('saritasapp:rental_approvals')
 
 #profile
 from django.shortcuts import render, redirect

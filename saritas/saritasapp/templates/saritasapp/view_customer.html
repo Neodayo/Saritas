@@ -25,8 +25,8 @@
                 {% endif %}
             </div>
             <div class="col-md-8">
-                <h4>{{ customer.first_name }} {{ customer.last_name }}</h4>
-                <p><strong>Email:</strong> {{ customer.email }}</p>
+                <h4>{{ customer.user.first_name }} {{ customer.user.last_name }}</h4>
+                <p><strong>Email:</strong> {{ customer.user.email }}</p>
                 <p><strong>Phone:</strong> {{ customer.phone }}</p>
                 <p><strong>Address:</strong> {{ customer.address }}</p>
             </div>

@@ -40,11 +40,6 @@
         {% if item.image %}
             <a href="{{ item.image.url }}" target="_blank" class="btn btn-primary">View Full Image</a>
         {% endif %}
-
-        <!-- Rent button -->
-        {% if item.available and item.quantity > 0 %}
-            <a href="{% url 'saritasapp:rental' item.id %}" class="btn btn-primary">Rent Item</a>
-        {% endif %}
     </div>
 
     <!-- Action buttons -->

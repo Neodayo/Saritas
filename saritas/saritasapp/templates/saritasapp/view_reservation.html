@@ -1,0 +1,112 @@
+{% extends 'saritasapp/base.html' %}
+{% load static %}
+
+{% block title %}Reservation Management | Sarita's{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/view_reservation.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="reservation-container">
+    <h2>Reservation Management</h2>
+    
+    <div class="status-filter">
+        <strong>Filter by Status:</strong>
+        <a href="?status=all" class="status-badge {% if status == 'all' %}status-approved{% endif %}">All</a>
+        {% for choice in status_choices %}
+            <a href="?status={{ choice.0 }}" 
+               class="status-badge status-{{ choice.0 }} {% if status == choice.0 %}active{% endif %}">
+                {{ choice.1 }}
+            </a>
+        {% endfor %}
+    </div>
+    
+    {% if reservations %}
+    <div class="table-responsive">
+        <table class="reservation-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Item</th>
+                    <th>Dates</th>
+                    <th>Qty</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reservation in reservations %}
+                <tr>
+                    <td>#{{ reservation.id }}</td>
+                    <td>
+                        {{ reservation.customer.user.get_full_name }}
+                        <div class="text-muted small">{{ reservation.customer.user.email }}</div>
+                    </td>
+                    <td>
+                        <div style="display: flex; align-items: center;">
+                            {% if reservation.item.image %}
+                            <img src="{{ reservation.item.image.url }}" 
+                                 alt="{{ reservation.item.name }}"
+                                 class="item-thumb">
+                            {% endif %}
+                            <div>
+                                {{ reservation.item.name }}
+                                <div class="text-muted small">
+                                    {{ reservation.item.category.name }}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {{ reservation.reservation_date|date:"M d" }} - 
+                        {{ reservation.return_date|date:"M d" }}
+                        <div class="text-muted small">
+                            {{ reservation.duration_days }} days
+                        </div>
+                    </td>
+                    <td>{{ reservation.quantity }}</td>
+                    <td>₱{{ reservation.total_cost|floatformat:2 }}</td>
+                    <td>
+                        <span class="status-badge status-{{ reservation.status }}">
+                            {{ reservation.get_status_display }}
+                        </span>
+                        {% if reservation.approved_by %}
+                        <div class="text-muted small">
+                            By: {{ reservation.approved_by.get_full_name }}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if reservation.status == 'pending' %}
+                        <form method="post" action="{% url 'customerapp:update_reservation' reservation.id 'approve' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="action-btn btn-approve">Approve</button>
+                        </form>
+                        <form method="post" action="{% url 'customerapp:update_reservation' reservation.id 'reject' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="action-btn btn-reject">Reject</button>
+                        </form>
+                        {% elif reservation.status == 'approved' %}
+                        <form method="post" action="{% url 'customerapp:update_reservation' reservation.id 'complete' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="action-btn btn-complete">Complete</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-calendar-check fa-3x mb-3"></i>
+        <h4>No Reservations Found</h4>
+        <p>There are currently no reservations matching your criteria.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

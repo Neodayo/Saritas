@@ -25,22 +25,25 @@
             <a href="{% url 'saritasapp:rental_tracker' %}" class="nav-btn">
                 <span class="fas fa-chart-line"></span> <text>Rental Tracker</text>
             </a>
+            <!-- Add Rental Approvals link -->
+            <a href="{% url 'saritasapp:rental_approvals' %}" class="nav-btn">
+                <span class="fas fa-clipboard-check"></span> <text>Rental Approvals</text>
+            </a>
+            <a href="{% url 'saritasapp:view_reservations' %}" class="nav-btn">
+                <span class="fas fa-calendar-check"></span> <text>View Reservations</text>
+            </a>
             <a href="{% url 'saritasapp:receipt-detail' receipt_id=1 %}" class="nav-btn">
                 <span class="fas fa-receipt"></span> <text>Receipt</text>
             </a>
             <a href="{% url 'saritasapp:data_analysis' %}" class="nav-btn">
                 <span class="fas fa-chart-bar"></span> <text>Data Analysis</text>
             </a>
-            
             <a href="{% url 'saritasapp:customer_list' %}" class="nav-btn">
-                <span class="fas fa-chart-bar"></span> <text>Customer Records</text>
+                <span class="fas fa-users"></span> <text>Customer Records</text>
             </a>
             <a href="{% url 'saritasapp:manage_staff' %}" class="nav-btn">
-                <span class="fas fa-chart-bar"></span> <text>Manage Staff</text>
+                <span class="fas fa-user-shield"></span> <text>Manage Staff</text>
             </a>
-            <!-- <a href="{% url 'saritasapp:reservation' %}" class="nav-btn">
-                <span class="fas fa-chart-bar"></span> <text>Reservation</text>
-            </a> -->
         </div>
     </div>
     
@@ -56,31 +59,23 @@
                     <div class="made-to-order">
                         <a href="{% url 'saritasapp:made_to_order' %}" class="header-link-text">Made to Order</a>
                     </div>
-                        <!-- <select name="Packages" id="Package" class="header-link-text">
-                            <option value="">Packages</option>
-                            <option value="Wardrobe Packages">Wardrobe Packages</option>
-                            <option value="Wedding Packages">Wedding Packages</option> -->
+                    <select id="Package" class="header-link-text" onchange="navigateToPage()">
+                        <option value="">Packages</option>
+                        <option value="{% url 'saritasapp:packages' %}">Wardrobe Packages</option>
+                    </select>
+                    <a href="{% url 'saritasapp:dashboard' %}" class="header-link"><i class="fas fa-home"></i></a>
+                    <a href="{% url 'saritasapp:notifications' %}" class="header-link"><i class="fas fa-bell"></i></a>
+                    <a href="{% url 'saritasapp:profile' %}" class="header-link"><i class="fas fa-user"></i></a>
 
-                            <select id="Package" class="header-link-text" onchange="navigateToPage()">
-                                <option value="">Packages</option>
-                                <option value="{% url 'saritasapp:packages' %}">Wardrobe Packages</option>
-                                <!-- <option value="Wedding Packages">Wedding Packages</option> -->
-                            </select>
-                        </select>
-                        <a href="{% url 'saritasapp:dashboard' %}" class="header-link"><i class="fas fa-home"></i></a>
-                        <a href="{% url 'saritasapp:notifications' %}" class="header-link"><i class="fas fa-bell"></i></a>
-
-                        <a href="{% url 'saritasapp:profile' %}" class="header-link"><i class="fas fa-user"></i></a>
-
-                        <!-- Login/Logout Button -->
-                        {% if user.is_authenticated %}
-                        <form method="post" action="{% url 'saritasapp:logout' %}" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="header-link">Logout</button>
-                            </form>
-                            {% else %}
-                            <a href="{% url 'saritasapp:sign_in' %}" class="header-link">Login</a>
-                            {% endif %}
+                    <!-- Login/Logout Button -->
+                    {% if user.is_authenticated %}
+                    <form method="post" action="{% url 'saritasapp:logout' %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="header-link">Logout</button>
+                        </form>
+                        {% else %}
+                        <a href="{% url 'saritasapp:sign_in' %}" class="header-link">Login</a>
+                        {% endif %}
                 </div>
     </div>
 
@@ -89,8 +84,6 @@
         {% block content %}
         {% endblock %}
     </div>
-
-    
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -103,11 +96,11 @@
         });
 
         function navigateToPage() {
-        const selectedValue = document.getElementById("Package").value;
-        if (selectedValue) {
-            window.location.href = selectedValue; // Redirect to the selected URL
+            const selectedValue = document.getElementById("Package").value;
+            if (selectedValue) {
+                window.location.href = selectedValue;
+            }
         }
-    }
     </script>
 </body>
 </html>

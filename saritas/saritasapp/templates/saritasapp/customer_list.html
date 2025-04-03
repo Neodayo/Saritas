@@ -1,35 +1,43 @@
 {% extends "saritasapp/base.html" %}
-{% block title %}Customer List{% endblock %}
+{% load static %}
+{% block title %}Customer Management | Sarita's{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/customer_list.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
 
 {% block content %}
 <div class="main-container">
-    <h2 class="page-title">Customer List</h2>
+    <h2 class="page-title"><i class="fas fa-users me-2"></i> Customer Management</h2>
 
     <!-- Search & Filter Section -->
     <div class="filter-container">
         <form method="GET" action="{% url 'saritasapp:customer_list' %}" class="search-box">
-            <input type="text" name="q" class="search-input" placeholder="Search by name..." value="{{ request.GET.q }}">
-            <button type="submit" class="btn-primary">
+            <input type="text" name="q" class="search-input" 
+                   placeholder="Search by name, email or phone..." 
+                   value="{{ request.GET.q }}">
+            <button type="submit" class="btn btn-primary">
                 <i class="fas fa-search"></i> Search
             </button>
         </form>
 
-        <div class="add-button">
-            <a href="{% url 'saritasapp:add_customer' %}" class="btn-success">
-                <i class="fas fa-user-plus"></i> Add Customer
-            </a>
+        <div class="filter-box">
+            <select name="status" id="status-filter" class="filter-select" onchange="updateFilter()">
+                <option value="all" {% if not request.GET.status or request.GET.status == 'all' %}selected{% endif %}>All Customers</option>
+                <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active Rentals</option>
+                <option value="past" {% if request.GET.status == 'past' %}selected{% endif %}>Past Customers</option>
+            </select>
         </div>
     </div>
 
-    <!-- Customer Data Table -->
     <div class="table-responsive">
         <table class="custom-table">
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Phone</th>
+                    <th>Customer</th>
+                    <th>Contact</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -37,175 +45,94 @@
                 {% for customer in customers %}
                 <tr>
                     <td>{{ forloop.counter }}</td>
-                    <td>{{ customer.first_name }} {{ customer.last_name }}</td>
-                    <td>{{ customer.email }}</td>
-                    <td>{{ customer.phone }}</td>
                     <td>
-                        <a href="{% url 'saritasapp:view_customer' customer.id %}" class="btn-info">
-                            <i class="fas fa-eye"></i> View
-                        </a>
+                        <div class="customer-name">
+                            {% if customer.image %}
+                                <img src="{{ customer.image.url }}" class="customer-avatar" alt="{{ customer.user.first_name }}">
+                            {% else %}
+                                <img src="{% static 'images/default-avatar.png' %}" class="customer-avatar" alt="Default avatar">
+                            {% endif %}
+                            {{ customer.user.first_name }} {{ customer.user.last_name }}
+                        </div>
+                    </td>
+                    <td>
+                        <div>{{ customer.user.email }}</div>
+                        <div class="text-muted small">{{ customer.phone }}</div>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{% url 'saritasapp:view_customer' customer.id %}" class="btn btn-primary">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" class="text-muted text-center">No customers found.</td>
+                    <td colspan="5" class="empty-state">
+                        <i class="fas fa-user-slash"></i>
+                        <h4>No customers found</h4>
+                        <p>Try adjusting your search</p>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #EAEAEA;
-            margin: 0;
-            padding: 0;
-        }
-
-        .main-container {
-            max-width: 1100px;
-            background: white;
-            padding: 30px 40px;
-            border-radius: 20px; /* rounded edges */
-            margin: 40px auto;
-            box-shadow: none; /* no shadow */
-        }
-
-        .page-title {
-            text-align: center;
-            font-size: 32px;
-            font-weight: bold;
-            color: #8E793E;
-            margin-bottom: 30px;
-        }
-
-        .filter-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .search-box,
-        .filter-box,
-        .add-button {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .search-input,
-        .filter-select {
-            padding: 10px 14px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 14px;
-            width: 220px;
-        }
-
-        .btn-primary,
-        .btn-success,
-        .btn-info {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 10px 16px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
-            text-decoration: none;
-            border: none;
-            cursor: pointer;
-            transition: background 0.3s ease;
-            color: #fff;
-        }
-
-        .btn-primary {
-            background-color: #8E793E;
-        }
-
-        .btn-primary:hover {
-            background-color: #AD974F;
-        }
-
-        .btn-success {
-            background-color: #231F20;
-        }
-
-        .btn-success:hover {
-            background-color: #333;
-        }
-
-        .btn-info {
-            background-color: #AD974F;
-        }
-
-        .btn-info:hover {
-            background-color: #8E793E;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-        }
-
-        .custom-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-
-        .custom-table th,
-        .custom-table td {
-            padding: 12px 15px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-        }
-
-        .custom-table th {
-            background-color: #8E793E;
-            color: white;
-        }
-
-        .custom-table tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-
-        .custom-table tr:hover {
-            background-color: #f2f2f2;
-        }
-
-        @media (max-width: 768px) {
-            .filter-container {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .search-box,
-            .filter-box,
-            .add-button {
-                width: 100%;
-                justify-content: space-between;
-            }
-
-            .search-input,
-            .filter-select {
-                width: 100%;
-            }
-        }
-    </style>
-
-    <script>
-        document.getElementById("status-filter").addEventListener("change", function () {
-            const url = new URL(this.value, window.location.origin);
-            const params = new URLSearchParams(window.location.search);
-            if (params.has("q")) {
-                url.searchParams.set("q", params.get("q"));
-            }
-            window.location.href = url.href;
-        });
-    </script>
+    <!-- Pagination -->
+    {% if customers.has_other_pages %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination">
+            {% if customers.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1&q={{ request.GET.q }}&status={{ request.GET.status }}">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ customers.previous_page_number }}&q={{ request.GET.q }}&status={{ request.GET.status }}">Previous</a>
+                </li>
+            {% endif %}
+            
+            {% for num in customers.paginator.page_range %}
+                {% if customers.number == num %}
+                    <li class="page-item active">
+                        <a class="page-link" href="#">{{ num }}</a>
+                    </li>
+                {% elif num > customers.number|add:'-3' and num < customers.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}&q={{ request.GET.q }}&status={{ request.GET.status }}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if customers.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ customers.next_page_number }}&q={{ request.GET.q }}&status={{ request.GET.status }}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ customers.paginator.num_pages }}&q={{ request.GET.q }}&status={{ request.GET.status }}">Last</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
 </div>
+
+<script>
+function updateFilter() {
+    const statusFilter = document.getElementById('status-filter');
+    const url = new URL(window.location.href);
+    url.searchParams.set('status', statusFilter.value);
+    window.location.href = url.toString();
+}
+
+// Initialize from URL parameters
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const statusParam = urlParams.get('status');
+    if (statusParam) {
+        document.getElementById('status-filter').value = statusParam;
+    }
+});
+</script>
 {% endblock %}

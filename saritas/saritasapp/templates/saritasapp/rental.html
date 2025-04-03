@@ -1,0 +1,105 @@
+{% extends "saritasapp/base.html" %}
+{% load static %}
+
+{% block title %}Rent {{ inventory_item.name }} | Sarita's{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/rent_item.css' %}">
+<style>
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <button class="back-arrow" onclick="history.back()">← Back</button>
+    <h2 class="page-title">Rent {{ inventory_item.name }}</h2>
+
+    <div class="item-details">
+        <p><strong>Category:</strong> {{ inventory_item.category.name }}</p>
+        <p><strong>Rental Price:</strong> ₱{{ inventory_item.rental_price|floatformat:2 }} per day</p>
+        <p><strong>Available Quantity:</strong> {{ inventory_item.quantity }}</p>
+        {% if inventory_item.color %}<p><strong>Color:</strong> {{ inventory_item.color.name }}</p>{% endif %}
+        {% if inventory_item.size %}<p><strong>Size:</strong> {{ inventory_item.size.name }}</p>{% endif %}
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" class="rental-form" id="rentalForm">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="customer">Customer:</label>
+            <select class="edit-bar" id="customer" name="customer" required>
+                <option value="" disabled selected>Select a customer</option>
+                {% for customer in customers %}
+                    <option value="{{ customer.id }}">
+                        {{ customer.user.get_full_name }} - {{ customer.phone }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Item:</label>
+            <input class="edit-bar" type="text" value="{{ inventory_item.name }}" readonly>
+            <input type="hidden" name="inventory" value="{{ inventory_item.id }}">
+        </div>
+
+        <div class="form-group">
+            <label for="rental_start">Rental Start Date:</label>
+            <div class="date-group">
+                <input class="edit-bar" type="date" id="rental_start" name="rental_start" required min="{{ today|date:'Y-m-d' }}">
+                <button type="button" class="btn-secondary" onclick="setToday()">Set Today</button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="rental_end">Rental End Date:</label>
+            <input class="edit-bar" type="date" id="rental_end" name="rental_end" required min="{{ today|date:'Y-m-d' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="notes">Notes (Optional):</label>
+            <textarea class="edit-bar" id="notes" name="notes" rows="3"></textarea>
+        </div>
+
+        <button type="submit" class="btn-primary">Confirm Rental</button>
+    </form>
+</div>
+
+<script>
+    function setToday() {
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        // Format dates as YYYY-MM-DD
+        const formatDate = (date) => date.toISOString().split('T')[0];
+        
+        document.getElementById("rental_start").value = formatDate(today);
+        document.getElementById("rental_end").value = formatDate(tomorrow);
+    }
+
+    // Auto-set end date when start date changes
+    document.getElementById('rental_start').addEventListener('change', function() {
+        const startDate = new Date(this.value);
+        const endDateInput = document.getElementById('rental_end');
+        
+        if (!endDateInput.value || new Date(endDateInput.value) < startDate) {
+            const defaultEndDate = new Date(startDate);
+            defaultEndDate.setDate(defaultEndDate.getDate() + 1);
+            endDateInput.value = defaultEndDate.toISOString().split('T')[0];
+        }
+        
+        // Set minimum end date to start date
+        endDateInput.min = this.value;
+    });
+</script>
+{% endblock %}

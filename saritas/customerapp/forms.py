@@ -3,6 +3,8 @@ from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 from saritasapp.models import Customer, User, Rental, Reservation
 from django.db import transaction
+from django.utils import timezone
+from datetime import timedelta
 
 class CustomerRegistrationForm(UserCreationForm):
     username = forms.CharField(
@@ -88,43 +90,134 @@ class CustomerRegistrationForm(UserCreationForm):
                 image=self.cleaned_data.get("image")
             )
         return user
+
 class RentalForm(forms.ModelForm):
     class Meta:
         model = Rental
-        fields = ['inventory', 'rental_start', 'rental_end']
+        fields = ['rental_start', 'rental_end', 'notes']  # Added notes back if needed
         widgets = {
-            'rental_start': forms.DateInput(attrs={
-                'type': 'date',
+            'rental_start': forms.DateInput(
+                attrs={
+                    'type': 'date',
+                    'class': 'form-control',
+                    'min': timezone.now().date().isoformat()
+                },
+                format='%Y-%m-%d'
+            ),
+            'rental_end': forms.DateInput(
+                attrs={
+                    'type': 'date',
+                    'class': 'form-control',
+                    'min': (timezone.now() + timedelta(days=1)).date().isoformat()
+                },
+                format='%Y-%m-%d'
+            ),
+            'notes': forms.Textarea(attrs={
                 'class': 'form-control',
-                'placeholder': 'Select start date'
-            }),
-            'rental_end': forms.DateInput(attrs={
-                'type': 'date',
-                'class': 'form-control',
-                'placeholder': 'Select end date'
+                'rows': 3,
+                'placeholder': 'Any special requests or notes...'
             }),
         }
-        labels = {
-            'rental_start': 'Rental Start Date',
-            'rental_end': 'Rental End Date',
-        }
+
+    def __init__(self, *args, **kwargs):
+        self.inventory_item = kwargs.pop('inventory_item', None)
+        self.customer = kwargs.pop('customer', None)
+        super().__init__(*args, **kwargs)
+        
+        # Set minimum end date based on start date via JavaScript
+        self.fields['rental_start'].widget.attrs.update({
+            'onchange': 'updateMinEndDate(this.value)'
+        })
 
     def clean(self):
         cleaned_data = super().clean()
         rental_start = cleaned_data.get('rental_start')
         rental_end = cleaned_data.get('rental_end')
 
-        if rental_start and rental_end:
-            if rental_start > rental_end:
-                raise forms.ValidationError("Rental end date must be after the start date.")
+        if not all([rental_start, rental_end]):
+            return cleaned_data
+
+        # Date validation
+        today = timezone.now().date()
+        if rental_start < today:
+            raise forms.ValidationError(
+                "Rental start date cannot be in the past. Please choose a date today or later."
+            )
+        
+        if rental_start > rental_end:
+            raise forms.ValidationError(
+                "Rental end date must be after the start date."
+            )
+        
+        min_rental_days = 1  # Minimum rental period
+        if (rental_end - rental_start).days < min_rental_days:
+            raise forms.ValidationError(
+                f"Minimum rental period is {min_rental_days} day(s)."
+            )
+
+        # Inventory availability check
+        if self.inventory_item:
+            # Check quantity
+            if self.inventory_item.quantity <= 0:
+                raise forms.ValidationError(
+                    "This item is currently out of stock."
+                )
+            
+            # Check for overlapping rentals
+            overlapping = Rental.objects.filter(
+                inventory=self.inventory_item,
+                rental_start__lte=rental_end,
+                rental_end__gte=rental_start,
+                status__in=['Approved', 'Rented']  # Only check confirmed rentals
+            ).exclude(pk=self.instance.pk if self.instance else None)
+            
+            if overlapping.exists():
+                raise forms.ValidationError(
+                    "This item is already booked during the selected period. "
+                    "Please choose different dates."
+                )
 
         return cleaned_data
-
+    
 class ReservationForm(forms.ModelForm):
     class Meta:
         model = Reservation
         fields = ['reservation_date', 'return_date', 'quantity']
         widgets = {
-            'reservation_date': forms.DateInput(attrs={'type': 'date'}),
-            'return_date': forms.DateInput(attrs={'type': 'date'}),
+            'reservation_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control',
+                'min': timezone.now().date().isoformat()
+            }),
+            'return_date': forms.DateInput(attrs={
+                'type': 'date', 
+                'class': 'form-control'
+            }),
+            'quantity': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 1
+            })
         }
+    
+    def __init__(self, *args, **kwargs):
+        self.item = kwargs.pop('item', None)
+        super().__init__(*args, **kwargs)
+        
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        if not self.item:
+            raise ValidationError("No inventory item selected")
+            
+        # Date validation
+        if cleaned_data.get('return_date') < cleaned_data.get('reservation_date'):
+            raise ValidationError("Return date must be after reservation date")
+            
+        # Quantity validation
+        quantity = cleaned_data.get('quantity', 1)
+        if quantity > self.item.quantity:
+            raise ValidationError(
+                f"Only {self.item.quantity} available. You requested {quantity}."
+            )
+            
+        return cleaned_data

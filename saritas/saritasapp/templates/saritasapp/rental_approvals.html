@@ -1,0 +1,81 @@
+{% extends "saritasapp/base.html" %}
+{% load static %}
+
+{% block title %}Rental Approvals | Sarita's{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/rental_approvals.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Wedding</h1>
+        <h2>Creations & Event Stylist</h2>
+    </div>
+
+    <div class="stats-container">
+        <div class="stat-item">
+            <div class="stat-label">Pending</div>
+            <div class="stat-value">{{ stats.pending }}</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Approved</div>
+            <div class="stat-value">{{ stats.approved }}</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Rejected</div>
+            <div class="stat-value">{{ stats.rejected }}</div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Request ID</th>
+                    <th>Customer Item</th>
+                    <th>Requested Date</th>
+                    <th>Days</th>
+                    <th>Est. Revenue</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rental in pending_rentals %}
+                <tr>
+                    <td>#{{ rental.id }}</td>
+                    <td>
+                        <strong>{{ rental.customer.user.get_full_name }}</strong><br>
+                        {{ rental.inventory.name }}
+                    </td>
+                    <td>
+                        {{ rental.rental_start|date:"M d" }} - {{ rental.rental_end|date:"M d, Y" }}
+                    </td>
+                    <td>{{ rental.duration_days }}</td>
+                    <td>₱{{ rental.total_cost|floatformat:2 }}</td>
+                    <td>
+                        <a href="{% url 'saritasapp:approve_rental' rental.id %}" class="btn btn-sm" 
+                           style="background-color: #AD974F; color: white;">
+                            Review
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="empty-state">
+                        <i class="fas fa-check-circle"></i>
+                        <h4>No pending approvals</h4>
+                        <p>All rental requests have been processed</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

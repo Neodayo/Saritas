@@ -1,3 +1,5 @@
+from datetime import timedelta
+from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .forms import CustomerRegistrationForm, RentalForm, ReservationForm
@@ -69,40 +71,83 @@ def item_detail(request, item_id):
 @login_required
 def rent_item(request, inventory_id):
     inventory_item = get_object_or_404(Inventory, id=inventory_id)
+    
+    if not inventory_item.available or inventory_item.quantity <= 0:
+        messages.error(request, 'This item is not currently available for rent')
+        return redirect('customerapp:wardrobe')
 
     if request.method == 'POST':
-        form = RentalForm(request.POST)
+        form = RentalForm(request.POST, inventory_item=inventory_item)
         if form.is_valid():
-            rental = form.save(commit=False)
-            rental.customer = request.user.customer  # Automatically assigns the logged-in customer
-            rental.deposit = inventory_item.deposit  # Set deposit from inventory data
-            rental.status = 'Pending'                # Mark rental as 'Pending' by default
-            rental.save()
-            messages.success(request, 'Your rental request has been submitted successfully.')
-            return redirect('customer_dashboard')   # Redirect to the customer's dashboard or desired page
+            with transaction.atomic():
+                inventory_item.refresh_from_db()
+                
+                if inventory_item.quantity <= 0:
+                    messages.error(request, 'Item is no longer available')
+                    return redirect('customerapp:wardrobe')
+                
+                rental = form.save(commit=False)
+                rental.inventory = inventory_item
+                rental.customer = request.user.customer_profile
+                rental.status = 'Pending'
+                rental.created_at = timezone.now()  # Explicitly set creation time
+                
+                if hasattr(request.user, 'branch'):
+                    rental.branch = request.user.branch
+                
+                rental.save()
+                messages.success(request, 'Rental request submitted for approval')
+                return redirect('customerapp:dashboard')
     else:
-        form = RentalForm()
+        # Set default rental period (e.g., 7 days)
+        initial = {
+            'rental_start': timezone.now().date(),
+            'rental_end': (timezone.now() + timedelta(days=7)).date()  # Fixed calculation
+        }
+        form = RentalForm(inventory_item=inventory_item, initial=initial)
+    
+    return render(request, 'customerapp/rent_item.html', {
+        'form': form,
+        'item': inventory_item,
+        'available': inventory_item.quantity > 0
+    })
 
-    return render(request, 'customerapp/rent_item.html', {'form': form, 'inventory_item': inventory_item})
-
-# Reserve Item View
 @login_required
+@transaction.atomic
 def reserve_item(request, item_id):
     item = get_object_or_404(Inventory, id=item_id)
-
+    
     if request.method == 'POST':
         form = ReservationForm(request.POST)
         if form.is_valid():
-            reservation = form.save(commit=False)
-            reservation.item = item
-            reservation.customer = request.user.customer
-            reservation.save()
-            messages.success(request, f"{item.name} has been successfully reserved!")
-            return redirect('customerapp:wardrobe')
+            try:
+                reservation = form.save(commit=False)
+                # Assign required fields before saving
+                reservation.item = item
+                reservation.customer = request.user.customer
+                reservation.status = 'pending'
+                reservation.save()
+                
+                messages.success(request, f"{item.name} reserved successfully!")
+                return redirect('customerapp:wardrobe')
+                
+            except Exception as e:
+                messages.error(request, f"Reservation failed: {str(e)}")
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
     else:
-        form = ReservationForm()
+        form = ReservationForm(initial={
+            'reservation_date': timezone.now().date(),
+            'return_date': timezone.now().date() + timedelta(days=1),
+            'quantity': 1
+        })
 
-    return render(request, 'customerapp/reserve_item.html', {'form': form, 'item': item})
+    return render(request, 'customerapp/reserve_item.html', {
+        'form': form,
+        'item': item
+    })
 
 def wardrobe_view(request):
     inventory_items = Inventory.objects.filter(available=True)
