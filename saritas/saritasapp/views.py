@@ -480,9 +480,7 @@ def get_events(request):
     ]
     return JsonResponse(events_data, safe=False)
 
-#Default Homepage Views
-def homepage(request):
-    return render(request, 'saritasapp/base.html')
+
 
 @login_required
 def made_to_order(request):

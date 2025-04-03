@@ -1,85 +1,39 @@
 {% extends "saritasapp/base.html" %}
 {% load static %}
-{% block title %}Rental Tracker | Sarita's{% endblock %}
-
+{% block title %}Rental Tracker{% endblock %}
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/rental_tracker.css' %}">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/rental_tracker.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <h2><i class="fas fa-calendar-alt me-2"></i> Rental Tracker</h2>
+<div class="rental-container"> <!-- Changed class from 'container' to 'rental-container' to avoid conflict -->
+    <h2>Rental Tracker</h2>
 
     <!-- Filter Form -->
-    <div class="filter-form">
-        <form method="GET" class="filter-group">
-            <div class="input-group">
-                <label for="statusFilter" class="input-group-text">Status</label>
-                <select name="status" id="statusFilter" class="form-select" onchange="this.form.submit()">
-                    <option value="">All Statuses</option>
-                    <option value="Renting" {% if request.GET.status == "Renting" %}selected{% endif %}>Renting</option>
-                    <option value="Returned" {% if request.GET.status == "Returned" %}selected{% endif %}>Returned</option>
-                    <option value="Overdue" {% if request.GET.status == "Overdue" %}selected{% endif %}>Overdue</option>
-                    <option value="Pending" {% if request.GET.status == "Pending" %}selected{% endif %}>Pending Approval</option>
-                </select>
-            </div>
-            
-            <div class="input-group">
-                <label for="dateFilter" class="input-group-text">Date Range</label>
-                <input type="date" name="start_date" class="form-control" value="{{ request.GET.start_date }}">
-                <span class="input-group-text">to</span>
-                <input type="date" name="end_date" class="form-control" value="{{ request.GET.end_date }}">
-            </div>
-            
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-filter me-1"></i> Apply
-            </button>
-            <a href="{% url 'saritasapp:rental_tracker' %}" class="btn btn-clear">
-                <i class="fas fa-times me-1"></i> Clear
-            </a>
-        </form>
-    </div>
+    <form method="GET" class="mb-3 d-flex align-items-center flex-wrap gap-2">
+        <label for="statusFilter" class="me-2">Filter by Status:</label>
+        <select name="status" id="statusFilter" class="form-select me-2" onchange="this.form.submit()">
+            <option value="">All</option>
+            <option value="Renting" {% if request.GET.status == "Renting" %}selected{% endif %}>Renting</option>
+            <option value="Returned" {% if request.GET.status == "Returned" %}selected{% endif %}>Returned</option>
+            <option value="Overdue" {% if request.GET.status == "Overdue" %}selected{% endif %}>Overdue</option>
+        </select>
+        <button type="submit" name="status" value="" class="btn btn-outline-secondary">Clear Filter</button>
+    </form>
 
-    <!-- Stats Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="stats-card">
-                <h5><i class="fas fa-clock me-2"></i> Pending</h5>
-                <p class="display-6">{{ pending_count }}</p>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stats-card">
-                <h5><i class="fas fa-calendar-day me-2"></i> Active</h5>
-                <p class="display-6">{{ active_count }}</p>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stats-card">
-                <h5><i class="fas fa-check-circle me-2"></i> Returned</h5>
-                <p class="display-6">{{ returned_count }}</p>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stats-card">
-                <h5><i class="fas fa-exclamation-triangle me-2"></i> Overdue</h5>
-                <p class="display-6">{{ overdue_count }}</p>
-            </div>
-        </div>
-    </div>
+    <!-- Display Total Rentals -->
+    <p class="mb-3">Total Rentals: <strong>{{ rentals|length }}</strong></p>
 
     <!-- Rental Table -->
     <div class="table-responsive">
-        <table class="table table-hover">
-            <thead>
+        <table class="table table-hover table-bordered">
+            <thead class="table-dark text-center align-middle">
                 <tr>
                     <th>ID</th>
                     <th>Customer</th>
                     <th>Item</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                    <th>Days Left</th>
+                    <th>Rental Start <i class="fas fa-sort ms-1"></i></th>
+                    <th>Rental End</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -88,124 +42,38 @@
                 {% for rental in rentals %}
                 <tr>
                     <td class="text-center">{{ rental.id }}</td>
+                    <td>{{ rental.customer.first_name }} {{ rental.customer.last_name }}</td>
+                    <td>{{ rental.inventory.name }}</td>
+                    <td>{{ rental.rental_start }}</td>
+                    <td>{{ rental.rental_end }}</td>
                     <td>
-                        <strong>{{ rental.customer.user.get_full_name }}</strong>
-                        <div class="text-muted small">{{ rental.customer.phone }}</div>
-                    </td>
-                    <td>
-                        {{ rental.inventory.name }}
-                        <div class="text-muted small">{{ rental.inventory.category.name }}</div>
-                    </td>
-                    <td>{{ rental.rental_start|date:"M d, Y" }}</td>
-                    <td>{{ rental.rental_end|date:"M d, Y" }}</td>
-                    <td>
-                        {% if rental.status == "Renting" %}
-                            {{ rental.days_left }} day{{ rental.days_left|pluralize }}
+                        {% if rental.status == "Overdue" %}
+                            <span class="badge bg-danger">Overdue</span>
+                        {% elif rental.status == "Returned" %}
+                            <span class="badge bg-success">{{ rental.status }}</span>
                         {% else %}
-                            -
+                            <span class="badge bg-warning">{{ rental.status }}</span>
                         {% endif %}
                     </td>
-                    <td>
-                        <span class="status-indicator status-{{ rental.status|lower }}"></span>
-                        <span class="badge bg-{% if rental.status == 'Overdue' %}danger{% elif rental.status == 'Returned' %}success{% elif rental.status == 'Pending' %}info{% else %}warning{% endif %}">
-                            {{ rental.status }}
-                        </span>
-                    </td>
                     <td class="text-center">
-                        <div class="d-flex gap-2 justify-content-center">
-                            <a href="{% url 'saritasapp:view_customer' rental.customer.id %}" 
-                               class="btn btn-action btn-info"
-                               title="View Customer">
-                                <i class="fas fa-user"></i>
-                            </a>
-                            <a href="{% url 'saritasapp:view_inventory' rental.inventory.id %}" 
-                               class="btn btn-action btn-info"
-                               title="View Item">
-                                <i class="fas fa-box"></i>
-                            </a>
-                            {% if rental.status == 'Pending' %}
-                            <a href="{% url 'saritasapp:approve_rental' rental.id %}" 
-                               class="btn btn-action btn-success"
-                               title="Review Request">
-                                <i class="fas fa-clipboard-check"></i>
-                            </a>
-                            {% endif %}
-                        </div>
+                        <a href="{% url 'saritasapp:view_customer' rental.customer.id %}" class="btn-info">
+                        <i class="fas fa-user"></i> Customer
+                        </a>
+                        <a href="{% url 'saritasapp:view_inventory' rental.inventory.id %}" class="btn-info">
+                        <i class="fas fa-box"></i> Item
+                        </a>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="8" class="empty-state">
-                        <i class="fas fa-inbox"></i>
-                        <h4>No rentals found</h4>
-                        <p class="text-muted">Try adjusting your filters or check pending approvals</p>
-                        <a href="{% url 'saritasapp:rental_approvals' %}" class="btn btn-outline-primary mt-2">
-                            <i class="fas fa-clipboard-list me-1"></i> View Pending Approvals
-                        </a>
+                    <td colspan="7" class="text-center py-3">
+                        <i class="fas fa-inbox fa-2x mb-2 text-muted"></i>
+                        <p class="text-muted">No rentals found.</p>
                     </td>
                 </tr>
                 {% endfor %}
-            </tbody>
+            </tbody>        
         </table>
     </div>
-
-    <!-- Pagination -->
-    {% if rentals.has_other_pages %}
-    <nav aria-label="Page navigation" class="mt-4">
-        <ul class="pagination justify-content-center">
-            {% if rentals.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page=1&status={{ request.GET.status }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}">First</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ rentals.previous_page_number }}&status={{ request.GET.status }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}">Previous</a>
-                </li>
-            {% endif %}
-            
-            {% for num in rentals.paginator.page_range %}
-                {% if rentals.number == num %}
-                    <li class="page-item active">
-                        <a class="page-link" href="#">{{ num }}</a>
-                    </li>
-                {% elif num > rentals.number|add:'-3' and num < rentals.number|add:'3' %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ num }}&status={{ request.GET.status }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}">{{ num }}</a>
-                    </li>
-                {% endif %}
-            {% endfor %}
-            
-            {% if rentals.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ rentals.next_page_number }}&status={{ request.GET.status }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}">Next</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ rentals.paginator.num_pages }}&status={{ request.GET.status }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}">Last</a>
-                </li>
-            {% endif %}
-        </ul>
-    </nav>
-    {% endif %}
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Set today as default end date if not set
-    const today = new Date().toISOString().split('T')[0];
-    const endDateField = document.querySelector('input[name="end_date"]');
-    if (endDateField && !endDateField.value) {
-        endDateField.value = today;
-    }
-    
-    // Sort functionality can be added here
-    const sortableHeaders = document.querySelectorAll('th[data-sort]');
-    sortableHeaders.forEach(header => {
-        header.addEventListener('click', function() {
-            const sortField = this.getAttribute('data-sort');
-            const currentUrl = new URL(window.location.href);
-            currentUrl.searchParams.set('sort', sortField);
-            window.location.href = currentUrl.toString();
-        });
-    });
-});
-</script>
 {% endblock %}

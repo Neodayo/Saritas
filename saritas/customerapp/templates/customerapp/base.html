@@ -3,103 +3,189 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Dashboard{% endblock %}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Rouge+Script&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <title>{% block title %}Sarita's Rental{% endblock %}</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
         body {
-            background: linear-gradient(rgba(128, 128, 128, 0.7), rgba(128, 128, 128, 0.625)), url("{% static 'images/background.jpg' %}");
-            background-size: cover;
-            background-attachment: fixed;
+            background: #f9f4f1;
+            color: #000000;
+            padding-top: 80px; /* Space for fixed header */
         }
-        
-       
-        .header {
-            height: 70px;
-            z-index: 50; 
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background-color: rgba(255, 255, 255, 0.9);
-            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+
+        header {
+            background: #fdfaf6;
+            padding: 15px 5%;
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            padding: 10px 20px;
+            align-items: center;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        nav {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand-logo {
+            font-size: 20px;
+            font-weight: bold;
+            color: #e63946;
+        }
+
+        .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-item {
+            position: relative;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            background: #fff;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            top: 35px;
+            left: 0;
+            min-width: 150px;
+            list-style: none;
+            z-index: 1001;
+        }
+
+        .dropdown-menu li {
+            padding: 10px;
+            white-space: nowrap;
+        }
+
+        .dropdown-menu li:hover {
+            background: #f5f5f5;
+        }
+
+        .nav-item:hover .dropdown-menu {
+            display: block;
+        }
+
+        .nav-icons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-icons svg {
+            width: 24px;
+            height: 24px;
+            fill: #5a3e2b;
+            cursor: pointer;
         }
 
         
-        .sidebar {
-            width: 250px;
-            height: 100vh;
-            background-color: rgba(255, 255, 255, 0.9);
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-            position: fixed;
-            left: -250px;
-            top: 0;
-            transition: left 0.3s ease-in-out;
-            z-index: 40; 
-            padding-top: 60px; 
-        }
 
-        .sidebar.open {
-            left: 0;
+        /* Mobile menu styles */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 80px;
+                left: 0;
+                width: 100%;
+                background: #fff;
+                flex-direction: column;
+                padding: 20px;
+                box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+            }
+            
+            .nav-links.mobile-visible {
+                display: flex;
+            }
+            
+            .nav-item {
+                padding: 15px 0;
+            }
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
-<body class="font-sans">
+<body>
+    <header>
+        <nav>
+            <div class="brand-logo">Sarita's</div>
+            <ul class="nav-links">
+                <li class="nav-item">PRODUCTS ▾
+                    <ul class="dropdown-menu">
+                        <li><a href="{% url 'customerapp:category_view' pk=1 %}">Wedding Dresses</a></li>
+                        <li><a href="{% url 'customerapp:category_view' pk=2 %}">Formal Wear</a></li>
+                        <li><a href="{% url 'customerapp:category_view' pk=3 %}">Accessories</a></li>
+                    </ul>
+                </li>
 
-    <!-- Header -->
-    <header class="header">
-        <div class="flex items-center">
-            <button id="menu-btn" class="text-2xl mr-4">☰</button> 
-            <img src="{% static 'images/Logo.png' %}" alt="Logo" class="w-11 h-11 rounded-full">
-            <span class="text-xs font-bold">Wedding Creations <br>& Event Stylist</span>
-        </div>
-        <div class="flex space-x-3">
-            <a href="#" class="text-xl"><i class="fas fa-home"></i></a>
-            <a href="#" class="text-xl"><i class="fas fa-bell"></i></a>
-            <a href="#" class="text-xl"><i class="fas fa-user"></i></a>
-            {% if user.is_authenticated %}
-                <form method="post" action="{% url 'customerapp:logout' %}">
-                    {% csrf_token %}
-                    <button type="submit" class="text-lg">Logout</button>
-                </form>            
-            {% else %}
-                <a href="#" class="text-lg">Login</a>
-            {% endif %}
-        </div>
+                <li class="nav-item">BOOK APPOINTMENT ▾
+                    <ul class="dropdown-menu">
+                        <li><a href="#">Personal Styling</a></li>
+                        <li><a href="#">Fittings</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">PACKAGES▾
+                    <ul class="dropdown-menu">
+                        <li><a href="{% url 'customerapp:package_detail' pk=1 %}">Wedding Packages</a></li>
+                        <li><a href="{% url 'customerapp:package_detail' pk=2 %}">Event Packages</a></li>
+                    </ul>
+                </li>
+                <!-- <li class="nav-item">LOOKBOOK ▾
+                    <ul class="dropdown-menu">
+                        <li><a href="#">Spring Collection</a></li>
+                        <li><a href="#">Summer Trends</a></li>
+                    </ul>
+                </li> -->
+                <li class="nav-item">ABOUT ▾
+                    <ul class="dropdown-menu">
+                        <li><a href="#">Our Story</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <div class="nav-icons">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 96 960 960" width="24"><path d="M796 936 535 675q-33 26-74.5 39.5T375 728q-117 0-198.5-81.5T95 448q0-117 81.5-198.5T375 168q117 0 198.5 81.5T655 448q0 41.5-13.5 83T602 606l261 261-67 69ZM375 648q83 0 140.5-57.5T573 448q0-83-57.5-140.5T375 250q-83 0-140.5 57.5T177 448q0 83 57.5 140.5T375 646Z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 96 960 960" width="24"><path d="M480 632q58 0 99-41t41-99q0-58-41-99t-99-41q-58 0-99 41t-41 99q0 58 41 99t99 41ZM235 896q-29 0-49.5-20.5T165 826q0-88 67.5-147T480 620q180 0 247.5 59T795 826q0 29-20.5 49.5T725 896H235Zm0-60h490q0-48-54-84t-186-36q-132 0-186 36t-54 84Zm245-264q-83 0-141.5-58.5T280 432q0-83 58.5-141.5T480 232q83 0 141.5 58.5T680 432q0 83-58.5 141.5T480 632Zm0-200ZM235 836h490-490Z"/></svg>
+                <svg class="mobile-menu-icon" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 96 960 960" width="24"><path d="M120 856v-60h720v60H120Zm0-230v-60h720v60H120Zm0-230v-60h720v60H120Z"/></svg>
+            </div>
+        </nav>
     </header>
 
-    <!-- Sidebar (Hidden by Default) -->
-    <div id="sidebar" class="sidebar">
-        <nav class="flex flex-col w-64 space-y-4 p-4">
-            <a href="{% url 'customerapp:wardrobe' %}" class="block px-6 py-3 bg-yellow-600 text-white rounded-md text-center">Wardrobe</a>
-            <a href="#" class="block px-6 py-3 bg-yellow-600 text-white rounded-md text-center">Book an Event</a>
-            <a href="#" class="block px-6 py-3 bg-yellow-600 text-white rounded-md text-center">Wedding Package</a>
-            <a href="#" class="block px-6 py-3 bg-yellow-600 text-white rounded-md text-center">Wardrobe Packages</a>
-            <a href="#" class="block px-6 py-3 bg-yellow-600 text-white rounded-md text-center">Rental Tracker</a>
-            <a href="#" class="block px-6 py-3 bg-yellow-600 text-white rounded-md text-center">Made-to-Order</a>
-            <a href="#" class="block px-6 py-3 bg-yellow-600 text-white rounded-md text-center">About Us</a>
-        </nav>
-    </div>
+    {% block content %}
+    <!-- Content will be inserted here -->
+    {% endblock %}
 
-    <!-- Main Content -->
-    <main class="pt-16 p-6">
-        {% block content %}
-        {% endblock %}
-    </main>
-
-    <!-- Sidebar Toggle Script -->
     <script>
-        document.getElementById("menu-btn").addEventListener("click", function () {
-            document.getElementById("sidebar").classList.toggle("open");
+        
+        // Mobile menu toggle
+        document.querySelector('.mobile-menu-icon').addEventListener('click', function() {
+            document.querySelector('.nav-links').classList.toggle('mobile-visible');
         });
-    </script>
 
+        // Close dropdowns when clicking elsewhere
+        // document.addEventListener('click', function(e) {
+        //     if (!e.target.closest('.nav-item')) {
+        //         document.querySelectorAll('.dropdown-menu').forEach(menu => {
+        //             menu.style.display = 'none';
+        //         });
+        //     }
+        // });
+    </script>
 </body>
 </html>

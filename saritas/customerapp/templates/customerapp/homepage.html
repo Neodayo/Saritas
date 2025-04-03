@@ -1,0 +1,106 @@
+{% extends 'customerapp/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/customerhomepage.css' %}">
+<style>
+    /* Additional homepage-specific styles */
+    .hero-banner {
+        margin-top: -80px;
+        padding-top: 80px;
+        height: calc(100vh - 80px);
+    }
+    
+    .section:first-child {
+        padding-top: 40px;
+    }
+    
+    /* Ensure content appears below fixed header */
+    main {
+        position: relative;
+        z-index: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main>
+    <!-- Hero Banner -->
+    <section class="hero-banner">
+        <div class="hero-content">
+            <h1>Elevate Your Special Occasion</h1>
+            <p>Premium fashion rentals for weddings, debuts, and galas</p>
+            <a href="#featured" class="btn btn-primary">Browse Collection</a>
+        </div>
+    </section>
+
+    <!-- Featured Items Section -->
+    <section id="featured" class="section">
+        <h2>Featured Pieces</h2>
+        <div class="scroll-container">
+            {% for item in featured_items %}
+            <div class="product-card">
+                <img src="{{ item.image.url|default:'/static/images/default-dress.jpg' }}" alt="{{ item.name }}">
+                <h3>{{ item.name }}</h3>
+                <p class="price">₱{{ item.rental_price }} rental</p>
+                <a href="{% url 'customerapp:product_detail' item.id %}" class="btn btn-outline">View Details</a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section class="section bg-light">
+        <h2>Shop by Category</h2>
+        <div class="categories-grid">
+            {% for category in categories %}    
+            <div class="category-card">
+                <img src="{% static 'images/category-'|add:category.name|lower|add:'.jpg' %}" 
+                     onerror="this.onerror=null;this.src='/static/images/default-category.jpg'">
+                <div class="category-info">
+                    <h3>{{ category.name }}</h3>
+                    <a href="{% url 'customerapp:category_view' category.id %}" class="btn btn-category">View Collection</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Wardrobe Packages Section -->
+    <section class="section">
+        <h2>Complete Wardrobe Packages</h2>
+        <h1> --- ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING --- </h1>
+        <div class="packages-grid">
+            {% for package in wardrobe_packages %}
+            <div class="package-card">
+                <h3>{{ package.name }}</h3>
+                <p class="price">₱{{ package.base_price }}</p>
+                <p class="tier">{{ package.get_tier_display }}</p>
+                <ul class="package-features">
+                    {% for item in package.package_items.all|slice:":3" %}
+                    <li>{{ item.inventory_item.name }}</li>
+                    {% endfor %}
+                </ul>
+                <a href="{% url 'customerapp:package_detail' package.id %}" class="btn btn-primary">View Package</a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- New Arrivals Section -->
+    <!-- <section class="section bg-light">
+        <h2>New Arrivals</h2>
+        <div class="scroll-container">
+            {% for item in new_arrivals %}
+            <div class="product-card">
+                <span class="new-badge">New</span>
+                <img src="{{ item.image.url|default:'/static/images/default-dress.jpg' }}" alt="{{ item.name }}">
+                <h3>{{ item.name }}</h3>
+                <p class="price">₱{{ item.rental_price }}</p>
+                <a href="{% url 'customerapp:product_detail' item.id %}" class="btn btn-outline">View Details</a>
+            </div>
+            {% endfor %}
+        </div>
+    </section> -->
+</main>
+{% endblock %}

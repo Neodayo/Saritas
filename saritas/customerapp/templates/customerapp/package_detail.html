@@ -1,0 +1,26 @@
+{% extends 'customerapp/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="package-detail">
+    <h1>{{ package.name }}</h1>
+    <p class="price">₱{{ package.base_price }}</p>
+    <p class="tier">{{ package.get_tier_display }}</p>
+    
+    <div class="package-items">
+        <h3>Includes:</h3>
+        <ul>
+            {% for item in package_items %}
+            <li>
+                {{ item.inventory_item.name }} 
+                ({{ item.inventory_item.color.name|default:"No color" }})
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    
+    <a href="{% url 'customerapp:wardrobe' %}" class="btn btn-primary">
+        Back to Wardrobe
+    </a>
+</div>
+{% endblock %}

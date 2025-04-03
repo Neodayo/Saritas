@@ -1,0 +1,31 @@
+{% extends 'customerapp/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="product-detail-container">
+    <div class="product-images">
+        <img src="{{ item.image.url|default:'/static/images/default-dress.jpg' }}" 
+             alt="{{ item.name }}" class="main-image">
+    </div>
+    
+    <div class="product-info">
+        <h1>{{ item.name }}</h1>
+        
+        <div class="details">
+            <p><strong>Category:</strong> {{ item.category.name }}</p>
+            {% if item.color %}<p><strong>Color:</strong> {{ item.color.name }}</p>{% endif %}
+            {% if item.size %}<p><strong>Size:</strong> {{ item.size.name }}</p>{% endif %}
+            <p><strong>Rental Price:</strong> ₱{{ item.rental_price }}</p>
+            <p><strong>Status:</strong> {% if can_rent %}Available{% else %}Unavailable{% endif %}</p>
+        </div>
+        
+        {% if can_rent %}
+        <div class="actions">
+            <a href="{% url 'customerapp:rent_item' item.id %}" class="btn btn-primary">
+                Rent This Item
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

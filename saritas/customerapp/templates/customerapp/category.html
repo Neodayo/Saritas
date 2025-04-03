@@ -1,0 +1,82 @@
+{% extends 'customerapp/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+/* Category Page Styles */
+.category-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.item-card {
+    border: 1px solid #eee;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.3s;
+}
+
+.item-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.item-card img {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+}
+
+.item-card h3 {
+    padding: 10px;
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.item-card .price {
+    padding: 0 10px 10px;
+    font-weight: bold;
+    color: #e63946;
+}
+
+.no-items {
+    text-align: center;
+    padding: 40px;
+    font-size: 1.2rem;
+    color: #666;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="category-container">
+    <h1>{{ category.name }}</h1>
+    
+    {% if items %}
+    <div class="items-grid">
+        {% for item in items %}
+        <div class="item-card">
+            <a href="{% url 'customerapp:product_detail' item.id %}">
+                <img src="{{ item.image.url|default:'/static/images/default-dress.jpg' }}" 
+                     alt="{{ item.name }}">
+                <h3>{{ item.name }}</h3>
+                <p class="price">₱{{ item.rental_price }}</p>
+                {% if item.color %}<p>Color: {{ item.color.name }}</p>{% endif %}
+                {% if item.size %}<p>Size: {{ item.size.name }}</p>{% endif %}
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="no-items">No available items in this category.</p>
+    {% endif %}
+</div>
+{% endblock %}

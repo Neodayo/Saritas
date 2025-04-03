@@ -8,7 +8,7 @@ from .views import render, update_receipt, receipt_detail, made_to_order_view, s
 app_name = 'saritasapp'
 
 urlpatterns = [
-    path('', views.sign_in, name='homepage'),
+    
     path('add-inventory/', views.add_inventory, name='add_inventory'),
     path('inventory/', views.inventory_view, name='inventory_list'),
     path('add-category/', views.add_category, name='add_category'),
