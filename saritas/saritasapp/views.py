@@ -546,7 +546,7 @@ def sign_in(request):
             elif user.is_staff_user:
                 return redirect('saritasapp:dashboard')  # Redirect staff to staff dashboard
             else:
-                return redirect('customerapp:dashboard')  # Redirect customers to their dashboard
+                return redirect('customerapp:homepage')  # Redirect customers to their dashboard
                 
         else:
             messages.error(request, "Invalid username or password.")

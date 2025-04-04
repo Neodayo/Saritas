@@ -43,7 +43,7 @@
                 <img src="{{ item.image.url|default:'/static/images/default-dress.jpg' }}" alt="{{ item.name }}">
                 <h3>{{ item.name }}</h3>
                 <p class="price">₱{{ item.rental_price }} rental</p>
-                <a href="{% url 'customerapp:product_detail' item.id %}" class="btn btn-outline">View Details</a>
+                <a href="" class="btn btn-outline">View Details</a>
             </div>
             {% endfor %}
         </div>
@@ -59,7 +59,7 @@
                      onerror="this.onerror=null;this.src='/static/images/default-category.jpg'">
                 <div class="category-info">
                     <h3>{{ category.name }}</h3>
-                    <a href="{% url 'customerapp:category_view' category.id %}" class="btn btn-category">View Collection</a>
+                    <a href="" class="btn btn-category">View Collection</a>
                 </div>
             </div>
             {% endfor %}
@@ -81,7 +81,7 @@
                     <li>{{ item.inventory_item.name }}</li>
                     {% endfor %}
                 </ul>
-                <a href="{% url 'customerapp:package_detail' package.id %}" class="btn btn-primary">View Package</a>
+                <a href="" class="btn btn-primary">View Package</a>
             </div>
             {% endfor %}
         </div>
@@ -97,7 +97,7 @@
                 <img src="{{ item.image.url|default:'/static/images/default-dress.jpg' }}" alt="{{ item.name }}">
                 <h3>{{ item.name }}</h3>
                 <p class="price">₱{{ item.rental_price }}</p>
-                <a href="{% url 'customerapp:product_detail' item.id %}" class="btn btn-outline">View Details</a>
+                <a href="" class="btn btn-outline">View Details</a>
             </div>
             {% endfor %}
         </div>
