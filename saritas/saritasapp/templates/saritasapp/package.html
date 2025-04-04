@@ -8,33 +8,22 @@
         body {
             font-family: Arial, sans-serif;
             background: #f8f8f8;
-            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
         }
 
         h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 28px;
-            color: #333;
-        }
-
-        .packages-section {
-            margin-bottom: 40px;
-        }
-
-        .section-title {
-            font-size: 24px;
-            color: #9E8729;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #9E8729;
-            padding-bottom: 5px;
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 22px;
         }
 
         .package-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
+            display: flex; /* Enable Flexbox */
+            gap: 20px; /* Space between packages */
         }
 
         .package-box {
@@ -43,61 +32,32 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             padding: 20px;
             width: 320px;
-            flex: 1;
-            min-width: 300px;
-            max-width: 350px;
+            flex: 1; /* Makes boxes flexible and share available space */
         }
 
         .package-box h2 {
             font-size: 20px;
             margin-bottom: 10px;
-            color: #333;
         }
 
-        .package-price {
-            font-size: 18px;
-            font-weight: bold;
-            color: #9E8729;
-            margin-bottom: 10px;
-        }
-
-        .package-deposit {
+        .package-box p {
+            margin: 5px 0;
             font-size: 14px;
-            color: #666;
-            margin-bottom: 15px;
-        }
-
-        .package-inclusions {
-            margin: 15px 0;
-        }
-
-        .package-inclusions h3 {
-            font-size: 16px;
-            margin-bottom: 10px;
-            color: #444;
         }
 
         .package-box ul {
             list-style: none;
             padding: 0;
-            margin: 0;
         }
 
         .package-box li {
-            margin: 8px 0;
+            margin: 5px 0;
             display: flex;
-            align-items: flex-start;
-            font-size: 14px;
-            line-height: 1.4;
+            align-items: center;
         }
 
-        .package-box li:before {
-            content: "•";
-            color: #9E8729;
-            font-weight: bold;
-            display: inline-block;
-            width: 1em;
-            margin-right: 5px;
+        .package-box input[type="checkbox"] {
+            margin-right: 10px;
         }
 
         .avail-btn {
@@ -111,306 +71,122 @@
             text-align: center;
             font-weight: bold;
             transition: background 0.3s;
-            width: 100%;
-            box-sizing: border-box;
         }
 
         .avail-btn:hover {
             background-color: #AD974F;
         }
 
-        .note {
-            font-size: 12px;
-            color: #666;
-            margin-top: 10px;
-            font-style: italic;
-        }
-
-        .corkage-note {
-            color: #d9534f;
-            font-weight: bold;
-            margin: 10px 0;
+        .select-all {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
         }
     </style>
 {% endblock %}
 
 {% block content %}
 
-<h1>Our Wedding & Debut Packages</h1>
-
-<div class="packages-section">
-    <h2 class="section-title">Wedding Packages</h2>
-    
-    <div class="package-container">
-        <!-- Wedding Package 1 -->
-        <div class="package-box">
-            <h2>Basic Wedding Package</h2>
-            <div class="package-price">₱270,000 - ₱280,000</div>
-            <div class="package-deposit">+ ₱10,000 refundable deposit</div>
-            
-            <div class="package-inclusions">
-                <h3>Hotel Venue / Food</h3>
-                <ul>
-                    <li>150 guests at ₱390 per head</li>
-                    <li>Free overnight stay room accommodation</li>
-                    <li>Free bridal car</li>
-                    <li>Client's choice of menu</li>
-                </ul>
-                <div class="corkage-note">All corkages will be charged to client</div>
-                
-                <h3>Floral Arrangement</h3>
-                <ul>
-                    <li>Church to venue (Christian wedding)</li>
-                    <li>Bridal bouquet (fresh flower)</li>
-                    <li>Groom's corsage</li>
-                    <li>10 pairs principal sponsors corsage</li>
-                    <li>3 pairs secondary sponsors corsage</li>
-                    <li>1 maid of honor flower bouquet</li>
-                    <li>1 bestman buttoner</li>
-                    <li>4 bridesmaids flower bouquet</li>
-                    <li>4 groomsmen buttoners</li>
-                    <li>4 flowergirls headress and flower basket</li>
-                    <li>Bridal car bouquet</li>
-                    <li>Artificial flower stand aisle</li>
-                </ul>
-            </div>
-            
-            <a href="#" class="avail-btn">Inquire About This Package</a>
+<h1 class="inventory-title">Packages</h1>
+<div class="package-container">
+    <!-- Package 1 -->
+    <div class="package-box">
+        <div class="select-all">
+            <h2>Package A</h2>
+            <label>
+                <input type="checkbox" class="selectAll"> SELECT ALL
+            </label>
         </div>
+        <p>Price: 12,000</p>
+        <p>Deposit: 10,000 (Refundable)</p>
 
-        <!-- Wedding Package 2 -->
-        <div class="package-box">
-            <h2>Premium Wedding Package</h2>
-            <div class="package-price">₱300,000 - ₱310,000</div>
-            <div class="package-deposit">+ ₱10,000 refundable deposit</div>
-            
-            <div class="package-inclusions">
-                <h3>Hotel Venue / Food</h3>
-                <ul>
-                    <li>Regency Hall (entire hall)</li>
-                    <li>150 guests at ₱390 per head</li>
-                    <li>Free room overnight stay only</li>
-                    <li>Free bridal car</li>
-                    <li>Client's choice of menu</li>
-                </ul>
-                <div class="corkage-note">All corkages will be charged to client</div>
-                
-                <h3>Floral Arrangement</h3>
-                <ul>
-                    <li>Church to venue (Christian wedding)</li>
-                    <li>Bridal bouquet (fresh flower)</li>
-                    <li>Groom's corsage</li>
-                    <li>10 pairs principal sponsors corsage</li>
-                    <li>3 pairs secondary sponsors corsage</li>
-                    <li>1 maid of honor flower bouquet</li>
-                    <li>1 bestman buttoner</li>
-                    <li>4 bridesmaids flower bouquet</li>
-                    <li>4 groomsmen buttoners</li>
-                    <li>4 flowergirls headress and flower basket</li>
-                    <li>Bridal car bouquet</li>
-                    <li>Artificial flower stand aisle</li>
-                </ul>
-                
-                <h3>Photo & Video</h3>
-                <ul>
-                    <li>With same day edit</li>
-                    <li>Prenup photoshoot</li>
-                    <li>Postnuptial shots</li>
-                    <li>2 set up cameras</li>
-                    <li>Free USB full coverage video</li>
-                    <li>Free wedding album</li>
-                    <li>Same day edit video</li>
-                </ul>
-                <div class="corkage-note">All corkages will be charged to client</div>
-            </div>
-            
-            <a href="#" class="avail-btn">Inquire About This Package</a>
-        </div>
+        <p><strong>Inclusions:</strong></p>
+        <ul>
+            <li><input type="checkbox"> Bridal Gown</li>
+            <li><input type="checkbox"> Groom's Tuxedo</li>
+            <li><input type="checkbox"> Maid of Honor</li>
+            <li><input type="checkbox"> Bestman</li>
+            <li><input type="checkbox"> Bridesmaids</li>
+            <li><input type="checkbox"> Groomsmen</li>
+            <li><input type="checkbox"> Flower Girls</li>
+            <li><input type="checkbox"> Bearers</li>
+            <li><input type="checkbox"> Free Use of Wedding Accessories</li>
+        </ul>
 
-        <!-- Wedding Package 3 -->
-        <div class="package-box">
-            <h2>Custom Wedding Package</h2>
-            <div class="package-price">Custom Pricing</div>
-            
-            <div class="package-inclusions">
-                <h3>Wedding Cake</h3>
-                <ul>
-                    <li>2 tiered customized wedding cake</li>
-                    <li>8 satellite cake</li>
-                    <li>Client's choice of motif</li>
-                </ul>
-                
-                <h3>Wedding Invitation</h3>
-                <ul>
-                    <li>Customized lacer cut invitations (50pcs)</li>
-                    <li>Client's choice of design and motif</li>
-                </ul>
-                
-                <h3>Coordination Team</h3>
-                <ul>
-                    <li>Professional coordinator</li>
-                    <li>Professional emcee</li>
-                    <li>Assistant coordinators</li>
-                    <li>Program flow</li>
-                    <li>Table tags</li>
-                    <li>Wedding acoustic singer</li>
-                </ul>
-                
-                <h3>Make Up Package</h3>
-                <ul>
-                    <li>Bride prenup photoshoot</li>
-                    <li>Bride's on the day make up</li>
-                    <li>10 heads on the day entourage make up</li>
-                    <li>Included 2 mothers</li>
-                </ul>
-                
-                <h3>Lights & Sounds</h3>
-                <ul>
-                    <li>With LED wall</li>
-                    <li>4 moving heads</li>
-                    <li>Pallow spot</li>
-                    <li>LED lights</li>
-                    <li>Spot light</li>
-                    <li>With smoke and bubbles machine</li>
-                </ul>
-                <div class="corkage-note">All corkages will be charged to client</div>
-            </div>
-            
-            <a href="#" class="avail-btn">Customize Your Package</a>
+        <p><strong>Others:</strong> __________</p>
+
+        <a href="#" class="avail-btn">+ Avail</a>
+    </div>
+
+    <!-- Package 2 -->
+    <div class="package-box">
+        <div class="select-all">
+            <h2>Package B</h2>
+            <label>
+                <input type="checkbox" class="selectAll"> SELECT ALL
+            </label>
         </div>
+        <p>Price: 12,000</p>
+        <p>Deposit: 10,000 (Refundable)</p>
+
+        <p><strong>Inclusions:</strong></p>
+        <ul>
+            <li><input type="checkbox"> Bridal Gown</li>
+            <li><input type="checkbox"> Groom's Tuxedo</li>
+            <li><input type="checkbox"> Maid of Honor</li>
+            <li><input type="checkbox"> Bestman</li>
+            <li><input type="checkbox"> Bridesmaids</li>
+            <li><input type="checkbox"> Groomsmen</li>
+            <li><input type="checkbox"> Flower Girls</li>
+            <li><input type="checkbox"> Bearers</li>
+            <li><input type="checkbox"> Free Use of Wedding Accessories</li>
+        </ul>
+
+        <p><strong>Others:</strong> __________</p>
+
+        <a href="#" class="avail-btn">+ Avail</a>
+    </div>
+
+    <!-- Package 3 -->
+    <div class="package-box">
+        <div class="select-all">
+            <h2>Package C</h2>
+            <label>
+                <input type="checkbox" class="selectAll"> SELECT ALL
+            </label>
+        </div>
+        <p>Price: 15,000</p>
+        <p>Deposit: 10,000 (Refundable)</p>
+
+        <p><strong>Inclusions:</strong></p>
+        <ul>
+            <li><input type="checkbox"> Bridal Gown</li>
+            <li><input type="checkbox"> Groom's Tuxedo</li>
+            <li><input type="checkbox"> Maid of Honor</li>
+            <li><input type="checkbox"> Bestman</li>
+            <li><input type="checkbox"> Bridesmaids</li>
+            <li><input type="checkbox"> Groomsmen</li>
+            <li><input type="checkbox"> Flower Girls</li>
+            <li><input type="checkbox"> Bearers</li>
+            <li><input type="checkbox"> Free Use of Wedding Accessories</li>
+        </ul>
+
+        <p><strong>Others:</strong> __________</p>
+
+        <a href="#" class="avail-btn">+ Avail</a>
     </div>
 </div>
 
-<div class="packages-section">
-    <h2 class="section-title">Debut Packages</h2>
-    
-    <div class="package-container">
-        <!-- Debut Package -->
-        <div class="package-box">
-            <h2>Standard Debut Package</h2>
-            <div class="package-price">₱180,000</div>
-            
-            <div class="package-inclusions">
-                <h3>Hotel Venue / Food</h3>
-                <div class="corkage-note">All corkages will be charged to client</div>
-                
-                <h3>Photo & Video</h3>
-                <ul>
-                    <li>Same day edit (SDE)</li>
-                    <li>2 set up cameras</li>
-                    <li>100 copies 3R size pictures</li>
-                    <li>Free USB full coverage video</li>
-                    <li>Free album</li>
-                    <li>Free projector</li>
-                </ul>
-                <div class="corkage-note">All corkages will be charged to client</div>
-                
-                <h3>Photoshoot</h3>
-                <ul>
-                    <li>25 set up cameras</li>
-                    <li>100 copies 3R size pictures</li>
-                    <li>Free USB full coverage video</li>
-                    <li>Free album</li>
-                    <li>Free projector</li>
-                </ul>
-                
-                <h3>Wardrobe Package</h3>
-                <ul>
-                    <li>Mother</li>
-                    <li>Father</li>
-                    <li>Ballgown</li>
-                    <li>Cocktail</li>
-                </ul>
-                
-                <h3>Debutant Cake</h3>
-                <ul>
-                    <li>3 layers customized cake</li>
-                    <li>18 cupcakes</li>
-                    <li>Client's choice of motif</li>
-                </ul>
-                
-                <h3>Coordination Team</h3>
-                <ul>
-                    <li>Professional coordinator</li>
-                    <li>Professional emcee</li>
-                    <li>Assistant coordinators</li>
-                    <li>Program flow</li>
-                    <li>Table tags</li>
-                </ul>
-                
-                <h3>Make Up Package</h3>
-                <ul>
-                    <li>Debut photoshoot</li>
-                    <li>Debut on the day make up</li>
-                    <li>Mother</li>
-                </ul>
-                
-                <h3>Lights & Sounds</h3>
-                <ul>
-                    <li>With LED wall</li>
-                    <li>4 moving heads</li>
-                    <li>Pallow spot</li>
-                    <li>LED lights</li>
-                    <li>Spot light</li>
-                    <li>With smoke and bubbles machine</li>
-                </ul>
-                <div class="corkage-note">All corkages will be charged to client</div>
-            </div>
-            
-            <a href="#" class="avail-btn">Inquire About This Package</a>
-        </div>
-    </div>
-</div>
-
-<div class="packages-section">
-    <h2 class="section-title">Additional Services</h2>
-    
-    <div class="package-container">
-        <!-- Additional Service 1 -->
-        <div class="package-box">
-            <h2>Venue Decoration</h2>
-            
-            <div class="package-inclusions">
-                <ul>
-                    <li>Stage decoration</li>
-                    <li>Ceiling tenting decoration</li>
-                    <li>Tussels</li>
-                    <li>Flowy flowers</li>
-                    <li>Entrance tunnel</li>
-                    <li>VIP presidential table</li>
-                </ul>
-                
-                <h3>Fireworks</h3>
-                <ul>
-                    <li>2 sets indoor fireworks</li>
-                    <li>Professional installed</li>
-                </ul>
-            </div>
-            
-            <a href="#" class="avail-btn">Add to Package</a>
-        </div>
-
-        <!-- Additional Service 2 -->
-        <div class="package-box">
-            <h2>Wedding Cake</h2>
-            
-            <div class="package-inclusions">
-                <ul>
-                    <li>Customized wedding cake</li>
-                    <li>4 satellite cake</li>
-                    <li>Client's choice of design</li>
-                </ul>
-                
-                <h3>Invitations</h3>
-                <ul>
-                    <li>Customized lacer cut invitations (50pcs)</li>
-                    <li>Client's choice of design and motif</li>
-                </ul>
-            </div>
-            
-            <a href="#" class="avail-btn">Add to Package</a>
-        </div>
-    </div>
-</div>
+<script>
+    // Select all checkboxes for each package
+    document.querySelectorAll(".selectAll").forEach(selectAll => {
+        selectAll.addEventListener("change", function() {
+            const packageBox = this.closest(".package-box");
+            const checkboxes = packageBox.querySelectorAll("input[type='checkbox']");
+            checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+        });
+    });
+</script>
 
 {% endblock %}
