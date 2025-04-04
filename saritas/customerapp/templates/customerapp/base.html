@@ -51,18 +51,38 @@
             gap: 20px;
         }
 
+        
+
         .nav-item {
             position: relative;
             padding: 10px;
             cursor: pointer;
 
         }
+        
+        .nav-item .logout-btn {
+            color: white;          
+            background-color: #ff4444; 
+            border-radius: 4px;      
+            padding: 5px 10px;       
+            transition: background-color 0.3s ease;
+        }
+
+        .nav-item .logout-btn:hover {
+            background-color: #cc0000; 
+        }
     
+        .nav-item .login-btn {
+            color: rgb(0, 0, 0);          
+            border-radius: 4px;      
+            padding: 5px 10px;       
+            transition: background-color 0.3s ease;
+        }
+
+
         .nav-item:hover {
             background-color: #e0dedb; 
             border-radius: 4px;
-            
-            /* box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); */
         }
 
         .nav-item > a {
@@ -70,7 +90,7 @@
             padding: 5px 8px; 
         }
         .nav-item > a::after {
-            content: " ▾";
+            content: " ";  /* ▾ */
             font-size: 0.9em;
         }
 
@@ -78,7 +98,6 @@
             display: none;
             position: absolute;
             background: #e0dedb;
-            /* box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); */
             top: 35px;
             left: 0;
             min-width: 150px;
@@ -98,7 +117,8 @@
         }
 
         .dropdown-menu li:hover {
-            background: #e0dedb;
+            background: #979694;
+            text-decoration: underline;
         }
 
         .nav-item:hover .dropdown-menu {
@@ -173,28 +193,27 @@
                     </ul>
                 </li>
 
-                <li class="nav-item"><a href="{}">ABOUT </a>
-                    <ul class="dropdown-menu">
-                        <li><a href="{% url 'customerapp:story' %}">Our Story</a></li>
-                        <li><a href="#">Contact</a></li>
-                    </ul>
-                </li>
+                <li class="nav-item"><a href="{% url 'customerapp:about_us' %}">ABOUT </a>
+ 
+                
+                
+                <!-- User Login/Logout -->
                 {% if user.is_authenticated %}
                 <li class="nav-item">
-                    <a href="{% url 'customerapp:logout' %}">Logout</a>
+                    <a href="{% url 'customerapp:logout' %}" class="logout-btn">LOGOUT</a>
                 </li>
                 {% else %}
                     <li class="nav-item">
-                        <a href="{% url 'saritasapp:sign_in' %}">Login</a>
+                        <a href="{% url 'saritasapp:sign_in' %}" class="login-btn">LOGIN</a>
                     </li>
                 {% endif %}
             </ul>
             <div class="nav-icons">
-
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 96 960 960" width="24">
+                    <!-- <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 96 960 960" width="24">
                         <path d="M796 936 535 675q-33 26-74.5 39.5T375 728q-117 0-198.5-81.5T95 448q0-117 81.5-198.5T375 168q117 0 198.5 81.5T655 448q0 41.5-13.5 83T602 606l261 261-67 69ZM375 648q83 0 140.5-57.5T573 448q0-83-57.5-140.5T375 250q-83 0-140.5 57.5T177 448q0 83 57.5 140.5T375 646Z"/>
                     </svg>
-                </a>
+                </a> -->
+             
                 
                 <a href="{% url 'customerapp:login' %}">
                     <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 96 960 960" width="24">
@@ -203,10 +222,10 @@
                 </a>
                 
 
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 96 960 960" width="24">
+                    <!-- <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 96 960 960" width="24">
                         <path d="M120 856v-60h720v60H120Zm0-230v-60h720v60H120Zm0-230v-60h720v60H120Z"/>
                     </svg>
-                </a>
+                </a> -->
             </div>
             
         </nav>

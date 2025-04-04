@@ -12,6 +12,6 @@ urlpatterns = [
     path('rental/<int:inventory_id>/', views.rent_item, name='rental'),
     path('reservation/<int:item_id>/', views.reserve_item, name='reservation'),
     path('logout/', views.logout_view, name='logout'),
-    path('homepage/', views.homepage, name='homepage'),
-    path('story/',views.story, name='story'),
+    path('', views.homepage, name='homepage'),
+    path('story/',views.about_us, name='about_us'),
 ]

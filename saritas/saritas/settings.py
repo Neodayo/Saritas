@@ -117,5 +117,5 @@ MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
 LOGOUT_REDIRECT_URL = '/'
 LOGIN_REDIRECT_URL = 'customerapp:dashboard'
 LOGIN_REDIRECT_URL = 'saritasapp:dashboard'
-LOGOUT_REDIRECT_URL = 'saritasapp:sign_in'
+LOGOUT_REDIRECT_URL = 'customerapp:dashboard'
 
