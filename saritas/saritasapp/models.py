@@ -5,6 +5,9 @@ from django.dispatch import receiver
 from django.db import transaction
 from django.db.models import F
 from django.core.exceptions import ValidationError
+from django.db import models, transaction
+from django.db.models import F
+from django.utils import timezone
 
 
 class Branch(models.Model):
@@ -245,12 +248,6 @@ def update_order_total(sender, instance, **kwargs):
     instance.order.calculate_total_price()
 
 # --- Rental System ---
-from django.db import models, transaction
-from django.db.models import F
-from django.core.exceptions import ValidationError
-from django.utils import timezone
-from saritasapp.models import Customer, Inventory, User
-
 class Rental(models.Model):
     STATUS_CHOICES = [
         ("Pending", "Pending"),        # Waiting for staff approval
