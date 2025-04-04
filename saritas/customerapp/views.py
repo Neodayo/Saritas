@@ -46,7 +46,7 @@ def register(request):
             try:
                 form.save()
                 messages.success(request, "Registration successful!")
-                return redirect('customerapp/login')
+                return redirect('saritasapp/login')
             except IntegrityError as e:
                 messages.error(request, "Database error. Please try again.")
                 # Log the error: print(e) or use logging module
