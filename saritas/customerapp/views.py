@@ -10,6 +10,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
 from django.shortcuts import render
 from saritasapp.models import Inventory, Category, Color, Size, Rental, Reservation
+from .models import WardrobePackage
 
 
 def homepage(request):
@@ -94,6 +95,9 @@ def customer_dashboard(request):
 def item_detail(request, item_id):
     item = get_object_or_404(Inventory, id=item_id)
     return render(request, 'customerapp/view_item.html', {'item': item})
+def view_item(request, item_id):
+    item = get_object_or_404(Inventory, id=item_id)
+    return render(request, 'saritasapp/view_item.html', {'item': item})
 
 @login_required
 def rent_item(request, inventory_id):
@@ -124,7 +128,7 @@ def rent_item(request, inventory_id):
                 
                 rental.save()
                 messages.success(request, 'Rental request submitted for approval')
-                return redirect('customerapp:homepage')
+                return redirect('customerapp:dashboard')
     else:
         # Set default rental period (e.g., 7 days)
         initial = {
@@ -249,3 +253,16 @@ def category_view(request, pk):
     }
     return render(request, 'customerapp/category.html', context)
 
+def package_detail(request, pk):
+    """Detailed view for a wardrobe package"""
+    package = get_object_or_404(WardrobePackage, id=pk)
+    package_items = package.package_items.all()
+    
+    context = {
+        'package': package,
+        'package_items': package_items,
+    }
+    return render(request, 'customerapp/package_detail.html', context)
+
+def story(request):
+    return render(request, 'customerapp/story.html')

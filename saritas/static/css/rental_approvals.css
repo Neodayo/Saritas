@@ -1,123 +1,156 @@
-    /* Main Container */
-    .container {
-        margin-left: 220px;
-        padding: 20px;
-        margin-top: 90px;
-        transition: margin-left 0.3s ease-in-out;
-        font-family: 'Arial', sans-serif;
-    }
+
+div.container {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    justify-content: center;
+    box-shadow: 0 0 15px rgba(0,0,0,0.05);
+    margin: 200px auto 1750x auto; /* Added top margin to center vertically */
+    max-width: 1200px;
+    font-family: 'Arial', sans-serif;
     
-    .sidebar.collapsed ~ .container {
-        margin-left: 105px;
-    }
     
+
     /* Header Styling */
     .page-header {
-        margin-bottom: 30px;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #eee;
     }
-    
+
     .page-header h1 {
-        color: #000;
-        font-weight: bold;
+        color: #8E793E;
+        font-size: 1.5rem;
+        font-weight: 600;
         margin: 0;
-        font-size: 2rem;
     }
-    
+
     .page-header h2 {
         color: #AD974F;
-        font-weight: normal;
-        margin: 0;
-        font-size: 1.5rem;
+        font-size: 1.1rem;
+        font-weight: 400;
+        margin: 5px 0 0;
     }
-    
-    /* Stats Cards */
+
+    /* Stats Container */
     .stats-container {
         display: flex;
-        gap: 20px;
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid #ddd;
+        gap: 15px;
+        margin-bottom: 25px;
     }
-    
+
     .stat-item {
-        text-align: center;
-    }
-    
-    .stat-label {
-        font-size: 1rem;
-        color: #666;
-        margin-bottom: 5px;
-    }
-    
-    .stat-value {
-        font-size: 1.8rem;
-        font-weight: bold;
-        color: #000;
-    }
-    
-    /* Main Table */
-    .table-container {
+        flex: 1;
         background: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        padding: 20px;
+        border-radius: 6px;
+        padding: 15px;
+        box-shadow: 0 0 8px rgba(0,0,0,0.05);
+        text-align: center;
+        border: 1px solid #eee;
     }
-    
+
+    .stat-label {
+        color: #666;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+    }
+
+    .stat-value {
+        color: #333;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    /* Table Styling */
     .table {
         width: 100%;
         border-collapse: collapse;
     }
-    
-    .table th {
-        background-color: #f8f9fa;
-        color: #000;
-        font-weight: bold;
+
+    .table thead th {
+        background-color: #8E793E;
+        color: white;
         padding: 12px 15px;
         text-align: left;
-        border-bottom: 2px solid #AD974F;
+        font-weight: 600;
     }
-    
-    .table td {
+
+    .table tbody td {
         padding: 12px 15px;
         border-bottom: 1px solid #eee;
+        vertical-align: middle;
     }
-    
-    .table tr:last-child td {
-        border-bottom: none;
+
+    .table tbody tr:hover {
+        background-color: rgba(173, 151, 79, 0.05);
     }
-    
+
+    /* Button Styling */
+    .btn {
+        display: inline-block;
+        padding: 6px 12px;
+        background-color: #8E793E;
+        color: white;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: background-color 0.2s ease;
+    }
+
+    .btn:hover {
+        background-color: #7a6935;
+    }
+
     /* Empty State */
     .empty-state {
         text-align: center;
-        padding: 40px 0;
-        color: #666;
+        padding: 40px 20px;
+        color: #777;
     }
-    
+
     .empty-state i {
-        font-size: 3rem;
+        font-size: 2.5rem;
         color: #AD974F;
         margin-bottom: 15px;
+        opacity: 0.7;
     }
-    
+
+    .empty-state h4 {
+        color: #555;
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+
+    .empty-state p {
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
     /* Responsive Adjustments */
-    @media (max-width: 992px) {
-        .container {
-            margin-left: 105px;
-        }
-        
-        .sidebar.collapsed ~ .container {
-            margin-left: 85px;
-        }
-    }
-    
     @media (max-width: 768px) {
         .container {
-            margin-left: 0;
-            padding-top: 80px;
+            margin: 20px 15px;
+            padding: 20px;
         }
         
         .stats-container {
-            flex-direction: column;
-            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            flex: 1 1 45%;
+            margin-bottom: 10px;
+        }
+        
+        .table thead th, 
+        .table tbody td {
+            padding: 10px 8px;
+            font-size: 0.85rem;
         }
     }

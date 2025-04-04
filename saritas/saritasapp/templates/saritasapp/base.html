@@ -60,7 +60,7 @@
                         <a href="{% url 'saritasapp:made_to_order' %}" class="header-link-text">Made to Order</a>
                     </div>
                     <select id="Package" class="header-link-text" onchange="navigateToPage()">
-                        <option value="">Packages</option>
+                        <option value="{% url 'saritasapp:packages' %}">Packages</option>
                         <option value="{% url 'saritasapp:packages' %}">Wardrobe Packages</option>
                     </select>
                     <a href="{% url 'saritasapp:dashboard' %}" class="header-link"><i class="fas fa-home"></i></a>
