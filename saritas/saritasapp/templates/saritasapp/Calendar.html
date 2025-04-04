@@ -32,8 +32,8 @@
         left: 0;
         right: 0;
         height: 4px;
-        background: linear-gradient(90deg, #8E793E, #AD974F);
-        border-radius: 12px 12px 0 0;
+        /* background: linear-gradient(90deg, #8E793E, #AD974F);
+        border-radius: 12px 12px 0 0; */
     }
 
     /* Header */
@@ -179,7 +179,6 @@
 {% endblock %}
 
 {% block content %}
-<div class="content-wrapper">
     <div class="white-container">
         <div class="calendar-header">
             <h1><i class="fas fa-calendar-alt"></i> Event Calendar</h1>
@@ -207,7 +206,7 @@
 
         <div id="calendar"></div>
     </div>
-</div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.js"></script>
 <script>
