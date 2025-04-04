@@ -1,74 +1,159 @@
 {% extends "customerapp/base.html" %}
 {% load static %}
 
-{% block title %}View Inventory{% endblock %}
+{% block title %}{{ item.name }} | Sarita's Wedding{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/view_inventory.css' %}">
+<style>
+    .gown-container {
+        max-width: 950px;
+        margin: 25px auto;
+        padding: 30px;
+        background: #fff;
+        box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+        border-radius: 2px;
+    }
+
+    .gown-grid {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 30px;
+        align-items: center;
+    }
+
+    .gown-image-container {
+        height: 500px;
+        background: #fafafa;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .gown-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .gown-details {
+        padding: 20px;
+    }
+
+    .gown-title {
+        font-size: 2.4rem;
+        color: #2d2d2d;
+        margin-bottom: 1.2rem;
+        font-weight: 400;
+    }
+
+    .detail-item {
+        margin: 1.2rem 0;
+        padding: 1rem 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .detail-label {
+        color: #8E793E;
+        font-weight: 500;
+        margin-bottom: 0.4rem;
+    }
+
+    .detail-value {
+        font-size: 1.1rem;
+        color: #444;
+    }
+
+    .price-display {
+        font-size: 1.8rem;
+        color: #2d2d2d;
+        margin: 2rem 0;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 2rem;
+    }
+
+    .btn {
+        padding: 14px 28px;
+        border-radius: 3px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+        background: #8E793E;
+        color: white;
+        border: 2px solid #8E793E;
+    }
+
+    .btn-secondary {
+        background: transparent;
+        color: #8E793E;
+        border: 2px solid #8E793E;
+    }
+
+    .back-btn {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 10;
+        background: rgba(255,255,255,0.9);
+        padding: 10px 20px;
+        border: 1px solid #eee;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<a href="{% url 'customerapp:wardrobe' %}" class="btn btn-primary">Back</a>
-<div class="inventory-container">
-    <!-- Image that opens modal -->
-    <img src="{% if item.image %}{{ item.image.url }}{% else %}https://via.placeholder.com/300{% endif %}" 
-         alt="{{ item.name }}" 
-         class="inventory-image"
-         onclick="openModal()" />
+<div class="gown-container">
+    <a href="{% url 'customerapp:wardrobe' %}" class="btn back-btn">← Back</a>
+    
+    <div class="gown-grid">
+        <div class="gown-image-container">
+            <img src="{% if item.image %}{{ item.image.url }}{% else %}{% static 'images/placeholder-gown.jpg' %}{% endif %}" 
+                 class="gown-image" 
+                 alt="{{ item.name }}">
+        </div>
 
-    <!-- Item details -->
-    <div class="inventory-details">
-        <h1>{{ item.name }}</h1>
-        <p><strong>Category:</strong> {{ item.category.name }}</p>
-        <p><strong>Color:</strong> {{ item.color }}</p>
-        <p><strong>Quantity:</strong> {{ item.quantity }}</p>
-        <p><strong>Rental Price:</strong> ₱{{ item.rental_price }}</p>
-        <p><strong>Reservation Price:</strong> {{ item.reservation_price }}</p>
-        <p><strong>Purchase Price:</strong> 
+        <div class="gown-details">
+            <h1 class="gown-title">{{ item.name }}</h1>
+            
+            <div class="detail-item">
+                <div class="detail-label">Category</div>
+                <div class="detail-value">{{ item.category.name }}</div>
+            </div>
 
-            {% if item.purchase_price %}₱{{ item.purchase_price }}{% else %}N/A{% endif %}
-        </p>
-        <p><strong>Available:</strong> 
-            {% if item.available %}
-                <span class="available-status">✅ Yes</span>
-            {% else %}
-                <span style="color: red;">❌ No</span>
-            {% endif %}
-        </p>
+            <div class="detail-item">
+                <div class="detail-label">Color</div>
+                <div class="detail-value">{{ item.color }}</div>
+            </div>
 
-        <!-- View full image button -->
-        {% if item.image %}
-            <a href="{{ item.image.url }}" target="_blank" class="btn btn-primary">View Full Image</a>
-        {% endif %}
+            <div class="detail-item">
+                <div class="detail-label">Availability</div>
+                <div class="detail-value">
+                    {% if item.available %}
+                        <span style="color: #2ecc71;">Available</span>
+                    {% else %}
+                        <span style="color: #e74c3c;">Unavailable</span>
+                    {% endif %}
+                </div>
+            </div>
 
-        <!-- Rent button -->
-        {% if item.available and item.quantity > 0 %}
-            <a href="{% url 'customerapp:rental' inventory_id=item.id %}" class="btn btn-primary mr-2">Rent Item</a>
-            <a href="{% url 'customerapp:reservation' item_id=item.id %}" class="btn btn-primary">Reserve Item</a>
+            <div class="price-display">
+                <div>Rental: ₱{{ item.rental_price }}</div>
+                <div style="margin-top: 10px;">Purchase: ₱{{ item.purchase_price }}</div>
+            </div>
 
-    {% endif %}
+            <div class="action-buttons">
+                {% if item.available %}
+                    <a href="{% url 'customerapp:rental' inventory_id=item.id %}" class="btn btn-primary">Rent Now</a>
+                    <a href="{% url 'customerapp:reservation' item_id=item.id %}" class="btn btn-secondary">Reserve</a>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </div>
-
-<!-- Modal -->
-<div id="imageModal" class="modal" onclick="closeModal()">
-    <span class="close">&times;</span>
-    <img class="modal-content" id="fullImage" alt="Full Image">
-</div>
-
-<!-- Modal Script -->
-<script>
-    function openModal() {
-        const modal = document.getElementById('imageModal');
-        const fullImage = document.getElementById('fullImage');
-        const imageUrl = "{{ item.image.url|default:'https://via.placeholder.com/300'|escapejs }}";
-
-        fullImage.src = imageUrl;
-        modal.style.display = "block";
-    }
-
-    function closeModal() {
-        document.getElementById('imageModal').style.display = "none";
-    }
-</script>
 {% endblock %}
