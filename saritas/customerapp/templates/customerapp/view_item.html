@@ -1,4 +1,4 @@
-{% extends "saritasapp/base.html" %}
+{% extends "customerapp/base.html" %}
 {% load static %}
 
 {% block title %}View Inventory{% endblock %}
@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block content %}
-<a href="{% url 'saritasapp:inventory_list' %}" class="btn btn-primary">Back</a>
+<a href="{% url 'customerapp:wardrobe' %}" class="btn btn-primary">Back</a>
 <div class="inventory-container">
     <!-- Image that opens modal -->
     <img src="{% if item.image %}{{ item.image.url }}{% else %}https://via.placeholder.com/300{% endif %}" 
@@ -44,7 +44,8 @@
         <!-- Rent button -->
         {% if item.available and item.quantity > 0 %}
             <a href="{% url 'customerapp:rental' inventory_id=item.id %}" class="btn btn-primary mr-2">Rent Item</a>
-            <a href="{% url 'customerapp:reservation' inventory_id=item.id %}" class="btn btn-primary">Reserve Item</a>
+            <a href="{% url 'customerapp:reservation' item_id=item.id %}" class="btn btn-primary">Reserve Item</a>
+
     {% endif %}
     </div>
 </div>

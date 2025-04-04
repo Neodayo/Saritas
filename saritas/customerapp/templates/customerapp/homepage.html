@@ -43,7 +43,7 @@
                 <img src="{{ item.image.url|default:'/static/images/default-dress.jpg' }}" alt="{{ item.name }}">
                 <h3>{{ item.name }}</h3>
                 <p class="price">₱{{ item.rental_price }} rental</p>
-                <a href="" class="btn btn-outline">View Details</a>
+                <a href="{% url 'customerapp:item_detail' item.id %}" class="btn btn-outline">View Details</a>
             </div>
             {% endfor %}
         </div>

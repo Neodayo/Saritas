@@ -91,10 +91,13 @@ def login_view(request):
 @login_required
 def customer_dashboard(request):
     return render(request, 'customerapp/dashboard.html')
-@login_required
+
 def item_detail(request, item_id):
     item = get_object_or_404(Inventory, id=item_id)
     return render(request, 'customerapp/view_item.html', {'item': item})
+def view_item(request, item_id):
+    item = get_object_or_404(Inventory, id=item_id)
+    return render(request, 'saritasapp/view_item.html', {'item': item})
 
 @login_required
 def rent_item(request, inventory_id):

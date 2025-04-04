@@ -4,111 +4,128 @@
 {% block title %}Inventory{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/inventory.css' %}">
+<link rel="stylesheet" href="{% static 'css/inventory.css' %}">
 {% endblock %}
 
 {% block content %}
-    <h1 class="inventory-title">Wardrobe</h1>
-
-    <div class="controls-container">
-        <div class="filter-category">
-            <label for="category">Filter by Category:</label>
-            <select id="category" name="category" onchange="filterInventory()">
-                <option value="">All</option>
-                {% for category in categories %}
-                    <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
-                        {{ category.name }}
-                    </option>
-                {% endfor %}
-            </select>
+<div class="content-wrapper">
+    <div class="white-container">
+        <div class="inventory-header">
+            <h1><i class="fas fa-boxes"></i> Inventory Management</h1>
         </div>
 
-        <div class="filter-color">
-            <label for="color">Filter by Color:</label>
-            <select id="color" name="color" onchange="filterInventory()">
-                <option value="">All</option>
-                {% for color in colors %}
-                    <option value="{{ color.id }}" {% if selected_color == color.id|stringformat:"s" %}selected{% endif %}>
-                        {{ color.name }}
-                    </option>
-                {% endfor %}
-            </select>
+        <div class="filter-row">
+            <div class="filter-box">
+                <select id="category" name="category" onchange="filterInventory()">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-box">
+                <select id="color" name="color" onchange="filterInventory()">
+                    <option value="">All Colors</option>
+                    {% for color in colors %}
+                        <option value="{{ color.id }}" {% if selected_color == color.id|stringformat:"s" %}selected{% endif %}>
+                            {{ color.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-box">
+                <select id="size" name="size" onchange="filterInventory()">
+                    <option value="">All Sizes</option>
+                    {% for size in sizes %}
+                        <option value="{{ size.id }}" {% if selected_size == size.id|stringformat:"s" %}selected{% endif %}>
+                            {{ size.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-box">
+                <select id="sort" name="sort" onchange="filterInventory()">
+                    <option value="">Default Sorting</option>
+                    <option value="name_asc">Name (A-Z)</option>
+                    <option value="name_desc">Name (Z-A)</option>
+                    <option value="price_asc">Price (Low to High)</option>
+                    <option value="price_desc">Price (High to Low)</option>
+                </select>
+            </div>
+
+            <button type="button" onclick="clearFilters()" class="clear-btn">
+                <i class="fas fa-times"></i> Clear Filters
+            </button>
         </div>
 
-        <div class="filter-size">
-            <label for="size">Filter by Size:</label>
-            <select id="size" name="size" onchange="filterInventory()">
-                <option value="">All</option>
-                {% for size in sizes %}
-                    <option value="{{ size.id }}" {% if selected_size == size.id|stringformat:"s" %}selected{% endif %}>
-                        {{ size.name }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-        <div>
-            <button type="button" onclick="clearFilters()" class="">Clear Filters</button>
-        </div>
-
-        <div class="sort-by">
-            <label for="sort">Sort by:</label>
-            <select id="sort" name="sort" onchange="filterInventory()">
-                <option value="">Default</option>
-                <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>Name (A-Z)</option>
-                <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>Name (Z-A)</option>
-                <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price (Low to High)</option>
-                <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price (High to Low)</option>
-            </select>
-        </div>
-    </div>
-
-    <div class="inventory-container">
-        {% if inventory_items %}
-            {% for item in inventory_items %}
-                <div class="inventory-card">
-                    {% if item.image %}
-                        <img src="{{ item.image.url }}" alt="{{ item.name }}">
-                    {% else %}
-                        <img src="{% static 'image/default-placeholder.png' %}" alt="No image available">
-                    {% endif %}
-                    <h3>{{ item.name }}</h3>
-                    <p><strong>Category:</strong> {{ item.category.name }}</p>
-                    <p><strong>Color:</strong> {{ item.color.name|default:"N/A" }}</p>
-                    <p><strong>Size:</strong> {{ item.size.name|default:"N/A" }}</p>
-                    <p><strong>Quantity:</strong> {{ item.quantity }}</p>
-                    <p><strong>Available:</strong> {{ item.available|yesno:"Yes,No" }}</p>
-                    <a href="{% url 'customerapp:item_detail' item.id %}">View Details</a>
+        <div class="inventory-items">
+            {% if inventory_items %}
+                {% for item in inventory_items %}
+                <div class="item-card">
+                    <div class="item-status {% if item.available %}in-stock{% else %}out-stock{% endif %}">
+                        {{ item.available|yesno:"In Stock,Out of Stock" }}
+                    </div>
+                    <div class="item-image">
+                        {% if item.image %}
+                            <img src="{{ item.image.url }}" alt="{{ item.name }}">
+                        {% else %}
+                            <img src="{% static 'image/default-placeholder.png' %}" alt="No image">
+                        {% endif %}
+                    </div>
+                    <div class="item-info">
+                        <h3>{{ item.name }}</h3>
+                        <div class="item-meta">
+                            <span><i class="fas fa-tag"></i> {{ item.category.name }}</span>
+                            <span><i class="fas fa-palette"></i> {{ item.color.name|default:"N/A" }}</span>
+                            <span><i class="fas fa-ruler"></i> {{ item.size.name|default:"N/A" }}</span>
+                        </div>
+                        <div class="item-quantity">
+                            <i class="fas fa-box-open"></i> {{ item.quantity }} available
+                        </div>
+                    </div>
+                    <a href="{% url 'customerapp:item_detail' item.id %}" class="view-btn">
+                        <i class="fas fa-eye"></i> View Details
+                    </a>
                 </div>
-            {% endfor %}
-        {% else %}
-            <p>No inventory items found matching the selected criteria.</p>
-        {% endif %}
+                {% endfor %}
+            {% else %}
+                <div class="no-items">
+                    <i class="fas fa-search"></i>
+                    <p>No items match your filters</p>
+                    <button onclick="clearFilters()">Clear Filters</button>
+                </div>
+            {% endif %}
+        </div>
     </div>
+</div>
 
-    <script>
-        function filterInventory() {
-            const selectedCategory = document.getElementById("category").value;
-            const selectedColor = document.getElementById("color").value;
-            const selectedSize = document.getElementById("size").value;
-            const selectedSort = document.getElementById("sort").value;
+<script>
+    function filterInventory() {
+        const category = document.getElementById('category').value;
+        const color = document.getElementById('color').value;
+        const size = document.getElementById('size').value;
+        const sort = document.getElementById('sort').value;
+        
+        let url = "{% url 'customerapp:wardrobe' %}?";
+        if (category) url += `category=${category}&`;
+        if (color) url += `color=${color}&`;
+        if (size) url += `size=${size}&`;
+        if (sort) url += `sort=${sort}`;
+        
+        window.location.href = url;
+    }
 
-            let url = "{% url 'customerapp:wardrobe' %}?"; // Updated for customerapp
-
-            if (selectedCategory) url += "category=" + encodeURIComponent(selectedCategory) + "&";
-            if (selectedColor) url += "color=" + encodeURIComponent(selectedColor) + "&";
-            if (selectedSize) url += "size=" + encodeURIComponent(selectedSize) + "&";
-            if (selectedSort) url += "sort=" + encodeURIComponent(selectedSort);
-
-            window.location.href = url;
-        }
-
-        function clearFilters() {
-            document.getElementById("category").value = "";
-            document.getElementById("color").value = "";
-            document.getElementById("size").value = "";
-            document.getElementById("sort").value = "";
-
-            filterInventory(); // Reuse the existing filter logic to refresh the page
-        }
-    </script>
+    function clearFilters() {
+        document.getElementById('category').value = '';
+        document.getElementById('color').value = '';
+        document.getElementById('size').value = '';
+        document.getElementById('sort').value = '';
+        filterInventory();
+    }
+</script>
 {% endblock %}
