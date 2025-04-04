@@ -264,3 +264,5 @@ def package_detail(request, pk):
     }
     return render(request, 'customerapp/package_detail.html', context)
 
+def story(request):
+    return render(request, 'customerapp/story.html')

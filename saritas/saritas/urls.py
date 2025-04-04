@@ -22,7 +22,7 @@ from customerapp import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("", include('saritasapp.urls', namespace='saritasapp')),
-    path("customer", include("customerapp.urls", namespace="customerapp")),
+    path("", include("customerapp.urls", namespace="customerapp")),
     path('', views.homepage, name='homepage'),
 ]
 

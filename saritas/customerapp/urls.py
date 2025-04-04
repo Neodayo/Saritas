@@ -13,4 +13,5 @@ urlpatterns = [
     path('reservation/<int:item_id>/', views.reserve_item, name='reservation'),
     path('logout/', views.logout_view, name='logout'),
     path('homepage/', views.homepage, name='homepage'),
+    path('story/',views.story, name='story'),
 ]
