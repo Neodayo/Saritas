@@ -10,8 +10,6 @@ from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
 from django.shortcuts import render
 from saritasapp.models import Inventory, Category, Color, Size, Rental, Reservation
-from .models import WardrobePackage
-
 
 def homepage(request):
     """Public homepage (no login required)"""
@@ -253,16 +251,8 @@ def category_view(request, pk):
     }
     return render(request, 'customerapp/category.html', context)
 
-def package_detail(request, pk):
-    """Detailed view for a wardrobe package"""
-    package = get_object_or_404(WardrobePackage, id=pk)
-    package_items = package.package_items.all()
-    
-    context = {
-        'package': package,
-        'package_items': package_items,
-    }
-    return render(request, 'customerapp/package_detail.html', context)
+def package_detail(request):
+    return render(request, 'customerapp/package_detail.html')
 
 def about_us(request):
     return render(request, 'customerapp/about_us.html')

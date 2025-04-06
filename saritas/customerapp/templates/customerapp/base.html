@@ -42,7 +42,7 @@
         .brand-logo {
             font-size: 20px;
             font-weight: bold;
-            color: #070606;
+            color: #9E8729;
         }
 
         .nav-links {
@@ -170,9 +170,12 @@
 <body>
     <header>
         <nav>
-            <div class="brand-logo"><a href="{% url 'customerapp:homepage' %}">Sarita's Wedding</a></div>
+            <div class="brand-logo"><a href="{% url 'customerapp:homepage' %}">Sarita's Wedding Creation</a>
+
+            </div>
+            
             <ul class="nav-links">
-                <li class="nav-item"><a href="">PRODUCTS </a>
+                <li class="nav-item"><a href="">SHOP BY CATEGORY </a>
                     <ul class="dropdown-menu">
                         <li><a href="">Wedding Dresses</a></li>
                         <li><a href="">Formal Wear</a></li>
@@ -186,14 +189,14 @@
                         <li><a href="#">Fittings</a></li>
                     </ul>
                 </li>
-                <li class="nav-item"><a href="{}">PACKAGES</a>
+                <li class="nav-item"><a href="{% url 'customerapp:package_detail' %}">PACKAGES</a>
                     <ul class="dropdown-menu">
                         <li><a href="">Wedding Packages</a></li>
                         <li><a href="">Event Packages</a></li>
                     </ul>
                 </li>
 
-                <li class="nav-item"><a href="{% url 'customerapp:about_us' %}">ABOUT </a>
+                <li class="nav-item"><a href="{% url 'customerapp:about_us' %}">ABOUT </a> </li>
  
                 
                 
@@ -203,10 +206,14 @@
                     <a href="{% url 'customerapp:logout' %}" class="logout-btn">LOGOUT</a>
                 </li>
                 {% else %}
-                    <li class="nav-item">
+                    {% if not request.resolver_match.url_name == 'sign_in' %} <!-- Removes the login button when on signup page -->
+                    <li class="nav-item">     
                         <a href="{% url 'saritasapp:sign_in' %}" class="login-btn">LOGIN</a>
                     </li>
+                    {% endif %}
                 {% endif %}
+
+
             </ul>
             <div class="nav-icons">
                     <!-- <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 96 960 960" width="24">
@@ -227,6 +234,7 @@
                     </svg>
                 </a> -->
             </div>
+            
             
         </nav>
     </header>

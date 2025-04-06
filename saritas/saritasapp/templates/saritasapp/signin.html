@@ -1,45 +1,41 @@
-
+{% extends "customerapp/base.html" %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Sign In</title>
+{% block title %}Sign In - Sarita's Wedding{% endblock %}
+
+{% block extra_css %}
     <link rel="stylesheet" href="{% static 'css/signin.css' %}">
     <link href="https://fonts.googleapis.com/css2?family=Allura&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
-</head>
-<body>
-    <div class="login-container">
-        <div class="left-section">
-            <span class="brand-name">Sarita's</span><br>
-            <h1><span class="brand-sub">Wedding Creations<br>& Event Stylist</span></h1>
-        </div>
+{% endblock %}
 
-        <div class="right-section">
-            <form method="post">
-                {% csrf_token %}
-                {% if form.errors %}
-                {% if messages %}
-                    <div class="error-message">
-                        {% for message in messages %}
-                            <p>{{ message }}</p>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-                {% endif %}
-                
-                <input type="text" name="username" placeholder="Enter your username" required>
-                <input type="password" name="password" placeholder="Password" required>
-                <button type="submit" class="login-btn">Log in</button>
-
-                <!-- Registration Link -->
-                <p class="register-link">
-                    Don't have an account? <a href="{% url 'customerapp:register' %}">Register here!</a>
-                </p>
-            </form>
-        </div>
+{% block content %}
+<div class="login-container">
+    <div class="left-section">
+        <span class="brand-name">Sarita's</span><br>
+        <h1><span class="brand-sub">Wedding Creations<br>& Event Stylist</span></h1>
     </div>
-</body>
-</html>
 
+    <div class="right-section">
+        <form method="post">
+            {% csrf_token %}
+            {% if form.errors %}
+            {% if messages %}
+                <div class="error-message">
+                    {% for message in messages %}
+                        <p>{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% endif %}
+            
+            <input type="text" name="username" placeholder="Enter your username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit" class="login-btn">Log in</button>
+
+            <p class="register-link">
+                Don't have an account? <a href="{% url 'customerapp:register' %}">Register here!</a>
+            </p>
+        </form>
+    </div>
+</div>
+{% endblock %}
