@@ -538,16 +538,15 @@ def sign_in(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            messages.success(request, "Successfully logged in!")
-
-            # Redirect users based on role
+            request.session['show_welcome_message'] = True  # Set session flag
+            request.session['welcome_username'] = user.get_full_name() or user.username
+            
             if user.is_superuser:
-                return redirect('saritasapp:dashboard')  # Redirect to Django admin panel
+                return redirect('saritasapp:dashboard')
             elif user.is_staff_user:
-                return redirect('saritasapp:dashboard')  # Redirect staff to staff dashboard
+                return redirect('saritasapp:dashboard')
             else:
-                return redirect('customerapp:homepage')  # Redirect customers to their dashboard
-                
+                return redirect('customerapp:homepage')
         else:
             messages.error(request, "Invalid username or password.")
     else:
@@ -1086,27 +1085,36 @@ def approve_rental(request, rental_id):
 def approve_rental(request, rental_id, action):
     rental = get_object_or_404(Rental, id=rental_id, status='Pending')
     
-    if action == 'approve':
-        # Check inventory availability
-        if rental.inventory.quantity <= 0:
-            messages.error(request, 'Cannot approve - item is out of stock!')
-            return redirect('saritasapp:rental_approvals')
-        
-        # Approve the rental
-        rental.status = 'Approved'
-        rental.approved_by = request.user
-        rental.approved_at = timezone.now()
-        
-        # Reduce inventory
-        rental.inventory.quantity -= 1
-        rental.inventory.save()
-        
-        messages.success(request, f'Rental #{rental_id} approved successfully!')
-    elif action == 'reject':
-        rental.status = 'Rejected'
-        messages.success(request, f'Rental #{rental_id} has been rejected.')
+    try:
+        with transaction.atomic():
+            if action == 'approve':
+                # Check inventory availability
+                if rental.inventory.quantity <= 0:
+                    messages.error(request, f'Cannot approve - {rental.inventory.name} is out of stock!')
+                    return redirect('saritasapp:rental_approvals')
+                
+                # Approve the rental
+                rental.status = 'Approved'
+                rental.approved_by = request.user
+                rental.approved_at = timezone.now()
+                
+                # Reduce inventory
+                rental.inventory.quantity -= 1
+                rental.inventory.save()
+                
+                messages.success(request, f'Rental #{rental_id} approved successfully!')
+            
+            elif action == 'reject':
+                rental.status = 'Rejected'
+                rental.approved_by = request.user
+                rental.rejection_reason = request.POST.get('rejection_reason', '')
+                messages.warning(request, f'Rental #{rental_id} has been rejected.')
+            
+            rental.save()
     
-    rental.save()
+    except Exception as e:
+        messages.error(request, f'Error processing request: {str(e)}')
+    
     return redirect('saritasapp:rental_approvals')
 
 #profile

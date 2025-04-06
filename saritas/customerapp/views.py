@@ -10,7 +10,14 @@ from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
 from django.shortcuts import render
 from saritasapp.models import Inventory, Category, Color, Size, Rental, Reservation
-from .models import WardrobePackage
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+
+@require_POST  # Optional: Only allow POST requests
+def clear_welcome_message(request):
+    if 'show_welcome_message' in request.session:
+        del request.session['show_welcome_message']
+    return JsonResponse({'status': 'ok'})
 
 
 def homepage(request):
@@ -46,7 +53,7 @@ def register(request):
             try:
                 form.save()
                 messages.success(request, "Registration successful!")
-                return redirect('customerapp/login')
+                return redirect('saritasapp/login')
             except IntegrityError as e:
                 messages.error(request, "Database error. Please try again.")
                 # Log the error: print(e) or use logging module
@@ -61,32 +68,6 @@ def register(request):
     
     return render(request, 'customerapp/register.html', {'form': form})
 
-
-def login_view(request):
-    if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
-            user = authenticate(request, username=username, password=password)
-
-            if user is not None:
-                # Restrict staff accounts
-                if user.role == 'staff':
-                    messages.error(request, "Staff accounts cannot log in here.")
-                    return redirect('customerapp:login')  # Redirect back to login page
-                
-                # Allow customer login
-                login(request, user)
-                return redirect('customerapp:dashboard')
-            else:
-                messages.error(request, "Invalid username or password.")
-        else:
-            messages.error(request, "Invalid username or password.")
-    else:
-        form = AuthenticationForm()
-
-    return render(request, 'customerapp/login.html', {'form': form})
 
 @login_required
 def customer_dashboard(request):
@@ -128,7 +109,7 @@ def rent_item(request, inventory_id):
                 
                 rental.save()
                 messages.success(request, 'Rental request submitted for approval')
-                return redirect('customerapp:dashboard')
+                return redirect('customerapp:homepage')
     else:
         # Set default rental period (e.g., 7 days)
         initial = {

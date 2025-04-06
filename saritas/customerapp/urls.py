@@ -5,7 +5,6 @@ app_name = 'customerapp'
 
 urlpatterns = [
     path('register/', views.register, name='register'),
-    path('login/', views.login_view, name='login'),
     path('dashboard/', views.customer_dashboard, name='dashboard'),
     path('wardrobe/', views.wardrobe_view, name='wardrobe'),
     path('wardrobe/<int:item_id>/', views.item_detail, name='item_detail'),
@@ -14,4 +13,5 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('', views.homepage, name='homepage'),
     path('story/',views.about_us, name='about_us'),
+    path('clear-welcome/', views.clear_welcome_message, name='clear_welcome_message'),
 ]

@@ -6,17 +6,13 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/rental_approvals.css' %}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<style>
-
-</style>
 {% endblock %}
 
 {% block content %}
-
 <div class="container">
     <div class="page-header">
-        <h1>Wedding</h1>
-        <h2>Creations & Event Stylist</h2>
+        <h1>Rental Approvals</h1>
+        <h2>Pending Rental Requests</h2>
     </div>
 
     <div class="stats-container">
@@ -39,10 +35,11 @@
             <thead>
                 <tr>
                     <th>Request ID</th>
-                    <th>Customer Item</th>
-                    <th>Requested Date</th>
+                    <th>Customer</th>
+                    <th>Item</th>
+                    <th>Requested Dates</th>
                     <th>Days</th>
-                    <th>Est. Revenue</th>
+                    <th>Total Cost</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -50,25 +47,31 @@
                 {% for rental in pending_rentals %}
                 <tr>
                     <td>#{{ rental.id }}</td>
-                    <td>
-                        <strong>{{ rental.customer.user.get_full_name }}</strong><br>
-                        {{ rental.inventory.name }}
-                    </td>
+                    <td>{{ rental.customer.user.get_full_name }}</td>
+                    <td>{{ rental.inventory.name }}</td>
                     <td>
                         {{ rental.rental_start|date:"M d" }} - {{ rental.rental_end|date:"M d, Y" }}
                     </td>
                     <td>{{ rental.duration_days }}</td>
                     <td>₱{{ rental.total_cost|floatformat:2 }}</td>
-                    <td>
-                        <a href="{% url 'saritasapp:approve_rental' rental.id %}" class="btn btn-sm" 
-                           style="background-color: #AD974F; color: white;">
-                            Review
+                    <td class="action-buttons">
+                        <a href="{% url 'saritasapp:approve_rental' rental.id 'approve' %}" 
+                           class="btn btn-approve">
+                            <i class="fas fa-check"></i> Approve
+                        </a>
+                        <a href="{% url 'saritasapp:approve_rental' rental.id 'reject' %}" 
+                           class="btn btn-reject">
+                            <i class="fas fa-times"></i> Reject
+                        </a>
+                        <a href="{% url 'saritasapp:rental_detail' rental.id %}" 
+                           class="btn btn-info">
+                            <i class="fas fa-eye"></i> View
                         </a>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="empty-state">
+                    <td colspan="7" class="empty-state">
                         <i class="fas fa-check-circle"></i>
                         <h4>No pending approvals</h4>
                         <p>All rental requests have been processed</p>

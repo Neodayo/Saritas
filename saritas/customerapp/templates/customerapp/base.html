@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">  
     <title>{% block title %}Sarita's Rental{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -51,13 +53,10 @@
             gap: 20px;
         }
 
-        
-
         .nav-item {
             position: relative;
             padding: 10px;
             cursor: pointer;
-
         }
         
         .nav-item .logout-btn {
@@ -78,7 +77,6 @@
             padding: 5px 10px;       
             transition: background-color 0.3s ease;
         }
-
 
         .nav-item:hover {
             background-color: #e0dedb; 
@@ -113,7 +111,6 @@
         .dropdown-menu li {
             padding: 10px;
             white-space: nowrap;
-            
         }
 
         .dropdown-menu li:hover {
@@ -139,8 +136,7 @@
         a {
             color: inherit;        
             text-decoration: none;  
-            }
-        
+        }
 
         /* Mobile menu styles */
         @media (max-width: 768px) {
@@ -163,6 +159,52 @@
             .nav-item {
                 padding: 15px 0;
             }
+        }
+
+        /* Welcome Modal Styles */
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+        }
+
+        .checkmark-circle {
+            width: 80px;
+            height: 80px;
+            background-color: #28a745;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+
+        .checkmark {
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+        }
+
+        @keyframes fill {
+            100% { box-shadow: inset 0 0 0 100px #28a745; }
+        }
+
+        @keyframes scale {
+            0%, 100% { transform: none; }
+            50% { transform: scale3d(1.1, 1.1, 1); }
+        }
+
+        .btn-modal-primary {
+            background-color: #5a3e2b;
+            border-color: #5a3e2b;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 4px;
+        }
+        
+        .btn-modal-primary:hover {
+            background-color: #3a281c;
+            border-color: #3a281c;
         }
     </style>
     {% block extra_css %}{% endblock %}
@@ -194,8 +236,6 @@
                 </li>
 
                 <li class="nav-item"><a href="{% url 'customerapp:about_us' %}">ABOUT </a>
- 
-                
                 
                 <!-- User Login/Logout -->
                 {% if user.is_authenticated %}
@@ -209,25 +249,11 @@
                 {% endif %}
             </ul>
             <div class="nav-icons">
-                    <!-- <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 96 960 960" width="24">
-                        <path d="M796 936 535 675q-33 26-74.5 39.5T375 728q-117 0-198.5-81.5T95 448q0-117 81.5-198.5T375 168q117 0 198.5 81.5T655 448q0 41.5-13.5 83T602 606l261 261-67 69ZM375 648q83 0 140.5-57.5T573 448q0-83-57.5-140.5T375 250q-83 0-140.5 57.5T177 448q0 83 57.5 140.5T375 646Z"/>
-                    </svg>
-                </a> -->
-             
-                
-                <a href="{% url 'customerapp:login' %}">
                     <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 96 960 960" width="24">
                         <path d="M480 632q58 0 99-41t41-99q0-58-41-99t-99-41q-58 0-99 41t-41 99q0 58 41 99t99 41ZM235 896q-29 0-49.5-20.5T165 826q0-88 67.5-147T480 620q180 0 247.5 59T795 826q0 29-20.5 49.5T725 896H235Zm0-60h490q0-48-54-84t-186-36q-132 0-186 36t-54 84Zm245-264q-83 0-141.5-58.5T280 432q0-83 58.5-141.5T480 232q83 0 141.5 58.5T680 432q0 83-58.5 141.5T480 632Zm0-200ZM235 836h490-490Z"/>
                     </svg>
                 </a>
-                
-
-                    <!-- <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 96 960 960" width="24">
-                        <path d="M120 856v-60h720v60H120Zm0-230v-60h720v60H120Zm0-230v-60h720v60H120Z"/>
-                    </svg>
-                </a> -->
             </div>
-            
         </nav>
     </header>
 
@@ -235,21 +261,59 @@
     <!-- Content will be inserted here -->
     {% endblock %}
 
-    <script>
-        
-        // Mobile menu toggle
-        document.querySelector('.mobile-menu-icon').addEventListener('click', function() {
-            document.querySelector('.nav-links').classList.toggle('mobile-visible');
-        });
+    <!-- Welcome Modal -->
+    <div class="modal fade" id="welcomeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center p-5">
+                    <div class="checkmark-circle">
+                        <div class="checkmark">✓</div>
+                    </div>
+                    <h3 class="mt-4">Successfully logged in!</h3>
+                    <p class="mb-4">Welcome back, <span id="welcomeUsername"></span>!</p>
+                    <button type="button" class="btn btn-modal-primary" data-bs-dismiss="modal">Continue</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        // Close dropdowns when clicking elsewhere
-        // document.addEventListener('click', function(e) {
-        //     if (!e.target.closest('.nav-item')) {
-        //         document.querySelectorAll('.dropdown-menu').forEach(menu => {
-        //             menu.style.display = 'none';
-        //         });
-        //     }
-        // });
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mobile menu toggle
+        const mobileMenuIcon = document.querySelector('.mobile-menu-icon');
+        if (mobileMenuIcon) {
+            mobileMenuIcon.addEventListener('click', function() {
+                document.querySelector('.nav-links').classList.toggle('mobile-visible');
+            });
+        }
+
+        // Welcome modal functionality
+        const welcomeModal = new bootstrap.Modal(document.getElementById('welcomeModal'));
+        
+        {% if request.session.show_welcome_message %}
+            // Set the username
+            document.getElementById('welcomeUsername').textContent = '{{ request.session.welcome_username }}';
+            // Show the modal
+            welcomeModal.show();
+            // Clear the session flag
+            fetch('{% url "customerapp:clear_welcome_message" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json',
+                    }
+                }).then(response => {
+                    if (!response.ok) {
+                        console.error('Error clearing welcome message');
+                    }
+                }).catch(error => {
+                    console.error('Fetch error:', error);
+                });
+        {% endif %}
+    });
     </script>
 </body>
 </html>
