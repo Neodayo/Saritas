@@ -38,7 +38,7 @@
     bottom: 0;
     background: url('/static/images/customerbackground.jpg') center/cover;
     filter: blur(3px); /* Adjust blur amount (3px-8px works well) */
-    z-index: -2; /* Behind the overlay */
+    z-index: -2; 
 }
 
 /* Dark overlay */
@@ -187,31 +187,31 @@
 }
 
 .btn-primary {
-    background: #e63946;
-    color: white;
+    background: #9E8729;
+    color: rgb(255, 255, 255);
 }
 
 .btn-primary:hover {
-    background: #c1121f;
+    background: #AD974F;
 }
 
 .btn-outline {
-    border: 2px solid #e63946;
-    color: #e63946;
+    border: 2px solid #9E8729;
+    color: #9E8729;
 }
 
 .btn-outline:hover {
-    background: #e63946;
-    color: white;
+    background: #9E8729;
+    color: rgb(255, 255, 255);
 }
 
 .btn-category {
-    background: white;
-    color: #333;
+    background: #9E8729;
+    color: #ffffff;
 }
 
 .btn-category:hover {
-    background: #f5f5f5;
+    background: #AD974F;
 }
 
 /* Responsive */

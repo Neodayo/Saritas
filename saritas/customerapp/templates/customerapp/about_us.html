@@ -1,0 +1,238 @@
+{% extends "customerapp/base.html" %}  
+
+{% block title %}About Us - Sarita's Wedding{% endblock %}
+{% load static %}
+{% block extra_css %}
+<style>
+    /* About Page Specific Styles */
+    .about-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 60px 20px 40px;
+    }
+    
+    .section:first-child {
+    padding-top: 20px; 
+    }
+
+    .section-title {
+        font-size: 2rem;
+        margin: 30px 0; 
+        text-align: center;
+        color: #5a3e2b;
+    }
+
+    .section {
+        margin-bottom: 60px;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+        margin-bottom: 30px;
+        text-align: center;
+        color: #5a3e2b;
+    }
+    
+    /* Contact Section */
+    .contact-section {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 40px;
+    }
+    
+    .contact-info {
+        flex: 1;
+        min-width: 300px;
+        background: #f5f5f5;
+        padding: 30px;
+        border-radius: 8px;
+    }
+    
+    .contact-card {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .contact-icon {
+        width: 40px;
+        height: 40px;
+        margin-right: 15px;
+        fill: #5a3e2b;
+    }
+    
+    /* Story Section */
+    .story-section {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 40px;
+    }
+    
+    .owner-image {
+        flex: 1;
+        min-width: 300px;
+        max-width: 500px; 
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        justify-content: center; 
+        align-items: center; 
+    }
+    
+    .owner-image img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+    
+    .story-content {
+        flex: 1;
+        min-width: 300px;
+    }
+    
+    /* Gallery Section */
+    .gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    
+    .gallery-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px;
+        height: 250px;
+    }
+    
+    .gallery-item img, .gallery-item video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    
+    .gallery-item:hover img, .gallery-item:hover video {
+        transform: scale(1.05);
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .contact-info, .owner-image, .story-content {
+            min-width: 100%;
+        }
+        
+        .contact-section, .story-section {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+    <!-- Story Section -->
+    <section class="section">
+        <h2 class="section-title">Our Story</h2>
+        <div class="story-section">
+            <div class="owner-image">
+                <img src="{% static 'images/Logo.png' %}" alt="Sarita, Founder of Sarita's Wedding">
+            </div>
+            <div class="story-content">
+                <h3>Sarita Macansantos Midel</h3> <br>
+                <p>She completed her education in Zamboanga, where she also took on sewing sideline jobs while studying. Later on, she moved to Manila and studied for two years to become a couturier.
+
+                    She started her business in Manila in 1993, then later moved it to Zamboanga City.
+                    They spent five years at the Shopping Center, primarily sewing uniforms, but they also made gowns, barongs, and did clothing repairs. After that, they moved to Panigayan, behind the Water District, where they stayed for about 17 years. At that time, the business was not yet called "Sarita's"—it was known as Grooms and Bride.</p> <br>
+                
+                <p>In 2012, they started offering gown rentals and custom-made clothing, eventually stopping uniform sewing. That’s when the business officially became known as Sarita’s Wedding Creation.</p>
+
+            </div>
+        </div>
+    </section>
+    
+    <!-- Gallery Section -->
+    <section class="section">
+        <h2 class="section-title">Our Work</h2>
+        <div class="gallery">
+            <div class="gallery-item">
+                <img src="" alt="Bridal gown">
+            </div>
+            <div class="gallery-item">
+                <img src="" alt="Wedding dress">
+            </div>
+            <div class="gallery-item">
+                <img src="" alt="Bride">
+            </div>
+            <div class="gallery-item">
+                <video controls poster="">
+                    <source src="" type="video/mp4">
+                </video>
+            </div>
+        </div>
+    </section>
+
+    <div class="about-container">
+        <!-- Contact Section -->
+        <section class="section">
+            <h2 class="section-title">Get In Touch</h2>
+            <div class="contact-section">
+                <div class="contact-info">
+                    <div class="contact-card">
+                        <svg class="contact-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M22 16v2h-20v-2h20zm0-4v2h-20v-2h20zm0-4v2h-20v-2h20zm-22-4h24v16h-24v-16z"/>
+                        </svg>
+                        <div>
+                            <h3>Email Us</h3>
+                            <p>p.angelene1603@gmail.com</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-card">
+                        <svg class="contact-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M18.48 22.926l-1.193.658c-6.979 3.621-19.082-17.494-12.279-21.484l1.145-.637 3.714 6.467-1.139.632c-2.067 1.245 2.76 9.707 4.879 8.545l1.162-.642 3.711 6.461zm-9.808-22.926l-1.68.975 3.714 6.466 1.681-.975-3.715-6.466zm8.613 14.997l-1.68.975 3.714 6.467 1.681-.975-3.715-6.467z"/>
+                        </svg>
+                        <div>
+                            <h3>Call Us</h3>
+                            <p>(+63) 975 643 1190</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-card">
+                        <a href="https://www.facebook.com/saritasweddingcreationandeventstylist" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; text-decoration: none; color: inherit;">
+                            <svg class="contact-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/>
+                            </svg>
+                            <div style="margin-left: 15px;">
+                                <h3>Follow Us</h3>
+                                <p>@SaritasWedding</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                
+                <div style="flex: 2; min-width: 300px;">
+                    <h3>Our Business Hours</h3>
+                    <p>Monday: 9:00 AM - 4:30 PM</p>
+                    <p>Tuesday - Friday: 9:00 AM - 6:00 PM</p>
+                    <p>Sunday: 9:00 AM - 4:00 PM </p>
+                    
+                    <h3 style="margin-top: 20px;">Location</h3>
+                    <a href="https://www.google.com/maps/place/55+Mayor+Climaco+Ave,+Zamboanga,+Zamboanga+del+Sur/@6.9084959,122.0742049,19z/data=!4m5!3m4!1s0x325041fce97fb3ab:0xfb452d2e1adf3089!8m2!3d6.9079704!4d122.0743751?entry=ttu&g_ep=EgoyMDI1MDQwMi4xIKXMDSoASAFQAw%3D%3D" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style="text-decoration: none; color: inherit; display: flex; align-items: center;">
+                     <svg width="16" height="16" viewBox="0 0 24 24" style="margin-right: 8px; fill: #5a3e2b;">
+                         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                     </svg>
+                     <div>
+                         <p>123 Wedding Avenue, Suite 456</p>
+                         <p>Bridal City, WC 78910</p>
+                     </div>
+                 </a>
+                </div>
+            </div>
+        </section>
+        
+</div>
+{% endblock %} 
