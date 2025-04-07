@@ -243,9 +243,11 @@
                     <a href="{% url 'customerapp:logout' %}" class="logout-btn">LOGOUT</a>
                 </li>
                 {% else %}
+                {% if not request.resolver_match.url_name == 'sign_in' %}
                     <li class="nav-item">
                         <a href="{% url 'saritasapp:sign_in' %}" class="login-btn">LOGIN</a>
                     </li>
+                {% endif %}
                 {% endif %}
             </ul>
             <div class="nav-icons">
@@ -300,18 +302,18 @@
             welcomeModal.show();
             // Clear the session flag
             fetch('{% url "customerapp:clear_welcome_message" %}', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}',
-                        'Content-Type': 'application/json',
-                    }
-                }).then(response => {
-                    if (!response.ok) {
-                        console.error('Error clearing welcome message');
-                    }
-                }).catch(error => {
-                    console.error('Fetch error:', error);
-                });
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                }
+            }).then(response => {
+                if (!response.ok) {
+                    console.error('Error clearing welcome message');
+                }
+            }).catch(error => {
+                console.error('Fetch error:', error);
+            });
         {% endif %}
     });
     </script>

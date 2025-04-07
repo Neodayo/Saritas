@@ -6,6 +6,15 @@
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'css/signin.css' %}">
     <link href="https://fonts.googleapis.com/css2?family=Allura&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        .error-message {
+            color: #dc3545;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f8d7da;
+            border-radius: 4px;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
@@ -18,7 +27,8 @@
     <div class="right-section">
         <form method="post">
             {% csrf_token %}
-            {% if form.errors %}
+            <input type="hidden" name="next" value="{{ next }}">
+            
             {% if messages %}
                 <div class="error-message">
                     {% for message in messages %}
@@ -26,9 +36,8 @@
                     {% endfor %}
                 </div>
             {% endif %}
-            {% endif %}
             
-            <input type="text" name="username" placeholder="Enter your username" required>
+            <input type="text" name="username" placeholder="Enter your username" required autofocus>
             <input type="password" name="password" placeholder="Password" required>
             <button type="submit" class="login-btn">Log in</button>
 

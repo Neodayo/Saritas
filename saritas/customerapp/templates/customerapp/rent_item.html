@@ -6,7 +6,8 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/rent_item.css' %}">
 <style>
-
+    .errorlist { color: #dc3545; font-size: 0.875rem; }
+    .cost-preview { background: #f8f9fa; padding: 1rem; border-radius: 0.25rem; }
 </style>
 {% endblock %}
 
@@ -14,48 +15,38 @@
 <div class="rental-container">
     <h2 class="page-title">Rent: {{ item.name }}</h2>
     
-    <!-- Approval Process Notice -->
     <div class="alert alert-info">
         <i class="fas fa-info-circle"></i> 
-        <strong>Important:</strong> Your rental request will need staff approval before being confirmed. 
-        You'll receive a notification once your request is processed.
+        <strong>Important:</strong> Rental requests require staff approval.
     </div>
     
     <div class="row">
         <div class="col-md-6">
             {% if item.image %}
-                <img src="{{ item.image.url }}" alt="{{ item.name }}" class="item-image img-fluid">
+                <img src="{{ item.image.url }}" alt="{{ item.name }}" class="item-image img-fluid rounded">
             {% else %}
-                <img src="{% static 'images/default-placeholder.png' %}" alt="No image available" class="item-image img-fluid">
+                <img src="{% static 'images/default-placeholder.png' %}" alt="No image" class="item-image img-fluid rounded">
             {% endif %}
         </div>
         <div class="col-md-6">
-            <div class="item-details">
+            <div class="item-details card p-3">
                 <h4>Item Details</h4>
                 <p><strong>Category:</strong> {{ item.category.name }}</p>
                 <p><strong>Rental Price:</strong> ₱{{ item.rental_price|floatformat:2 }} <small class="text-muted">per day</small></p>
-                {% if item.color %}
-                    <p><strong>Color:</strong> {{ item.color.name }}</p>
-                {% endif %}
-                {% if item.size %}
-                    <p><strong>Size:</strong> {{ item.size.name }}</p>
-                {% endif %}
+                {% if item.color %}<p><strong>Color:</strong> {{ item.color.name }}</p>{% endif %}
+                {% if item.size %}<p><strong>Size:</strong> {{ item.size.name }}</p>{% endif %}
                 <p><strong>Availability:</strong> 
-                    {% if item.quantity > 0 %}
-                        <span class="text-success">{{ item.quantity }} available</span>
-                    {% else %}
-                        <span class="text-danger">Currently out of stock</span>
-                    {% endif %}
+                    <span class="{% if item.quantity > 0 %}text-success{% else %}text-danger{% endif %}">
+                        {{ item.quantity }} available
+                    </span>
                 </p>
                 
-                <!-- Rental Terms -->
                 <div class="rental-terms mt-3">
                     <h5>Rental Terms:</h5>
                     <ul class="small">
-                        <li>Minimum rental period: 1 day</li>
-                        <li>Refundable deposit required: ₱10,000</li>
-                        <li>Late returns incur additional charges</li>
-                        <li>Items must be returned in original condition</li>
+                        <li>Minimum rental period: 3 days</li>
+                        <li>Refundable deposit: ₱{{ item.refundable_deposit|default:10000|floatformat:2 }}</li>
+                        <li>Late returns incur 20% daily penalty</li>
                     </ul>
                 </div>
             </div>
@@ -71,129 +62,167 @@
             </div>
         {% endif %}
         
-        <div class="form-group">
-            <label for="{{ form.rental_start.id_for_label }}">Start Date *</label>
-            <input type="date" class="form-control" id="{{ form.rental_start.id_for_label }}" 
-                   name="{{ form.rental_start.name }}" required>
-            {% if form.rental_start.errors %}
-                <ul class="errorlist">
-                    {% for error in form.rental_start.errors %}
-                        <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        </div>
-        
-        <div class="form-group">
-            <label for="{{ form.rental_end.id_for_label }}">End Date *</label>
-            <input type="date" class="form-control" id="{{ form.rental_end.id_for_label }}" 
-                   name="{{ form.rental_end.name }}" required>
-            {% if form.rental_end.errors %}
-                <ul class="errorlist">
-                    {% for error in form.rental_end.errors %}
-                        <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label for="{{ form.rental_start.id_for_label }}">Start Date *</label>
+                    <input type="date" class="form-control" id="{{ form.rental_start.id_for_label }}" 
+                           name="{{ form.rental_start.name }}" required>
+                    {% if form.rental_start.errors %}
+                        <div class="errorlist">{{ form.rental_start.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label for="{{ form.rental_end.id_for_label }}">End Date *</label>
+                    <input type="date" class="form-control" id="{{ form.rental_end.id_for_label }}" 
+                           name="{{ form.rental_end.name }}" required>
+                    {% if form.rental_end.errors %}
+                        <div class="errorlist">{{ form.rental_end.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
 
-        <!-- Estimated Cost Preview -->
-        <div class="cost-preview mb-4">
+        <!-- Cost Calculation -->
+        <div class="cost-preview card p-3 mb-4">
             <h5>Estimated Rental Cost</h5>
             <div id="cost-calculation">
-                <p class="mb-1">Daily rate: ₱<span id="daily-rate">{{ item.rental_price|floatformat:2 }}</span></p>
-                <p class="mb-1">Rental days: <span id="rental-days">0</span> days</p>
+                <div class="d-flex justify-content-between">
+                    <span>Daily rate:</span>
+                    <span>₱<span id="daily-rate">{{ item.rental_price|floatformat:2 }}</span></span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Rental days:</span>
+                    <span><span id="rental-days">0</span> days</span>
+                </div>
                 <hr>
-                <p class="font-weight-bold">Subtotal: ₱<span id="subtotal">0.00</span></p>
-                <p class="small text-muted">+ ₱10,000 refundable deposit</p>
-                <p class="mt-2 font-weight-bold">Total Estimated Cost: ₱<span id="total-cost">10,000.00</span></p>
+                <div class="d-flex justify-content-between">
+                    <span>Subtotal:</span>
+                    <span>₱<span id="subtotal">0.00</span></span>
+                </div>
+                <div class="d-flex justify-content-between small text-muted">
+                    <span>Refundable deposit:</span>
+                    <span>₱<span id="deposit-amount">{{ item.refundable_deposit|default:10000|floatformat:2 }}</span></span>
+                </div>
+                <div class="d-flex justify-content-between mt-2 font-weight-bold">
+                    <span>Total Estimated Cost:</span>
+                    <span>₱<span id="total-cost">{{ item.refundable_deposit|default:10000|floatformat:2 }}</span></span>
+                </div>
+                <div id="min-rental-alert" class="alert alert-warning mt-2 d-none">
+                    Minimum rental period is 3 days
+                </div>
             </div>
         </div>
 
         <div class="form-group">
-            <button type="submit" class="btn btn-primary" {% if item.quantity <= 0 %}disabled{% endif %}>
+            <button type="submit" class="btn btn-primary btn-lg" id="submit-btn" {% if item.quantity <= 0 %}disabled{% endif %}>
                 {% if item.quantity <= 0 %}
                     Item Not Available
                 {% else %}
                     Submit Rental Request
                 {% endif %}
             </button>
-            <a href="{% url 'customerapp:wardrobe' %}" class="btn btn-secondary">Cancel</a>
+            <a href="{% url 'customerapp:wardrobe' %}" class="btn btn-outline-secondary btn-lg">Cancel</a>
         </div>
-        
-        <p class="text-muted small mt-3">
-            By submitting this request, you agree to our rental terms and conditions.
-            Your request will be processed within 24 hours.
-        </p>
     </form>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Set minimum dates
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('{{ form.rental_start.id_for_label }}').min = today;
-    document.getElementById('{{ form.rental_end.id_for_label }}').min = today;
+    // Configuration
+    const MIN_RENTAL_DAYS = 3;
+    const deposit = parseFloat(document.getElementById('deposit-amount').textContent);
+    const dailyRate = parseFloat(document.getElementById('daily-rate').textContent);
     
-    // Get elements
+    // Elements
     const startDateField = document.getElementById('{{ form.rental_start.id_for_label }}');
     const endDateField = document.getElementById('{{ form.rental_end.id_for_label }}');
     const rentalDaysSpan = document.getElementById('rental-days');
     const subtotalSpan = document.getElementById('subtotal');
     const totalCostSpan = document.getElementById('total-cost');
-    const dailyRate = parseFloat(document.getElementById('daily-rate').textContent);
-    const deposit = 10000;
+    const minRentalAlert = document.getElementById('min-rental-alert');
+    const submitBtn = document.getElementById('submit-btn');
     
-    // Update end date minimum when start date changes
-    startDateField.addEventListener('change', function() {
-        const startDate = this.value;
-        endDateField.min = startDate;
-        
-        if (endDateField.value && endDateField.value < startDate) {
-            endDateField.value = '';
-        }
-        calculateCost();
-    });
+    // Set initial dates
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
     
-    // Calculate cost when end date changes
+    startDateField.min = today.toISOString().split('T')[0];
+    endDateField.min = tomorrow.toISOString().split('T')[0];
+    
+    // Event listeners
+    startDateField.addEventListener('change', updateEndDateMin);
     endDateField.addEventListener('change', calculateCost);
     
-    function calculateCost() {
-        if (startDateField.value && endDateField.value) {
-            const startDate = new Date(startDateField.value);
-            const endDate = new Date(endDateField.value);
-            
-            // Calculate difference in days
-            const timeDiff = endDate - startDate;
-            const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
-            
-            if (daysDiff > 0) {
-                rentalDaysSpan.textContent = daysDiff;
-                const subtotal = daysDiff * dailyRate;
-                subtotalSpan.textContent = subtotal.toFixed(2);
-                totalCostSpan.textContent = (subtotal + deposit).toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                });
-            } else {
-                rentalDaysSpan.textContent = '0';
-                subtotalSpan.textContent = '0.00';
-                totalCostSpan.textContent = deposit.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                });
-            }
-        } else {
-            // Show just deposit if no dates selected
-            totalCostSpan.textContent = deposit.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
+    function updateEndDateMin() {
+        if (!startDateField.value) return;
+        
+        const startDate = new Date(startDateField.value);
+        const minEndDate = new Date(startDate);
+        minEndDate.setDate(minEndDate.getDate() + MIN_RENTAL_DAYS - 1);
+        
+        endDateField.min = minEndDate.toISOString().split('T')[0];
+        
+        // Reset end date if invalid
+        if (endDateField.value && new Date(endDateField.value) < minEndDate) {
+            endDateField.value = '';
         }
+        
+        calculateCost();
     }
     
-    // Initial calculation
-    calculateCost();
+    function calculateCost() {
+        if (!startDateField.value || !endDateField.value) {
+            resetCalculation();
+            return;
+        }
+        
+        const startDate = new Date(startDateField.value);
+        const endDate = new Date(endDateField.value);
+        
+        // Calculate difference in days (inclusive)
+        const timeDiff = endDate.getTime() - startDate.getTime();
+        const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24)) + 1;
+        
+        if (daysDiff < MIN_RENTAL_DAYS) {
+            showMinRentalAlert();
+            resetCalculation();
+            return;
+        }
+        
+        hideMinRentalAlert();
+        
+        const subtotal = daysDiff * dailyRate;
+        const total = subtotal + deposit;
+        
+        rentalDaysSpan.textContent = daysDiff;
+        subtotalSpan.textContent = subtotal.toFixed(2);
+        totalCostSpan.textContent = total.toFixed(2);
+        
+        // Enable submit button if valid
+        submitBtn.disabled = false;
+    }
+    
+    function resetCalculation() {
+        rentalDaysSpan.textContent = '0';
+        subtotalSpan.textContent = '0.00';
+        totalCostSpan.textContent = deposit.toFixed(2);
+        submitBtn.disabled = true;
+    }
+    
+    function showMinRentalAlert() {
+        minRentalAlert.classList.remove('d-none');
+    }
+    
+    function hideMinRentalAlert() {
+        minRentalAlert.classList.add('d-none');
+    }
+    
+    // Initialize
+    updateEndDateMin();
 });
 </script>
 {% endblock %}

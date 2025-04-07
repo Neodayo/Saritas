@@ -12,6 +12,7 @@ from django.core.exceptions import ValidationError, PermissionDenied
 from django.contrib import messages
 from django.utils import timezone
 from django.contrib.auth import login, logout
+from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -533,27 +534,38 @@ def admin_signup(request):
 
 # --- Login View ---
 def sign_in(request):
+    # Redirect already authenticated users
+    if request.user.is_authenticated:
+        if hasattr(request.user, 'is_staff') and request.user.is_staff:
+            return redirect('saritasapp:dashboard')
+        return redirect('customerapp:homepage')
+
     if request.method == 'POST':
-        form = LoginForm(request, data=request.POST)
+        form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            request.session['show_welcome_message'] = True  # Set session flag
+            request.session['show_welcome_message'] = True
             request.session['welcome_username'] = user.get_full_name() or user.username
             
-            if user.is_superuser:
+            # Handle next parameter if exists
+            next_url = request.POST.get('next', '')
+            if next_url:
+                return redirect(next_url)
+                
+            # Role-based redirect
+            if hasattr(user, 'is_staff') and user.is_staff:
                 return redirect('saritasapp:dashboard')
-            elif user.is_staff_user:
-                return redirect('saritasapp:dashboard')
-            else:
-                return redirect('customerapp:homepage')
+            return redirect('customerapp:homepage')
         else:
             messages.error(request, "Invalid username or password.")
     else:
-        form = LoginForm()
+        form = AuthenticationForm()
 
-    return render(request, 'saritasapp/signin.html', {'form': form})
-
+    return render(request, 'saritasapp/signin.html', {
+        'form': form,
+        'next': request.GET.get('next', '')  # Pass next URL to template
+    })
 
 # --- Dashboard View ---
 @login_required
@@ -1044,44 +1056,6 @@ def update_reservation(request, reservation_id, action):
 
 @staff_member_required
 @login_required
-def approve_rental(request, rental_id):
-    rental = get_object_or_404(Rental, id=rental_id, status='Pending')
-    
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        
-        if action == 'approve':
-            # Check inventory availability
-            if rental.inventory.quantity <= 0:
-                messages.error(request, 'Cannot approve - item is out of stock!')
-                return redirect('saritasapp:rental_approvals')
-            
-            # Approve the rental
-            rental.status = 'Approved'
-            rental.approved_by = request.user
-            rental.approved_at = timezone.now()
-            
-            # Reduce inventory
-            rental.inventory.quantity -= 1
-            rental.inventory.save()
-            
-            messages.success(request, f'Rental #{rental.id} approved successfully!')
-            
-        elif action == 'reject':
-            rental.status = 'Rejected'
-            rental.rejection_reason = request.POST.get('rejection_reason', '')
-            messages.warning(request, f'Rental #{rental.id} has been rejected.')
-        
-        rental.save()
-        return redirect('saritasapp:rental_approvals')
-    
-    # For GET requests, show approval form
-    return render(request, 'saritasapp/approve_rental.html', {
-        'rental': rental,
-    })
-
-@staff_member_required
-@login_required
 def approve_rental(request, rental_id, action):
     rental = get_object_or_404(Rental, id=rental_id, status='Pending')
     
@@ -1116,6 +1090,15 @@ def approve_rental(request, rental_id, action):
         messages.error(request, f'Error processing request: {str(e)}')
     
     return redirect('saritasapp:rental_approvals')
+
+@staff_member_required
+@login_required
+def rental_detail(request, rental_id):
+    rental = get_object_or_404(Rental, id=rental_id)
+
+    return render(request, 'saritasapp/rental_detail.html', {
+        'rental': rental
+    })
 
 #profile
 from django.shortcuts import render, redirect

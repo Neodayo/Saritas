@@ -76,52 +76,46 @@ def customer_dashboard(request):
 def item_detail(request, item_id):
     item = get_object_or_404(Inventory, id=item_id)
     return render(request, 'customerapp/view_item.html', {'item': item})
-def view_item(request, item_id):
-    item = get_object_or_404(Inventory, id=item_id)
-    return render(request, 'saritasapp/view_item.html', {'item': item})
 
 @login_required
 def rent_item(request, inventory_id):
-    inventory_item = get_object_or_404(Inventory, id=inventory_id)
+    # Verify customer profile exists
+    if not hasattr(request.user, 'customer_profile'):
+        messages.error(request, 'Please complete your customer profile')
+        return redirect('customerapp:profile')
+
+    item = get_object_or_404(Inventory, id=inventory_id)
     
-    if not inventory_item.available or inventory_item.quantity <= 0:
+    if not item.available or item.quantity <= 0:
         messages.error(request, 'This item is not currently available for rent')
         return redirect('customerapp:wardrobe')
 
     if request.method == 'POST':
-        form = RentalForm(request.POST, inventory_item=inventory_item)
+        form = RentalForm(request.POST)
         if form.is_valid():
-            with transaction.atomic():
-                inventory_item.refresh_from_db()
-                
-                if inventory_item.quantity <= 0:
-                    messages.error(request, 'Item is no longer available')
-                    return redirect('customerapp:wardrobe')
-                
-                rental = form.save(commit=False)
-                rental.inventory = inventory_item
-                rental.customer = request.user.customer_profile
-                rental.status = 'Pending'
-                rental.created_at = timezone.now()  # Explicitly set creation time
-                
-                if hasattr(request.user, 'branch'):
-                    rental.branch = request.user.branch
-                
-                rental.save()
-                messages.success(request, 'Rental request submitted for approval')
-                return redirect('customerapp:homepage')
+            try:
+                with transaction.atomic():
+                    rental = form.save(commit=False)
+                    rental.inventory = item
+                    rental.customer = request.user.customer_profile
+                    rental.status = 'Pending'
+                    rental.save()
+                    
+                    messages.success(request, 'Your rental request has been submitted!')
+                    return redirect('customerapp:homepage')
+            except Exception as e:
+                messages.error(request, f'Error processing rental: {str(e)}')
+        else:
+            messages.error(request, 'Please correct the errors below')
     else:
-        # Set default rental period (e.g., 7 days)
-        initial = {
+        form = RentalForm(initial={
             'rental_start': timezone.now().date(),
-            'rental_end': (timezone.now() + timedelta(days=7)).date()  # Fixed calculation
-        }
-        form = RentalForm(inventory_item=inventory_item, initial=initial)
+            'rental_end': (timezone.now() + timedelta(days=7)).date()
+        })
     
     return render(request, 'customerapp/rent_item.html', {
         'form': form,
-        'item': inventory_item,
-        'available': inventory_item.quantity > 0
+        'item': item
     })
 
 @login_required
