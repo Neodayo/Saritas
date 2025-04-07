@@ -1,0 +1,244 @@
+{% extends "saritasapp/base.html" %}
+{% load static %}
+
+{% block title %}Packages{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/Allpackages.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+
+
+<div class="packages-section">
+    <h2 class="section-title">
+        <i class="fas fa-star"></i> Debut Packages
+    </h2>
+    
+    <div class="package-container">
+        <!-- Debut Package -->
+        <div class="package-box debut" data-id="debut-1">
+            <div class="compare-checkbox">
+                <input type="checkbox" id="compare-debut-1" class="compare-check" data-id="debut-1">
+                <label for="compare-debut-1">Compare</label>
+            </div>
+            
+            <h2>Standard Debut Package</h2>
+            <div class="package-price">₱180,000</div>
+            
+            <div class="package-inclusions">
+                <h3><i class="fas fa-hotel"></i> Hotel Venue / Food</h3>
+                <div class="corkage-note">
+                    <i class="fas fa-exclamation-circle"></i> All corkages will be charged to client
+                </div>
+                
+                <h3><i class="fas fa-camera"></i> Photo & Video</h3>
+                <ul>
+                    <li>Same day edit (SDE)</li>
+                    <li>2 set up cameras</li>
+                    <li>100 copies 3R size pictures</li>
+                    <li>Free USB full coverage video</li>
+                    <li>Free album</li>
+                    <li>Free projector</li>
+                </ul>
+                <div class="corkage-note">
+                    <i class="fas fa-exclamation-circle"></i> All corkages will be charged to client
+                </div>
+                
+                <h3><i class="fas fa-images"></i> Photoshoot</h3>
+                <ul>
+                    <li>25 set up cameras</li>
+                    <li>100 copies 3R size pictures</li>
+                    <li>Free USB full coverage video</li>
+                    <li>Free album</li>
+                    <li>Free projector</li>
+                </ul>
+                
+                <h3><i class="fas fa-tshirt"></i> Wardrobe Package</h3>
+                <ul>
+                    <li>Mother</li>
+                    <li>Father</li>
+                    <li>Ballgown</li>
+                    <li>Cocktail</li>
+                </ul>
+                
+                <h3><i class="fas fa-birthday-cake"></i> Debutant Cake</h3>
+                <ul>
+                    <li>3 layers customized cake</li>
+                    <li>18 cupcakes</li>
+                    <li>Client's choice of motif</li>
+                </ul>
+                
+                <h3><i class="fas fa-users-cog"></i> Coordination Team</h3>
+                <ul>
+                    <li>Professional coordinator</li>
+                    <li>Professional emcee</li>
+                    <li>Assistant coordinators</li>
+                    <li>Program flow</li>
+                    <li>Table tags</li>
+                </ul>
+                
+                <h3><i class="fas fa-paint-brush"></i> Make Up Package</h3>
+                <ul>
+                    <li>Debut photoshoot</li>
+                    <li>Debut on the day make up</li>
+                    <li>Mother</li>
+                </ul>
+                
+                <h3><i class="fas fa-lightbulb"></i> Lights & Sounds</h3>
+                <ul>
+                    <li>With LED wall</li>
+                    <li>4 moving heads</li>
+                    <li>Pallow spot</li>
+                    <li>LED lights</li>
+                    <li>Spot light</li>
+                    <li>With smoke and bubbles machine</li>
+                </ul>
+                <div class="corkage-note">
+                    <i class="fas fa-exclamation-circle"></i> All corkages will be charged to client
+                </div>
+            </div>
+            
+            <button class="avail-btn">
+                <i class="fas fa-envelope"></i> Inquire Now
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Comparison Modal -->
+<div id="comparisonModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Package Comparison</h2>
+        <div id="comparisonResults"></div>
+    </div>
+</div>
+
+<script>
+    // Package filtering functionality
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Update active state of filter buttons
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const filter = this.getAttribute('data-filter');
+            const packages = document.querySelectorAll('.package-box');
+            
+            packages.forEach(pkg => {
+                if (filter === 'all' || pkg.classList.contains(filter)) {
+                    pkg.style.display = 'block';
+                } else {
+                    pkg.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Package comparison functionality
+    const compareCheckboxes = document.querySelectorAll('.compare-check');
+    const compareBtn = document.getElementById('compareBtn');
+    const comparisonModal = document.getElementById('comparisonModal');
+    const closeModal = document.querySelector('.close');
+    const comparisonResults = document.getElementById('comparisonResults');
+    
+    let selectedPackages = [];
+    
+    compareCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const packageId = this.getAttribute('data-id');
+            
+            if (this.checked) {
+                selectedPackages.push(packageId);
+            } else {
+                selectedPackages = selectedPackages.filter(id => id !== packageId);
+            }
+            
+            updateCompareButton();
+        });
+    });
+    
+    function updateCompareButton() {
+        const count = selectedPackages.length;
+        compareBtn.disabled = count < 2;
+        compareBtn.textContent = ` Compare Selected Packages (${count})`;
+        
+        if (count >= 2) {
+            compareBtn.innerHTML = `<i class="fas fa-exchange-alt"></i> Compare Selected Packages (${count})`;
+        } else {
+            compareBtn.innerHTML = `<i class="fas fa-exchange-alt"></i> Compare Selected Packages (${count})`;
+        }
+    }
+    
+    compareBtn.addEventListener('click', function() {
+        if (selectedPackages.length < 2) return;
+        
+        // Generate comparison table
+        const packagesToCompare = Array.from(document.querySelectorAll('.package-box'))
+            .filter(pkg => selectedPackages.includes(pkg.getAttribute('data-id')));
+        
+        let tableHTML = `
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        ${packagesToCompare.map(pkg => `<th>${pkg.querySelector('h2').textContent}</th>`).join('')}
+                    </tr>
+                    <tr>
+                        <th>Price</th>
+                        ${packagesToCompare.map(pkg => `<td>${pkg.querySelector('.package-price').textContent}</td>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        // Get all unique features from all packages being compared
+        const allFeatures = new Set();
+        packagesToCompare.forEach(pkg => {
+            const features = pkg.querySelectorAll('.package-inclusions li');
+            features.forEach(li => allFeatures.add(li.textContent.trim()));
+        });
+        
+        // Add rows for each feature
+        Array.from(allFeatures).forEach(feature => {
+            tableHTML += `
+                <tr>
+                    <td>${feature}</td>
+                    ${packagesToCompare.map(pkg => {
+                        const features = Array.from(pkg.querySelectorAll('.package-inclusions li'))
+                            .map(li => li.textContent.trim());
+                        return `<td class="checkmark">${features.includes(feature) ? '✓' : ''}</td>`;
+                    }).join('')}
+                </tr>
+            `;
+        });
+        
+        tableHTML += `</tbody></table>`;
+        comparisonResults.innerHTML = tableHTML;
+        comparisonModal.style.display = 'block';
+    });
+    
+    closeModal.addEventListener('click', function() {
+        comparisonModal.style.display = 'none';
+    });
+    
+    window.addEventListener('click', function(event) {
+        if (event.target === comparisonModal) {
+            comparisonModal.style.display = 'none';
+        }
+    });
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+</script>
+
+{% endblock %}

@@ -64,6 +64,8 @@ urlpatterns = [
     path('wardrobe-packages/<int:package_id>/', views.wardrobe_package_view, name='wardrobe_package_detail'),
     path('wardrobe-packages/<int:package_id>/select/', views.wardrobe_package_view, name='select_wardrobe_package'),
     #packages
-    path('packages/', views.packages, name='packages'),
-
+    path('wedding-packages/', views.wedding_packages, name='wedding_packages'),
+     path('wedding-confirmation/', views.wedding_confirmation, name='wedding_confirmation'),
+    path('debut-packages/', views.debut_packages, name='debut_packages'),
+    path('additional-services/', views.additional_services, name='additional_services'),
 ]
