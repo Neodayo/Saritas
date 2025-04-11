@@ -50,7 +50,6 @@ urlpatterns = [
     path("logout/", views.sign_out, name="logout"), 
     path("logout_page/", lambda request: render(request, "saritasapp/logout.html"), name="logout_page"),
         # ✅ Logout confirmation
-    path('notifications/', views.notification_view, name='notifications'),
     path('rental-tracker/', views.rental_tracker, name='rental_tracker'),
     path('rentals/approvals/', views.rental_approvals, name='rental_approvals'),
     path('rentals/<int:rental_id>/<str:action>/', views.approve_rental, name='approve_rental'),
