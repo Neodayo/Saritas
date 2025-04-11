@@ -1,9 +1,11 @@
-{% extends "customerapp/base.html" %}
-{% load static %}
-
-{% block title %}Sign In - Sarita's Wedding{% endblock %}
-
-{% block extra_css %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    {% block head %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In | Sarita's Wedding</title>
     <link rel="stylesheet" href="{% static 'css/signin.css' %}">
     <link href="https://fonts.googleapis.com/css2?family=Allura&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -14,31 +16,47 @@
             background-color: #f8d7da;
             border-radius: 4px;
         }
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        /* Hide the default title from base.html */
+        header h1 {
+            display: none;
+        }
     </style>
 {% endblock %}
 
 {% block content %}
 <div class="login-container">
     <div class="left-section">
-        <span class="brand-name">Sarita's</span><br>
-        <h1><span class="brand-sub">Wedding Creations<br>& Event Stylist</span></h1>
+        <span class="brand-name">Sarita's</span>
+        <h1 class="brand-sub">Wedding Creations<br>& Event Stylist</h1>
     </div>
 
     <div class="right-section">
+        <div class="form-header">
+            <h2>Sign In</h2>
+        </div>
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ next }}">
             
-            {% if messages %}
+            {% if form.non_field_errors %}
                 <div class="error-message">
-                    {% for message in messages %}
-                        <p>{{ message }}</p>
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
                     {% endfor %}
                 </div>
             {% endif %}
             
-            <input type="text" name="username" placeholder="Enter your username" required autofocus>
-            <input type="password" name="password" placeholder="Password" required>
+            {{ form.username }}
+            {{ form.password }}
+            
             <button type="submit" class="login-btn">Log in</button>
 
             <p class="register-link">

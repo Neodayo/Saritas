@@ -531,12 +531,12 @@ def admin_signup(request):
 def sign_in(request):
     # Redirect already authenticated users
     if request.user.is_authenticated:
-        if hasattr(request.user, 'is_staff') and request.user.is_staff:
+        if request.user.is_staff:
             return redirect('saritasapp:dashboard')
         return redirect('customerapp:homepage')
 
     if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
+        form = LoginForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
             login(request, user)
@@ -549,17 +549,15 @@ def sign_in(request):
                 return redirect(next_url)
                 
             # Role-based redirect
-            if hasattr(user, 'is_staff') and user.is_staff:
+            if user.is_staff:
                 return redirect('saritasapp:dashboard')
             return redirect('customerapp:homepage')
-        else:
-            messages.error(request, "Invalid username or password.")
     else:
-        form = AuthenticationForm()
+        form = LoginForm()
 
     return render(request, 'saritasapp/signin.html', {
         'form': form,
-        'next': request.GET.get('next', '')  # Pass next URL to template
+        'next': request.GET.get('next', '')
     })
 
 # --- Dashboard View ---

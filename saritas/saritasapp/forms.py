@@ -295,5 +295,38 @@ class EditProfileForm(forms.ModelForm):
         }
 
 class LoginForm(AuthenticationForm):
-    username = forms.CharField(label="Username", widget=forms.TextInput(attrs={'class': 'form-control'}))
-    password = forms.CharField(label="Password", widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    username = forms.CharField(
+        label="Username or Email",
+        widget=forms.TextInput(attrs={'class': 'form-control','placeholder': 'Enter your username or email' })
+    )
+    password = forms.CharField(
+        label="Password",
+        widget=forms.PasswordInput(attrs={'class': 'form-control','placeholder': 'Password'})
+    )
+
+    def clean(self):
+        username = self.cleaned_data.get('username')
+        password = self.cleaned_data.get('password')
+
+        if username and password:
+            # Try to authenticate with username first
+            self.user_cache = authenticate(request=self.request,username=username,password=password)
+            
+            # If that fails, try with email
+            if self.user_cache is None:
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                try:
+                    user = User.objects.get(email=username)
+                    self.user_cache = authenticate(request=self.request,username=user.username,password=password)
+                except User.DoesNotExist:
+                    pass
+            
+            if self.user_cache is None:
+                raise ValidationError(
+                    "Please enter a correct username/email and password."
+                )
+            
+            self.confirm_login_allowed(self.user_cache)
+
+        return self.cleaned_data
