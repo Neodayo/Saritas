@@ -1,17 +1,25 @@
-
 div.container {
     background: white;
-    padding: 25px;
+    padding: 20px;
     border-radius: 10px;
-    justify-content: center;
-    box-shadow: 0 0 15px rgba(0,0,0,0.05);
-    margin: 200px auto 1750x auto; /* Added top margin to center vertically */
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    width: 100%;
     max-width: 1200px;
-    font-family: 'Arial', sans-serif;
+    margin: 50px auto; 
     
-    
+}
 
-    /* Header Styling */
+.container {
+        background: white;
+        padding: 25px;
+        border-radius: 10px;
+        justify-content: center;
+        box-shadow: 0 0 15px rgba(0,0,0,0.05);
+        margin: 20px auto;
+        max-width: 1200px;
+        font-family: 'Arial', sans-serif;
+    }
+
     .page-header {
         display: flex;
         flex-direction: column;
