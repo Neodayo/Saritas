@@ -8,29 +8,99 @@
     .about-container {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 60px 20px 40px;
+        padding: 40px 20px 60px;
     }
     
-    .section:first-child {
-    padding-top: 20px; 
-    }
-
-    .section-title {
-        font-size: 2rem;
-        margin: 30px 0; 
-        text-align: center;
-        color: #5a3e2b;
-    }
-
     .section {
-        margin-bottom: 60px;
+        margin-bottom: 80px;
+        position: relative;
     }
     
     .section-title {
-        font-size: 2rem;
-        margin-bottom: 30px;
+        font-size: 2.5rem;
+        margin-bottom: 40px;
         text-align: center;
         color: #5a3e2b;
+        position: relative;
+        padding-bottom: 15px;
+    }
+    
+    .section-title:after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 3px;
+        background: #d4a373;
+    }
+    
+    /* Story Section */
+    .story-section {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 60px;
+        background: rgba(234, 234, 234, 0.3);
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+    
+    .owner-image {
+        flex: 1;
+        min-width: 300px;
+        max-width: 500px;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .owner-image:hover {
+        transform: translateY(-5px);
+    }
+    
+    .owner-image img {
+        width: 100%;
+        height: auto;
+        display: block;
+        transition: transform 0.5s ease;
+    }
+    
+    .owner-image:hover img {
+        transform: scale(1.03);
+    }
+    
+    .story-content {
+        flex: 1;
+        min-width: 300px;
+    }
+    
+    .story-content h3 {
+        font-size: 1.8rem;
+        color: #5a3e2b;
+        margin-bottom: 20px;
+        position: relative;
+        display: inline-block;
+    }
+    
+    .story-content h3:after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        width: 50px;
+        height: 2px;
+        background: #d4a373;
+    }
+    
+    .story-content p {
+        margin-bottom: 20px;
+        line-height: 1.8;
+        color: #333;
+        font-size: 1.1rem;
     }
     
     /* Contact Section */
@@ -43,94 +113,166 @@
     .contact-info {
         flex: 1;
         min-width: 300px;
-        background: #f5f5f5;
-        padding: 30px;
-        border-radius: 8px;
+        background: #f9f4f1;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
     }
     
     .contact-card {
         display: flex;
-        align-items: center;
-        margin-bottom: 20px;
+        align-items: flex-start;
+        margin-bottom: 30px;
+        transition: transform 0.3s ease;
+    }
+    
+    .contact-card:hover {
+        transform: translateX(5px);
     }
     
     .contact-icon {
-        width: 40px;
-        height: 40px;
-        margin-right: 15px;
+        width: 50px;
+        height: 50px;
+        margin-right: 20px;
         fill: #5a3e2b;
+        flex-shrink: 0;
     }
     
-    /* Story Section */
-    .story-section {
+    .contact-card h3 {
+        font-size: 1.3rem;
+        color: #5a3e2b;
+        margin-bottom: 5px;
+    }
+    
+    .contact-card p {
+        color: #666;
+        font-size: 1.05rem;
+    }
+    
+    /* Business Hours & Location */
+    .hours-location {
+        flex: 2;
+        min-width: 300px;
+        background: #f9f4f1;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+    
+    .hours-location h3 {
+        font-size: 1.3rem;
+        color: #5a3e2b;
+        margin-bottom: 15px;
+        position: relative;
+        padding-bottom: 8px;
+    }
+    
+    .hours-location h3:after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 40px;
+        height: 2px;
+        background: #d4a373;
+    }
+    
+    .hours-location p {
+        margin-bottom: 12px;
+        color: #666;
+        font-size: 1.05rem;
+    }
+    
+    .map-link {
         display: flex;
-        flex-wrap: wrap;
         align-items: center;
-        gap: 40px;
+        margin-top: 20px;
+        color: #5a3e2b;
+        text-decoration: none;
+        transition: color 0.3s ease;
     }
     
-    .owner-image {
-        flex: 1;
-        min-width: 300px;
-        max-width: 500px; 
-        border-radius: 8px;
-        overflow: hidden;
-        display: flex;
-        justify-content: center; 
-        align-items: center; 
+    .map-link:hover {
+        color: #d4a373;
     }
     
-    .owner-image img {
-        width: 100%;
-        height: auto;
-        display: block;
+    .map-link svg {
+        margin-right: 10px;
+        transition: fill 0.3s ease;
     }
     
-    .story-content {
-        flex: 1;
-        min-width: 300px;
+    .map-link:hover svg {
+        fill: #d4a373;
     }
     
     /* Gallery Section */
     .gallery {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 25px;
     }
     
     .gallery-item {
         position: relative;
         overflow: hidden;
-        border-radius: 8px;
-        height: 250px;
+        border-radius: 12px;
+        height: 280px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
     }
     
-    .gallery-item img, .gallery-item video {
+    .gallery-item:hover {
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        transform: translateY(-5px);
+    }
+    
+    .gallery-item img, 
+    .gallery-item video {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        transition: transform 0.3s ease;
+        transition: transform 0.5s ease;
     }
     
-    .gallery-item:hover img, .gallery-item:hover video {
-        transform: scale(1.05);
+    .gallery-item:hover img, 
+    .gallery-item:hover video {
+        transform: scale(1.1);
     }
     
     /* Responsive Adjustments */
     @media (max-width: 768px) {
-        .contact-info, .owner-image, .story-content {
-            min-width: 100%;
+        .section {
+            margin-bottom: 60px;
         }
         
-        .contact-section, .story-section {
-            flex-direction: column;
+        .section-title {
+            font-size: 2rem;
+        }
+        
+        .story-section,
+        .contact-info,
+        .hours-location {
+            padding: 30px;
+        }
+        
+        .contact-card {
+            margin-bottom: 25px;
+        }
+        
+        .gallery {
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
+        }
+        
+        .gallery-item {
+            height: 220px;
         }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-
+<div class="about-container">
     <!-- Story Section -->
     <section class="section">
         <h2 class="section-title">Our Story</h2>
@@ -139,14 +281,10 @@
                 <img src="{% static 'images/Logo.png' %}" alt="Sarita, Founder of Sarita's Wedding">
             </div>
             <div class="story-content">
-                <h3>Sarita Macansantos Midel</h3> <br>
-                <p>She completed her education in Zamboanga, where she also took on sewing sideline jobs while studying. Later on, she moved to Manila and studied for two years to become a couturier.
-
-                    She started her business in Manila in 1993, then later moved it to Zamboanga City.
-                    They spent five years at the Shopping Center, primarily sewing uniforms, but they also made gowns, barongs, and did clothing repairs. After that, they moved to Panigayan, behind the Water District, where they stayed for about 17 years. At that time, the business was not yet called "Sarita's"—it was known as Grooms and Bride.</p> <br>
-                
-                <p>In 2012, they started offering gown rentals and custom-made clothing, eventually stopping uniform sewing. That’s when the business officially became known as Sarita’s Wedding Creation.</p>
-
+                <h3>Sarita Macansantos Midel</h3>
+                <p>She completed her education in Zamboanga, where she also took on sewing sideline jobs while studying. Later on, she moved to Manila and studied for two years to become a couturier.</p>
+                <p>She started her business in Manila in 1993, then later moved it to Zamboanga City. They spent five years at the Shopping Center, primarily sewing uniforms, but they also made gowns, barongs, and did clothing repairs. After that, they moved to Panigayan, behind the Water District, where they stayed for about 17 years. At that time, the business was not yet called "Sarita's"—it was known as Grooms and Bride.</p>
+                <p>In 2012, they started offering gown rentals and custom-made clothing, eventually stopping uniform sewing. That's when the business officially became known as Sarita's Wedding Creation.</p>
             </div>
         </div>
     </section>
@@ -156,83 +294,81 @@
         <h2 class="section-title">Our Work</h2>
         <div class="gallery">
             <div class="gallery-item">
-                <img src="" alt="Bridal gown">
+                <img src="{% static 'images/gallery1.jpg' %}" alt="Bridal gown">
             </div>
             <div class="gallery-item">
-                <img src="" alt="Wedding dress">
+                <img src="{% static 'images/gallery2.jpg' %}" alt="Wedding dress">
             </div>
             <div class="gallery-item">
-                <img src="" alt="Bride">
+                <img src="{% static 'images/gallery3.jpg' %}" alt="Bride">
             </div>
             <div class="gallery-item">
-                <video controls poster="">
-                    <source src="" type="video/mp4">
+                <video controls poster="{% static 'images/video-poster.jpg' %}">
+                    <source src="{% static 'videos/showcase.mp4' %}" type="video/mp4">
                 </video>
             </div>
         </div>
     </section>
 
-    <div class="about-container">
-        <!-- Contact Section -->
-        <section class="section">
-            <h2 class="section-title">Get In Touch</h2>
-            <div class="contact-section">
-                <div class="contact-info">
-                    <div class="contact-card">
-                        <svg class="contact-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path d="M22 16v2h-20v-2h20zm0-4v2h-20v-2h20zm0-4v2h-20v-2h20zm-22-4h24v16h-24v-16z"/>
-                        </svg>
-                        <div>
-                            <h3>Email Us</h3>
-                            <p>p.angelene1603@gmail.com</p>
-                        </div>
-                    </div>
-                    
-                    <div class="contact-card">
-                        <svg class="contact-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path d="M18.48 22.926l-1.193.658c-6.979 3.621-19.082-17.494-12.279-21.484l1.145-.637 3.714 6.467-1.139.632c-2.067 1.245 2.76 9.707 4.879 8.545l1.162-.642 3.711 6.461zm-9.808-22.926l-1.68.975 3.714 6.466 1.681-.975-3.715-6.466zm8.613 14.997l-1.68.975 3.714 6.467 1.681-.975-3.715-6.467z"/>
-                        </svg>
-                        <div>
-                            <h3>Call Us</h3>
-                            <p>(+63) 975 643 1190</p>
-                        </div>
-                    </div>
-                    
-                    <div class="contact-card">
-                        <a href="https://www.facebook.com/saritasweddingcreationandeventstylist" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; text-decoration: none; color: inherit;">
-                            <svg class="contact-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                <path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/>
-                            </svg>
-                            <div style="margin-left: 15px;">
-                                <h3>Follow Us</h3>
-                                <p>@SaritasWedding</p>
-                            </div>
-                        </a>
+    <!-- Contact Section -->
+    <section class="section">
+        <h2 class="section-title">Get In Touch</h2>
+        <div class="contact-section">
+            <div class="contact-info">
+                <div class="contact-card">
+                    <svg class="contact-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M22 16v2h-20v-2h20zm0-4v2h-20v-2h20zm0-4v2h-20v-2h20zm-22-4h24v16h-24v-16z"/>
+                    </svg>
+                    <div>
+                        <h3>Email Us</h3>
+                        <p>p.angelene1603@gmail.com</p>
                     </div>
                 </div>
                 
-                <div style="flex: 2; min-width: 300px;">
-                    <h3>Our Business Hours</h3>
-                    <p>Monday: 9:00 AM - 4:30 PM</p>
-                    <p>Tuesday - Friday: 9:00 AM - 6:00 PM</p>
-                    <p>Sunday: 9:00 AM - 4:00 PM </p>
-                    
-                    <h3 style="margin-top: 20px;">Location</h3>
-                    <a href="https://www.google.com/maps/place/55+Mayor+Climaco+Ave,+Zamboanga,+Zamboanga+del+Sur/@6.9084959,122.0742049,19z/data=!4m5!3m4!1s0x325041fce97fb3ab:0xfb452d2e1adf3089!8m2!3d6.9079704!4d122.0743751?entry=ttu&g_ep=EgoyMDI1MDQwMi4xIKXMDSoASAFQAw%3D%3D" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    style="text-decoration: none; color: inherit; display: flex; align-items: center;">
-                     <svg width="16" height="16" viewBox="0 0 24 24" style="margin-right: 8px; fill: #5a3e2b;">
-                         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                     </svg>
-                     <div>
-                         <p>123 Wedding Avenue, Suite 456</p>
-                         <p>Bridal City, WC 78910</p>
-                     </div>
-                 </a>
+                <div class="contact-card">
+                    <svg class="contact-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M18.48 22.926l-1.193.658c-6.979 3.621-19.082-17.494-12.279-21.484l1.145-.637 3.714 6.467-1.139.632c-2.067 1.245 2.76 9.707 4.879 8.545l1.162-.642 3.711 6.461zm-9.808-22.926l-1.68.975 3.714 6.466 1.681-.975-3.715-6.466zm8.613 14.997l-1.68.975 3.714 6.467 1.681-.975-3.715-6.467z"/>
+                    </svg>
+                    <div>
+                        <h3>Call Us</h3>
+                        <p>(+63) 975 643 1190</p>
+                    </div>
+                </div>
+                
+                <div class="contact-card">
+                    <a href="https://www.facebook.com/saritasweddingcreationandeventstylist" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; text-decoration: none; color: inherit;">
+                        <svg class="contact-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/>
+                        </svg>
+                        <div style="margin-left: 15px;">
+                            <h3>Follow Us</h3>
+                            <p>@SaritasWedding</p>
+                        </div>
+                    </a>
                 </div>
             </div>
-        </section>
-        
+            
+            <div class="hours-location">
+                <h3>Our Business Hours</h3>
+                <p><strong>Monday:</strong> 9:00 AM - 4:30 PM</p>
+                <p><strong>Tuesday - Friday:</strong> 9:00 AM - 6:00 PM</p>
+                <p><strong>Sunday:</strong> 9:00 AM - 4:00 PM</p>
+                
+                <h3 style="margin-top: 30px;">Location</h3>
+                <a href="https://www.google.com/maps/place/55+Mayor+Climaco+Ave,+Zamboanga,+Zamboanga+del+Sur/@6.9084959,122.0742049,19z/data=!4m5!3m4!1s0x325041fce97fb3ab:0xfb452d2e1adf3089!8m2!3d6.9079704!4d122.0743751?entry=ttu&g_ep=EgoyMDI1MDQwMi4xIKXMDSoASAFQAw%3D%3D" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   class="map-link">
+                    <svg width="24" height="24" viewBox="0 0 24 24">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    </svg>
+                    <div>
+                        <p><strong>55 Mayor Climaco Avenue</strong></p>
+                        <p>Zamboanga City, Philippines</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
 </div>
-{% endblock %} 
+{% endblock %}

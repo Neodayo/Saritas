@@ -124,8 +124,8 @@ nav {
     cursor: pointer;
 }
 a {
-    color: inherit;        
-    text-decoration: none;  
+    color: inherit !important;        
+    text-decoration: none !important;  
 }
 
 /* Mobile menu styles */
