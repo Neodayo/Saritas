@@ -92,9 +92,29 @@ class CustomerRegistrationForm(UserCreationForm):
         return user
 
 class RentalForm(forms.ModelForm):
+    deposit_amount = forms.DecimalField(
+        required=False,
+        disabled=True,
+        label="Deposit Amount",
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'id': 'deposit-amount'
+        })
+    )
+    
+    total_cost = forms.DecimalField(
+        required=False,
+        disabled=True,
+        label="Estimated Total",
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'id': 'total-cost'
+        })
+    )
+
     class Meta:
         model = Rental
-        fields = ['rental_start', 'rental_end', 'notes']  # Added notes back if needed
+        fields = ['rental_start', 'rental_end', 'notes']
         widgets = {
             'rental_start': forms.DateInput(
                 attrs={
@@ -124,10 +144,30 @@ class RentalForm(forms.ModelForm):
         self.customer = kwargs.pop('customer', None)
         super().__init__(*args, **kwargs)
         
+        # Set initial values for display-only fields
+        if self.inventory_item:
+            self.fields['deposit_amount'].initial = self.inventory_item.deposit_price or 0
+            self.fields['total_cost'].initial = self.calculate_total_cost()
+        
         # Set minimum end date based on start date via JavaScript
         self.fields['rental_start'].widget.attrs.update({
-            'onchange': 'updateMinEndDate(this.value)'
+            'onchange': 'updateDatesAndCalculate()'
         })
+        self.fields['rental_end'].widget.attrs.update({
+            'onchange': 'updateDatesAndCalculate()'
+        })
+
+    def calculate_total_cost(self):
+        if not self.inventory_item:
+            return 0
+        
+        rental_days = 1  # Default if dates not set
+        if self['rental_start'].value() and self['rental_end'].value():
+            start = datetime.strptime(self['rental_start'].value(), '%Y-%m-%d').date()
+            end = datetime.strptime(self['rental_end'].value(), '%Y-%m-%d').date()
+            rental_days = (end - start).days + 1
+        
+        return (self.inventory_item.rental_price * rental_days) + (self.inventory_item.deposit_price or 0)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -178,6 +218,16 @@ class RentalForm(forms.ModelForm):
                 )
 
         return cleaned_data
+
+    def save(self, commit=True):
+        rental = super().save(commit=False)
+        rental.inventory = self.inventory_item
+        rental.customer = self.customer
+        
+        if commit:
+            rental.save()
+        
+        return rental
     
 class ReservationForm(forms.ModelForm):
     class Meta:

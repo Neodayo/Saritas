@@ -51,18 +51,18 @@ def register(request):
         form = CustomerRegistrationForm(request.POST, request.FILES)
         if form.is_valid():
             try:
-                form.save()
-                messages.success(request, "Registration successful!")
-                return redirect('saritasapp/sign_in')
+                user = form.save()
+                messages.success(request, "Registration successful! Please sign in.")
+                return redirect('saritasapp:sign_in')  # Using namespace
             except IntegrityError as e:
-                messages.error(request, "Database error. Please try again.")
-                # Log the error: print(e) or use logging module
+                messages.error(request, "This username or email already exists.")
+            except Exception as e:
+                messages.error(request, "An error occurred during registration.")
         else:
-            # Show specific phone number errors
-            if 'phone' in form.errors:
-                messages.error(request, "Invalid or duplicate phone number")
-            else:
-                messages.error(request, "Please correct the errors below")
+            # Show specific field errors
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field.title()}: {error}")
     else:
         form = CustomerRegistrationForm()
     
