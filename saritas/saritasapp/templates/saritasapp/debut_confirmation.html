@@ -1,0 +1,108 @@
+{% extends "saritasapp/base.html" %}
+
+{% block content %}
+<div class="confirmation-container">
+    <h2>Your Custom Debut Package</h2>
+    
+    <div class="summary-card">
+        <div class="summary-item">
+            <span>Debutant Size:</span>
+            <strong>{{ customization.sizes.debutant }}</strong>
+        </div>
+        <div class="summary-item">
+            <span>Parent's Outfit Size:</span>
+            <strong>{{ customization.sizes.parent }}</strong>
+        </div>
+        <div class="summary-item">
+            <span>Number of Guests:</span>
+            <strong>{{ customization.guests }}</strong>
+        </div>
+        <div class="summary-item">
+            <span>Selected Theme:</span>
+            <strong>{{ customization.theme }}</strong>
+        </div>
+        
+        <h4>Additional Services:</h4>
+        <ul class="services-list">
+            {% for service in customization.services %}
+            <li>{{ service }}</li>
+            {% endfor %}
+        </ul>
+        
+        <div class="total-price">
+            Total Price: ₱{{ customization.total_price|floatformat:2 }}
+        </div>
+    </div>
+    
+    <div class="confirmation-actions">
+        <button class="edit-btn" onclick="window.history.back()">
+            <i class="fas fa-edit"></i> Edit Customization
+        </button>
+        <button class="proceed-btn">
+            <i class="fas fa-credit-card"></i> Proceed to Payment
+        </button>
+    </div>
+</div>
+
+<style>
+.confirmation-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+}
+
+.summary-card {
+    padding: 2rem;
+    border: 1px solid #eee;
+    border-radius: 8px;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    margin: 1rem 0;
+    padding: 0.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.services-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.services-list li {
+    padding: 0.5rem;
+    background: #f8f9fa;
+    margin: 0.3rem 0;
+    border-radius: 4px;
+}
+
+.confirmation-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    justify-content: center;
+}
+
+.edit-btn, .proceed-btn {
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.1rem;
+}
+
+.edit-btn {
+    background: #6c757d;
+    color: white;
+}
+
+.proceed-btn {
+    background: #28a745;
+    color: white;
+}
+</style>
+{% endblock %}

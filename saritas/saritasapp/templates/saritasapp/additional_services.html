@@ -1,0 +1,274 @@
+{% extends "saritasapp/base.html" %}
+{% load static %}
+
+{% block title %}Packages{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/Allpackages.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<!-- Button for comparing packages -->
+<button id="compareBtn" class="comparison-btn" disabled>
+    <i class="fas fa-exchange-alt"></i> Compare Selected Packages (0)
+</button>
+
+<!-- Display Additional Services -->
+<div class="packages-section">
+    <h2 class="section-title">
+        <i class="fas fa-plus-circle"></i> Additional Services
+    </h2>
+    
+    <div class="package-container">
+        <!-- Additional Service 1 -->
+        <div class="package-box addons" data-id="addon-1">
+            <div class="compare-checkbox">
+                <input type="checkbox" id="compare-addon-1" class="compare-check" data-id="addon-1">
+                <label for="compare-addon-1">Compare</label>
+            </div>
+            
+            <h2>Venue Decoration</h2>
+            <div class="package-price">Starting at ₱25,000</div>
+            
+            <div class="package-inclusions">
+                <ul>
+                    <li>Stage decoration</li>
+                    <li>Ceiling tenting decoration</li>
+                    <li>Tussels</li>
+                    <li>Flowy flowers</li>
+                    <li>Entrance tunnel</li>
+                    <li>VIP presidential table</li>
+                </ul>
+                
+                <h3><i class="fas fa-fire"></i> Fireworks</h3>
+                <ul>
+                    <li>2 sets indoor fireworks</li>
+                    <li>Professional installation</li>
+                </ul>
+            </div>
+            
+            <button class="avail-btn">
+                <i class="fas fa-cart-plus"></i> Add to Package
+            </button>
+        </div>
+
+        <!-- Additional Service 2 -->
+        <div class="package-box addons" data-id="addon-2">
+            <div class="compare-checkbox">
+                <input type="checkbox" id="compare-addon-2" class="compare-check" data-id="addon-2">
+                <label for="compare-addon-2">Compare</label>
+            </div>
+            
+            <h2>Wedding Cake</h2>
+            <div class="package-price">Starting at ₱15,000</div>
+            
+            <div class="package-inclusions">
+                <ul>
+                    <li>Customized wedding cake</li>
+                    <li>4 satellite cakes</li>
+                    <li>Client's choice of design</li>
+                </ul>
+                
+                <h3><i class="fas fa-envelope-open-text"></i> Invitations</h3>
+                <ul>
+                    <li>Customized laser-cut invitations (50pcs)</li>
+                    <li>Client's choice of design and motif</li>
+                </ul>
+            </div>
+            
+            <button class="avail-btn">
+                <i class="fas fa-cart-plus"></i> Add to Package
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Comparison Modal -->
+<div id="comparisonModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Package Comparison</h2>
+        <div id="comparisonResults"></div>
+    </div>
+</div>
+
+<!-- Package Customization Form -->
+<div class="package-customization">
+    <h2>Customize Additional Services</h2>
+    
+    <form method="POST" action="{% url 'saritasapp:additional_confirmation' %}">
+        {% csrf_token %}
+        
+        <div class="customization-form">
+            <!-- Service Selection -->
+            <div class="form-group">
+                <label>Select Services:</label>
+                <div class="service-grid">
+                    <div class="service-option">
+                        <input type="checkbox" name="services" value="photography" id="photo">
+                        <label for="photo">Professional Photography (+₱15,000)</label>
+                    </div>
+                    <div class="service-option">
+                        <input type="checkbox" name="services" value="videography" id="video">
+                        <label for="video">Videography Package (+₱25,000)</label>
+                    </div>
+                    <!-- Add more services -->
+                </div>
+            </div>
+
+            <!-- Quantity Selection -->
+            <div class="form-group">
+                <label>Service Duration:</label>
+                <select name="duration" class="form-control">
+                    <option value="4">4 Hours (+₱0)</option>
+                    <option value="6">6 Hours (+₱10,000)</option>
+                    <option value="8">8 Hours (+₱18,000)</option>
+                </select>
+            </div>
+
+            <!-- Custom Requests -->
+            <div class="form-group">
+                <label>Special Requests:</label>
+                <textarea name="special_requests" class="form-control" 
+                          placeholder="Enter any special requirements"></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="form-submit">
+                <button type="submit" class="confirm-btn">
+                    <i class="fas fa-check-circle"></i> Confirm Services
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Package filtering functionality
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const filter = this.getAttribute('data-filter');
+            const packages = document.querySelectorAll('.package-box');
+            
+            packages.forEach(pkg => {
+                if (filter === 'all' || pkg.classList.contains(filter)) {
+                    pkg.style.display = 'block';
+                } else {
+                    pkg.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Package comparison functionality
+    const compareCheckboxes = document.querySelectorAll('.compare-check');
+    const compareBtn = document.getElementById('compareBtn');
+    const comparisonModal = document.getElementById('comparisonModal');
+    const closeModal = document.querySelector('.close');
+    const comparisonResults = document.getElementById('comparisonResults');
+    
+    let selectedPackages = [];
+    
+    compareCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const packageId = this.getAttribute('data-id');
+            
+            if (this.checked) {
+                selectedPackages.push(packageId);
+            } else {
+                selectedPackages = selectedPackages.filter(id => id !== packageId);
+            }
+            
+            updateCompareButton();
+        });
+    });
+    
+    function updateCompareButton() {
+        const count = selectedPackages.length;
+        compareBtn.disabled = count < 2;
+        compareBtn.textContent = ` Compare Selected Packages (${count})`;
+    }
+    
+    compareBtn.addEventListener('click', function() {
+        if (selectedPackages.length < 2) return;
+        
+        const packagesToCompare = Array.from(document.querySelectorAll('.package-box'))
+            .filter(pkg => selectedPackages.includes(pkg.getAttribute('data-id')));
+        
+        let tableHTML = `
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        ${packagesToCompare.map(pkg => `<th>${pkg.querySelector('h2').textContent}</th>`).join('')}
+                    </tr>
+                    <tr>
+                        <th>Price</th>
+                        ${packagesToCompare.map(pkg => `<td>${pkg.querySelector('.package-price').textContent}</td>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        const allFeatures = new Set();
+        packagesToCompare.forEach(pkg => {
+            const features = pkg.querySelectorAll('.package-inclusions li');
+            features.forEach(li => allFeatures.add(li.textContent.trim()));
+        });
+        
+        Array.from(allFeatures).forEach(feature => {
+            tableHTML += `
+                <tr>
+                    <td>${feature}</td>
+                    ${packagesToCompare.map(pkg => {
+                        const features = Array.from(pkg.querySelectorAll('.package-inclusions li'))
+                            .map(li => li.textContent.trim());
+                        return `<td class="checkmark">${features.includes(feature) ? '✓' : ''}</td>`;
+                    }).join('')}
+                </tr>
+            `;
+        });
+        
+        tableHTML += `</tbody></table>`;
+        comparisonResults.innerHTML = tableHTML;
+        comparisonModal.style.display = 'block';
+    });
+    
+    closeModal.addEventListener('click', function() {
+        comparisonModal.style.display = 'none';
+    });
+    
+    window.addEventListener('click', function(event) {
+        if (event.target === comparisonModal) {
+            comparisonModal.style.display = 'none';
+        }
+    });
+
+    // Calculate total for additional services
+    const servicePrices = {
+        photography: 15000,
+        videography: 25000,
+    };
+
+    function calculateTotal() {
+        let total = 0;
+        document.querySelectorAll('input[name="services"]:checked').forEach(service => {
+            total += servicePrices[service.value] || 0;
+        });
+
+        const duration = document.querySelector('select[name="duration"]').value;
+        total += {4: 0, 6: 10000, 8: 18000}[duration] || 0;
+        
+        document.getElementById('totalPrice').textContent = total.toLocaleString('en-PH');
+    }
+
+    document.querySelectorAll('input, select').forEach(element => {
+        element.addEventListener('change', calculateTotal);
+    });
+</script>
+
+{% endblock %}
