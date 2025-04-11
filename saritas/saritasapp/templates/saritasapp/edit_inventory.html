@@ -19,54 +19,83 @@
             <input type="text" id="name" name="name" value="{{ item.name }}" required>
         </div>
 
-        <div class="form-group">
-            <label for="category">Category</label>
-            <select id="category" name="category" required>
-                {% for category in categories %}
-                    <option value="{{ category.id }}" {% if item.category and item.category.id == category.id %}selected{% endif %}>
-                        {{ category.name }}
-                    </option>
-                {% endfor %}
-            </select>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="category">Category</label>
+                <select id="category" name="category" required>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}" {% if item.category and item.category.id == category.id %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="branch">Branch</label>
+                <select id="branch" name="branch" required>
+                    {% for branch in branches %}
+                        <option value="{{ branch.id }}" {% if item.branch and item.branch.id == branch.id %}selected{% endif %}>
+                            {{ branch.branch_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="color">Color</label>
-            <select id="color" name="color">
-                <option value="">Select a Color</option>
-                {% for color in colors %}
-                    <option value="{{ color.id }}" {% if item.color and item.color.id == color.id %}selected{% endif %}>
-                        {{ color.name }}
-                    </option>
-                {% endfor %}
-            </select>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="color">Color</label>
+                <select id="color" name="color">
+                    <option value="">Select a Color</option>
+                    {% for color in colors %}
+                        <option value="{{ color.id }}" {% if item.color and item.color.id == color.id %}selected{% endif %}>
+                            {{ color.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="size">Size</label>
+                <select id="size" name="size">
+                    <option value="">Select a Size</option>
+                    {% for size in sizes %}
+                        <option value="{{ size.id }}" {% if item.size and item.size.id == size.id %}selected{% endif %}>
+                            {{ size.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
         </div>
-        
-        <div class="form-group">
-            <label for="size">Size</label>
-            <select id="size" name="size">
-                <option value="">Select a Size</option>
-                {% for size in sizes %}
-                    <option value="{{ size.id }}" {% if item.size and item.size.id == size.id %}selected{% endif %}>
-                        {{ size.name }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-        
 
         <div class="form-group">
             <label for="quantity">Quantity</label>
             <input type="number" id="quantity" name="quantity" value="{{ item.quantity }}" min="0" required>
         </div>
 
-        <div class="form-group">
-            <label for="rental_price">Rental Price (₱)</label>
-            <input type="number" id="rental_price" name="rental_price" step="0.01" value="{{ item.rental_price }}" required>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="rental_price">Rental Price (₱)</label>
+                <input type="number" id="rental_price" name="rental_price" step="0.01" value="{{ item.rental_price }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="reservation_price">Reservation Price (₱)</label>
+                <input type="number" id="reservation_price" name="reservation_price" step="0.01" value="{{ item.reservation_price|default_if_none:'' }}">
+            </div>
         </div>
 
-        <div class="form-group">
-            <label for="purchase_price">Purchase Price (₱)</label>
-            <input type="number" id="purchase_price" name="purchase_price" step="0.01" value="{{ item.purchase_price }}">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="deposit_price">Deposit Price (₱)</label>
+                <input type="number" id="deposit_price" name="deposit_price" step="0.01" value="{{ item.deposit_price|default_if_none:'' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="purchase_price">Purchase Price (₱)</label>
+                <input type="number" id="purchase_price" name="purchase_price" step="0.01" value="{{ item.purchase_price|default_if_none:'' }}">
+            </div>
         </div>
 
         <div class="form-group checkbox-group">
@@ -77,6 +106,7 @@
         <div class="form-group">
             <label for="image">Upload Image</label>
             <input type="file" id="image" name="image" accept="image/*" onchange="previewImage(event)">
+            <small class="form-text">Current image will be replaced</small>
         </div>
 
         <div class="image-preview">
@@ -87,7 +117,10 @@
             {% endif %}
         </div>
 
-        <button type="submit" class="submit-btn">Update Item</button>
+        <div class="form-actions">
+            <button type="submit" class="submit-btn">Update Item</button>
+            <a href="{% url 'saritasapp:inventory_list' %}" class="cancel-btn">Cancel</a>
+        </div>
     </form>
 </div>
 

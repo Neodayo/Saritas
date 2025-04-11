@@ -1,0 +1,56 @@
+{% extends "customerapp/base.html" %}
+{% load static %}
+
+{% block title %}Notifications | Sarita's{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/notifications.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Notifications</h1>
+        <div class="header-actions">
+            {% if unread_count > 0 %}
+            <a href="{% url 'customerapp:mark_all_notifications_as_read' %}" class="btn btn-mark-all">
+                <i class="fas fa-check-double"></i> Mark all as read
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="notification-container">
+        {% if notifications %}
+            {% for notification in notifications %}
+            <div class="notification {% if not notification.is_read %}unread{% endif %}" 
+                 onclick="location.href='{% url 'customerapp:mark_notification_as_read' notification.id %}'">
+                <div class="notification-icon">
+                    {% if notification.notification_type == 'rental_approved' %}
+                        <i class="fas fa-check-circle text-success"></i>
+                    {% elif notification.notification_type == 'rental_rejected' %}
+                        <i class="fas fa-times-circle text-danger"></i>
+                    {% else %}
+                        <i class="fas fa-info-circle text-info"></i>
+                    {% endif %}
+                </div>
+                <div class="notification-content">
+                    <p class="notification-message">{{ notification.message }}</p>
+                    <small class="notification-time">{{ notification.created_at|timesince }} ago</small>
+                </div>
+                {% if not notification.is_read %}
+                <span class="unread-badge"></span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-bell-slash"></i>
+                <h4>No notifications yet</h4>
+                <p>You'll see important updates here</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

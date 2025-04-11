@@ -236,7 +236,14 @@
                 </li>
 
                 <li class="nav-item"><a href="{% url 'customerapp:about_us' %}">ABOUT </a>
-                
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'customerapp:notifications' %}">
+                            <i class="fas fa-bell"></i>
+                            {% if unread_count > 0 %}
+                            <span class="badge badge-danger">{{ unread_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
                 <!-- User Login/Logout -->
                 {% if user.is_authenticated %}
                 <li class="nav-item">

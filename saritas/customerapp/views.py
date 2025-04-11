@@ -9,7 +9,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
 from django.shortcuts import render
-from saritasapp.models import Inventory, Category, Color, Size, Rental, Reservation
+from saritasapp.models import Inventory, Category, Color, Size, Rental, Reservation, Notification, WardrobePackage
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 
@@ -53,7 +53,7 @@ def register(request):
             try:
                 form.save()
                 messages.success(request, "Registration successful!")
-                return redirect('saritasapp/login')
+                return redirect('saritasapp/sign_in')
             except IntegrityError as e:
                 messages.error(request, "Database error. Please try again.")
                 # Log the error: print(e) or use logging module
@@ -68,6 +68,35 @@ def register(request):
     
     return render(request, 'customerapp/register.html', {'form': form})
 
+def notifications(request):
+    if request.user.is_authenticated:
+        return {
+            'unread_count': Notification.objects.filter(user=request.user, is_read=False).count()
+        }
+    return {}
+
+@login_required
+def notifications(request):
+    user_notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
+    unread_count = user_notifications.filter(is_read=False).count()
+    
+    return render(request, 'customerapp/notifications.html', {
+        'notifications': user_notifications,
+        'unread_count': unread_count
+    })
+
+@login_required
+def mark_notification_as_read(request, notification_id):
+    notification = Notification.objects.filter(id=notification_id, user=request.user).first()
+    if notification:
+        notification.is_read = True
+        notification.save()
+    return redirect('customerapp:notifications')
+
+@login_required
+def mark_all_notifications_as_read(request):
+    Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+    return redirect('customerapp:notifications')
 
 @login_required
 def customer_dashboard(request):

@@ -24,6 +24,7 @@
         <p><strong>Quantity:</strong> {{ item.quantity }}</p>
         <p><strong>Rental Price:</strong> ₱{{ item.rental_price }}</p>
         <p><strong>Reservation Price:</strong> {{ item.reservation_price }}</p>
+        <p><strong>Deposit Price:</strong> {{ item.deposit_price }}</p>
         <p><strong>Purchase Price:</strong> 
 
             {% if item.purchase_price %}₱{{ item.purchase_price }}{% else %}N/A{% endif %}

@@ -6,223 +6,233 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/rent_item.css' %}">
 <style>
-    .errorlist { color: #dc3545; font-size: 0.875rem; }
-    .cost-preview { background: #f8f9fa; padding: 1rem; border-radius: 0.25rem; }
+    .errorlist { 
+        color: #dc3545; 
+        font-size: 0.875rem; 
+        list-style: none;
+        padding-left: 0;
+        margin-top: 0.25rem;
+    }
+    .cost-preview { 
+        background: #f8f9fa; 
+        padding: 1.5rem; 
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .availability-badge {
+        font-size: 0.9rem;
+        padding: 0.35rem 0.75rem;
+    }
+    #id_notes {
+        min-height: 100px;
+    }
+    .item-image-container {
+        height: 300px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .item-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .placeholder-icon {
+        font-size: 5rem;
+        color: #6c757d;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="rental-container">
-    <h2 class="page-title">Rent: {{ item.name }}</h2>
-    
-    <div class="alert alert-info">
-        <i class="fas fa-info-circle"></i> 
-        <strong>Important:</strong> Rental requests require staff approval.
-    </div>
-    
-    <div class="row">
-        <div class="col-md-6">
-            {% if item.image %}
-                <img src="{{ item.image.url }}" alt="{{ item.name }}" class="item-image img-fluid rounded">
-            {% else %}
-                <img src="{% static 'images/default-placeholder.png' %}" alt="No image" class="item-image img-fluid rounded">
-            {% endif %}
-        </div>
-        <div class="col-md-6">
-            <div class="item-details card p-3">
-                <h4>Item Details</h4>
-                <p><strong>Category:</strong> {{ item.category.name }}</p>
-                <p><strong>Rental Price:</strong> ₱{{ item.rental_price|floatformat:2 }} <small class="text-muted">per day</small></p>
-                {% if item.color %}<p><strong>Color:</strong> {{ item.color.name }}</p>{% endif %}
-                {% if item.size %}<p><strong>Size:</strong> {{ item.size.name }}</p>{% endif %}
-                <p><strong>Availability:</strong> 
-                    <span class="{% if item.quantity > 0 %}text-success{% else %}text-danger{% endif %}">
-                        {{ item.quantity }} available
-                    </span>
-                </p>
-                
-                <div class="rental-terms mt-3">
-                    <h5>Rental Terms:</h5>
-                    <ul class="small">
-                        <li>Minimum rental period: 3 days</li>
-                        <li>Refundable deposit: ₱{{ item.refundable_deposit|default:10000|floatformat:2 }}</li>
-                        <li>Late returns incur 20% daily penalty</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <form method="post" class="rental-form mt-4">
-        {% csrf_token %}
+<div class="container py-5">
+    <div class="rental-container">
+        <a href="{% url 'customerapp:wardrobe' %}" class="btn btn-outline-secondary mb-4">
+            <i class="fas fa-arrow-left"></i> Back to Wardrobe
+        </a>
         
-        {% if form.non_field_errors %}
-            <div class="alert alert-danger">
-                {{ form.non_field_errors }}
+        <h2 class="page-title mb-4">Rental Request: {{ item.name }}</h2>
+        
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
+            {% endfor %}
         {% endif %}
         
-        <div class="row">
-            <div class="col-md-6">
-                <div class="form-group mb-3">
-                    <label for="{{ form.rental_start.id_for_label }}">Start Date *</label>
-                    <input type="date" class="form-control" id="{{ form.rental_start.id_for_label }}" 
-                           name="{{ form.rental_start.name }}" required>
-                    {% if form.rental_start.errors %}
-                        <div class="errorlist">{{ form.rental_start.errors }}</div>
-                    {% endif %}
+        <div class="alert alert-info d-flex align-items-center">
+            <i class="fas fa-info-circle me-2"></i>
+            <div>
+                <strong>Important:</strong> Rental requests require staff approval. 
+                You'll receive a confirmation once approved.
+            </div>
+        </div>
+        
+        <div class="row g-4 mb-4">
+            <!-- Item Image Column -->
+            <div class="col-lg-5">
+                <div class="card h-100">
+                    <div class="item-image-container">
+                        {% if item.image %}
+                            <img src="{{ item.image.url }}" alt="{{ item.name }}" class="item-image">
+                        {% else %}
+                            <i class="fas fa-image placeholder-icon"></i>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ item.name }}</h5>
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge availability-badge bg-{% if item.quantity > 0 %}success{% else %}danger{% endif %}">
+                                {% if item.quantity > 0 %}
+                                    {{ item.quantity }} Available
+                                {% else %}
+                                    Out of Stock
+                                {% endif %}
+                            </span>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <strong>Category:</strong> {{ item.category.name }}
+                            </li>
+                            {% if item.color %}
+                            <li class="list-group-item">
+                                <strong>Color:</strong> {{ item.color.name }}
+                            </li>
+                            {% endif %}
+                            {% if item.size %}
+                            <li class="list-group-item">
+                                <strong>Size:</strong> {{ item.size.name }}
+                            </li>
+                            {% endif %}
+                            <li class="list-group-item">
+                                <strong>Rental Price:</strong> ₱{{ item.rental_price|floatformat:2 }}
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Deposit:</strong> ₱{{ item.deposit_price|default:10000|floatformat:2 }}
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="form-group mb-3">
-                    <label for="{{ form.rental_end.id_for_label }}">End Date *</label>
-                    <input type="date" class="form-control" id="{{ form.rental_end.id_for_label }}" 
-                           name="{{ form.rental_end.name }}" required>
-                    {% if form.rental_end.errors %}
-                        <div class="errorlist">{{ form.rental_end.errors }}</div>
-                    {% endif %}
+            
+            <!-- Rental Form Column -->
+            <div class="col-lg-7">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Rental Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" class="rental-form">
+                            {% csrf_token %}
+                            
+                            <!-- Date Fields -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        {{ form.rental_start }}
+                                        <label for="{{ form.rental_start.id_for_label }}">Start Date *</label>
+                                        {% if form.rental_start.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ form.rental_start.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        {{ form.rental_end }}
+                                        <label for="{{ form.rental_end.id_for_label }}">End Date *</label>
+                                        {% if form.rental_end.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ form.rental_end.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Notes Field -->
+                            <div class="mb-4">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                    Special Requests or Notes
+                                </label>
+                                {{ form.notes }}
+                            </div>
+                            
+                            <!-- Cost Preview -->
+                            <div class="cost-preview">
+                                <h5 class="mb-3">Rental Cost</h5>
+                                <div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Rental price:</span>
+                                        <span>₱{{ item.rental_price|floatformat:2 }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Deposit:</span>
+                                        <span>₱{{ item.deposit_price|default:10000|floatformat:2 }}</span>
+                                    </div>
+                                    <hr class="my-2">
+                                    <div class="d-flex justify-content-between mt-3 fw-bold">
+                                        <span>Total:</span>
+                                        <span>₱{{ item.rental_price|add:item.deposit_price|default:10000|floatformat:2 }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" class="btn btn-primary btn-lg px-4" id="submit-btn" {% if item.quantity <= 0 %}disabled{% endif %}>
+                                    {% if item.quantity <= 0 %}
+                                        <i class="fas fa-times-circle me-2"></i>Item Not Available
+                                    {% else %}
+                                        <i class="fas fa-paper-plane me-2"></i>Submit Rental Request
+                                    {% endif %}
+                                </button>
+                                <a href="{% url 'customerapp:wardrobe' %}" class="btn btn-outline-secondary btn-lg px-4">
+                                    <i class="fas fa-times me-2"></i>Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- Cost Calculation -->
-        <div class="cost-preview card p-3 mb-4">
-            <h5>Estimated Rental Cost</h5>
-            <div id="cost-calculation">
-                <div class="d-flex justify-content-between">
-                    <span>Daily rate:</span>
-                    <span>₱<span id="daily-rate">{{ item.rental_price|floatformat:2 }}</span></span>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <span>Rental days:</span>
-                    <span><span id="rental-days">0</span> days</span>
-                </div>
-                <hr>
-                <div class="d-flex justify-content-between">
-                    <span>Subtotal:</span>
-                    <span>₱<span id="subtotal">0.00</span></span>
-                </div>
-                <div class="d-flex justify-content-between small text-muted">
-                    <span>Refundable deposit:</span>
-                    <span>₱<span id="deposit-amount">{{ item.refundable_deposit|default:10000|floatformat:2 }}</span></span>
-                </div>
-                <div class="d-flex justify-content-between mt-2 font-weight-bold">
-                    <span>Total Estimated Cost:</span>
-                    <span>₱<span id="total-cost">{{ item.refundable_deposit|default:10000|floatformat:2 }}</span></span>
-                </div>
-                <div id="min-rental-alert" class="alert alert-warning mt-2 d-none">
-                    Minimum rental period is 3 days
-                </div>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <button type="submit" class="btn btn-primary btn-lg" id="submit-btn" {% if item.quantity <= 0 %}disabled{% endif %}>
-                {% if item.quantity <= 0 %}
-                    Item Not Available
-                {% else %}
-                    Submit Rental Request
-                {% endif %}
-            </button>
-            <a href="{% url 'customerapp:wardrobe' %}" class="btn btn-outline-secondary btn-lg">Cancel</a>
-        </div>
-    </form>
+    </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Configuration
-    const MIN_RENTAL_DAYS = 3;
-    const deposit = parseFloat(document.getElementById('deposit-amount').textContent);
-    const dailyRate = parseFloat(document.getElementById('daily-rate').textContent);
-    
     // Elements
     const startDateField = document.getElementById('{{ form.rental_start.id_for_label }}');
     const endDateField = document.getElementById('{{ form.rental_end.id_for_label }}');
-    const rentalDaysSpan = document.getElementById('rental-days');
-    const subtotalSpan = document.getElementById('subtotal');
-    const totalCostSpan = document.getElementById('total-cost');
-    const minRentalAlert = document.getElementById('min-rental-alert');
-    const submitBtn = document.getElementById('submit-btn');
     
-    // Set initial dates
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    startDateField.min = today.toISOString().split('T')[0];
-    endDateField.min = tomorrow.toISOString().split('T')[0];
-    
-    // Event listeners
-    startDateField.addEventListener('change', updateEndDateMin);
-    endDateField.addEventListener('change', calculateCost);
-    
-    function updateEndDateMin() {
-        if (!startDateField.value) return;
+    // Function to update minimum end date based on start date
+    function updateMinEndDate(startDateValue) {
+        if (!startDateValue) return;
         
-        const startDate = new Date(startDateField.value);
+        const startDate = new Date(startDateValue);
         const minEndDate = new Date(startDate);
-        minEndDate.setDate(minEndDate.getDate() + MIN_RENTAL_DAYS - 1);
+        minEndDate.setDate(minEndDate.getDate() + 1); // Minimum 1 day rental
         
-        endDateField.min = minEndDate.toISOString().split('T')[0];
+        // Format as YYYY-MM-DD
+        const formattedMinDate = minEndDate.toISOString().split('T')[0];
+        endDateField.min = formattedMinDate;
         
-        // Reset end date if invalid
+        // Adjust end date if it's now invalid
         if (endDateField.value && new Date(endDateField.value) < minEndDate) {
-            endDateField.value = '';
+            endDateField.value = formattedMinDate;
         }
-        
-        calculateCost();
     }
     
-    function calculateCost() {
-        if (!startDateField.value || !endDateField.value) {
-            resetCalculation();
-            return;
-        }
-        
-        const startDate = new Date(startDateField.value);
-        const endDate = new Date(endDateField.value);
-        
-        // Calculate difference in days (inclusive)
-        const timeDiff = endDate.getTime() - startDate.getTime();
-        const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24)) + 1;
-        
-        if (daysDiff < MIN_RENTAL_DAYS) {
-            showMinRentalAlert();
-            resetCalculation();
-            return;
-        }
-        
-        hideMinRentalAlert();
-        
-        const subtotal = daysDiff * dailyRate;
-        const total = subtotal + deposit;
-        
-        rentalDaysSpan.textContent = daysDiff;
-        subtotalSpan.textContent = subtotal.toFixed(2);
-        totalCostSpan.textContent = total.toFixed(2);
-        
-        // Enable submit button if valid
-        submitBtn.disabled = false;
-    }
+    // Set up event listener
+    startDateField.addEventListener('change', function() {
+        updateMinEndDate(this.value);
+    });
     
-    function resetCalculation() {
-        rentalDaysSpan.textContent = '0';
-        subtotalSpan.textContent = '0.00';
-        totalCostSpan.textContent = deposit.toFixed(2);
-        submitBtn.disabled = true;
-    }
-    
-    function showMinRentalAlert() {
-        minRentalAlert.classList.remove('d-none');
-    }
-    
-    function hideMinRentalAlert() {
-        minRentalAlert.classList.add('d-none');
-    }
-    
-    // Initialize
-    updateEndDateMin();
+    // Initialize with current values
+    updateMinEndDate(startDateField.value);
 });
 </script>
 {% endblock %}

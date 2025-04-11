@@ -31,46 +31,31 @@ from .forms import (
 )
 from .models import (
     Customer, Inventory, Category, Rental, Reservation, User, WardrobePackage,
-    Receipt, Color, Size, Staff, Event
+    Receipt, Color, Size, Branch, Event, Notification
 )
-
-
 
 @login_required
 def add_inventory(request):
-    categories = Category.objects.all()
-    sizes = Size.objects.all() 
-    colors = Color.objects.all()
-
     if request.method == 'POST':
-        form = InventoryForm(request.POST, request.FILES)
+        form = InventoryForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
-            inventory_item = form.save(commit=False)
-
-            # Ensure reservation_price is set properly (if blank, default to zero)
-            if inventory_item.reservation_price is None:
-                inventory_item.reservation_price = 0.00
-
-            inventory_item.save()
-            return redirect('saritasapp:inventory_list')
+            try:
+                form.save()
+                messages.success(request, "Inventory added successfully!")
+                return redirect('saritasapp:inventory_list')
+            except Exception as e:
+                messages.error(request, f"Error saving inventory: {str(e)}")
         else:
-            # Display error messages in the template if form is invalid
-            return render(request, 'saritasapp/add_inventory.html', {
-                'form': form,
-                'categories': categories,
-                'sizes': sizes,
-                'colors': colors,
-            })
+            messages.error(request, "Please correct the errors below")
     else:
-        form = InventoryForm()
-
+        form = InventoryForm(user=request.user)
+    
     return render(request, 'saritasapp/add_inventory.html', {
         'form': form,
-        'categories': categories,
-        'colors': colors,
-        'sizes': sizes
+        'categories': Category.objects.all(),
+        'colors': Color.objects.all(),
+        'sizes': Size.objects.all()
     })
-
 
 
 @login_required
@@ -79,11 +64,17 @@ def add_category(request):
         form = CategoryForm(request.POST)
         if form.is_valid():
             form.save()
+            messages.success(request, f'Category "{form.cleaned_data["name"]}" was added successfully!')
+            if request.GET.get('next'):
+                return redirect(request.GET.get('next'))
             return redirect('saritasapp:add_inventory')
     else:
         form = CategoryForm()
-    
-    return render(request, 'saritasapp/add_category.html', {'form': form})
+
+    return render(request, 'saritasapp/add_category.html', {
+        'form': form,
+        'next': request.GET.get('next', '')
+    })
 
 @login_required
 def add_color(request):
@@ -116,6 +107,7 @@ def view_item(request, item_id):
 @login_required
 def edit_inventory(request, item_id):
     item = get_object_or_404(Inventory, id=item_id)
+    branches = Branch.objects.all()  # Add this line
     categories = Category.objects.all()
     colors = Color.objects.all()
     sizes = Size.objects.all()
@@ -124,15 +116,18 @@ def edit_inventory(request, item_id):
         form = InventoryForm(request.POST, request.FILES, instance=item)
         if form.is_valid():
             item = form.save(commit=False)
-            item.purchase_price = float(request.POST.get('purchase_price', '0') or 0) 
-            item.available = 'available' in request.POST  
+            # These fields are already handled by the form
             item.save()
+            messages.success(request, 'Inventory item updated successfully!')
             return redirect('saritasapp:inventory_list')
+        else:
+            messages.error(request, 'Please correct the errors below.')
     else:
         form = InventoryForm(instance=item)
 
     return render(request, 'saritasapp/edit_inventory.html', {
         'form': form,
+        'branches': branches,  # Add this
         'categories': categories,
         'colors': colors,
         'sizes': sizes,
@@ -1076,12 +1071,29 @@ def approve_rental(request, rental_id, action):
                 rental.inventory.quantity -= 1
                 rental.inventory.save()
                 
+                # Create approval notification
+                Notification.objects.create(
+                    user=rental.customer.user,
+                    notification_type='rental_approved',
+                    rental=rental,
+                    message=f"Your rental request for {rental.inventory.name} has been approved!"
+                )
+                
                 messages.success(request, f'Rental #{rental_id} approved successfully!')
             
             elif action == 'reject':
                 rental.status = 'Rejected'
                 rental.approved_by = request.user
                 rental.rejection_reason = request.POST.get('rejection_reason', '')
+                
+                # Create rejection notification
+                Notification.objects.create(
+                    user=rental.customer.user,
+                    notification_type='rental_rejected',
+                    rental=rental,
+                    message=f"Your rental request for {rental.inventory.name} has been rejected. Reason: {rental.rejection_reason}"
+                )
+                
                 messages.warning(request, f'Rental #{rental_id} has been rejected.')
             
             rental.save()
