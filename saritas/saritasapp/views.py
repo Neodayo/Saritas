@@ -1175,6 +1175,131 @@ def delete_event(request, event_id):
 
     return render(request, 'saritasapp/confirm_delete_event.html', {'event': event})
 
-def packages(request):
-    return render(request, 'saritasapp/package.html')
+# not final packages implementation
+from django.shortcuts import render
+
+from django.shortcuts import render, redirect
+from django.http import JsonResponse
+from .models import Venue  # Make sure Venue model is imported
+
+def wedding_packages(request):
+    if request.method == 'POST':
+        # Handle custom venues from DB if needed (or from session)
+        custom_venues = {v.venue_id: v.base_price for v in Venue.objects.filter(is_custom=True, created_by=request.user)}
+
+        # Get selected venue
+        venue_id = request.POST.get('venue')
+        venue_price = 0
+        venue_name = ""
+
+        if venue_id and venue_id.startswith('custom_'):
+            venue_price = custom_venues.get(venue_id, 0)
+            venue_name = request.POST.get(f'venue_{venue_id}_name', 'Custom Venue')
+        else:
+            # Handle predefined venues from the DB
+            try:
+                venue_obj = Venue.objects.get(venue_id=venue_id)
+                venue_name = venue_obj.name
+                venue_price = venue_obj.base_price
+            except Venue.DoesNotExist:
+                venue_name = "Unknown"
+                venue_price = 0
+
+        # Collect other data
+        data = {
+            'sizes': {
+                'bride': request.POST.get('bride_size'),
+                'groom': request.POST.get('groom_size')
+            },
+            'guests': int(request.POST.get('guests', 0)),
+            'venue': {
+                'id': venue_id,
+                'name': venue_name,
+                'price': venue_price
+            },
+            'services': request.POST.getlist('services'),
+            'total_price': float(request.POST.get('total_price', 0))
+        }
+
+        # Save to session
+        request.session['wedding_customization'] = data
+        return redirect('wedding_confirmation')
+
+    return render(request, 'saritasapp/wedding_packages.html')
+
+
+def wedding_confirmation(request):
+    customization = request.session.get('wedding_customization', {})
+    return render(request, 'saritasapp/wedding_confirmation.html', {
+        'customization': customization
+    })
+
+
+def add_custom_venue(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        price = request.POST.get('price')
+
+        if name and price:
+            # Generate a unique venue ID using a prefix and timestamp
+            from datetime import datetime
+            venue_id = f'custom_{int(datetime.now().timestamp())}'
+
+            Venue.objects.create(
+                venue_id=venue_id,
+                name=name,
+                base_price=price,
+                is_custom=True,
+                created_by=request.user
+            )
+            return JsonResponse({'status': 'success', 'venue_id': venue_id})
+        
+        return JsonResponse({'status': 'invalid data'}, status=400)
+
+    return JsonResponse({'status': 'error'}, status=400)
+
+from django.shortcuts import render, redirect
+
+# Debut Packages View
+def debut_packages(request):
+    if request.method == 'POST':
+        # Process debut customization
+        request.session['debut_customization'] = {
+            'sizes': {
+                'debutant': request.POST.get('debutant_size'),
+                'parent': request.POST.get('parent_size')
+            },
+            'guests': request.POST.get('guest_count'),
+            'theme': request.POST.get('theme'),
+            'services': request.POST.getlist('services')
+        }
+        return redirect('debut_confirmation')
+    return render(request, 'saritasapp/debut_packages.html')
+
+# Additional Services View
+def additional_services(request):
+    if request.method == 'POST':
+        request.session['additional_services'] = {
+            'services': request.POST.getlist('services'),
+            'duration': request.POST.get('duration'),
+            'requests': request.POST.get('special_requests')
+        }
+        return redirect('additional_services')
+    return render(request, 'saritasapp/additional_services.html')
+
+# Debut Confirmation View
+def debut_confirmation(request):
+    customization = request.session.get('debut_customization', {})
+    # Add price calculation logic if needed
+    return render(request, 'saritasapp/debut_confirmation.html', {
+        'customization': customization
+    })
+
+# Additional Services Confirmation View
+def additional_confirmation(request):
+    services = request.session.get('additional_services', {})
+    # Add price calculation logic if needed
+    return render(request, 'saritasapp/additional_services.html', {
+        'services': services
+    })
 

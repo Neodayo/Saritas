@@ -60,11 +60,25 @@
                         <a href="{% url 'saritasapp:made_to_order' %}" class="header-link-text">Made to Order</a>
                     </div>
                     <select id="Package" class="header-link-text" onchange="navigateToPage()">
-                        <option value="{% url 'saritasapp:packages' %}">Packages</option>
-                        <option value="{% url 'saritasapp:packages' %}">Wardrobe Packages</option>
+                        <option value="{% url 'saritasapp:wedding_packages' %}" 
+                            {% if title == 'Wedding Packages' %}selected{% endif %}>
+                            Packages
+                        </option>
+                        <option value="{% url 'saritasapp:wedding_packages' %}" 
+                            {% if title == 'Wedding Packages' %}selected{% endif %}>
+                            Wedding Packages
+                        </option>
+                        <option value="{% url 'saritasapp:debut_packages' %}" 
+                            {% if title == 'Debut Packages' %}selected{% endif %}>
+                            Debut Packages
+                        </option>
+                        <option value="{% url 'saritasapp:additional_services' %}" 
+                            {% if title == 'Additional Services' %}selected{% endif %}>
+                            Additional Services
+                        </option>
                     </select>
                     <a href="{% url 'saritasapp:dashboard' %}" class="header-link"><i class="fas fa-home"></i></a>
-                    <a href="{% url 'saritasapp:notifications' %}" class="header-link"><i class="fas fa-bell"></i></a>
+                    
                     <a href="{% url 'saritasapp:profile' %}" class="header-link"><i class="fas fa-user"></i></a>
 
                     <!-- Login/Logout Button -->
@@ -101,6 +115,13 @@
                 window.location.href = selectedValue;
             }
         }
+
+        // initial pacckages backend implemented (not final)
+        function navigateToPage() {
+    const select = document.getElementById('Package');
+    const url = select.value;
+    window.location.href = url;
+}
     </script>
 </body>
 </html>

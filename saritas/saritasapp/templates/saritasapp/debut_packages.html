@@ -1,0 +1,194 @@
+{% extends "saritasapp/base.html" %}
+{% load static %}
+
+{% block title %}Packages{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/Allpackages.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="packages-section">
+    <h2 class="section-title">
+        <i class="fas fa-star"></i> Debut Packages
+    </h2>
+
+    <div class="package-container">
+        <!-- Debut Package -->
+        <div class="package-box debut" data-id="debut-1">
+            <div class="compare-checkbox">
+                <input type="checkbox" id="compare-debut-1" class="compare-check" data-id="debut-1">
+                <label for="compare-debut-1">Compare</label>
+            </div>
+
+            <h2>Standard Debut Package</h2>
+            <div class="package-price">₱180,000</div>
+
+            <div class="package-inclusions">
+                <h3><i class="fas fa-hotel"></i> Hotel Venue / Food</h3>
+                <div class="corkage-note">
+                    <i class="fas fa-exclamation-circle"></i> All corkages will be charged to client
+                </div>
+                <h3><i class="fas fa-camera"></i> Photo & Video</h3>
+                <ul>
+                    <li>Same day edit (SDE)</li>
+                    <li>2 set up cameras</li>
+                    <li>100 copies 3R size pictures</li>
+                    <li>Free USB full coverage video</li>
+                    <li>Free album</li>
+                    <li>Free projector</li>
+                </ul>
+                <div class="corkage-note">
+                    <i class="fas fa-exclamation-circle"></i> All corkages will be charged to client
+                </div>
+                <h3><i class="fas fa-images"></i> Photoshoot</h3>
+                <ul>
+                    <li>25 set up cameras</li>
+                    <li>100 copies 3R size pictures</li>
+                    <li>Free USB full coverage video</li>
+                    <li>Free album</li>
+                    <li>Free projector</li>
+                </ul>
+                <h3><i class="fas fa-tshirt"></i> Wardrobe Package</h3>
+                <ul>
+                    <li>Mother</li>
+                    <li>Father</li>
+                    <li>Ballgown</li>
+                    <li>Cocktail</li>
+                </ul>
+                <h3><i class="fas fa-birthday-cake"></i> Debutant Cake</h3>
+                <ul>
+                    <li>3 layers customized cake</li>
+                    <li>18 cupcakes</li>
+                    <li>Client's choice of motif</li>
+                </ul>
+                <h3><i class="fas fa-users-cog"></i> Coordination Team</h3>
+                <ul>
+                    <li>Professional coordinator</li>
+                    <li>Professional emcee</li>
+                    <li>Assistant coordinators</li>
+                    <li>Program flow</li>
+                    <li>Table tags</li>
+                </ul>
+                <h3><i class="fas fa-paint-brush"></i> Make Up Package</h3>
+                <ul>
+                    <li>Debut photoshoot</li>
+                    <li>Debut on the day make up</li>
+                    <li>Mother</li>
+                </ul>
+                <h3><i class="fas fa-lightbulb"></i> Lights & Sounds</h3>
+                <ul>
+                    <li>With LED wall</li>
+                    <li>4 moving heads</li>
+                    <li>Pallow spot</li>
+                    <li>LED lights</li>
+                    <li>Spot light</li>
+                    <li>With smoke and bubbles machine</li>
+                </ul>
+                <div class="corkage-note">
+                    <i class="fas fa-exclamation-circle"></i> All corkages will be charged to client
+                </div>
+            </div>
+
+            <button class="avail-btn">
+                <i class="fas fa-envelope"></i> Inquire Now
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Customization Section -->
+<div class="package-customization">
+    <h2>Customize Your Debut Package</h2>
+
+    <form method="POST" action="{% url 'saritasapp:debut_confirmation' %}">
+        {% csrf_token %}
+
+        <div class="customization-form">
+            <!-- Size Controls -->
+            <div class="form-group">
+                <label>Dress Sizes:</label>
+                <div class="size-controls">
+                    <input type="number" name="debutant_size" class="size-input"
+                           placeholder="Debutant Size" min="0" max="50" step="0.5" required>
+                    <input type="number" name="parent_size" class="size-input"
+                           placeholder="Parent's Outfit Size" min="0" max="50" step="0.5">
+                </div>
+            </div>
+
+            <!-- Guest Count -->
+            <div class="form-group">
+                <label>Number of Guests:</label>
+                <input type="number" id="guestCount" name="guest_count"
+                       min="50" max="300" value="100" required>
+            </div>
+
+            <!-- Theme Selection -->
+            <div class="form-group">
+                <label>Event Theme:</label>
+                <select id="themeChoice" name="theme" class="form-control" required>
+                    <option value="classic">Classic Ball</option>
+                    <option value="modern">Modern Glam (+₱15,000)</option>
+                    <option value="fantasy">Fantasy Theme (+₱25,000)</option>
+                </select>
+            </div>
+
+            <!-- Add Services Section -->
+            <div class="add-services">
+                <h4>Additional Services</h4>
+                <div class="service-item">
+                    <select class="service-select" name="services">
+                        <option value="">Select Service</option>
+                        <option value="photo_booth">Photo Booth (+₱10,000)</option>
+                        <option value="videographer">Professional Videography (+₱20,000)</option>
+                        <option value="fireworks">Fireworks Display (+₱15,000)</option>
+                    </select>
+                    <input type="number" class="service-qty" name="service_qty" min="1" value="1">
+                </div>
+                <button type="button" class="add-service-btn" onclick="addService()">
+                    <i class="fas fa-plus-circle"></i> Add Another Service
+                </button>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="form-submit">
+                <button type="submit" class="confirm-btn">
+                    <i class="fas fa-check-circle"></i> Confirm Customization
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Comparison Modal -->
+<div id="comparisonModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Package Comparison</h2>
+        <div id="comparisonResults"></div>
+    </div>
+</div>
+
+<script>
+const debutBasePrice = 180000;
+const debutPriceModifiers = {
+    modern: 15000,
+    fantasy: 25000,
+    photo_booth: 10000,
+    videographer: 20000,
+    fireworks: 15000
+};
+
+function calculateTotal() {
+    let total = debutBasePrice;
+    total += debutPriceModifiers[document.getElementById('themeChoice').value] || 0;
+    document.querySelectorAll('.service-item').forEach(item => {
+        const service = item.querySelector('.service-select').value;
+        const qty = parseInt(item.querySelector('.service-qty').value) || 0;
+        total += (debutPriceModifiers[service] || 0) * qty;
+    });
+    document.getElementById('totalPrice').textContent = total.toLocaleString('en-PH');
+}
+</script>
+{% endblock %}

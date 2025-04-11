@@ -567,3 +567,10 @@ class Receipt(models.Model):
     def __str__(self):
         return f"Receipt for {self.customer_name}"
 
+#packages wedding packages
+
+class Venue(models.Model):
+    name = models.CharField(max_length=255)
+    base_price = models.DecimalField(max_digits=10, decimal_places=2)
+    is_custom = models.BooleanField(default=False)
+    created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
