@@ -113,40 +113,50 @@ def item_detail(request, item_id):
 
 @login_required
 def rent_item(request, inventory_id):
-    try:
-        with transaction.atomic():
-            # Use select_for_update() to lock the inventory row
-            item = Inventory.objects.select_for_update().get(pk=inventory_id)
-            
-            if not item.available or item.quantity <= 0:
-                messages.error(request, 'Item no longer available')
+    item = get_object_or_404(Inventory, pk=inventory_id)
+
+    if request.method == 'POST':
+        form = RentalForm(request.POST, inventory=item)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    # Lock inventory row
+                    item = Inventory.objects.select_for_update().get(pk=inventory_id)
+                    
+                    if not item.available or item.quantity <= 0:
+                        messages.error(request, 'Item no longer available')
+                        return redirect('customerapp:wardrobe')
+
+                    rental = form.save(commit=False)
+                    rental.inventory = item
+                    rental.customer = request.user.customer_profile
+                    rental.status = 'Pending'
+                    rental.deposit = item.deposit_price or 0.00
+                    rental.save()
+
+                    # Decrement inventory
+                    item.quantity -= 1
+                    item.save()
+
+                    # Async notification to staff
+                    from .tasks import notify_staff_about_rental_request
+                    notify_staff_about_rental_request.delay(rental.id)
+
+                    messages.success(request, 'Rental request submitted!')
+                    return redirect('customerapp:my_rentals')
+
+            except Exception as e:
+                messages.error(request, f'Error: {str(e)}')
                 return redirect('customerapp:wardrobe')
-            
-            rental = Rental(
-                inventory=item,
-                customer=request.user.customer_profile,
-                status='Pending',
-                deposit=item.deposit_price or 0.00,
-                rental_start=form.cleaned_data['rental_start'],
-                rental_end=form.cleaned_data['rental_end'],
-                notes=form.cleaned_data.get('notes', '')
-            )
-            rental.save()
-            
-            # Decrement inventory
-            item.quantity -= 1
-            item.save()
-            
-            # Async email task
-            from .tasks import notify_staff_about_rental_request
-            notify_staff_about_rental_request.delay(rental.id)
-            
-            messages.success(request, 'Rental request submitted!')
-            return redirect('customerapp:my_rentals')
-            
-    except Exception as e:
-        messages.error(request, f'Error: {str(e)}')
-        return redirect('customerapp:wardrobe')
+        else:
+            messages.error(request, 'Please correct the errors in the form.')
+    else:
+        form = RentalForm(inventory=item)
+
+    return render(request, 'customerapp/rent_item.html', {
+        'form': form,
+        'item': item
+    })
 
 @login_required
 def rental_list(request):

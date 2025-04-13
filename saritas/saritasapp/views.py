@@ -1,38 +1,40 @@
 # Standard library imports
-from datetime import date, datetime, timedelta
 from calendar import month_name
+from datetime import date, datetime, timedelta
 
 # Django core imports
-from django.shortcuts import render, redirect, get_object_or_404, HttpResponse
-from django.http import JsonResponse
-from django.db.models import F, Q, Count, Sum
-from django.db import transaction
-from django.db.models.functions import TruncMonth, ExtractWeek, ExtractMonth, ExtractYear
-from django.core.exceptions import ValidationError, PermissionDenied
 from django.contrib import messages
-from django.utils import timezone
-from django.contrib.auth import login, logout
-from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth import login, logout
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.forms import AuthenticationForm
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db import transaction
+from django.db.models import Count, F, Q, Sum
+from django.db.models.functions import ExtractMonth, ExtractWeek, ExtractYear, TruncMonth
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
-# ReportLab imports (for PDF generation)
-from reportlab.lib.pagesizes import letter
+# Third-party imports (ReportLab for PDF generation)
 from reportlab.lib import colors
-from reportlab.pdfgen import canvas
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Spacer, Paragraph
+from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.pdfgen import canvas
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
-# Local imports
+# Local app imports
 from .forms import (
-    InventoryForm, CategoryForm, EventForm, ColorForm, SizeForm,
-    StaffSignUpForm, AdminSignUpForm, LoginForm
+    AdminSignUpForm, CategoryForm, ColorForm, EventForm, InventoryForm,
+    LoginForm, SizeForm, StaffSignUpForm
 )
 from .models import (
-    Customer, Inventory, Category, Rental, Reservation, User, WardrobePackage,
-    Receipt, Color, Size, Branch, Event, Notification
+    Branch, Category, Color, Customer, Event, Inventory, Notification,
+    Receipt, Rental, Reservation, Size, User, WardrobePackage
 )
+from .utils import send_notification
+
 
 @login_required
 def add_inventory(request):
@@ -1051,7 +1053,7 @@ def update_reservation(request, reservation_id, action):
 @login_required
 def approve_rental(request, rental_id, action):
     rental = get_object_or_404(Rental, id=rental_id, status='Pending')
-    
+
     try:
         with transaction.atomic():
             if action == 'approve':
@@ -1059,46 +1061,46 @@ def approve_rental(request, rental_id, action):
                 if rental.inventory.quantity <= 0:
                     messages.error(request, f'Cannot approve - {rental.inventory.name} is out of stock!')
                     return redirect('saritasapp:rental_approvals')
-                
+
                 # Approve the rental
                 rental.status = 'Approved'
                 rental.approved_by = request.user
                 rental.approved_at = timezone.now()
-                
+
                 # Reduce inventory
                 rental.inventory.quantity -= 1
                 rental.inventory.save()
-                
-                # Create approval notification
-                Notification.objects.create(
+
+                # Send approval notification
+                send_notification(
                     user=rental.customer.user,
                     notification_type='rental_approved',
                     rental=rental,
                     message=f"Your rental request for {rental.inventory.name} has been approved!"
                 )
-                
+
                 messages.success(request, f'Rental #{rental_id} approved successfully!')
-            
+
             elif action == 'reject':
                 rental.status = 'Rejected'
                 rental.approved_by = request.user
                 rental.rejection_reason = request.POST.get('rejection_reason', '')
-                
-                # Create rejection notification
-                Notification.objects.create(
+
+                # Send rejection notification
+                send_notification(
                     user=rental.customer.user,
                     notification_type='rental_rejected',
                     rental=rental,
                     message=f"Your rental request for {rental.inventory.name} has been rejected. Reason: {rental.rejection_reason}"
                 )
-                
+
                 messages.warning(request, f'Rental #{rental_id} has been rejected.')
-            
+
             rental.save()
-    
+
     except Exception as e:
         messages.error(request, f'Error processing request: {str(e)}')
-    
+
     return redirect('saritasapp:rental_approvals')
 
 @staff_member_required
