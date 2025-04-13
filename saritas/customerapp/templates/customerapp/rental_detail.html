@@ -1,0 +1,101 @@
+{% extends 'customerapp/base.html' %}
+{% load static %}
+{% block title %}Rental Detail{% endblock %}
+{% block stylesheets %}
+<link rel="stylesheet" href="{% static 'css/rental_detail.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">Rental #{{ rental.id }}</h2>
+            <span class="badge bg-{% if rental.status == 'Approved' %}success{% elif rental.status == 'Pending' %}warning{% elif rental.status == 'Rejected' %}danger{% else %}secondary{% endif %}">
+                {{ rental.get_status_display }}
+            </span>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h4>{{ rental.inventory.name }}</h4>
+                    <p class="text-muted">{{ rental.inventory.category.name }}</p>
+                    
+                    {% if rental.inventory.image %}
+                    <img src="{{ rental.inventory.image.url }}" alt="{{ rental.inventory.name }}" class="img-fluid rounded" style="max-height: 200px;">
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <h5>Rental Period</h5>
+                    <p>{{ rental.rental_start|date:"F j, Y" }} to {{ rental.rental_end|date:"F j, Y" }}</p>
+                    <p>{{ rental.duration_days }} day{{ rental.duration_days|pluralize }}</p>
+                    
+                    <h5 class="mt-4">Contact Information</h5>
+                    <p>{{ rental.customer.user.get_full_name }}<br>
+                    {{ rental.customer.phone_number }}</p>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Payment Summary</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <span>Rental Fee:</span>
+                                <span>₱{{ rental.inventory.rental_price|floatformat:2 }} × {{ rental.duration_days }} days</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Deposit:</span>
+                                <span>₱{{ rental.deposit|floatformat:2 }}</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between fw-bold">
+                                <span>Total:</span>
+                                <span>₱{{ rental.total_cost|floatformat:2 }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Rental Details</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Requested On:</strong> {{ rental.created_at|date:"F j, Y H:i" }}</p>
+                            
+                            {% if rental.approved_at %}
+                            <p><strong>Processed On:</strong> {{ rental.approved_at|date:"F j, Y H:i" }}</p>
+                            {% endif %}
+                            
+                            {% if rental.rejection_reason %}
+                            <div class="alert alert-danger">
+                                <strong>Rejection Reason:</strong> {{ rental.rejection_reason }}
+                            </div>
+                            {% endif %}
+                            
+                            {% if rental.notes %}
+                            <div class="alert alert-info">
+                                <strong>Your Notes:</strong> {{ rental.notes }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <a href="{% url 'customerapp:my_rentals' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to My Rentals
+                </a>
+                <a href="{% url 'customerapp:wardrobe' %}" class="btn btn-primary">
+                    <i class="fas fa-tshirt"></i> Browse Wardrobe
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'customerapp/base.html' %}
+{%load static%}
+{% block title %}My Rentals{% endblock %}
+{% block stylesheets %}
+<link rel="stylesheet" href="{% static 'css/rental_list.css' %}">
+{% block content %}
+<div class="container py-5">
+    <h2>My Rentals</h2>
+    <div class="list-group">
+        {% for rental in rentals %}
+        <a href="{% url 'customerapp:rental_detail' pk=rental.id %}" class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1">{{ rental.inventory.name }}</h5>
+                <span class="badge bg-{% if rental.status == 'Approved' %}success{% elif rental.status == 'Pending' %}warning{% else %}secondary{% endif %}">
+                    {{ rental.get_status_display }}
+                </span>
+            </div>
+            <p class="mb-1">Dates: {{ rental.rental_start }} to {{ rental.rental_end }}</p>
+            <small>Total: ₱{{ rental.total_cost|floatformat:2 }}</small>
+        </a>
+        {% empty %}
+        <div class="alert alert-info">You have no rental history</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

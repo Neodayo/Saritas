@@ -1,0 +1,26 @@
+New Rental Request Notification
+--------------------------------
+
+Item: {{ rental.inventory.name }}
+Request ID: #{{ rental.id }}
+Customer: {{ rental.customer.user.get_full_name }}
+Email: {{ rental.customer.user.email }}
+Phone: {{ rental.customer.phone_number|default:"Not provided" }}
+
+Rental Period:
+{{ rental.rental_start|date:"F j, Y" }} to {{ rental.rental_end|date:"F j, Y" }}
+({{ rental.duration_days }} day{% if rental.duration_days > 1 %}s{% endif %})
+
+Pricing:
+- Daily Rate: ₱{{ rental.inventory.rental_price|floatformat:2 }}
+- Deposit: ₱{{ rental.deposit|floatformat:2 }}
+- Total Cost: ₱{{ rental.total_cost|floatformat:2 }}
+
+Special Requests:
+{% if rental.notes %}{{ rental.notes }}{% else %}None{% endif %}
+
+Action Required:
+Please review this request in the admin panel at {{ admin_url }}
+
+Thank you,
+{{ site_name }}

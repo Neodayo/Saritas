@@ -1,56 +1,236 @@
 {% extends 'customerapp/base.html' %}
 {% load static %}
 
-{% block title %}Reserve Item{% endblock %}
+{% block title %}Reserve {{ item.name }} | Saritas{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="">
+<link rel="stylesheet" href="{% static 'css/reservations.css' %}">
+<style>
+    .reservation-card {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .item-image {
+        max-height: 400px;
+        object-fit: contain;
+    }
+    .summary-card {
+        background-color: #f8f9fa;
+    }
+    .invalid-feedback {
+        display: block;
+        color: #dc3545;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="reservation-container">
-    <h2>Reserve Item: {{ item.name }}</h2>
-    
-    {% if item.image %}
-        <img src="{{ item.image.url }}" alt="{{ item.name }}" class="item-image">
-    {% else %}
-        <img src="{% static 'image/default-placeholder.png' %}" alt="No image available" class="item-image">
-    {% endif %}
-    {% if messages %}
-    <div class="alert-messages">
-        {% for message in messages %}
-        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-            {{ message }}
+<div class="container py-5">
+    <div class="reservation-card card shadow-lg">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">Reserve: {{ item.name }}</h2>
         </div>
-        {% endfor %}
+        
+        <div class="card-body">
+            <div class="row">
+                <!-- Item Image Column -->
+                <div class="col-md-5">
+                    <div class="item-image-container text-center mb-4">
+                        {% if item.image %}
+                            <img src="{{ item.image.url }}" alt="{{ item.name }}" class="img-fluid rounded item-image">
+                        {% else %}
+                            <img src="{% static 'images/default-placeholder.png' %}" alt="No image available" class="img-fluid rounded item-image">
+                        {% endif %}
+                    </div>
+                    
+                    <div class="item-details">
+                        <h4 class="text-primary">{{ item.name }}</h4>
+                        <p class="text-muted">{{ item.category.name }}</p>
+                        
+                        <div class="item-meta mb-3">
+                            {% if item.color %}
+                                <span class="badge bg-info me-2">Color: {{ item.color.name }}</span>
+                            {% endif %}
+                            {% if item.size %}
+                                <span class="badge bg-info">Size: {{ item.size.name }}</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="availability mb-3">
+                            <span class="badge {% if item.quantity > 0 %}bg-success{% else %}bg-danger{% endif %}">
+                                {% if item.quantity > 0 %}
+                                    {{ item.quantity }} available
+                                {% else %}
+                                    Out of stock
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="pricing">
+                            <h5 class="text-success">${{ item.reservation_price|default:item.rental_price }} <small class="text-muted">per day</small></h5>
+                            <p class="text-muted mb-1">Deposit: ${{ item.deposit_price|default:"0.00" }}</p>
+                            {% if item.max_reservation_days %}
+                            <p class="text-muted">Max reservation: {{ item.max_reservation_days }} days</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Reservation Form Column -->
+                <div class="col-md-7">
+                    {% if messages %}
+                    <div class="alert-container mb-4">
+                        {% for message in messages %}
+                        <div class="alert alert-dismissible {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post" class="reservation-form needs-validation" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="id_reservation_date" class="form-label">Start Date*</label>
+                                {{ form.reservation_date }}
+                                {% if form.reservation_date.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.reservation_date.errors.as_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="id_return_date" class="form-label">End Date*</label>
+                                {{ form.return_date }}
+                                {% if form.return_date.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.return_date.errors.as_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_quantity" class="form-label">Quantity* (Available: {{ item.quantity }})</label>
+                            {{ form.quantity }}
+                            {% if form.quantity.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.quantity.errors.as_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_notes" class="form-label">Special Requests</label>
+                            {{ form.notes }}
+                            <div class="form-text">Any special instructions or requests</div>
+                        </div>
+                        
+                        <div class="summary-card card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">Reservation Summary</h5>
+                                <div class="d-flex justify-content-between">
+                                    <span>Daily Rate:</span>
+                                    <span>$<span id="daily-rate">{{ item.reservation_price|default:item.rental_price }}</span></span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Duration:</span>
+                                    <span id="duration-display">0 days</span>
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between fw-bold">
+                                    <span>Estimated Total:</span>
+                                    <span>$<span id="estimated-total">0.00</span></span>
+                                </div>
+                                <div class="d-flex justify-content-between text-muted small">
+                                    <span>Plus deposit:</span>
+                                    <span>$<span id="deposit-amount">{{ item.deposit_price|default:"0.00" }}</span></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'customerapp:item_detail' item.id %}" class="btn btn-outline-secondary me-md-2">
+                                <i class="bi bi-arrow-left"></i> Back to Item
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-calendar-check"></i> Confirm Reservation
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-    {% endif %}
-    
-    <form method="post">
-        {% csrf_token %}
-        
-        <div class="form-group">
-            <label>Item: {{ item.name }}</label>
-            <input type="hidden" name="item_id" value="{{ item.id }}">
-        </div>
-        
-        {{ form.as_p }}
-        
-        <button type="submit" class="btn btn-primary">Submit Reservation</button>
-    </form>
-    
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Set minimum dates
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('id_reservation_date').min = today;
-        
-        // Update end date minimum when start date changes
-        document.getElementById('id_reservation_date').addEventListener('change', function() {
-            const startDate = this.value;
-            document.getElementById('id_return_date').min = startDate;
-        });
-    });
-    </script>
+</div>
+{% endblock %}
 
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set minimum dates
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('id_reservation_date').min = today;
+    
+    // Elements
+    const startDateInput = document.getElementById('id_reservation_date');
+    const endDateInput = document.getElementById('id_return_date');
+    const quantityInput = document.getElementById('id_quantity');
+    const durationDisplay = document.getElementById('duration-display');
+    const estimatedTotal = document.getElementById('estimated-total');
+    const dailyRate = parseFloat(document.getElementById('daily-rate').textContent);
+    const depositAmount = parseFloat(document.getElementById('deposit-amount').textContent);
+    
+    // Update calculations when dates or quantity change
+    function updateCalculations() {
+        const startDate = new Date(startDateInput.value);
+        const endDate = new Date(endDateInput.value);
+        
+        if (startDateInput.value && endDateInput.value && startDate <= endDate) {
+            const diffTime = Math.abs(endDate - startDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // Include both start and end days
+            const quantity = parseInt(quantityInput.value) || 1;
+            
+            durationDisplay.textContent = `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
+            const subtotal = (dailyRate * diffDays * quantity).toFixed(2);
+            estimatedTotal.textContent = subtotal;
+        } else {
+            durationDisplay.textContent = '0 days';
+            estimatedTotal.textContent = '0.00';
+        }
+    }
+    
+    // Event listeners
+    startDateInput.addEventListener('change', function() {
+        if (this.value) {
+            endDateInput.min = this.value;
+            if (endDateInput.value && new Date(endDateInput.value) < new Date(this.value)) {
+                endDateInput.value = this.value;
+            }
+        }
+        updateCalculations();
+    });
+    
+    endDateInput.addEventListener('change', updateCalculations);
+    quantityInput.addEventListener('change', updateCalculations);
+    
+    // Initialize calculations
+    updateCalculations();
+    
+    // Form validation
+    const form = document.querySelector('.needs-validation');
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    }, false);
+});
+</script>
 {% endblock %}

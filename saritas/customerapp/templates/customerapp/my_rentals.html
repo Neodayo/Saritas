@@ -1,0 +1,57 @@
+{% extends 'customerapp/base.html' %}
+{% load static %}
+{% block title %}My Rentals{% endblock %}
+{% block stylesheets %}
+<link rel="stylesheet" href="{% static 'css/rental_list.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="mb-4">My Rental Requests</h2>
+    
+    {% if rentals %}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Dates</th>
+                    <th>Status</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rental in rentals %}
+                <tr>
+                    <td>{{ rental.inventory.name }}</td>
+                    <td>
+                        {{ rental.rental_start|date:"M d" }} - {{ rental.rental_end|date:"M d, Y" }}
+                        <br><small>{{ rental.duration_days }} days</small>
+                    </td>
+                    <td>
+                        <span class="badge bg-{% if rental.status == 'Approved' %}success{% elif rental.status == 'Pending' %}warning{% elif rental.status == 'Rejected' %}danger{% else %}secondary{% endif %}">
+                            {{ rental.get_status_display }}
+                        </span>
+                    </td>
+                    <td>₱{{ rental.total_cost|floatformat:2 }}</td>
+                    <td>
+                        <a href="{% url 'customerapp:rental_detail' rental_id=rental.id %}" class="btn btn-sm btn-outline-primary">
+                            Details
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        You haven't made any rental requests yet.
+        <a href="{% url 'customerapp:wardrobe' %}" class="alert-link">
+            Browse our wardrobe
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

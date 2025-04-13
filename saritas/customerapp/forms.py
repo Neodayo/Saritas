@@ -1,3 +1,4 @@
+import datetime
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
@@ -93,23 +94,17 @@ class CustomerRegistrationForm(UserCreationForm):
 
 class RentalForm(forms.ModelForm):
     deposit_amount = forms.DecimalField(
-        required=False,
-        disabled=True,
         label="Deposit Amount",
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'id': 'deposit-amount'
-        })
+        disabled=True,
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
     )
     
-    total_cost = forms.DecimalField(
-        required=False,
-        disabled=True,
+    estimated_total = forms.DecimalField(
         label="Estimated Total",
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'id': 'total-cost'
-        })
+        disabled=True,
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
     )
 
     class Meta:
@@ -118,19 +113,17 @@ class RentalForm(forms.ModelForm):
         widgets = {
             'rental_start': forms.DateInput(
                 attrs={
-                    'type': 'date',
+                    'type': 'date', 
                     'class': 'form-control',
                     'min': timezone.now().date().isoformat()
-                },
-                format='%Y-%m-%d'
+                }
             ),
             'rental_end': forms.DateInput(
                 attrs={
                     'type': 'date',
                     'class': 'form-control',
                     'min': (timezone.now() + timedelta(days=1)).date().isoformat()
-                },
-                format='%Y-%m-%d'
+                }
             ),
             'notes': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -140,118 +133,59 @@ class RentalForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        self.inventory_item = kwargs.pop('inventory_item', None)
-        self.customer = kwargs.pop('customer', None)
+        self.inventory = kwargs.pop('inventory', None)
         super().__init__(*args, **kwargs)
-        
-        # Set initial values for display-only fields
-        if self.inventory_item:
-            self.fields['deposit_amount'].initial = self.inventory_item.deposit_price or 0
-            self.fields['total_cost'].initial = self.calculate_total_cost()
-        
-        # Set minimum end date based on start date via JavaScript
-        self.fields['rental_start'].widget.attrs.update({
-            'onchange': 'updateDatesAndCalculate()'
-        })
-        self.fields['rental_end'].widget.attrs.update({
-            'onchange': 'updateDatesAndCalculate()'
-        })
-
-    def calculate_total_cost(self):
-        if not self.inventory_item:
-            return 0
-        
-        rental_days = 1  # Default if dates not set
-        if self['rental_start'].value() and self['rental_end'].value():
-            start = datetime.strptime(self['rental_start'].value(), '%Y-%m-%d').date()
-            end = datetime.strptime(self['rental_end'].value(), '%Y-%m-%d').date()
-            rental_days = (end - start).days + 1
-        
-        return (self.inventory_item.rental_price * rental_days) + (self.inventory_item.deposit_price or 0)
-
-    def clean(self):
-        cleaned_data = super().clean()
-        rental_start = cleaned_data.get('rental_start')
-        rental_end = cleaned_data.get('rental_end')
-
-        if not all([rental_start, rental_end]):
-            return cleaned_data
-
-        # Date validation
-        today = timezone.now().date()
-        if rental_start < today:
-            raise forms.ValidationError(
-                "Rental start date cannot be in the past. Please choose a date today or later."
-            )
-        
-        if rental_start > rental_end:
-            raise forms.ValidationError(
-                "Rental end date must be after the start date."
-            )
-        
-        min_rental_days = 1  # Minimum rental period
-        if (rental_end - rental_start).days < min_rental_days:
-            raise forms.ValidationError(
-                f"Minimum rental period is {min_rental_days} day(s)."
-            )
-
-        # Inventory availability check
-        if self.inventory_item:
-            # Check quantity
-            if self.inventory_item.quantity <= 0:
-                raise forms.ValidationError(
-                    "This item is currently out of stock."
-                )
-            
-            # Check for overlapping rentals
-            overlapping = Rental.objects.filter(
-                inventory=self.inventory_item,
-                rental_start__lte=rental_end,
-                rental_end__gte=rental_start,
-                status__in=['Approved', 'Rented']  # Only check confirmed rentals
-            ).exclude(pk=self.instance.pk if self.instance else None)
-            
-            if overlapping.exists():
-                raise forms.ValidationError(
-                    "This item is already booked during the selected period. "
-                    "Please choose different dates."
-                )
-
-        return cleaned_data
 
     def save(self, commit=True):
         rental = super().save(commit=False)
-        rental.inventory = self.inventory_item
-        rental.customer = self.customer
-        
+        if self.inventory:
+            rental.deposit = self.inventory.deposit_price or 0.00
         if commit:
             rental.save()
-        
         return rental
     
 class ReservationForm(forms.ModelForm):
     class Meta:
         model = Reservation
-        fields = ['reservation_date', 'return_date', 'quantity']
+        fields = ['reservation_date', 'return_date', 'quantity', 'notes']
         widgets = {
-            'reservation_date': forms.DateInput(attrs={
-                'type': 'date',
-                'class': 'form-control',
-                'min': timezone.now().date().isoformat()
-            }),
-            'return_date': forms.DateInput(attrs={
-                'type': 'date', 
-                'class': 'form-control'
-            }),
-            'quantity': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'min': 1
-            })
+            'reservation_date': forms.DateInput(
+                attrs={
+                    'type': 'date',
+                    'class': 'form-control',
+                    'min': timezone.now().date().isoformat()
+                }
+            ),
+            'return_date': forms.DateInput(
+                attrs={
+                    'type': 'date', 
+                    'class': 'form-control',
+                    'min': (timezone.now() + timedelta(days=1)).date().isoformat()
+                }
+            ),
+            'quantity': forms.NumberInput(
+                attrs={
+                    'class': 'form-control',
+                    'min': 1
+                }
+            ),
+            'notes': forms.Textarea(
+                attrs={
+                    'class': 'form-control',
+                    'rows': 3,
+                    'placeholder': 'Any special requests...'
+                }
+            )
         }
     
     def __init__(self, *args, **kwargs):
         self.item = kwargs.pop('item', None)
+        self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+        
+        # Set initial minimum for return date based on reservation date
+        if 'reservation_date' in self.initial:
+            self.fields['return_date'].widget.attrs['min'] = self.initial['reservation_date']
         
     def clean(self):
         cleaned_data = super().clean()
@@ -259,15 +193,27 @@ class ReservationForm(forms.ModelForm):
         if not self.item:
             raise ValidationError("No inventory item selected")
             
+        reservation_date = cleaned_data.get('reservation_date')
+        return_date = cleaned_data.get('return_date')
+        quantity = cleaned_data.get('quantity', 1)
+        
         # Date validation
-        if cleaned_data.get('return_date') < cleaned_data.get('reservation_date'):
-            raise ValidationError("Return date must be after reservation date")
+        if reservation_date and return_date:
+            if return_date < reservation_date:
+                raise ValidationError("Return date must be after reservation date")
+            
+            max_duration = 30  # Maximum rental duration in days
+            if (return_date - reservation_date).days > max_duration:
+                raise ValidationError(f"Maximum reservation duration is {max_duration} days")
             
         # Quantity validation
-        quantity = cleaned_data.get('quantity', 1)
-        if quantity > self.item.quantity:
-            raise ValidationError(
-                f"Only {self.item.quantity} available. You requested {quantity}."
-            )
-            
+        if quantity:
+            if quantity <= 0:
+                raise ValidationError("Quantity must be at least 1")
+                
+            if quantity > self.item.quantity:
+                raise ValidationError(
+                    f"Only {self.item.quantity} available. You requested {quantity}."
+                )
+                
         return cleaned_data

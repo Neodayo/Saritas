@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>New Rental Request #{{ rental.id }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; }
+        .header { background-color: #f8f9fa; padding: 20px; }
+        .content { padding: 20px; }
+        .details { margin-bottom: 20px; }
+        .footer { margin-top: 20px; font-size: 0.9em; color: #6c757d; }
+        .badge {
+            display: inline-block;
+            padding: 0.35em 0.65em;
+            font-size: 0.75em;
+            font-weight: 700;
+            line-height: 1;
+            color: #fff;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.25rem;
+            background-color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>New Rental Request #{{ rental.id }}</h2>
+        <span class="badge">Status: {{ rental.get_status_display }}</span>
+    </div>
+    
+    <div class="content">
+        <div class="details">
+            <h3>{{ rental.inventory.name }}</h3>
+            <p><strong>Customer:</strong> {{ rental.customer.user.get_full_name }}</p>
+            <p><strong>Contact:</strong> {{ rental.customer.user.email }} | {{ rental.customer.phone_number|default:"Phone not provided" }}</p>
+        </div>
+        
+        <div class="details">
+            <h4>Rental Period</h4>
+            <p>{{ rental.rental_start|date:"F j, Y" }} to {{ rental.rental_end|date:"F j, Y" }}</p>
+            <p>({{ rental.duration_days }} day{% if rental.duration_days > 1 %}s{% endif %})</p>
+        </div>
+        
+        <div class="details">
+            <h4>Pricing</h4>
+            <table>
+                <tr>
+                    <td>Daily Rate:</td>
+                    <td>₱{{ rental.inventory.rental_price|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Deposit:</td>
+                    <td>₱{{ rental.deposit|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Total Cost:</strong></td>
+                    <td><strong>₱{{ rental.total_cost|floatformat:2 }}</strong></td>
+                </tr>
+            </table>
+        </div>
+        
+        {% if rental.notes %}
+        <div class="details">
+            <h4>Special Requests</h4>
+            <p>{{ rental.notes }}</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="footer">
+        <p>Please review this request in the <a href="{{ admin_url }}">admin panel</a>.</p>
+        <p>Thank you,<br>{{ site_name }}</p>
+    </div>
+</body>
+</html>

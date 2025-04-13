@@ -1,4 +1,6 @@
 from datetime import timedelta
+from urllib import request
+from django.conf import settings
 from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -9,9 +11,12 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
 from django.shortcuts import render
-from saritasapp.models import Inventory, Category, Color, Size, Rental, Reservation, Notification, WardrobePackage
+from saritasapp.models import Inventory, Category, Color, Size, Rental, Reservation, Notification, User, WardrobePackage
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.template.loader import render_to_string
+from django.core.mail import send_mail
+
 
 @require_POST  # Optional: Only allow POST requests
 def clear_welcome_message(request):
@@ -108,81 +113,115 @@ def item_detail(request, item_id):
 
 @login_required
 def rent_item(request, inventory_id):
-    # Verify customer profile exists
-    if not hasattr(request.user, 'customer_profile'):
-        messages.error(request, 'Please complete your customer profile')
-        return redirect('customerapp:profile')
-
-    item = get_object_or_404(Inventory, id=inventory_id)
-    
-    if not item.available or item.quantity <= 0:
-        messages.error(request, 'This item is not currently available for rent')
+    try:
+        with transaction.atomic():
+            # Use select_for_update() to lock the inventory row
+            item = Inventory.objects.select_for_update().get(pk=inventory_id)
+            
+            if not item.available or item.quantity <= 0:
+                messages.error(request, 'Item no longer available')
+                return redirect('customerapp:wardrobe')
+            
+            rental = Rental(
+                inventory=item,
+                customer=request.user.customer_profile,
+                status='Pending',
+                deposit=item.deposit_price or 0.00,
+                rental_start=form.cleaned_data['rental_start'],
+                rental_end=form.cleaned_data['rental_end'],
+                notes=form.cleaned_data.get('notes', '')
+            )
+            rental.save()
+            
+            # Decrement inventory
+            item.quantity -= 1
+            item.save()
+            
+            # Async email task
+            from .tasks import notify_staff_about_rental_request
+            notify_staff_about_rental_request.delay(rental.id)
+            
+            messages.success(request, 'Rental request submitted!')
+            return redirect('customerapp:my_rentals')
+            
+    except Exception as e:
+        messages.error(request, f'Error: {str(e)}')
         return redirect('customerapp:wardrobe')
 
-    if request.method == 'POST':
-        form = RentalForm(request.POST)
-        if form.is_valid():
-            try:
-                with transaction.atomic():
-                    rental = form.save(commit=False)
-                    rental.inventory = item
-                    rental.customer = request.user.customer_profile
-                    rental.status = 'Pending'
-                    rental.save()
-                    
-                    messages.success(request, 'Your rental request has been submitted!')
-                    return redirect('customerapp:homepage')
-            except Exception as e:
-                messages.error(request, f'Error processing rental: {str(e)}')
-        else:
-            messages.error(request, 'Please correct the errors below')
-    else:
-        form = RentalForm(initial={
-            'rental_start': timezone.now().date(),
-            'rental_end': (timezone.now() + timedelta(days=7)).date()
-        })
-    
-    return render(request, 'customerapp/rent_item.html', {
-        'form': form,
-        'item': item
-    })
+@login_required
+def rental_list(request):
+    rentals = Rental.objects.filter(customer=request.user.customer_profile)
+    return render(request, 'customerapp/rental_list.html', {'rentals': rentals})
+
+@login_required
+def my_rentals(request):
+    rentals = Rental.objects.filter(
+        customer=request.user.customer_profile
+    ).order_by('-created_at')
+    return render(request, 'customerapp/my_rentals.html', {'rentals': rentals})
+
+@login_required
+def rental_detail(request, rental_id):
+    rental = get_object_or_404(
+        Rental, 
+        id=rental_id, 
+        customer=request.user.customer_profile
+    )
+    return render(request, 'customerapp/rental_detail.html', {'rental': rental})
 
 @login_required
 @transaction.atomic
 def reserve_item(request, item_id):
     item = get_object_or_404(Inventory, id=item_id)
     
+    if not item.available or item.quantity <= 0:
+        messages.error(request, "This item is currently not available for reservation")
+        return redirect('customerapp:item_detail', item_id=item.id)
+    
     if request.method == 'POST':
-        form = ReservationForm(request.POST)
+        form = ReservationForm(request.POST, item=item, user=request.user)
         if form.is_valid():
             try:
                 reservation = form.save(commit=False)
-                # Assign required fields before saving
                 reservation.item = item
-                reservation.customer = request.user.customer
+                reservation.customer = request.user.customer_profile
+                reservation.created_by = request.user
                 reservation.status = 'pending'
+                
+                # Save the reservation
                 reservation.save()
                 
-                messages.success(request, f"{item.name} reserved successfully!")
-                return redirect('customerapp:wardrobe')
+                # Send notifications
+                from .tasks import send_reservation_notification
+                send_reservation_notification.delay(reservation.id)
                 
+                messages.success(request, f"Your reservation for {item.name} was submitted successfully!")
+                return redirect('customerapp:my_reservations')
+                
+            except IntegrityError as e:
+                messages.error(request, "A database error occurred. Please try again.")
             except Exception as e:
                 messages.error(request, f"Reservation failed: {str(e)}")
         else:
+            # Collect all form errors
             for field, errors in form.errors.items():
                 for error in errors:
-                    messages.error(request, f"{field}: {error}")
+                    messages.error(request, f"{field.title()}: {error}")
     else:
-        form = ReservationForm(initial={
+        # Initial form setup
+        initial_data = {
             'reservation_date': timezone.now().date(),
             'return_date': timezone.now().date() + timedelta(days=1),
             'quantity': 1
-        })
+        }
+        form = ReservationForm(initial=initial_data, item=item, user=request.user)
 
-    return render(request, 'customerapp/reserve_item.html', {
+    context = {
         'form': form,
-        'item': item
-    })
+        'item': item,
+        'available_quantity': item.quantity
+    }
+    return render(request, 'customerapp/reserve_item.html', context)
 
 def wardrobe_view(request):
     inventory_items = Inventory.objects.filter(available=True)
@@ -270,3 +309,37 @@ def package_detail(request, pk):
 
 def about_us(request):
     return render(request, 'customerapp/about_us.html')
+
+def notify_staff_about_rental_request(rental):
+    staff_users = User.objects.filter(is_staff=True)
+    subject = f"New Rental Request: {rental.inventory.name} (ID: #{rental.id})"
+    
+    admin_url = request.build_absolute_uri(
+        reverse('admin:customerapp_rental_change', args=[rental.id])
+    )
+    
+    context = {
+        'rental': rental,
+        'admin_url': admin_url,
+        'site_name': 'Your Site Name'  # Or use settings.SITE_NAME
+    }
+    
+    message = render_to_string(
+        'customerapp/emails/new_rental_request.txt',
+        context
+    )
+    
+    html_message = render_to_string(
+        'customerapp/emails/new_rental_request.html',
+        context
+    )
+    
+    recipient_list = [user.email for user in staff_users if user.email]
+    
+    send_mail(
+        subject,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        recipient_list,
+        html_message=html_message
+    )
