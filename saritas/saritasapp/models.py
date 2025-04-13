@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.utils import timezone
 from datetime import timedelta
-
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class Branch(models.Model):
@@ -248,8 +248,6 @@ class Rental(models.Model):
 
     
 # --- Reservation System---
-
-
 class Reservation(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending Approval'),
@@ -259,44 +257,47 @@ class Reservation(models.Model):
         ('cancelled', 'Cancelled'),
     ]
     
-    item = models.ForeignKey('Inventory',on_delete=models.CASCADE,related_name='reservations')
-    customer = models.ForeignKey('Customer',on_delete=models.CASCADE,related_name='reservations')
-    reservation_date = models.DateField(default=timezone.now,validators=[MinValueValidator(timezone.now().date())])
-    return_date = models.DateField(validators=[MinValueValidator(timezone.now().date() + timedelta(days=1))])
-    quantity = models.PositiveIntegerField(default=1,validators=[MinValueValidator(1)])
-    status = models.CharField(max_length=10,choices=STATUS_CHOICES,default='pending')
+    item = models.ForeignKey('Inventory', on_delete=models.CASCADE, related_name='reservations')
+    customer = models.ForeignKey('Customer', on_delete=models.CASCADE, related_name='reservations')    
+    reservation_date = models.DateField(
+        default=timezone.now,
+        validators=[MinValueValidator(timezone.now().date())]
+    )
+    return_date = models.DateField(
+        validators=[MinValueValidator(timezone.now().date() + timedelta(days=1))]
+    )
+    quantity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
+    reservation_price = models.DecimalField(
+        max_digits=8, decimal_places=2,
+        default=500.00,  # Set the default value here
+        validators=[MinValueValidator(500.00), MaxValueValidator(500.00)],
+        help_text="Flat reservation fee per item"
+    )
+    total_price = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        blank=True, null=True,
+        help_text="Automatically calculated as quantity × reservation price"
+    )
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    created_by = models.ForeignKey(User,on_delete=models.SET_NULL,null=True,related_name='created_reservations')
-    approved_by = models.ForeignKey(User,on_delete=models.SET_NULL,null=True,blank=True,related_name='approved_reservations')
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_reservations')
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_reservations')
     approved_at = models.DateTimeField(null=True, blank=True)
     cancelled_at = models.DateTimeField(null=True, blank=True)
+
     notes = models.TextField(blank=True, null=True)
 
-    class Meta:
-        ordering = ['-reservation_date']
-        verbose_name = 'Reservation'
-        verbose_name_plural = 'Reservations'
-        constraints = [
-            models.CheckConstraint(
-                check=models.Q(return_date__gte=models.F('reservation_date')),
-                name='return_after_reservation'
-            )
-        ]
+    def save(self, *args, **kwargs):
+        # Set reservation_price from inventory if not manually provided
+        if not self.reservation_price:
+            self.reservation_price = self.item.reservation_price
+        # Auto-calculate total
+        self.total_price = self.quantity * self.reservation_price
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Reservation #{self.id} - {self.customer.user.get_full_name()} for {self.item.name}"
-
-    def clean(self):
-        # Validation logic as shown above
-        pass
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-
-    # All the additional methods shown above
-    # ...
 
     
     # --- Fitting Schedule System ---
@@ -472,25 +473,31 @@ def update_order_total(sender, instance, **kwargs):
     instance.order.calculate_total_price()
 
 # --- Notification System ---
+
 class Notification(models.Model):
     NOTIFICATION_TYPES = [
         ('rental_approved', 'Rental Approved'),
         ('rental_rejected', 'Rental Rejected'),
         ('rental_completed', 'Rental Completed'),
+        ('reservation_approved', 'Reservation Approved'),
+        ('reservation_rejected', 'Reservation Rejected'),
+        ('reservation_completed', 'Reservation Completed'),
     ]
-    
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
-    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
-    rental = models.ForeignKey(Rental, on_delete=models.CASCADE, null=True, blank=True)
+    notification_type = models.CharField(max_length=30, choices=NOTIFICATION_TYPES)
+    rental = models.ForeignKey('Rental', on_delete=models.CASCADE, null=True, blank=True)
+    reservation = models.ForeignKey('Reservation', on_delete=models.CASCADE, null=True, blank=True)
     message = models.TextField()
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         ordering = ['-created_at']
-    
+
     def __str__(self):
         return f"{self.get_notification_type_display()} - {self.user.username}"
+
 
 # --- Calendar/Event Model ---
 class Event(models.Model):

@@ -13,7 +13,7 @@
     
     <div class="status-filter">
         <strong>Filter by Status:</strong>
-        <a href="?status=all" class="status-badge {% if status == 'all' %}status-approved{% endif %}">All</a>
+        <a href="?status=all" class="status-badge status-all {% if status == 'all' %}active{% endif %}">All</a>
         {% for choice in status_choices %}
             <a href="?status={{ choice.0 }}" 
                class="status-badge status-{{ choice.0 }} {% if status == choice.0 %}active{% endif %}">
@@ -81,16 +81,16 @@
                     </td>
                     <td>
                         {% if reservation.status == 'pending' %}
-                        <form method="post" action="{% url 'customerapp:update_reservation' reservation.id 'approve' %}" style="display: inline;">
+                        <form method="post" action="{% url 'saritasapp:update_reservation' reservation.id 'approve' %}" style="display: inline;">
                             {% csrf_token %}
                             <button type="submit" class="action-btn btn-approve">Approve</button>
                         </form>
-                        <form method="post" action="{% url 'customerapp:update_reservation' reservation.id 'reject' %}" style="display: inline;">
+                        <form method="post" action="{% url 'saritasapp:update_reservation' reservation.id 'reject' %}" style="display: inline;">
                             {% csrf_token %}
                             <button type="submit" class="action-btn btn-reject">Reject</button>
                         </form>
                         {% elif reservation.status == 'approved' %}
-                        <form method="post" action="{% url 'customerapp:update_reservation' reservation.id 'complete' %}" style="display: inline;">
+                        <form method="post" action="{% url 'saritasapp:update_reservation' reservation.id 'complete' %}" style="display: inline;">
                             {% csrf_token %}
                             <button type="submit" class="action-btn btn-complete">Complete</button>
                         </form>

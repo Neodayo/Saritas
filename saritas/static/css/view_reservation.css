@@ -1,69 +1,111 @@
 .reservation-container {
     max-width: 1200px;
-    margin: 2rem auto;
-    padding: 2rem;
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    margin: 40px auto;
+    padding: 30px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+}
+
+h2 {
+    font-size: 28px;
+    margin-bottom: 25px;
+    color: #333;
 }
 
 .status-filter {
-    margin-bottom: 1.5rem;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.status-filter strong {
+    margin-right: 10px;
+}
+
+.status-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    color: white;
+    text-decoration: none;
+    transition: background 0.3s ease;
+}
+
+.status-all { background-color: #6c757d; }
+.status-pending { background-color: #ffc107; }
+.status-approved { background-color: #28a745; }
+.status-rejected { background-color: #dc3545; }
+.status-completed { background-color: #007bff; }
+
+.status-badge.active,
+.status-badge:hover {
+    filter: brightness(90%);
+    box-shadow: 0 0 5px rgba(0,0,0,0.15);
 }
 
 .reservation-table {
     width: 100%;
     border-collapse: collapse;
+    margin-top: 10px;
 }
 
-.reservation-table th, 
-.reservation-table td {
-    padding: 12px 15px;
+.reservation-table th, .reservation-table td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #eaeaea;
     text-align: left;
-    border-bottom: 1px solid #ddd;
+    vertical-align: middle;
+    font-size: 14px;
 }
 
 .reservation-table th {
-    background-color: #6d4c41;
-    color: white;
-}
-
-.status-badge {
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: bold;
-}
-
-.status-pending { background-color: #fff3cd; color: #856404; }
-.status-approved { background-color: #d4edda; color: #155724; }
-.status-rejected { background-color: #f8d7da; color: #721c24; }
-.status-completed { background-color: #d1ecf1; color: #0c5460; }
-.status-cancelled { background-color: #e2e3e5; color: #383d41; }
-
-.action-btn {
-    padding: 5px 10px;
-    margin-right: 5px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.8rem;
-}
-
-.btn-approve { background-color: #28a745; color: white; }
-.btn-reject { background-color: #dc3545; color: white; }
-.btn-complete { background-color: #17a2b8; color: white; }
-
-.empty-state {
-    text-align: center;
-    padding: 2rem;
-    color: #666;
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #555;
 }
 
 .item-thumb {
     width: 50px;
     height: 50px;
     object-fit: cover;
-    border-radius: 4px;
-    margin-right: 10px;
+    border-radius: 8px;
+    margin-right: 12px;
+}
+
+.action-btn {
+    padding: 6px 12px;
+    margin-right: 5px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-approve { background-color: #28a745; color: white; }
+.btn-reject { background-color: #dc3545; color: white; }
+.btn-complete { background-color: #007bff; color: white; }
+
+.action-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.text-muted.small {
+    font-size: 12px;
+    color: #888;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #888;
+}
+
+.empty-state h4 {
+    margin-top: 15px;
+    font-size: 20px;
+    color: #555;
 }

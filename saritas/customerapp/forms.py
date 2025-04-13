@@ -158,7 +158,7 @@ class ReservationForm(forms.ModelForm):
             ),
             'return_date': forms.DateInput(
                 attrs={
-                    'type': 'date', 
+                    'type': 'date',
                     'class': 'form-control',
                     'min': (timezone.now() + timedelta(days=1)).date().isoformat()
                 }
@@ -177,43 +177,47 @@ class ReservationForm(forms.ModelForm):
                 }
             )
         }
-    
+
     def __init__(self, *args, **kwargs):
         self.item = kwargs.pop('item', None)
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-        
-        # Set initial minimum for return date based on reservation date
+
+        # Dynamic min date for return date based on reservation date
         if 'reservation_date' in self.initial:
-            self.fields['return_date'].widget.attrs['min'] = self.initial['reservation_date']
-        
+            res_date = self.initial['reservation_date']
+            if isinstance(res_date, str):
+                self.fields['return_date'].widget.attrs['min'] = res_date
+            elif hasattr(res_date, 'isoformat'):
+                self.fields['return_date'].widget.attrs['min'] = res_date.isoformat()
+
     def clean(self):
         cleaned_data = super().clean()
-        
+
         if not self.item:
-            raise ValidationError("No inventory item selected")
-            
+            raise ValidationError("No inventory item selected for reservation.")
+
         reservation_date = cleaned_data.get('reservation_date')
         return_date = cleaned_data.get('return_date')
         quantity = cleaned_data.get('quantity', 1)
-        
-        # Date validation
+
+        # Date checks
         if reservation_date and return_date:
             if return_date < reservation_date:
-                raise ValidationError("Return date must be after reservation date")
-            
-            max_duration = 30  # Maximum rental duration in days
+                raise ValidationError("Return date must be after the reservation date.")
+
+            max_duration = 30
             if (return_date - reservation_date).days > max_duration:
-                raise ValidationError(f"Maximum reservation duration is {max_duration} days")
-            
-        # Quantity validation
-        if quantity:
+                raise ValidationError(f"Maximum reservation duration is {max_duration} days.")
+
+        # Quantity checks
+        if quantity is not None:
             if quantity <= 0:
-                raise ValidationError("Quantity must be at least 1")
-                
-            if quantity > self.item.quantity:
+                raise ValidationError("Quantity must be at least 1.")
+
+            if self.item and quantity > self.item.quantity:
                 raise ValidationError(
-                    f"Only {self.item.quantity} available. You requested {quantity}."
+                    f"Only {self.item.quantity} unit(s) available. You requested {quantity}."
                 )
-                
+
         return cleaned_data

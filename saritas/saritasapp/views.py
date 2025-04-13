@@ -998,8 +998,8 @@ def rental_approvals(request):
         'pending_rentals': pending_rentals,
         'stats': stats,
     })
+
 @staff_member_required
-@login_required
 def view_reservations(request):
     status = request.GET.get('status', 'all')
     
@@ -1021,32 +1021,39 @@ def view_reservations(request):
 
 
 @staff_member_required
-@login_required
-def update_reservation(request, reservation_id, action):
-    reservation = get_object_or_404(Reservation, id=reservation_id)
-    
-    try:
+def update_reservation(request, pk, action):
+    reservation = get_object_or_404(Reservation, pk=pk)
+
+    if request.method == 'POST':
         if action == 'approve':
-            reservation.approve(request.user)
-            messages.success(request, f"Reservation #{reservation_id} approved successfully.")
+            reservation.status = 'approved'
+            reservation.approved_by = request.user
+            Notification.objects.create(
+                user=reservation.customer.user,
+                notification_type='reservation_approved',
+                reservation=reservation,
+                message=f"Your reservation for '{reservation.item.name}' has been approved."
+            )
         elif action == 'reject':
-            reservation.reject(request.user, request.POST.get('reason', ''))
-            messages.success(request, f"Reservation #{reservation_id} rejected.")
+            reservation.status = 'rejected'
+            reservation.approved_by = request.user
+            Notification.objects.create(
+                user=reservation.customer.user,
+                notification_type='reservation_rejected',
+                reservation=reservation,
+                message=f"Your reservation for '{reservation.item.name}' has been rejected."
+            )
         elif action == 'complete':
             reservation.status = 'completed'
-            reservation.save()
-            
-            # Return items to inventory
-            reservation.item.quantity += reservation.quantity
-            reservation.item.save()
-            
-            messages.success(request, f"Reservation #{reservation_id} marked as completed.")
-        else:
-            messages.error(request, "Invalid action requested.")
-    except ValidationError as e:
-        messages.error(request, str(e))
-    
-    return redirect('customerapp:view_reservations')
+            Notification.objects.create(
+                user=reservation.customer.user,
+                notification_type='reservation_completed',
+                reservation=reservation,
+                message=f"Your reservation for '{reservation.item.name}' has been marked as completed."
+            )
+        reservation.save()
+
+    return redirect('saritasapp:view_reservations')
 
 
 @staff_member_required

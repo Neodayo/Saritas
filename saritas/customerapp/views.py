@@ -1,21 +1,24 @@
 from datetime import timedelta
-from urllib import request
+import logging
 from django.conf import settings
 from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .forms import CustomerRegistrationForm, RentalForm, ReservationForm
 from django.urls import reverse
-from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
-from django.db import IntegrityError, transaction
-from django.shortcuts import render
-from saritasapp.models import Inventory, Category, Color, Size, Rental, Reservation, Notification, User, WardrobePackage
 from django.http import JsonResponse
-from django.views.decorators.http import require_POST
 from django.template.loader import render_to_string
 from django.core.mail import send_mail
+from django.views.decorators.http import require_POST
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.decorators import login_required
+from django.db import transaction, IntegrityError
+from .forms import CustomerRegistrationForm, RentalForm, ReservationForm
+from .tasks import send_reservation_notification
+from saritasapp.models import (
+    Inventory, Category, Color, Size,
+    Rental, Reservation, Notification, User, WardrobePackage
+)
 
 
 @require_POST  # Optional: Only allow POST requests
@@ -179,15 +182,17 @@ def rental_detail(request, rental_id):
     )
     return render(request, 'customerapp/rental_detail.html', {'rental': rental})
 
+logger = logging.getLogger(__name__)
+
 @login_required
 @transaction.atomic
 def reserve_item(request, item_id):
     item = get_object_or_404(Inventory, id=item_id)
-    
+
     if not item.available or item.quantity <= 0:
-        messages.error(request, "This item is currently not available for reservation")
+        messages.error(request, "This item is currently not available for reservation.")
         return redirect('customerapp:item_detail', item_id=item.id)
-    
+
     if request.method == 'POST':
         form = ReservationForm(request.POST, item=item, user=request.user)
         if form.is_valid():
@@ -197,32 +202,37 @@ def reserve_item(request, item_id):
                 reservation.customer = request.user.customer_profile
                 reservation.created_by = request.user
                 reservation.status = 'pending'
-                
+
+                # Check if requested quantity is available
+                if reservation.quantity > item.quantity:
+                    messages.error(request, f"Only {item.quantity} unit(s) of {item.name} are available for reservation.")
+                    return redirect('customerapp:item_detail', item_id=item.id)
+
                 # Save the reservation
                 reservation.save()
-                
-                # Send notifications
-                from .tasks import send_reservation_notification
+
+                # Send notification to staff
                 send_reservation_notification.delay(reservation.id)
-                
+
                 messages.success(request, f"Your reservation for {item.name} was submitted successfully!")
                 return redirect('customerapp:my_reservations')
-                
-            except IntegrityError as e:
+
+            except IntegrityError:
                 messages.error(request, "A database error occurred. Please try again.")
             except Exception as e:
-                messages.error(request, f"Reservation failed: {str(e)}")
+                logger.exception("Unexpected error during reservation")
+                messages.error(request, "An unexpected error occurred. Please contact support.")
         else:
-            # Collect all form errors
             for field, errors in form.errors.items():
+                label = form.fields[field].label if field in form.fields else field
                 for error in errors:
-                    messages.error(request, f"{field.title()}: {error}")
+                    messages.error(request, f"{label}: {error}")
     else:
-        # Initial form setup
         initial_data = {
             'reservation_date': timezone.now().date(),
             'return_date': timezone.now().date() + timedelta(days=1),
-            'quantity': 1
+            'quantity': 1,
+            'reservation_price': item.reservation_price,
         }
         form = ReservationForm(initial=initial_data, item=item, user=request.user)
 
@@ -232,6 +242,7 @@ def reserve_item(request, item_id):
         'available_quantity': item.quantity
     }
     return render(request, 'customerapp/reserve_item.html', context)
+
 
 def wardrobe_view(request):
     inventory_items = Inventory.objects.filter(available=True)
