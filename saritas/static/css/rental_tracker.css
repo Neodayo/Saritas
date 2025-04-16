@@ -1,174 +1,25 @@
+/* Custom gold theme enhancements */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    margin: 0;
-    padding: 20px;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-image: linear-gradient(to bottom right, #fff7ed, #fef3c7);
 }
 
-.rental-container {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    width: 100%;
-    max-width: 1200px;
-    margin: 20px auto;
-}
-
-.search-bar {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.search-bar input {
-    flex: 1;
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-.filter {
-    margin-left: 10px;
-    padding: 5px;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-th, td {
-    padding: 10px;
-    border: 1px solid #ddd;
-    text-align: left;
-}
-
-.status {
-    padding: 5px 10px;
-    border-radius: 15px;
-    text-align: center;
-    width: 80px;
-}
-
-.returned {
-    background-color: #28a745;
-    color: white;
-}
-
-.pending {
-    background-color: #c3e6cb;
-    color: #155724;
-}
-
-.pagination {
-    display: flex;
-    justify-content: center;
-    margin-top: 10px;
-}
-
-.pagination button {
-    padding: 5px 10px;
-    margin: 0 5px;
-    border: 1px solid #ddd;
-    background: white;
-    cursor: pointer;
-}
-
-.pagination .active {
-    background-color: #007bff;
-    color: white;
-}
-
-.btn-primary,
-.btn-success,
-.btn-info {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 10px 16px;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 600;
-    text-decoration: none;
-    border: none;
-    cursor: pointer;
-    transition: background 0.3s ease;
-    color: #fff;
-}
-
-.btn-primary {
-    background-color: #8E793E;
-}
-
-.btn-primary:hover {
-    background-color: #AD974F;
-}
-
-.btn-info {
-    background-color: #AD974F;
-}
-
-.btn-info:hover {
-    background-color: #8E793E;
-}
-
-.custom-table {
-    background-color: #8E793E;
-    color: white;
-}
-
-.text-center {
-    text-align: center;
-}
-
-.py-3 {
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-}
-
-.text-muted {
-    color: #6c757d;
-}
-
+/* Smooth scroll for mobile */
 @media (max-width: 768px) {
-    .rental-container {
-        padding: 15px;
-    }
-    
-    th, td {
-        padding: 8px;
-    }
-    
-    .btn-primary,
-    .btn-success,
-    .btn-info {
-        padding: 8px 12px;
-        font-size: 12px;
+    .overflow-x-auto {
+        -webkit-overflow-scrolling: touch;
     }
 }
 
-/* NEW CLEAR FILTER BUTTON STYLES */
-.btn-outline-secondary {
-    background-color: transparent;
-    border: 2px solid #AD974F;
-    color: #AD974F;
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    cursor: pointer;
+/* Custom gold theme animations */
+@keyframes gold-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(217, 119, 6, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0); }
 }
 
-.btn-outline-secondary:hover {
-    background-color: #AD974F;
-    color: white;
-}
-
-.btn-outline-secondary:active {
-    background-color: #8E793E;
-    border-color: #8E793E;
+.gold-focus:focus {
+    animation: gold-pulse 1.5s infinite;
 }
