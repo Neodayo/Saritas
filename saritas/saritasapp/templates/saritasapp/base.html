@@ -1,127 +1,289 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        {% load static %}
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{% block title %}Dashboard{% endblock %}</title>
-        <link rel="stylesheet" href="{% static 'css/mainbase.css' %}">
-        <link href="https://fonts.googleapis.com/css2?family=Rouge+Script&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-        {% block extra_css %}{% endblock %}
-    </head>    
-<body>
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <div class="nav-buttons">
-            <a href="{% url 'saritasapp:inventory_list' %}" class="nav-btn">
-                <span class="fas fa-box"></span> <text>Inventory</text>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .bg-custom {
+            background-image: linear-gradient(rgba(128, 128, 128, 0.7), rgba(128, 128, 128, 0.625)), url("{% static 'images/background.jpg' %}");
+            background-attachment: fixed;
+        }
+        .font-rouge-script {
+            font-family: 'Rouge Script', cursive;
+        }
+        .sidebar-transition {
+            transition: transform 0.3s ease-in-out;
+        }
+        .rotate-180 {
+            transform: rotate(180deg);
+        }
+        .dropdown-content {
+            transition: max-height 0.3s ease-out, opacity 0.2s ease;
+        }
+        .group-hover\:scale-y-100 {
+            transform: scaleY(1);
+        }
+        .group-hover .fa-chevron-down {
+            transform: rotate(180deg);
+            transition: transform 0.3s ease;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Rouge+Script&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-custom min-h-screen">
+    <!-- Mobile Sidebar -->
+    <div id="mobile-sidebar" class="fixed lg:hidden top-0 left-0 h-full w-64 bg-[#EAEAEA] shadow-lg sidebar-transition transform -translate-x-full z-50 overflow-y-auto">
+        <div class="p-4 space-y-2 mt-16">
+            <a href="{% url 'saritasapp:made_to_order' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                <span class="font-semibold">Made to Order</span>
             </a>
-            <a href="{% url 'saritasapp:calendar' %}" class="nav-btn">
-                <span class="fas fa-calendar"></span> <text>Calendar of Event</text>
+            
+            <!-- Mobile Packages Dropdown -->
+            <div class="dropdown relative">
+                <button class="w-full px-4 py-2 text-left text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors flex justify-between items-center">
+                    <span>Packages</span>
+                    <i class="fas fa-chevron-down transition-transform"></i>
+                </button>
+                <div class="dropdown-content pl-4 max-h-0 overflow-hidden transition-all duration-300">
+                    <a href="{% url 'saritasapp:wedding_packages' %}" class="block px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                        Wedding Packages
+                    </a>
+                    <a href="{% url 'saritasapp:debut_packages' %}" class="block px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                        Debut Packages
+                    </a>
+                    <a href="{% url 'saritasapp:additional_services' %}" class="block px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                        Additional Services
+                    </a>
+                </div>
+            </div>
+
+            <!-- Navigation Items -->
+            <a href="{% url 'saritasapp:inventory_list' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                <i class="fas fa-box w-6 text-center mr-2"></i>
+                <span>Inventory</span>
             </a>
-            <a href="{% url 'saritasapp:rental_tracker' %}" class="nav-btn">
-                <span class="fas fa-chart-line"></span> <text>Rental Tracker</text>
+            <a href="{% url 'saritasapp:calendar' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                <i class="fas fa-calendar w-6 text-center mr-2"></i>
+                <span>Calendar of Event</span>
             </a>
-            <!-- Add Rental Approvals link -->
-            <a href="{% url 'saritasapp:rental_approvals' %}" class="nav-btn">
-                <span class="fas fa-clipboard-check"></span> <text>Rental Approvals</text>
+            <a href="{% url 'saritasapp:rental_tracker' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                <i class="fas fa-chart-line w-6 text-center mr-2"></i>
+                <span>Rental Tracker</span>
             </a>
-            <a href="{% url 'saritasapp:view_reservations' %}" class="nav-btn">
-                <span class="fas fa-calendar-check"></span> <text>View Reservations</text>
+            <a href="{% url 'saritasapp:rental_approvals' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                <i class="fas fa-clipboard-check w-6 text-center mr-2"></i>
+                <span>Rental Approvals</span>
             </a>
-            <a href="{% url 'saritasapp:receipt-detail' receipt_id=1 %}" class="nav-btn">
-                <span class="fas fa-receipt"></span> <text>Receipt</text>
+            <a href="{% url 'saritasapp:view_reservations' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                <i class="fas fa-calendar-check w-6 text-center mr-2"></i>
+                <span>View Reservations</span>
             </a>
-            <a href="{% url 'saritasapp:data_analysis' %}" class="nav-btn">
-                <span class="fas fa-chart-bar"></span> <text>Data Analysis</text>
+            <a href="{% url 'saritasapp:receipt-detail' receipt_id=1 %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                <i class="fas fa-receipt w-6 text-center mr-2"></i>
+                <span>Receipt</span>
             </a>
-            <a href="{% url 'saritasapp:customer_list' %}" class="nav-btn">
-                <span class="fas fa-users"></span> <text>Customer Records</text>
+            <a href="{% url 'saritasapp:data_analysis' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                <i class="fas fa-chart-bar w-6 text-center mr-2"></i>
+                <span>Data Analysis</span>
             </a>
-            <a href="{% url 'saritasapp:manage_staff' %}" class="nav-btn">
-                <span class="fas fa-user-shield"></span> <text>Manage Staff</text>
+            <a href="{% url 'saritasapp:customer_list' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                <i class="fas fa-users w-6 text-center mr-2"></i>
+                <span>Customer Records</span>
+            </a>
+            <a href="{% url 'saritasapp:manage_staff' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                <i class="fas fa-user-shield w-6 text-center mr-2"></i>
+                <span>Manage Staff</span>
+            </a>
+
+            <!-- Auth Section -->
+            <div class="mt-4 border-t pt-4">
+                <a href="{% url 'saritasapp:profile' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                    <i class="fas fa-user w-6 text-center mr-2"></i>
+                    <span>Profile</span>
+                </a>
+                {% if user.is_authenticated %}
+                <form method="post" action="{% url 'saritasapp:logout' %}" class="w-full">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full px-4 py-2 text-left text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                        Logout
+                    </button>
+                </form>
+                {% else %}
+                <a href="{% url 'saritasapp:sign_in' %}" class="block px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                    Login
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Desktop Sidebar -->
+    <div class="hidden lg:block fixed top-0 left-0 h-full w-60 bg-[#EAEAEA] shadow-lg z-40 overflow-y-auto">
+        <div class="p-4 space-y-2 mt-16">
+            <a href="{% url 'saritasapp:inventory_list' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                <i class="fas fa-box w-6 text-center mr-2"></i>
+                <span>Inventory</span>
+            </a>
+            <a href="{% url 'saritasapp:calendar' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                <i class="fas fa-calendar w-6 text-center mr-2"></i>
+                <span>Calendar of Event</span>
+            </a>
+            <a href="{% url 'saritasapp:rental_tracker' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                <i class="fas fa-chart-line w-6 text-center mr-2"></i>
+                <span>Rental Tracker</span>
+            </a>
+            <a href="{% url 'saritasapp:rental_approvals' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                <i class="fas fa-clipboard-check w-6 text-center mr-2"></i>
+                <span>Rental Approvals</span>
+            </a>
+            <a href="{% url 'saritasapp:view_reservations' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                <i class="fas fa-calendar-check w-6 text-center mr-2"></i>
+                <span>View Reservations</span>
+            </a>
+            <a href="{% url 'saritasapp:receipt-detail' receipt_id=1 %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                <i class="fas fa-receipt w-6 text-center mr-2"></i>
+                <span>Receipt</span>
+            </a>
+            <a href="{% url 'saritasapp:data_analysis' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                <i class="fas fa-chart-bar w-6 text-center mr-2"></i>
+                <span>Data Analysis</span>
+            </a>
+            <a href="{% url 'saritasapp:customer_list' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                <i class="fas fa-users w-6 text-center mr-2"></i>
+                <span>Customer Records</span>
+            </a>
+            <a href="{% url 'saritasapp:manage_staff' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                <i class="fas fa-user-shield w-6 text-center mr-2"></i>
+                <span>Manage Staff</span>
             </a>
         </div>
     </div>
-    
 
     <!-- Header -->
-    <div class="header">
-        <button id="toggle-btn">☰</button>
-            <div class="logo">
-                <img src="{% static 'images/Logo.png' %}" alt="Wedding Creations & Event Stylist">
-                <span> Wedding<br>Creations &<br> Event Stylist</span>
-            </div>
-                <div class="header-items">
-                    <div class="made-to-order">
-                        <a href="{% url 'saritasapp:made_to_order' %}" class="header-link-text">Made to Order</a>
-                    </div>
-                    <select id="Package" class="header-link-text" onchange="navigateToPage()">
-                        <option value="{% url 'saritasapp:wedding_packages' %}" 
-                            {% if title == 'Wedding Packages' %}selected{% endif %}>
-                            Packages
-                        </option>
-                        <option value="{% url 'saritasapp:wedding_packages' %}" 
-                            {% if title == 'Wedding Packages' %}selected{% endif %}>
-                            Wedding Packages
-                        </option>
-                        <option value="{% url 'saritasapp:debut_packages' %}" 
-                            {% if title == 'Debut Packages' %}selected{% endif %}>
-                            Debut Packages
-                        </option>
-                        <option value="{% url 'saritasapp:additional_services' %}" 
-                            {% if title == 'Additional Services' %}selected{% endif %}>
-                            Additional Services
-                        </option>
-                    </select>
-                    <a href="{% url 'saritasapp:dashboard' %}" class="header-link"><i class="fas fa-home"></i></a>
-                    
-                    <a href="{% url 'saritasapp:profile' %}" class="header-link"><i class="fas fa-user"></i></a>
+    <header class="fixed top-0 left-0 right-0 h-16 bg-[#EAEAEA] flex items-center justify-between px-4 z-50 border-b border-gray-800">
+        <div class="flex items-center">
+            <button id="mobile-toggle" class="lg:hidden text-2xl mr-2">
+                ☰
+            </button>
+            <a href="{% url 'saritasapp:dashboard' %}" class="flex items-center gap-2">
+                <img src="{% static 'images/Logo.png' %}" alt="Logo" class="w-12 h-12 rounded-full">
+                <span class="text-2xl font-bold text-black" style="font-family: 'Great Vibes', cursive;">
+                    Wedding Creations
+                </span>
+                <span class="text-xl font-semibold text-black" style="font-family: 'Playfair Display', serif;">
+                    & Event Stylist
+                </span>
+            </a>
+        </div>
 
-                    <!-- Login/Logout Button -->
-                    {% if user.is_authenticated %}
-                    <form method="post" action="{% url 'saritasapp:logout' %}" style="display:inline;">
-                        {% csrf_token %}
-                        <button type="submit" class="header-link">Logout</button>
-                        </form>
-                        {% else %}
-                        <a href="{% url 'saritasapp:sign_in' %}" class="header-link">Login</a>
-                        {% endif %}
+        <!-- Desktop Header Items -->
+        <div class="hidden lg:flex items-center gap-6 mr-4">
+            <a href="{% url 'saritasapp:made_to_order' %}" class="text-black font-semibold hover:text-[#AD974F] transition-colors">
+                Made to Order
+            </a>
+            
+            <!-- Desktop Packages Dropdown -->
+            <div class="relative group">
+                <button class="flex items-center text-black font-semibold hover:text-[#AD974F] transition-colors">
+                    Packages
+                    <i class="fas fa-chevron-down ml-2 text-sm"></i>
+                </button>
+                <div class="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-xl overflow-hidden transform origin-top transition-all scale-y-0 group-hover:scale-y-100">
+                    <a href="{% url 'saritasapp:wedding_packages' %}" class="block px-4 py-3 text-gray-800 hover:bg-[#AD974F]/10 transition-colors border-b border-gray-100">
+                        Wedding Packages
+                    </a>
+                    <a href="{% url 'saritasapp:debut_packages' %}" class="block px-4 py-3 text-gray-800 hover:bg-[#AD974F]/10 transition-colors border-b border-gray-100">
+                        Debut Packages
+                    </a>
+                    <a href="{% url 'saritasapp:additional_services' %}" class="block px-4 py-3 text-gray-800 hover:bg-[#AD974F]/10 transition-colors">
+                        Additional Services
+                    </a>
                 </div>
-    </div>
+            </div>
 
-    <!-- Main Content Area -->
-    <div class="container" style="margin-left: 220px; margin-top: 80px; padding: 20px;">
+            <a href="{% url 'saritasapp:profile' %}" class="text-black hover:text-[#AD974F] transition-colors">
+                <i class="fas fa-user text-xl"></i>
+            </a>
+            {% if user.is_authenticated %}
+            <form method="post" action="{% url 'saritasapp:logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="text-black font-semibold hover:text-[#AD974F] transition-colors">
+                    Logout
+                </button>
+            </form>
+            {% else %}
+            <a href="{% url 'saritasapp:sign_in' %}" class="text-black font-semibold hover:text-[#AD974F] transition-colors">
+                Login
+            </a>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="pt-20 lg:pl-64 px-4 min-h-screen">
         {% block content %}
         {% endblock %}
-    </div>
+    </main>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const sidebar = document.getElementById("sidebar");
-            const toggleBtn = document.getElementById("toggle-btn");
+        // Enhanced dropdown functionality
+        document.querySelectorAll('.dropdown').forEach(dropdown => {
+            const button = dropdown.querySelector('button');
+            const content = dropdown.querySelector('.dropdown-content');
+            const chevron = dropdown.querySelector('.fa-chevron-down');
 
-            toggleBtn.addEventListener("click", function () {
-                sidebar.classList.toggle("collapsed");
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = content.style.maxHeight !== '0px' && content.style.maxHeight !== '';
+                
+                // Close all other dropdowns
+                document.querySelectorAll('.dropdown-content').forEach(otherContent => {
+                    if(otherContent !== content) {
+                        otherContent.style.maxHeight = '0';
+                        otherContent.previousElementSibling.querySelector('.fa-chevron-down').classList.remove('rotate-180');
+                    }
+                });
+
+                
+                content.style.maxHeight = isOpen ? '0' : `${content.scrollHeight}px`;
+                chevron.classList.toggle('rotate-180', !isOpen);
             });
         });
 
-        function navigateToPage() {
-            const selectedValue = document.getElementById("Package").value;
-            if (selectedValue) {
-                window.location.href = selectedValue;
-            }
-        }
+        
+        document.addEventListener('click', (e) => {
+            document.querySelectorAll('.dropdown').forEach(dropdown => {
+                const content = dropdown.querySelector('.dropdown-content');
+                const chevron = dropdown.querySelector('.fa-chevron-down');
+                
+                if(!dropdown.contains(e.target)) {
+                    content.style.maxHeight = '0';
+                    chevron.classList.remove('rotate-180');
+                }
+            });
+        });
 
-        // initial pacckages backend implemented (not final)
-        function navigateToPage() {
-    const select = document.getElementById('Package');
-    const url = select.value;
-    window.location.href = url;
-}
+        
+        const mobileSidebar = document.getElementById('mobile-sidebar');
+        const mobileToggle = document.getElementById('mobile-toggle');
+
+        mobileToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            mobileSidebar.classList.toggle('-translate-x-full');
+        });
+
+        // Close sidebar when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!mobileSidebar.contains(e.target) && !mobileToggle.contains(e.target)) {
+                mobileSidebar.classList.add('-translate-x-full');
+            }
+        });
     </script>
 </body>
 </html>
