@@ -2,9 +2,10 @@
 {% load static %}
 {% block title %}Manage Staff{% endblock %}
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/rental_tracker.css' %}">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
     <style>
-        /* Staff Management Styles - Matches Rental Tracker */
+        /* Staff Management Styles */
         .staff-management-container {
             background: white;
             padding: 25px;
@@ -36,10 +37,9 @@
         }
 
         .staff-table thead th {
-            background-color: #8E793E;
+            background-color: #8E793E !important;
             color: white;
             padding: 12px 15px;
-            text-align: left;
             font-weight: 600;
         }
 
@@ -56,6 +56,82 @@
         .action-buttons {
             display: flex;
             gap: 8px;
+            flex-wrap: nowrap;
+        }
+
+        /* DataTable Customization */
+        .dataTables_wrapper {
+            padding: 0 10px;
+        }
+
+        .dataTables_filter input {
+            border: 1px solid #AD974F !important;
+            border-radius: 4px;
+            padding: 5px 10px;
+        }
+
+        .dataTables_length select {
+            border: 1px solid #AD974F;
+            border-radius: 4px;
+            padding: 5px;
+        }
+
+        .dataTables_paginate .paginate_button {
+            color: #8E793E !important;
+            border: 1px solid #AD974F !important;
+            margin: 0 3px;
+            border-radius: 4px !important;
+            transition: all 0.3s;
+        }
+
+        .dataTables_paginate .paginate_button:hover {
+            background: #AD974F !important;
+            color: white !important;
+            border-color: #8E793E !important;
+        }
+
+        .dataTables_paginate .paginate_button.current {
+            background: #8E793E !important;
+            color: white !important;
+            border-color: #8E793E !important;
+        }
+
+        /* Scrollable Table */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Mobile Responsive Styles */
+        @media screen and (max-width: 767px) {
+            .staff-management-container {
+                padding: 15px;
+            }
+            
+            .staff-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .dataTables_wrapper .row {
+                margin: 0 -5px;
+            }
+            
+            .dataTables_filter,
+            .dataTables_length {
+                margin-bottom: 15px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn-edit, 
+            .btn-delete {
+                width: 100%;
+                justify-content: center;
+            }
         }
 
         .btn-edit {
@@ -129,35 +205,6 @@
             color: #AD974F;
             margin-bottom: 15px;
         }
-
-        /* SIMPLIFIED POSITION STYLE */
-        .position-text {
-            font-size: 14px;
-            color: #333;
-        }
-
-        @media (max-width: 768px) {
-            .staff-management-container {
-                padding: 15px;
-            }
-            
-            .staff-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
-            }
-            
-            .action-buttons {
-                flex-direction: column;
-                gap: 5px;
-            }
-            
-            .btn-edit, 
-            .btn-delete {
-                width: 100%;
-                justify-content: center;
-            }
-        }
     </style>
 {% endblock %}
 
@@ -175,7 +222,7 @@
     </div>
 
     <div class="table-responsive">
-        <table class="staff-table">
+        <table class="staff-table table table-striped" style="width:100%">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -184,7 +231,7 @@
                     <th>Email</th>
                     <th>Position</th>
                     <th>Branch</th>
-                    <th>Actions</th>
+                    <th data-priority="1">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -194,7 +241,7 @@
                     <td>{{ staff_user.username }}</td>
                     <td>{{ staff_user.get_full_name }}</td>
                     <td>{{ staff_user.email }}</td>
-                    <td class="position-text">{{ staff_user.staff_profile.position }}</td>
+                    <td>{{ staff_user.staff_profile.position }}</td>
                     <td>{{ staff_user.staff_profile.branch.branch_name }}</td>
                     <td>
                         <div class="action-buttons">
@@ -224,4 +271,47 @@
         </table>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        $('.staff-table').DataTable({
+            responsive: true,
+            scrollX: true,
+            autoWidth: false,
+            columnDefs: [
+                { responsivePriority: 1, targets: 6 }, // Actions column
+                { responsivePriority: 2, targets: 2 }, // Full Name
+                { 
+                    targets: [0, 3], // ID and Email columns
+                    responsivePriority: 3,
+                    visible: false,
+                    searchable: true
+                }
+            ],
+            language: {
+                search: "Search Staff:",
+                lengthMenu: "Show _MENU_ entries",
+                paginate: {
+                    previous: '<i class="fas fa-chevron-left"></i>',
+                    next: '<i class="fas fa-chevron-right"></i>'
+                }
+            },
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-6"i><"col-sm-12 col-md-6"p>>',
+            pageLength: 10,
+            order: [[1, 'asc']],
+            initComplete: function() {
+                // Force responsive recalc on load
+                this.api().columns.adjust().responsive.recalc();
+            }
+        });
+    });
+</script>
 {% endblock %}
