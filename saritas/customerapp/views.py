@@ -44,7 +44,7 @@ def homepage(request):
         quantity__gt=0
     ).order_by('?')[:8]
     
-    categories = Category.objects.all()[:4]
+    categories = Category.objects.all()
     wardrobe_packages = []  # Empty list for now
     
     new_arrivals = Inventory.objects.filter(
@@ -369,4 +369,7 @@ def package_detail(request, pk):
     return render(request, 'customerapp/package_detail.html', context)
 
 def about_us(request):
-    return render(request, 'customerapp/about_us.html')
+    categories = Category.objects.all()
+    return render(request, 'customerapp/about_us.html', {
+        'categories': categories
+    })
