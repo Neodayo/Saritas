@@ -57,11 +57,11 @@
                     <td>{{ rental.duration_days }}</td>
                     <td>₱{{ rental.total_cost|floatformat:2 }}</td>
                     <td class="action-buttons">
-                        <a href="{% url 'saritasapp:approve_rental' rental.id 'approve' %}" 
+                        <a href="{% url 'saritasapp:approve_or_reject_rental' rental.id 'approve' %}" 
                            class="btn btn-approve">
                             <i class="fas fa-check"></i> Approve
                         </a>
-                        <a href="{% url 'saritasapp:approve_rental' rental.id 'reject' %}" 
+                        <a href="{% url 'saritasapp:approve_or_reject_rental' rental.id 'approve' %}" 
                            class="btn btn-reject">
                             <i class="fas fa-times"></i> Reject
                         </a>

@@ -159,6 +159,9 @@ class ReservationForm(forms.ModelForm):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
+        if self.item:
+            self.instance.item = self.item  # 🔥 This sets the item early so model.clean() doesn't fail
+
         # Dynamic min date for return date based on reservation date
         if 'reservation_date' in self.initial:
             res_date = self.initial['reservation_date']
@@ -166,6 +169,7 @@ class ReservationForm(forms.ModelForm):
                 self.fields['return_date'].widget.attrs['min'] = res_date
             elif hasattr(res_date, 'isoformat'):
                 self.fields['return_date'].widget.attrs['min'] = res_date.isoformat()
+
 
     def clean(self):
         cleaned_data = super().clean()

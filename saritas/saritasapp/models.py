@@ -369,6 +369,13 @@ class Reservation(models.Model):
 
     item = models.ForeignKey(Inventory, on_delete=models.CASCADE, related_name='reservations')
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='reservations')
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='approved_reservations'
+    )
     reservation_date = models.DateField(default=timezone.now)
     return_date = models.DateField()
     quantity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
@@ -389,9 +396,12 @@ class Reservation(models.Model):
 
         if self.reservation_date < today:
             raise ValidationError("Reservation date cannot be in the past.")
+
         if self.return_date <= self.reservation_date:
             raise ValidationError("Return date must be after the reservation date.")
-        if self.quantity > self.item.quantity:
+
+        # Make sure item exists before checking its quantity
+        if self.item and self.quantity > self.item.quantity:
             raise ValidationError(f"Only {self.item.quantity} items available for reservation.")
 
     def save(self, *args, **kwargs):
