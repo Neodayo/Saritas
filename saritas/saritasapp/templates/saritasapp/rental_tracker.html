@@ -6,74 +6,118 @@
 {% endblock %}
 
 {% block content %}
-<div class="rental-container"> <!-- Changed class from 'container' to 'rental-container' to avoid conflict -->
-    <h2>Rental Tracker</h2>
+<div class="min-h-screen bg-amber-50 p-4 md:p-8">
+    <div class="max-w-7xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden border border-amber-100">
+        <!-- Header Section -->
+        <div class="px-6 py-4">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+            <h1 class="gold-heading text-2xl font-bold text-[#FFD700] mb-2 md:mb-0" style="font-family: 'Playfair Display', serif;">
+            <i class="fas fa-concierge-bell mr-2"></i>Rental Management
+            </h1>
+            <div class="flex items-center space-x-2 bg-[#FFD700] px-3 py-1 rounded-lg">
+            <span class="text-sm text-amber-700">Total Rentals:</span>
+            <span class="text-lg font-semibold text-amber-700">{{ rentals|length }}</span>
+            </div>
+            </div>
+        </div>
 
-    <!-- Filter Form -->
-    <form method="GET" class="mb-3 d-flex align-items-center flex-wrap gap-2">
-        <label for="statusFilter" class="me-2">Filter by Status:</label>
-        <select name="status" id="statusFilter" class="form-select me-2" onchange="this.form.submit()">
-            <option value="">All</option>
-            <option value="Renting" {% if request.GET.status == "Renting" %}selected{% endif %}>Renting</option>
-            <option value="Returned" {% if request.GET.status == "Returned" %}selected{% endif %}>Returned</option>
-            <option value="Overdue" {% if request.GET.status == "Overdue" %}selected{% endif %}>Overdue</option>
-        </select>
-        <button type="submit" name="status" value="" class="btn btn-outline-secondary">Clear Filter</button>
-    </form>
+        <!-- Filter Section -->
+        <div class="px-6 py-4 bg-amber-50">
+            <form method="GET" class="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                <div class="flex-1 w-full md:w-auto">
+                    <label class="block text-sm font-medium text-amber-700 mb-1">Filter by Status:</label>
+                    <select name="status" id="statusFilter" onchange="this.form.submit()" 
+                            class="w-full px-4 py-2 border border-amber-300 rounded-lg shadow-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white">
+                        <option value="">All Status</option>
+                        <option value="Renting" {% if request.GET.status == "Renting" %}selected{% endif %}>Renting</option>
+                        <option value="Returned" {% if request.GET.status == "Returned" %}selected{% endif %}>Returned</option>
+                        <option value="Overdue" {% if request.GET.status == "Overdue" %}selected{% endif %}>Overdue</option>
+                    </select>
+                </div>
+                <button type="submit" name="status" value="" 
+                        class="w-full md:w-auto px-4 py-2 border border-amber-600 text-amber-600 rounded-lg hover:bg-amber-100 transition-colors font-medium">
+                    <i class="fas fa-sync-alt mr-2"></i>Clear Filters
+                </button>
+            </form>
+        </div>
 
-    <!-- Display Total Rentals -->
-    <p class="mb-3">Total Rentals: <strong>{{ rentals|length }}</strong></p>
-
-    <!-- Rental Table -->
-    <div class="table-responsive">
-        <table class="table table-hover table-bordered">
-            <thead class="table-dark text-center align-middle">
-                <tr>
-                    <th>ID</th>
-                    <th>Customer</th>
-                    <th>Item</th>
-                    <th>Rental Start</th>
-                    <th>Rental End</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for rental in rentals %}
-                <tr>
-                    <td class="text-center">{{ rental.id }}</td>
-                    <td>{{ rental.customer.first_name }} {{ rental.customer.last_name }}</td>
-                    <td>{{ rental.inventory.name }}</td>
-                    <td>{{ rental.rental_start }}</td>
-                    <td>{{ rental.rental_end }}</td>
-                    <td>
-                        {% if rental.status == "Overdue" %}
-                            <span class="badge bg-danger">Overdue</span>
-                        {% elif rental.status == "Returned" %}
-                            <span class="badge bg-success">{{ rental.status }}</span>
-                        {% else %}
-                            <span class="badge bg-warning">{{ rental.status }}</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-center">
-                        <a href="{% url 'saritasapp:view_customer' rental.customer.id %}" class="btn-info">
-                        <i class="fas fa-user"></i> Customer
-                        </a>
-                        <a href="{% url 'saritasapp:view_inventory' rental.inventory.id %}" class="btn-info">
-                        <i class="fas fa-box"></i> Item
-                        </a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="7" class="text-center py-3">
-                        <i class="fas fa-inbox fa-2x mb-2 text-muted"></i>
-                        <p class="text-muted">No rentals found.</p>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>        
-        </table>
+        <!-- Table Section (Unchanged from previous version) -->
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for rental in rentals %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-600">#{{ rental.id }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ rental.customer.first_name }} {{ rental.customer.last_name }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ rental.inventory.name }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ rental.rental_start|date:"M d, Y" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ rental.rental_end|date:"M d, Y" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if rental.status == "Overdue" %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-red-800 text-sm font-medium">
+                                    <span class="w-2 h-2 mr-2 bg-red-500 rounded-full"></span>
+                                    Overdue
+                                </span>
+                            {% elif rental.status == "Returned" %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">
+                                    <span class="w-2 h-2 mr-2 bg-green-500 rounded-full"></span>
+                                    Returned
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-sm font-medium">
+                                    <span class="w-2 h-2 mr-2 bg-yellow-500 rounded-full"></span>
+                                    Renting
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <div class="flex space-x-2">
+                                <a href="{% url 'saritasapp:view_customer' rental.customer.id %}" 
+                                   class="flex items-center px-3 py-1.5 bg-amber-100 text-amber-700 rounded-md hover:bg-amber-200 transition-colors">
+                                    <i class="fas fa-user-circle mr-2"></i>
+                                    Profile
+                                </a>
+                                <a href="{% url 'saritasapp:view_inventory' rental.inventory.id %}" 
+                                   class="flex items-center px-3 py-1.5 bg-amber-100 text-amber-700 rounded-md hover:bg-amber-200 transition-colors">
+                                    <i class="fas fa-box-open mr-2"></i>
+                                    Details
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-8 text-center">
+                            <div class="flex flex-col items-center justify-center text-amber-400">
+                                <i class="fas fa-clipboard-list text-4xl mb-4"></i>
+                                <p class="text-lg font-medium">No rentals found</p>
+                                <p class="text-sm mt-1">Start by creating new rentals</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}

@@ -5,33 +5,39 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/view_reservation.css' %}">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 {% endblock %}
 
 {% block content %}
 <div class="reservation-container">
-    <h2>Reservation Management</h2>
-    
-    <div class="status-filter">
-        <strong>Filter by Status:</strong>
-        <a href="?status=all" class="status-badge status-all {% if status == 'all' %}active{% endif %}">All</a>
-        {% for choice in status_choices %}
-            <a href="?status={{ choice.0 }}" 
-               class="status-badge status-{{ choice.0 }} {% if status == choice.0 %}active{% endif %}">
+    <h2 class="gold-heading">Reservation Management</h2>
+
+    <div class="filter-container">
+        <div class="status-filter">
+            <strong class="filter-label">Filter by Status:</strong>
+            <a href="?status=all" class="status-badge status-all {% if status == 'all' %}active{% endif %}">
+                <i class="fas fa-list"></i> All
+            </a>
+            {% for choice in status_choices %}
+            <a href="?status={{ choice.0 }}" class="status-badge status-{{ choice.0 }} {% if status == choice.0 %}active{% endif %}">
+                <i class="status-icon fas fa-{% if choice.0 == 'pending' %}clock{% elif choice.0 == 'approved' %}check-circle{% elif choice.0 == 'rejected' %}times-circle{% else %}calendar-check{% endif %}"></i>
                 {{ choice.1 }}
             </a>
-        {% endfor %}
+            {% endfor %}
+        </div>
     </div>
-    
+
     {% if reservations %}
     <div class="table-responsive">
-        <table class="reservation-table">
+        <table class="reservation-table display nowrap" id="reservationTable">
             <thead>
                 <tr>
                     <th>ID</th>
                     <th>Customer</th>
                     <th>Item</th>
                     <th>Dates</th>
-                    <th>Qty</th>
+                    <th>Quantity</th>
                     <th>Total</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -42,59 +48,65 @@
                 <tr>
                     <td>#{{ reservation.id }}</td>
                     <td>
-                        {{ reservation.customer.user.get_full_name }}
-                        <div class="text-muted small">{{ reservation.customer.user.email }}</div>
+                        <div class="customer-info">
+                            <div class="customer-name">{{ reservation.customer.user.get_full_name }}</div>
+                            <div class="customer-email">{{ reservation.customer.user.email }}</div>
+                        </div>
                     </td>
                     <td>
-                        <div style="display: flex; align-items: center;">
+                        <div class="item-container">
                             {% if reservation.item.image %}
-                            <img src="{{ reservation.item.image.url }}" 
-                                 alt="{{ reservation.item.name }}"
-                                 class="item-thumb">
+                            <img src="{{ reservation.item.image.url }}" alt="{{ reservation.item.name }}" class="item-thumb">
                             {% endif %}
-                            <div>
-                                {{ reservation.item.name }}
-                                <div class="text-muted small">
-                                    {{ reservation.item.category.name }}
-                                </div>
+                            <div class="item-details">
+                                <div class="item-name">{{ reservation.item.name }}</div>
+                                <div class="item-category">{{ reservation.item.category.name }}</div>
                             </div>
                         </div>
                     </td>
                     <td>
-                        {{ reservation.reservation_date|date:"M d" }} - 
-                        {{ reservation.return_date|date:"M d" }}
-                        <div class="text-muted small">
-                            {{ reservation.duration_days }} days
+                        <div class="date-range">
+                            {{ reservation.reservation_date|date:"M d" }} - 
+                            {{ reservation.return_date|date:"M d" }}
+                        </div>
+                        <div class="duration">{{ reservation.duration_days }} days</div>
+                    </td>
+                    <td class="quantity">{{ reservation.quantity }}</td>
+                    <td class="total">₱{{ reservation.total_cost|floatformat:2 }}</td>
+                    <td>
+                        <div class="status-container">
+                            <span class="status-badge status-{{ reservation.status }}">
+                                {{ reservation.get_status_display }}
+                            </span>
+                            {% if reservation.approved_by %}
+                            <div class="approver">By: {{ reservation.approved_by.get_full_name }}</div>
+                            {% endif %}
                         </div>
                     </td>
-                    <td>{{ reservation.quantity }}</td>
-                    <td>₱{{ reservation.total_cost|floatformat:2 }}</td>
                     <td>
-                        <span class="status-badge status-{{ reservation.status }}">
-                            {{ reservation.get_status_display }}
-                        </span>
-                        {% if reservation.approved_by %}
-                        <div class="text-muted small">
-                            By: {{ reservation.approved_by.get_full_name }}
+                        <div class="action-buttons">
+                            {% if reservation.status == 'pending' %}
+                            <form method="post" action="{% url 'saritasapp:update_reservation' reservation.id 'approve' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="action-btn btn-approve">
+                                    <i class="fas fa-check"></i> Approve
+                                </button>
+                            </form>
+                            <form method="post" action="{% url 'saritasapp:update_reservation' reservation.id 'reject' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="action-btn btn-reject">
+                                    <i class="fas fa-times"></i> Reject
+                                </button>
+                            </form>
+                            {% elif reservation.status == 'approved' %}
+                            <form method="post" action="{% url 'saritasapp:update_reservation' reservation.id 'complete' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="action-btn btn-complete">
+                                    <i class="fas fa-check-double"></i> Complete
+                                </button>
+                            </form>
+                            {% endif %}
                         </div>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if reservation.status == 'pending' %}
-                        <form method="post" action="{% url 'saritasapp:update_reservation' reservation.id 'approve' %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="action-btn btn-approve">Approve</button>
-                        </form>
-                        <form method="post" action="{% url 'saritasapp:update_reservation' reservation.id 'reject' %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="action-btn btn-reject">Reject</button>
-                        </form>
-                        {% elif reservation.status == 'approved' %}
-                        <form method="post" action="{% url 'saritasapp:update_reservation' reservation.id 'complete' %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="action-btn btn-complete">Complete</button>
-                        </form>
-                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
@@ -103,10 +115,36 @@
     </div>
     {% else %}
     <div class="empty-state">
-        <i class="fas fa-calendar-check fa-3x mb-3"></i>
+        <i class="fas fa-calendar-check"></i>
         <h4>No Reservations Found</h4>
         <p>There are currently no reservations matching your criteria.</p>
     </div>
     {% endif %}
 </div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#reservationTable').DataTable({
+            scrollX: true,
+            responsive: true,
+            pageLength: 10,
+            dom: '<"top"<"filter-container"f>>rt<"bottom"<"table-info"lip>><"clear">',
+            language: {
+                search: "_INPUT_",
+                searchPlaceholder: "Search reservations...",
+                lengthMenu: "Show _MENU_ entries",
+                info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                paginate: {
+                    previous: '<i class="fas fa-chevron-left"></i>',
+                    next: '<i class="fas fa-chevron-right"></i>'
+                }
+            },
+            initComplete: function() {
+                $('.dataTables_filter input').addClass('search-input');
+            }
+        });
+    });
+</script>
 {% endblock %}
