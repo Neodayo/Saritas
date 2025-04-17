@@ -3,12 +3,13 @@
 {% block title %}My Rentals{% endblock %}
 {% block stylesheets %}
 <link rel="stylesheet" href="{% static 'css/rental_list.css' %}">
+{% endblock %}
 {% block content %}
 <div class="container py-5">
     <h2>My Rentals</h2>
     <div class="list-group">
         {% for rental in rentals %}
-        <a href="{% url 'customerapp:rental_detail' pk=rental.id %}" class="list-group-item list-group-item-action">
+        <a href="{% url 'customerapp:rental_detail' rental_id=rental.id %}" class="list-group-item list-group-item-action">
             <div class="d-flex w-100 justify-content-between">
                 <h5 class="mb-1">{{ rental.inventory.name }}</h5>
                 <span class="badge bg-{% if rental.status == 'Approved' %}success{% elif rental.status == 'Pending' %}warning{% else %}secondary{% endif %}">

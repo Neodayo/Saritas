@@ -46,15 +46,15 @@ urlpatterns = [
     path("logout/", views.logout_view, name="logout"),
     path("dashboard/", views.dashboard, name="dashboard"),
     #profile
-    path("profile/", views.profile_view, name="profile"),
+    path("staff-profile/", views.staff_profile_view, name="staff_profile"),
     path("logout/", views.sign_out, name="logout"), 
     path("logout_page/", lambda request: render(request, "saritasapp/logout.html"), name="logout_page"),
         # ✅ Logout confirmation
     path('rental-tracker/', views.rental_tracker, name='rental_tracker'),
     path('rentals/approvals/', views.rental_approvals, name='rental_approvals'),
-    path('rentals/<int:rental_id>/<str:action>/', views.approve_rental, name='approve_rental'),
+    path('rentals/approvals/<int:rental_id>/<str:action>/', views.approve_or_reject_rental, name='approve_or_reject_rental'),
     path('rental/<int:rental_id>/', views.rental_detail, name='rental_detail'),
-    path('reservation/', views.reservation_view, name='reservation'),
+     #path('reservation/', views.reservation_view, name='reservation'),
     path('reservations/', views.view_reservations, name='view_reservations'),
     path('reservations/<int:pk>/<str:action>/', views.update_reservation, name='update_reservation'),
     path('wardrobe-packages/', views.wardrobe_package_list, name='wardrobe_package_list'),
@@ -68,6 +68,4 @@ urlpatterns = [
     path('additional-services/', views.additional_services, name='additional_services'),
     path('debut-confirmation/', views.debut_confirmation, name='debut_confirmation'),
     path('additional-confirmation/', views.additional_confirmation, name='additional_confirmation'),
-
-
 ]

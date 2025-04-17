@@ -1,7 +1,13 @@
+# Standard library
 from datetime import timedelta
+from django.core.cache import cache
 import logging
+from urllib import request
+
+# Django core
 from django.conf import settings
 from django.utils import timezone
+from django.utils.timezone import now
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.urls import reverse
@@ -13,11 +19,14 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.db import transaction, IntegrityError
-from .forms import CustomerRegistrationForm, RentalForm, ReservationForm
-from .tasks import send_reservation_notification
+from django.core.exceptions import ValidationError
+
+# Local app
+from .forms import CustomerRegistrationForm, RentalForm, ReservationForm, CustomerUpdateForm, UserUpdateForm
+from .tasks import send_reservation_notification, notify_staff_about_rental_request
 from saritasapp.models import (
     Inventory, Category, Color, Size,
-    Rental, Reservation, Notification, User, WardrobePackage
+    Rental, Reservation, Notification, User, WardrobePackage, Customer
 )
 
 
@@ -36,11 +45,6 @@ def homepage(request):
     ).order_by('?')[:8]
     
     categories = Category.objects.all()[:4]
-    
-    # Temporarily comment out the wardrobe packages query
-    # wardrobe_packages = WardrobePackage.objects.filter(
-    #     status='active'
-    # ).order_by('tier')[:3]
     wardrobe_packages = []  # Empty list for now
     
     new_arrivals = Inventory.objects.filter(
@@ -76,12 +80,32 @@ def register(request):
     
     return render(request, 'customerapp/register.html', {'form': form})
 
-def notifications(request):
-    if request.user.is_authenticated:
-        return {
-            'unread_count': Notification.objects.filter(user=request.user, is_read=False).count()
-        }
-    return {}
+@login_required
+def customer_profile(request):
+    customer = get_object_or_404(Customer, user=request.user)
+    return render(request, 'customerapp/customer_profile.html', {'customer': customer})
+
+@login_required
+def edit_customer_profile(request):
+    customer = get_object_or_404(Customer, user=request.user)
+
+    if request.method == 'POST':
+        user_form = UserUpdateForm(request.POST, instance=request.user)
+        customer_form = CustomerUpdateForm(request.POST, request.FILES, instance=customer)
+
+        if user_form.is_valid() and customer_form.is_valid():
+            user_form.save()
+            customer_form.save()
+            messages.success(request, 'Your profile has been updated!')
+            return redirect('customerapp:customer_profile')
+    else:
+        user_form = UserUpdateForm(instance=request.user)
+        customer_form = CustomerUpdateForm(instance=customer)
+
+    return render(request, 'customerapp/edit_customer_profile.html', {
+        'user_form': user_form,
+        'customer_form': customer_form,
+    })
 
 @login_required
 def notifications(request):
@@ -95,15 +119,24 @@ def notifications(request):
 
 @login_required
 def mark_notification_as_read(request, notification_id):
-    notification = Notification.objects.filter(id=notification_id, user=request.user).first()
-    if notification:
-        notification.is_read = True
-        notification.save()
-    return redirect('customerapp:notifications')
+    notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+    notification.is_read = True
+    notification.save()
+    
+    # Invalidate cache
+    cache_key = f'unread_count_{request.user.id}'
+    cache.delete(cache_key)
+    
+    return JsonResponse({'status': 'success'})
 
 @login_required
 def mark_all_notifications_as_read(request):
     Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+    
+    # Invalidate cache
+    cache_key = f'unread_count_{request.user.id}'
+    cache.delete(cache_key)
+    
     return redirect('customerapp:notifications')
 
 @login_required
@@ -114,6 +147,11 @@ def item_detail(request, item_id):
     item = get_object_or_404(Inventory, id=item_id)
     return render(request, 'customerapp/view_item.html', {'item': item})
 
+logger = logging.getLogger(__name__)
+from saritasapp.models import Notification, User
+
+...
+
 @login_required
 def rent_item(request, inventory_id):
     item = get_object_or_404(Inventory, pk=inventory_id)
@@ -123,10 +161,8 @@ def rent_item(request, inventory_id):
         if form.is_valid():
             try:
                 with transaction.atomic():
-                    # Lock inventory row
-                    item = Inventory.objects.select_for_update().get(pk=inventory_id)
-                    
-                    if not item.available or item.quantity <= 0:
+                    # Check availability but don't decrement yet
+                    if item.quantity <= 0:
                         messages.error(request, 'Item no longer available')
                         return redirect('customerapp:wardrobe')
 
@@ -137,22 +173,26 @@ def rent_item(request, inventory_id):
                     rental.deposit = item.deposit_price or 0.00
                     rental.save()
 
-                    # Decrement inventory
-                    item.quantity -= 1
-                    item.save()
+                    # 🔔 Create notifications for all staff users
+                    staff_users = User.objects.filter(role='staff')
+                    for staff in staff_users:
+                        Notification.objects.create(
+                            user=staff,
+                            notification_type='rental_request',
+                            rental=rental,
+                            message=f'New rental request for {item.name} from {request.user.get_full_name()}',
+                            url=reverse('saritasapp:rental_approvals')
+                        )
 
-                    # Async notification to staff
-                    from .tasks import notify_staff_about_rental_request
-                    notify_staff_about_rental_request.delay(rental.id)
-
-                    messages.success(request, 'Rental request submitted!')
+                    messages.success(request, 'Rental request submitted for approval!')
                     return redirect('customerapp:my_rentals')
 
+            except ValidationError as e:
+                logger.error(f"Validation error during rental creation: {e}")
+                messages.error(request, f'Validation error: {e}')
             except Exception as e:
-                messages.error(request, f'Error: {str(e)}')
-                return redirect('customerapp:wardrobe')
-        else:
-            messages.error(request, 'Please correct the errors in the form.')
+                logger.error(f"Unexpected error during rental creation: {e}", exc_info=True)
+                messages.error(request, f'An unexpected error occurred: {e}')
     else:
         form = RentalForm(inventory=item)
 
@@ -330,37 +370,3 @@ def package_detail(request, pk):
 
 def about_us(request):
     return render(request, 'customerapp/about_us.html')
-
-def notify_staff_about_rental_request(rental):
-    staff_users = User.objects.filter(is_staff=True)
-    subject = f"New Rental Request: {rental.inventory.name} (ID: #{rental.id})"
-    
-    admin_url = request.build_absolute_uri(
-        reverse('admin:customerapp_rental_change', args=[rental.id])
-    )
-    
-    context = {
-        'rental': rental,
-        'admin_url': admin_url,
-        'site_name': 'Your Site Name'  # Or use settings.SITE_NAME
-    }
-    
-    message = render_to_string(
-        'customerapp/emails/new_rental_request.txt',
-        context
-    )
-    
-    html_message = render_to_string(
-        'customerapp/emails/new_rental_request.html',
-        context
-    )
-    
-    recipient_list = [user.email for user in staff_users if user.email]
-    
-    send_mail(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        recipient_list,
-        html_message=html_message
-    )

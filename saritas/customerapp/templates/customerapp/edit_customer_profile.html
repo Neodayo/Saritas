@@ -1,0 +1,67 @@
+{% extends 'customerapp/base.html' %}
+{% load static %}
+
+{% block title %}Edit Profile - Sarita's{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card p-4 shadow" style="max-width: 600px; margin: auto;">
+        <h2 class="mb-4 text-center">Edit Profile</h2>
+
+        {% if messages %}
+            <div class="mb-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="mb-4">
+                <h4>User Information</h4>
+                <div class="form-group mb-3">
+                    <label for="{{ user_form.first_name.id_for_label }}">First Name</label>
+                    {{ user_form.first_name }}
+                </div>
+                <div class="form-group mb-3">
+                    <label for="{{ user_form.last_name.id_for_label }}">Last Name</label>
+                    {{ user_form.last_name }}
+                </div>
+                <div class="form-group mb-3">
+                    <label for="{{ user_form.email.id_for_label }}">Email</label>
+                    {{ user_form.email }}
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h4>Customer Information</h4>
+                <div class="form-group mb-3">
+                    <label for="{{ customer_form.phone.id_for_label }}">Phone</label>
+                    {{ customer_form.phone }}
+                    <small class="form-text text-muted">Format: +1234567890</small>
+                </div>
+                <div class="form-group mb-3">
+                    <label for="{{ customer_form.address.id_for_label }}">Address</label>
+                    {{ customer_form.address }}
+                </div>
+                <div class="form-group mb-3">
+                    <label for="{{ customer_form.image.id_for_label }}">Profile Picture</label>
+                    {% if customer_form.instance.image %}
+                        <div class="mb-2">
+                            <img src="{{ customer_form.instance.image.url }}" alt="Current Profile Image" class="img-thumbnail" style="max-height: 150px;">
+                        </div>
+                    {% endif %}
+                    {{ customer_form.image }}
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a href="{% url 'customerapp:customer_profile' %}" class="btn btn-outline-secondary ml-2">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

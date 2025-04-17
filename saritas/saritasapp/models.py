@@ -1,15 +1,21 @@
-from django.db import models, transaction
+from datetime import timedelta
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
-from django.db.models import F
+from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator, MaxValueValidator, URLValidator
+from django.db import models, transaction
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator
+from django.urls import reverse
 from django.utils import timezone
-from datetime import timedelta
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.conf import settings
 
 
+
+
+
+# --- Branch ---
 class Branch(models.Model):
     branch_name = models.CharField(max_length=255, unique=True)
     location = models.CharField(max_length=255)
@@ -17,6 +23,8 @@ class Branch(models.Model):
     def __str__(self):
         return self.branch_name
 
+
+# --- Custom User ---
 class User(AbstractUser):
     ROLE_CHOICES = [
         ('staff', 'Staff'),
@@ -47,6 +55,8 @@ class User(AbstractUser):
             self.is_staff = True
         super().save(*args, **kwargs)
 
+
+# --- Staff ---
 class Staff(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="staff_profile")
     position = models.CharField(max_length=100)
@@ -55,6 +65,8 @@ class Staff(models.Model):
     def __str__(self):
         return f"{self.user.username} ({self.position})"
 
+
+# --- Customer ---
 class Customer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="customer_profile")
     phone = models.CharField(max_length=15, unique=True)
@@ -65,9 +77,20 @@ class Customer(models.Model):
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name}"
 
+    @property
+    def first_name(self):
+        return self.user.first_name
+
+    @property
+    def last_name(self):
+        return self.user.last_name
+
+    @property
+    def email(self):
+        return self.user.email
 
 
-# --- Category Model (For Inventory Items) ---
+# --- Inventory Support Models ---
 class Category(models.Model):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True)
@@ -75,21 +98,20 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
-# --- Color Model ---
 class Color(models.Model):
     name = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
         return self.name
 
-# --- Size Model ---
 class Size(models.Model):
     name = models.CharField(max_length=10, unique=True)
 
     def __str__(self):
         return self.name
 
-# --- Inventory Model ---
+
+# --- Inventory ---
 class Inventory(models.Model):
     name = models.CharField(max_length=255)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name="inventory_items")
@@ -122,132 +144,220 @@ class Inventory(models.Model):
         verbose_name_plural = "Inventory"
         ordering = ['-created_at']
 
-# --- Rental System ---
+
+# --- Rental ---
 class Rental(models.Model):
+    # Status Constants
+    PENDING = "Pending"
+    APPROVED = "Approved"
+    RENTED = "Rented"
+    RETURNED = "Returned"
+    OVERDUE = "Overdue"
+    CANCELLED = "Cancelled"
+    REJECTED = "Rejected"
+    RENTING = "Renting"
+
     STATUS_CHOICES = [
-        ("Pending", "Pending"),
-        ("Approved", "Approved"),
-        ("Rented", "Rented"),
-        ("Returned", "Returned"),
-        ("Overdue", "Overdue"),
-        ("Cancelled", "Cancelled"),
-        ("Rejected", "Rejected"),
+        (RENTING, "Renting"),
+        (PENDING, "Pending"),
+        (APPROVED, "Approved"),
+        (RENTED, "Rented"),
+        (RETURNED, "Returned"),
+        (OVERDUE, "Overdue"),
+        (CANCELLED, "Cancelled"),
+        (REJECTED, "Rejected"),
     ]
 
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="rentals")
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="managed_rentals")
-    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="approved_rentals")
-    inventory = models.ForeignKey(Inventory, on_delete=models.CASCADE, related_name="rentals")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="managed_rentals"
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="managed_rentals"
+    )
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approved_rentals"
+    )
+    inventory = models.ForeignKey(
+        'Inventory',
+        on_delete=models.CASCADE,
+        related_name="rentals"
+    )
     rental_start = models.DateField(default=timezone.now, db_index=True)
     rental_end = models.DateField(db_index=True)
-    deposit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="Pending", db_index=True)
+    deposit = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        null=True, 
+        blank=True
+    )
+    status = models.CharField(
+        max_length=10, 
+        choices=STATUS_CHOICES, 
+        default=PENDING, 
+        db_index=True
+    )
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
     approved_at = models.DateTimeField(null=True, blank=True)
     rejection_reason = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
+    inventory_decremented = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['-created_at']
-        verbose_name = "Rental"
-        verbose_name_plural = "Rentals"
         indexes = [
             models.Index(fields=['rental_start', 'rental_end']),
             models.Index(fields=['status']),
             models.Index(fields=['created_at']),
         ]
 
+    def __str__(self):
+        return f"Rental #{self.pk} - {self.customer} - {self.inventory}"
+
     def clean(self):
         if self.rental_end < self.rental_start:
             raise ValidationError("Return date must be after the rental start date.")
-        if self.status == "Rented" and self.inventory.quantity <= 0:
-            raise ValidationError(f"{self.inventory.name} is out of stock.")
+        
+        # Set deposit amount from inventory if not set
+        if not self.deposit and self.inventory:
+            self.deposit = self.inventory.deposit_price
 
     def save(self, *args, **kwargs):
         self.full_clean()
-        with transaction.atomic():
-            self.inventory.refresh_from_db()
+        super().save(*args, **kwargs)
 
-            if self.pk:
-                old_rental = Rental.objects.select_for_update().get(pk=self.pk)
-                if old_rental.status != self.status:
-                    if old_rental.status == "Rented" and self.status in ["Returned", "Cancelled"]:
-                        self.inventory.quantity += 1
-                    elif old_rental.status in ["Pending", "Approved"] and self.status == "Rented":
-                        if self.inventory.quantity <= 0:
-                            raise ValidationError(f"{self.inventory.name} is out of stock.")
-                        self.inventory.quantity -= 1
-                        self.approved_at = timezone.now()
-                    elif old_rental.status == "Pending" and self.status == "Approved":
-                        self.approved_by = self.user
-                        self.approved_at = timezone.now()
-            else:
-                if self.status == "Rented":
-                    if self.inventory.quantity <= 0:
-                        raise ValidationError(f"{self.inventory.name} is out of stock.")
-                    self.inventory.quantity -= 1
-                    self.approved_at = timezone.now()
-
-            self.inventory.save()
-            super().save(*args, **kwargs)
+    # --- Properties ---
 
     @property
     def duration_days(self):
+        """Calculate total rental duration in days"""
         return (self.rental_end - self.rental_start).days + 1
 
     @property
     def days_left(self):
-        if self.status not in ["Rented", "Approved"]:
+        """Days remaining until due date"""
+        if self.status not in [self.RENTED, self.APPROVED]:
             return None
         return (self.rental_end - timezone.now().date()).days
 
     @property
-    def total_cost(self):
-        return (self.inventory.rental_price or 0) + (self.inventory.deposit_price or 0)
+    def rental_cost(self):
+        """Flat rental price (not multiplied by days)"""
+        return float(self.inventory.rental_price)
 
+
+    @property
+    def total_cost(self):
+        """Original total cost (rental + deposit)"""
+        return self.rental_cost + float(self.deposit or 0)
+
+    @property
+    def final_amount(self):
+        """Final amount after return (rental cost only)"""
+        if self.status == self.RETURNED:
+            return self.rental_cost
+        return self.total_cost
 
     @property
     def is_active(self):
-        return self.status in ["Rented", "Approved"] and timezone.now().date() <= self.rental_end
+        """Check if rental is currently active"""
+        return self.status in [self.RENTED, self.APPROVED] and timezone.now().date() <= self.rental_end
 
     @property
     def is_overdue(self):
-        return self.status == "Rented" and timezone.now().date() > self.rental_end
+        """Check if rental is overdue"""
+        return self.status == self.RENTED and timezone.now().date() > self.rental_end
+
+    # --- Rental Lifecycle Actions ---
 
     def approve(self, user):
-        if self.status != "Pending":
+        """Approve a pending rental"""
+        if self.status != self.PENDING:
             raise ValidationError("Only pending rentals can be approved.")
-        self.status = "Approved"
-        self.approved_by = user
-        self.approved_at = timezone.now()
-        self.save()
+
+        with transaction.atomic():
+            self.inventory.refresh_from_db()
+            if self.inventory.quantity <= 0:
+                raise ValidationError(f"{self.inventory.name} is out of stock.")
+
+            if not self.inventory_decremented:
+                self.inventory.quantity -= 1
+                self.inventory_decremented = True
+                self.inventory.save()
+
+            self.status = self.APPROVED
+            self.approved_by = user
+            self.approved_at = timezone.now()
+            self.save()
 
     def reject(self, user, reason=""):
-        if self.status != "Pending":
+        """Reject a pending rental"""
+        if self.status != self.PENDING:
             raise ValidationError("Only pending rentals can be rejected.")
-        self.status = "Rejected"
+
+        self.status = self.REJECTED
+        self.rejection_reason = reason
         self.approved_by = user
         self.approved_at = timezone.now()
-        self.rejection_reason = reason
         self.save()
 
     def mark_as_rented(self, user):
-        if self.status != "Approved":
+        """Mark approved rental as rented"""
+        if self.status != self.APPROVED:
             raise ValidationError("Only approved rentals can be marked as rented.")
-        if self.inventory.quantity <= 0:
-            raise ValidationError(f"{self.inventory.name} is out of stock.")
-        self.status = "Rented"
+
+        self.status = self.RENTED
         self.user = user
-        self.inventory.quantity -= 1
-        self.inventory.save()
         self.save()
 
-    def __str__(self):
-        return f"Rental #{self.id} - {self.get_status_display()} ({self.inventory.name})"
+    def mark_as_returned(self):
+        """Mark rental as returned and handle inventory"""
+        if self.status not in ['Renting', 'Overdue']:
+            raise ValidationError("Only rented or overdue items can be returned.")
 
-    
-# --- Reservation System---
+        with transaction.atomic():
+            # Return inventory item
+            self.inventory.quantity += 1
+            self.inventory.save()
+            
+            # Update rental status
+            self.status = 'Returned'
+            self.save()
+
+    def mark_as_cancelled(self):
+        """Cancel a pending or approved rental"""
+        if self.status not in [self.APPROVED, self.PENDING]:
+            raise ValidationError("Only pending or approved rentals can be cancelled.")
+
+        with transaction.atomic():
+            if self.status == self.APPROVED and not self.inventory_decremented:
+                self.inventory.quantity += 1
+                self.inventory.save()
+
+            self.status = self.CANCELLED
+            self.save()
+
+    def check_and_update_overdue(self):
+        """Update status to overdue if past due date"""
+        if self.status == self.RENTED and timezone.now().date() > self.rental_end:
+            self.status = self.OVERDUE
+            self.save(update_fields=["status"])
+
+
+# --- Reservation ---
 class Reservation(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending Approval'),
@@ -256,48 +366,40 @@ class Reservation(models.Model):
         ('completed', 'Completed'),
         ('cancelled', 'Cancelled'),
     ]
-    
-    item = models.ForeignKey('Inventory', on_delete=models.CASCADE, related_name='reservations')
-    customer = models.ForeignKey('Customer', on_delete=models.CASCADE, related_name='reservations')    
-    reservation_date = models.DateField(
-        default=timezone.now,
-        validators=[MinValueValidator(timezone.now().date())]
-    )
-    return_date = models.DateField(
-        validators=[MinValueValidator(timezone.now().date() + timedelta(days=1))]
-    )
+
+    item = models.ForeignKey(Inventory, on_delete=models.CASCADE, related_name='reservations')
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='reservations')
+    reservation_date = models.DateField(default=timezone.now)
+    return_date = models.DateField()
     quantity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
     reservation_price = models.DecimalField(
         max_digits=8, decimal_places=2,
-        default=500.00,  # Set the default value here
+        default=500.00,
+        editable=False,
         validators=[MinValueValidator(500.00), MaxValueValidator(500.00)],
-        help_text="Flat reservation fee per item"
+        help_text="Flat reservation fee of ₱500.00 per item"
     )
-    total_price = models.DecimalField(
-        max_digits=10, decimal_places=2,
-        blank=True, null=True,
-        help_text="Automatically calculated as quantity × reservation price"
-    )
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    total_price = models.DecimalField(max_digits=10, decimal_places=2, editable=False, default=0.00)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_reservations')
-    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_reservations')
-    approved_at = models.DateTimeField(null=True, blank=True)
-    cancelled_at = models.DateTimeField(null=True, blank=True)
-
     notes = models.TextField(blank=True, null=True)
 
+    def clean(self):
+        today = timezone.now().date()
+
+        if self.reservation_date < today:
+            raise ValidationError("Reservation date cannot be in the past.")
+        if self.return_date <= self.reservation_date:
+            raise ValidationError("Return date must be after the reservation date.")
+        if self.quantity > self.item.quantity:
+            raise ValidationError(f"Only {self.item.quantity} items available for reservation.")
+
     def save(self, *args, **kwargs):
-        # Set reservation_price from inventory if not manually provided
-        if not self.reservation_price:
-            self.reservation_price = self.item.reservation_price
-        # Auto-calculate total
         self.total_price = self.quantity * self.reservation_price
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Reservation #{self.id} - {self.customer.user.get_full_name()} for {self.item.name}"
+        return f"Reservation #{self.pk} by {self.customer.user.username} for '{self.item.name}'"
 
     
     # --- Fitting Schedule System ---
@@ -339,6 +441,76 @@ class FittingAppointment(models.Model):
 
     def __str__(self):
         return f"Fitting #{self.id} - {self.get_status_display()}"
+    
+# --- Notification System ---
+class Notification(models.Model):
+    NOTIFICATION_TYPES = [
+        ('rental_approved', 'Rental Approved'),
+        ('rental_rejected', 'Rental Rejected'),
+        ('rental_completed', 'Rental Completed'),
+        ('reservation_approved', 'Reservation Approved'),
+        ('reservation_rejected', 'Reservation Rejected'),
+        ('reservation_completed', 'Reservation Completed'),
+        ('payment_required', 'Payment Required'),
+        ('payment_received', 'Payment Received'),
+        ('rental_reminder', 'Rental Reminder'),
+        ('return_reminder', 'Return Reminder'),
+        ('system_alert', 'System Alert'),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notifications'
+    )
+    notification_type = models.CharField(max_length=30, choices=NOTIFICATION_TYPES)
+    rental = models.ForeignKey('Rental', on_delete=models.CASCADE, null=True, blank=True)
+    reservation = models.ForeignKey('Reservation', on_delete=models.CASCADE, null=True, blank=True)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    is_email_sent = models.BooleanField(default=False)
+    email_sent_at = models.DateTimeField(null=True, blank=True)
+    url = models.URLField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Notification'
+        verbose_name_plural = 'Notifications'
+
+    def __str__(self):
+        return f"{self.get_notification_type_display()} - {self.user.username}"
+
+    def save(self, *args, **kwargs):
+        if not self.url:
+            try:
+                if self.rental:
+                    self.url = reverse('customerapp:rental_detail', args=[self.rental.id])
+                elif self.reservation:
+                    self.url = reverse('customerapp:reservation_detail', args=[self.reservation.id])
+            except:
+                self.url = None
+        super().save(*args, **kwargs)
+
+    def clean(self):
+        if self.url:
+            validator = URLValidator()
+            try:
+                validator(self.url)
+            except ValidationError:
+                raise ValidationError({'url': 'Enter a valid URL'})
+
+    def mark_as_read(self):
+        self.is_read = True
+        self.save()
+
+    @classmethod
+    def get_unread_count(cls, user):
+        return cls.objects.filter(user=user, is_read=False).count()
+
+    @classmethod
+    def mark_all_as_read(cls, user):
+        return cls.objects.filter(user=user, is_read=False).update(is_read=True)
 
 # --- Event Package & Pricing ---
 class EventPackage(models.Model):
@@ -471,32 +643,6 @@ def update_order_total(sender, instance, **kwargs):
 @receiver(post_delete, sender=SelectedWardrobeItem)
 def update_order_total(sender, instance, **kwargs):
     instance.order.calculate_total_price()
-
-# --- Notification System ---
-
-class Notification(models.Model):
-    NOTIFICATION_TYPES = [
-        ('rental_approved', 'Rental Approved'),
-        ('rental_rejected', 'Rental Rejected'),
-        ('rental_completed', 'Rental Completed'),
-        ('reservation_approved', 'Reservation Approved'),
-        ('reservation_rejected', 'Reservation Rejected'),
-        ('reservation_completed', 'Reservation Completed'),
-    ]
-
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
-    notification_type = models.CharField(max_length=30, choices=NOTIFICATION_TYPES)
-    rental = models.ForeignKey('Rental', on_delete=models.CASCADE, null=True, blank=True)
-    reservation = models.ForeignKey('Reservation', on_delete=models.CASCADE, null=True, blank=True)
-    message = models.TextField()
-    is_read = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return f"{self.get_notification_type_display()} - {self.user.username}"
 
 
 # --- Calendar/Event Model ---

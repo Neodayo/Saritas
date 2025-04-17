@@ -110,7 +110,9 @@
                     <td>
                         {% if rental.status == 'Renting' or rental.status == 'Overdue' %}
                             <a href="{% url 'saritasapp:return_rental' rental.id %}" 
-                               class="btn btn-success btn-sm">Mark as Returned</a>
+                               class="btn btn-success btn-sm">
+                                <i class="fa fa-undo"></i> Return
+                            </a>
                         {% else %}
                             <span class="text-muted">Returned</span>
                         {% endif %}

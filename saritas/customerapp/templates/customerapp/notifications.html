@@ -25,7 +25,8 @@
         {% if notifications %}
             {% for notification in notifications %}
             <div class="notification {% if not notification.is_read %}unread{% endif %}" 
-                 onclick="location.href='{% url 'customerapp:mark_notification_as_read' notification.id %}'">
+                 data-notification-id="{{ notification.id }}"
+                 data-notification-url="{{ notification.url|default:'' }}">
                 <div class="notification-icon">
                     {% if notification.notification_type == 'rental_approved' %}
                         <i class="fas fa-check-circle text-success"></i>
@@ -36,7 +37,13 @@
                     {% endif %}
                 </div>
                 <div class="notification-content">
-                    <p class="notification-message">{{ notification.message }}</p>
+                    <p class="notification-message">
+                        {% if notification.url %}
+                            <span class="notification-link">{{ notification.message }}</span>
+                        {% else %}
+                            {{ notification.message }}
+                        {% endif %}
+                    </p>
                     <small class="notification-time">{{ notification.created_at|timesince }} ago</small>
                 </div>
                 {% if not notification.is_read %}
@@ -52,5 +59,44 @@
             </div>
         {% endif %}
     </div>
+    <div>
+        <a href="{% url 'customerapp:rental_list' %}">rental_list</a>
+    </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle click on notifications
+    document.querySelectorAll('.notification').forEach(item => {
+        item.addEventListener('click', function(e) {
+            const notificationId = this.dataset.notificationId;
+            const notificationUrl = this.dataset.notificationUrl;
+            const markAsReadUrl = `{% url 'customerapp:mark_notification_as_read' 0 %}`.replace('0', notificationId);
+            
+            // Mark as read via AJAX
+            fetch(markAsReadUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Accept': 'application/json',
+                }
+            }).then(response => {
+                if (response.ok) {
+                    // Update UI without reload
+                    this.classList.remove('unread');
+                    const badge = this.querySelector('.unread-badge');
+                    if (badge) badge.remove();
+                    
+                    // Navigate to URL if it exists (same tab)
+                    if (notificationUrl) {
+                        window.location.href = notificationUrl;
+                    }
+                }
+            }).catch(error => {
+                console.error('Error marking notification as read:', error);
+            });
+        });
+    });
+});
+</script>
 {% endblock %}

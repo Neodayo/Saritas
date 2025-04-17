@@ -1,17 +1,37 @@
-
+/* Notification Bell */
 .nav-item .fa-bell {
     color: #5a3e2b;
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     position: relative;
+    transition: transform 0.3s ease;
 }
 
+.nav-item .fa-bell:hover {
+    transform: scale(1.1);
+}
+
+/* Badge */
 .nav-item .badge {
     position: absolute;
     top: -5px;
     right: -5px;
-    font-size: 0.6rem;
-    padding: 3px 5px;
+    font-size: 0.65rem;
+    padding: 0.35em 0.5em;
+    min-width: 1.5em;
 }
+
+/* Pulse animation for new notifications */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.nav-item .badge.bg-danger {
+    animation: pulse 1.5s infinite;
+}
+
+/* Notification Container */
 .notification-container {
     max-width: 800px;
     margin: 0 auto;
@@ -21,6 +41,7 @@
     overflow: hidden;
 }
 
+/* Individual Notification */
 .notification {
     padding: 15px 20px;
     border-bottom: 1px solid #eee;
@@ -70,6 +91,7 @@
     margin-left: 10px;
 }
 
+/* Empty State */
 .empty-state {
     text-align: center;
     padding: 40px 20px;
@@ -91,6 +113,7 @@
     margin: 0;
 }
 
+/* Mark All Button */
 .btn-mark-all {
     background: #6c757d;
     color: white;

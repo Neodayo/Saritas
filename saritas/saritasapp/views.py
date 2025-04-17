@@ -1,6 +1,7 @@
 # Standard library imports
 from calendar import month_name
 from datetime import date, datetime, timedelta
+from venv import logger
 
 # Django core imports
 from django.contrib import messages
@@ -17,24 +18,27 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-# Third-party imports (ReportLab for PDF generation)
+# Third-party imports
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.pdfgen import canvas
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+import plotly.graph_objects as go
 
 # Local app imports
 from .forms import (
-    AdminSignUpForm, CategoryForm, ColorForm, EventForm, InventoryForm,
-    LoginForm, SizeForm, StaffSignUpForm
+    AdminSignUpForm, CategoryForm, ColorForm, EditProfileForm, EventForm,
+    InventoryForm, LoginForm, SizeForm, StaffSignUpForm
 )
 from .models import (
     Branch, Category, Color, Customer, Event, Inventory, Notification,
-    Receipt, Rental, Reservation, Size, User, WardrobePackage
+    Receipt, Rental, Reservation, Size, User, Venue, WardrobePackage
 )
 from .utils import send_notification
-
+from customerapp.tasks import notify_staff_about_rental_request
+from saritasapp.tasks import send_notification
+ # Make sure Venue model is imported
 
 @login_required
 def add_inventory(request):
@@ -186,6 +190,249 @@ def inventory_view(request):
         'sort': sort
     })
 
+from django.shortcuts import render
+from django.db import transaction
+from django.utils import timezone
+from .models import Rental
+import logging
+
+# Create a logger instance
+logger = logging.getLogger(__name__)
+
+@login_required
+def rental_tracker(request):
+    # Extract filter values from GET parameters
+    status_filter = request.GET.get('status')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    today = timezone.now().date()
+
+    # Apply filters to rental query
+    rentals = Rental.objects.all()
+
+    if status_filter:
+        rentals = rentals.filter(status=status_filter)
+
+    # Handle date filters if provided
+    if start_date:
+        rentals = rentals.filter(rental_start__gte=start_date)
+    if end_date:
+        rentals = rentals.filter(rental_end__lte=end_date)
+
+    with transaction.atomic():
+        # Only mark as overdue if the rental's item quantity was properly decremented
+        overdue_rentals = Rental.objects.filter(
+            rental_end__lt=today,
+            status="Renting"
+        )
+
+        for rental in overdue_rentals:
+            # Verify the item was actually checked out (inventory decremented)
+            if not rental.inventory_was_decremented:
+                logger.warning(f"Overdue rental {rental.id} never had inventory decremented.")
+                continue
+                
+            rental.status = "Overdue"
+            rental.save()
+
+        # Only mark as "Renting" if the quantity was decremented during approval
+        approved_rentals = Rental.objects.filter(
+            rental_start__lte=today,
+            rental_end__gte=today,
+            status="Approved"
+        )
+
+        for rental in approved_rentals:
+            rental.status = "Renting"
+            rental.save()
+
+    # Render the rental tracker page with filtered rentals
+    return render(request, 'saritasapp/rental_tracker.html', {
+        'rentals': rentals
+    })
+
+
+
+@staff_member_required
+@login_required
+def rental_approvals(request):
+    pending_rentals = Rental.objects.filter(status='Pending').select_related(
+        'customer__user', 'inventory').order_by('-created_at')
+
+    stats = {
+        'pending': pending_rentals.count(),
+        'approved': Rental.objects.filter(status='Approved').count(),
+        'rejected': Rental.objects.filter(status='Rejected').count(),
+    }
+
+    return render(request, 'saritasapp/rental_approvals.html', {
+        'pending_rentals': pending_rentals,
+        'stats': stats,
+    })
+
+@staff_member_required
+@login_required
+def approve_or_reject_rental(request, rental_id, action):
+    rental = get_object_or_404(Rental, pk=rental_id)
+
+    try:
+        if action == 'approve':
+            # This now includes the quantity decrement
+            rental.approve(request.user)
+            action_message = 'approved'
+        elif action == 'reject':
+            reason = request.POST.get('rejection_reason', '')
+            rental.reject(request.user, reason)
+            action_message = 'rejected'
+        else:
+            return redirect('saritasapp:rental_approvals')
+    except ValidationError as e:
+        messages.error(request, str(e))
+        return redirect('saritasapp:rental_approvals')
+    except Exception as e:
+        logger.error(f"Error processing rental {action}: {str(e)}")
+        messages.error(request, "An error occurred processing this request")
+        return redirect('saritasapp:rental_approvals')
+
+    # Notifications
+    Notification.objects.create(
+        user=rental.customer.user,
+        notification_type=f'rental_{action_message}',
+        rental=rental,
+        message=f"Your rental for {rental.inventory.name} has been {action_message}!", 
+        is_read=False
+    )
+
+    messages.success(request, f"Rental successfully {action_message}!")
+    return redirect('saritasapp:rental_approvals')
+
+
+@staff_member_required
+def view_reservations(request):
+    status = request.GET.get('status', 'all')
+    
+    reservations = Reservation.objects.select_related(
+        'item',
+        'customer__user',
+        'approved_by'
+    ).order_by('-created_at')
+    
+    if status != 'all':
+        reservations = reservations.filter(status=status)
+    
+    context = {
+        'reservations': reservations,
+        'status': status,
+        'status_choices': Reservation.STATUS_CHOICES,
+    }
+    return render(request, 'saritasapp/view_reservation.html', context)
+
+
+@staff_member_required
+def update_reservation(request, pk, action):
+    reservation = get_object_or_404(Reservation, pk=pk)
+
+    if request.method == 'POST':
+        if action == 'approve':
+            reservation.status = 'approved'
+            reservation.approved_by = request.user
+            Notification.objects.create(
+                user=reservation.customer.user,
+                notification_type='reservation_approved',
+                reservation=reservation,
+                message=f"Your reservation for '{reservation.item.name}' has been approved."
+            )
+        elif action == 'reject':
+            reservation.status = 'rejected'
+            reservation.approved_by = request.user
+            Notification.objects.create(
+                user=reservation.customer.user,
+                notification_type='reservation_rejected',
+                reservation=reservation,
+                message=f"Your reservation for '{reservation.item.name}' has been rejected."
+            )
+        elif action == 'complete':
+            reservation.status = 'completed'
+            Notification.objects.create(
+                user=reservation.customer.user,
+                notification_type='reservation_completed',
+                reservation=reservation,
+                message=f"Your reservation for '{reservation.item.name}' has been marked as completed."
+            )
+        reservation.save()
+
+    return redirect('saritasapp:view_reservations')
+
+
+@staff_member_required
+@login_required
+def approve_rental(request, rental_id, action):
+    rental = get_object_or_404(Rental, id=rental_id, status='Pending')
+
+    try:
+        with transaction.atomic():
+            if action == 'approve':
+                # Check inventory availability
+                if rental.inventory.quantity <= 0:
+                    messages.error(request, f'Cannot approve - {rental.inventory.name} is out of stock!')
+                    return redirect('saritasapp:rental_approvals')
+
+                # Approve the rental
+                rental.status = 'Approved'
+                rental.approved_by = request.user
+                rental.approved_at = timezone.now()
+
+                # Reduce inventory
+                rental.inventory.quantity -= 1
+                rental.inventory.save()
+
+                # Send approval notification
+                send_notification(
+                    user=rental.customer.user,
+                    notification_type='rental_approved',
+                    rental=rental,
+                    message=f"Your rental request for {rental.inventory.name} has been approved!"
+                )
+
+                messages.success(request, f'Rental #{rental_id} approved successfully!')
+
+            elif action == 'reject':
+                rental.status = 'Rejected'
+                rental.approved_by = request.user
+                rental.rejection_reason = request.POST.get('rejection_reason', '')
+
+                # Send rejection notification
+                send_notification(
+                    user=rental.customer.user,
+                    notification_type='rental_rejected',
+                    rental=rental,
+                    message=f"Your rental request for {rental.inventory.name} has been rejected. Reason: {rental.rejection_reason}"
+                )
+
+                messages.warning(request, f'Rental #{rental_id} has been rejected.')
+
+            rental.save()
+
+    except Exception as e:
+        messages.error(request, f'Error processing request: {str(e)}')
+
+    return redirect('saritasapp:rental_approvals')
+
+@staff_member_required
+@login_required
+def rental_detail(request, rental_id):
+    rental = get_object_or_404(Rental, id=rental_id)
+    
+    # Get last rental excluding current one
+    last_rental = None
+    if rental.customer:
+        last_rental = rental.customer.rentals.exclude(id=rental.id).order_by('-created_at').first()
+    
+    return render(request, 'saritasapp/rental_detail.html', {
+        'rental': rental,
+        'last_rental': last_rental
+    })
+
 @login_required
 def customer_list(request):
     query = request.GET.get('q', '')
@@ -245,24 +492,31 @@ def view_customer(request, customer_id):
     return render(request, 'saritasapp/view_customer.html', {
         'customer': customer,
         'rentals': rentals,
-    })  
+    })
 
 @login_required
 def return_rental(request, rental_id):
     rental = get_object_or_404(Rental, id=rental_id)
     
-    if rental.status in ['Renting', 'Overdue']:
-        rental.status = 'Returned'
-        
-        rental.inventory.quantity += 1  
-        rental.inventory.save()  
-        
-        rental.save() 
-        messages.success(request, f"{rental.inventory.name} has been marked as 'Returned'.")
-    else:
-        messages.warning(request, "This item has already been returned.")
+    if request.method == 'POST':
+        if rental.status in ['Renting', 'Overdue']:
+            rental.mark_as_returned()
+            messages.success(
+                request,
+                f"{rental.inventory.name} has been returned. "
+                f"Deposit of ₱{rental.deposit} will be refunded."
+            )
+            return redirect('saritasapp:view_customer', rental.customer.id)
+        else:
+            messages.warning(request, "This item cannot be returned.")
+            return redirect('saritasapp:view_customer', rental.customer.id)
     
-    return redirect('saritasapp:view_customer', rental.customer.id)
+    # For GET requests, show confirmation page
+    return render(request, 'saritasapp/confirm_return.html', {
+        'rental': rental,
+        'rental_cost': rental.inventory.rental_price * rental.duration_days,
+        'deposit': rental.deposit
+    })
 
 # views.py
 @login_required
@@ -279,13 +533,7 @@ def manage_staff(request):
     return render(request, 'saritasapp/manage_staff.html', context)
 
 #data_analysis
-from django.shortcuts import render
-from django.db.models import Count, Sum
-from django.contrib.auth.decorators import login_required
-from django.db.models.functions import ExtractWeek, ExtractMonth, ExtractYear
-import plotly.graph_objects as go
-from datetime import datetime, timedelta
-from .models import Rental, Customer, Inventory
+
 
 @login_required
 def data_analysis(request):
@@ -580,14 +828,6 @@ def logout_view(request):
 def receipt_view(request):
     return render(request, 'saritasapp/receipt.html')
 
-@login_required
-def notification_view(request):
-    return render(request, 'saritasapp/notification.html')
-
-@login_required
-def reservation_view(request):
-
-    return render(request, 'saritasapp/reservation.html')
 
 #Receipt
 @login_required
@@ -907,228 +1147,13 @@ def get_events(request):
     ]
     return JsonResponse(events_data, safe=False)
 
-@login_required
-def rental_tracker(request):
-    status_filter = request.GET.get('status')
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
-    today = timezone.now().date()
 
-    # Automatically update statuses
-    with transaction.atomic():
-        # Mark overdue rentals
-        Rental.objects.filter(
-            rental_end__lt=today,
-            status="Renting"
-        ).update(status="Overdue")
-        
-        # Mark newly active rentals (Approved → Renting when start date arrives)
-        Rental.objects.filter(
-            rental_start__lte=today,
-            rental_end__gte=today,
-            status="Approved"
-        ).update(status="Renting")
-
-    # Base query with optimized joins
-    rentals = Rental.objects.select_related(
-        'customer__user',
-        'inventory__category'
-    ).order_by('-rental_start')
-
-    # Apply filters
-    if status_filter:
-        rentals = rentals.filter(status=status_filter)
-        
-    if start_date:
-        rentals = rentals.filter(rental_start__gte=start_date)
-        
-    if end_date:
-        rentals = rentals.filter(rental_end__lte=end_date)
-
-    # Pagination
-    page = request.GET.get('page', 1)
-    paginator = Paginator(rentals, 25)  # Show 25 rentals per page
-    
-    try:
-        rentals = paginator.page(page)
-    except PageNotAnInteger:
-        rentals = paginator.page(1)
-    except EmptyPage:
-        rentals = paginator.page(paginator.num_pages)
-
-    # Get counts for all statuses
-    status_counts = Rental.objects.aggregate(
-        pending=Count('pk', filter=Q(status='Pending')),
-        active=Count('pk', filter=Q(status='Renting')),
-        returned=Count('pk', filter=Q(status='Returned')),
-        overdue=Count('pk', filter=Q(status='Overdue'))
-    )
-
-    return render(request, 'saritasapp/rental_tracker.html', {
-        'rentals': rentals,
-        'today': today,
-        'active_count': status_counts['active'],
-        'returned_count': status_counts['returned'],
-        'overdue_count': status_counts['overdue'],
-        'pending_count': status_counts['pending'],
-        'filter_status': status_filter,
-        'filter_start_date': start_date,
-        'filter_end_date': end_date,
-    })
-
-@staff_member_required
-@login_required
-def rental_approvals(request):
-    # Get all pending rental requests with related data
-    pending_rentals = Rental.objects.filter(
-        status='Pending'
-    ).select_related(
-        'customer__user',
-        'inventory'
-    ).order_by('-created_at')  # Newest requests first
-    
-    # Counts for the dashboard
-    stats = {
-        'pending': pending_rentals.count(),
-        'approved': Rental.objects.filter(status='Approved').count(),
-        'rejected': Rental.objects.filter(status='Rejected').count(),
-    }
-    
-    return render(request, 'saritasapp/rental_approvals.html', {
-        'pending_rentals': pending_rentals,
-        'stats': stats,
-    })
-
-@staff_member_required
-def view_reservations(request):
-    status = request.GET.get('status', 'all')
-    
-    reservations = Reservation.objects.select_related(
-        'item',
-        'customer__user',
-        'approved_by'
-    ).order_by('-created_at')
-    
-    if status != 'all':
-        reservations = reservations.filter(status=status)
-    
-    context = {
-        'reservations': reservations,
-        'status': status,
-        'status_choices': Reservation.STATUS_CHOICES,
-    }
-    return render(request, 'saritasapp/view_reservation.html', context)
-
-
-@staff_member_required
-def update_reservation(request, pk, action):
-    reservation = get_object_or_404(Reservation, pk=pk)
-
-    if request.method == 'POST':
-        if action == 'approve':
-            reservation.status = 'approved'
-            reservation.approved_by = request.user
-            Notification.objects.create(
-                user=reservation.customer.user,
-                notification_type='reservation_approved',
-                reservation=reservation,
-                message=f"Your reservation for '{reservation.item.name}' has been approved."
-            )
-        elif action == 'reject':
-            reservation.status = 'rejected'
-            reservation.approved_by = request.user
-            Notification.objects.create(
-                user=reservation.customer.user,
-                notification_type='reservation_rejected',
-                reservation=reservation,
-                message=f"Your reservation for '{reservation.item.name}' has been rejected."
-            )
-        elif action == 'complete':
-            reservation.status = 'completed'
-            Notification.objects.create(
-                user=reservation.customer.user,
-                notification_type='reservation_completed',
-                reservation=reservation,
-                message=f"Your reservation for '{reservation.item.name}' has been marked as completed."
-            )
-        reservation.save()
-
-    return redirect('saritasapp:view_reservations')
-
-
-@staff_member_required
-@login_required
-def approve_rental(request, rental_id, action):
-    rental = get_object_or_404(Rental, id=rental_id, status='Pending')
-
-    try:
-        with transaction.atomic():
-            if action == 'approve':
-                # Check inventory availability
-                if rental.inventory.quantity <= 0:
-                    messages.error(request, f'Cannot approve - {rental.inventory.name} is out of stock!')
-                    return redirect('saritasapp:rental_approvals')
-
-                # Approve the rental
-                rental.status = 'Approved'
-                rental.approved_by = request.user
-                rental.approved_at = timezone.now()
-
-                # Reduce inventory
-                rental.inventory.quantity -= 1
-                rental.inventory.save()
-
-                # Send approval notification
-                send_notification(
-                    user=rental.customer.user,
-                    notification_type='rental_approved',
-                    rental=rental,
-                    message=f"Your rental request for {rental.inventory.name} has been approved!"
-                )
-
-                messages.success(request, f'Rental #{rental_id} approved successfully!')
-
-            elif action == 'reject':
-                rental.status = 'Rejected'
-                rental.approved_by = request.user
-                rental.rejection_reason = request.POST.get('rejection_reason', '')
-
-                # Send rejection notification
-                send_notification(
-                    user=rental.customer.user,
-                    notification_type='rental_rejected',
-                    rental=rental,
-                    message=f"Your rental request for {rental.inventory.name} has been rejected. Reason: {rental.rejection_reason}"
-                )
-
-                messages.warning(request, f'Rental #{rental_id} has been rejected.')
-
-            rental.save()
-
-    except Exception as e:
-        messages.error(request, f'Error processing request: {str(e)}')
-
-    return redirect('saritasapp:rental_approvals')
-
-@staff_member_required
-@login_required
-def rental_detail(request, rental_id):
-    rental = get_object_or_404(Rental, id=rental_id)
-
-    return render(request, 'saritasapp/rental_detail.html', {
-        'rental': rental
-    })
 
 #profile
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import logout
-from django.contrib import messages
-from .models import User
-from .forms import EditProfileForm
+
 
 @login_required
-def profile_view(request):
+def staff_profile_view(request):
     """Handles profile updates"""
     user = request.user  # Get the logged-in user
     
@@ -1142,8 +1167,6 @@ def profile_view(request):
             messages.error(request, "Please correct the errors below.")
     else:
         form = EditProfileForm(instance=user)
-
-    return render(request, "saritasapp/profile.html", {"form": form, "user": user})
 
 @login_required
 def sign_out(request):

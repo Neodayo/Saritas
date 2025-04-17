@@ -1,0 +1,40 @@
+{% extends "saritasapp/base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="card p-4">
+        <h2 class="mb-4">Confirm Return</h2>
+        
+        <div class="alert alert-info mb-4">
+            <h5>Rental #{{ rental.id }}</h5>
+            <p><strong>Item:</strong> {{ rental.inventory.name }}</p>
+            <p><strong>Customer:</strong> {{ rental.customer.user.get_full_name }}</p>
+        </div>
+        
+        <div class="border p-3 mb-4">
+            <h5>Financial Summary</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Rental Cost:</strong> ₱{{ rental_cost }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Deposit to Refund:</strong> ₱{{ deposit }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'saritasapp:view_customer' rental.customer.id %}" 
+                   class="btn btn-secondary">
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-success">
+                    Confirm Return
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'customerapp/base.html' %}
+{% load static %}
+
+{% block title %}My Profile - Sarita's{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card p-4 shadow" style="max-width: 600px; margin: auto;">
+        <h2 class="mb-4 text-center">My Profile</h2>
+        <div class="text-center mb-3">
+            {% if customer.image %}
+                <img src="{{ customer.image.url }}" alt="Profile Picture" class="rounded-circle" width="120" height="120">
+            {% else %}
+                <img src="{% static 'images/default-user.png' %}" alt="Default Image" class="rounded-circle" width="120" height="120">
+            {% endif %}
+        </div>
+        <table class="table">
+            <tr>
+                <th>Full Name</th>
+                <td>{{ customer.user.get_full_name }}</td>
+            </tr>
+            <tr>
+                <th>Email</th>
+                <td>{{ customer.user.email }}</td>
+            </tr>
+            <tr>
+                <th>Phone</th>
+                <td>{{ customer.phone }}</td>
+            </tr>
+            <tr>
+                <th>Address</th>
+                <td>{{ customer.address|default:"Not provided" }}</td>
+            </tr>
+            <tr>
+                <th>Joined</th>
+                <td>{{ customer.created_at|date:"F j, Y" }}</td>
+            </tr>
+        </table>
+        <div class="text-center">
+            <a href="{% url 'customerapp:edit_profile' %}" class="btn btn-outline-primary">Edit Profile</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
