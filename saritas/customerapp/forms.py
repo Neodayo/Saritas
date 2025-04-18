@@ -93,8 +93,10 @@ class RentalForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        # Remove inventory from kwargs if present (we'll handle it separately)
         self.inventory = kwargs.pop('inventory', None)
         super().__init__(*args, **kwargs)
+        
         # Initialize dynamic fields
         if self.inventory:
             self.fields['deposit_amount'].initial = self.inventory.deposit_price or 0.00

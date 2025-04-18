@@ -157,23 +157,24 @@ def rent_item(request, inventory_id):
     item = get_object_or_404(Inventory, pk=inventory_id)
 
     if request.method == 'POST':
-        form = RentalForm(request.POST, inventory=item)
+        form = RentalForm(request.POST)
         if form.is_valid():
             try:
                 with transaction.atomic():
-                    # Check availability but don't decrement yet
+                    # Check availability
                     if item.quantity <= 0:
                         messages.error(request, 'Item no longer available')
                         return redirect('customerapp:wardrobe')
 
+                    # Create and save rental with inventory
                     rental = form.save(commit=False)
-                    rental.inventory = item
+                    rental.inventory = item  # CRUCIAL: Assign inventory before saving
                     rental.customer = request.user.customer_profile
                     rental.status = 'Pending'
                     rental.deposit = item.deposit_price or 0.00
                     rental.save()
 
-                    # 🔔 Create notifications for all staff users
+                    # Create notifications for staff
                     staff_users = User.objects.filter(role='staff')
                     for staff in staff_users:
                         Notification.objects.create(
@@ -194,7 +195,11 @@ def rent_item(request, inventory_id):
                 logger.error(f"Unexpected error during rental creation: {e}", exc_info=True)
                 messages.error(request, f'An unexpected error occurred: {e}')
     else:
-        form = RentalForm(inventory=item)
+        # Initialize form with default dates
+        form = RentalForm(initial={
+            'rental_start': timezone.now().date(),
+            'rental_end': timezone.now().date() + timedelta(days=7)
+        })
 
     return render(request, 'customerapp/rent_item.html', {
         'form': form,

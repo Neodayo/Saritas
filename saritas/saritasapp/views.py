@@ -28,11 +28,11 @@ import plotly.graph_objects as go
 
 # Local app imports
 from .forms import (
-    AdminSignUpForm, CategoryForm, ColorForm, EditProfileForm, EventForm,
-    InventoryForm, LoginForm, SizeForm, StaffSignUpForm
+    AdminSignUpForm, CategoryForm, ColorForm, EditProfileForm, EventForm, EventPackageForm,
+    InventoryForm, LoginForm, PackageItemForm, SelectedPackageItemForm, SizeForm, StaffSignUpForm
 )
 from .models import (
-    Branch, Category, Color, Customer, Event, Inventory, Notification,
+    Branch, Category, Color, Customer, CustomerOrder, Event, EventPackage, Inventory, Notification, PackageItem,
     Receipt, Rental, Reservation, Size, User, Venue, WardrobePackage
 )
 from .utils import send_notification
@@ -1332,4 +1332,42 @@ def additional_confirmation(request):
     return render(request, 'saritasapp/additional_services.html', {
         'services': services
     })
+
+def event_package_list(request):
+    packages = EventPackage.objects.all()
+    return render(request, 'wedding/event_package_list.html', {'packages': packages})
+
+def event_package_form(request, pk=None):
+    instance = get_object_or_404(EventPackage, pk=pk) if pk else None
+    form = EventPackageForm(request.POST or None, instance=instance)
+    if request.method == 'POST':
+        if form.is_valid():
+            form.save()
+            return redirect('event_package_list')
+    return render(request, 'wedding/event_package_form.html', {'form': form})
+
+def package_item_form(request, package_pk, item_pk=None):
+    package = get_object_or_404(EventPackage, pk=package_pk)
+    instance = get_object_or_404(PackageItem, pk=item_pk) if item_pk else None
+    form = PackageItemForm(request.POST or None, instance=instance)
+    if request.method == 'POST':
+        if form.is_valid():
+            item = form.save(commit=False)
+            item.package = package
+            item.save()
+            return redirect('event_package_detail', pk=package_pk)
+    return render(request, 'wedding/package_item_form.html', {'form': form, 'package': package})
+
+def customize_wedding_package(request, order_pk):
+    order = get_object_or_404(CustomerOrder, pk=order_pk)
+    if request.method == 'POST':
+        forms = [SelectedPackageItemForm(request.POST, instance=item) for item in order.selected_items.all()]
+        if all(form.is_valid() for form in forms):
+            for form in forms:
+                form.save()
+            order.calculate_total_price()
+            return redirect('order_detail', pk=order_pk)
+    else:
+        forms = [SelectedPackageItemForm(instance=item) for item in order.selected_items.all()]
+    return render(request, 'wedding/customize_wedding_package.html', {'order': order, 'forms': forms})
 

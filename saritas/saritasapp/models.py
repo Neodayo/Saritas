@@ -228,12 +228,16 @@ class Rental(models.Model):
         return f"Rental #{self.pk} - {self.customer} - {self.inventory}"
 
     def clean(self):
+        if not self.inventory_id:
+            raise ValidationError("Rental must be associated with an inventory item")
+
         if self.rental_end < self.rental_start:
             raise ValidationError("Return date must be after the rental start date.")
         
         # Set deposit amount from inventory if not set
         if not self.deposit and self.inventory:
             self.deposit = self.inventory.deposit_price
+        
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -521,46 +525,7 @@ class Notification(models.Model):
     @classmethod
     def mark_all_as_read(cls, user):
         return cls.objects.filter(user=user, is_read=False).update(is_read=True)
-
-# --- Event Package & Pricing ---
-class EventPackage(models.Model):
-    name = models.CharField(max_length=255)
-    base_price = models.DecimalField(max_digits=10, decimal_places=2)
-    description = models.TextField()
-
-    def __str__(self):
-        return self.name
-
-class PackageItem(models.Model):
-    SERVICE_TYPES = [
-        ("internal", "Provided by Sarita's"),
-        ("external", "Outsourced Service"),
-    ]
-    package = models.ForeignKey(EventPackage, on_delete=models.CASCADE, related_name="items")
-    name = models.CharField(max_length=255)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    service_type = models.CharField(max_length=10, choices=SERVICE_TYPES, default="internal")
-    acquired = models.BooleanField(default=False)  # For external services
-
-    def __str__(self):
-        return f"{self.name} ({self.get_service_type_display()})"
-
-class SelectedPackageItem(models.Model):
-    order = models.ForeignKey("CustomerOrder", related_name="selected_items", on_delete=models.CASCADE)
-    item = models.ForeignKey(PackageItem, on_delete=models.CASCADE)
-    selected = models.BooleanField(default=True)
-
-    def save(self, *args, **kwargs):
-        # Automatically set 'acquired' to True for external services when selected
-        if self.item.service_type == "external" and self.selected:
-            self.item.acquired = True
-            self.item.save()
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"Order {self.order.id} - Item {self.item.name} - {'Selected' if self.selected else 'Not Selected'}"
-
-# --- Wardrobe Package (Connected to Inventory) ---
+    
 class WardrobePackage(models.Model):
     PACKAGE_TIERS = [
         ("A", "Package A (₱12,000)"),
@@ -580,29 +545,46 @@ class WardrobePackage(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="active")
 
     def final_price(self):
+        """Calculate the final price after applying discounts."""
         return self.base_price - self.discount
 
     def __str__(self):
         return f"{self.name} - {self.get_tier_display()}"
-
+    
 class WardrobePackageItem(models.Model):
-    package = models.ForeignKey(WardrobePackage, on_delete=models.CASCADE, related_name="package_items")
-    inventory_item = models.ForeignKey(Inventory, on_delete=models.CASCADE)
+    package = models.ForeignKey(
+        WardrobePackage,
+        on_delete=models.CASCADE,
+        related_name="package_items"
+    )
+    inventory_item = models.ForeignKey(
+        Inventory,
+        on_delete=models.CASCADE
+    )
     quantity = models.PositiveIntegerField(default=1)
 
     def clean(self):
+        """Ensure there is enough stock in the inventory."""
         if self.quantity > self.inventory_item.quantity:
             raise ValidationError(f"Not enough stock for {self.inventory_item.name} in inventory.")
 
     def __str__(self):
         return f"{self.inventory_item.name} in {self.package.name}"
-
+    
 class SelectedWardrobeItem(models.Model):
-    order = models.ForeignKey("CustomerOrder", related_name="selected_wardrobe_items", on_delete=models.CASCADE)
-    wardrobe_package_item = models.ForeignKey(WardrobePackageItem, on_delete=models.CASCADE)
+    order = models.ForeignKey(
+        "CustomerOrder",
+        related_name="selected_wardrobe_items",
+        on_delete=models.CASCADE
+    )
+    wardrobe_package_item = models.ForeignKey(
+        WardrobePackageItem,
+        on_delete=models.CASCADE
+    )
     selected_quantity = models.PositiveIntegerField(default=0)
 
     def clean(self):
+        """Ensure there is enough stock for the selected quantity."""
         if self.selected_quantity > self.wardrobe_package_item.inventory_item.quantity:
             raise ValidationError(
                 f"Not enough stock for {self.wardrobe_package_item.inventory_item.name}. Available: {self.wardrobe_package_item.inventory_item.quantity}"
@@ -611,49 +593,145 @@ class SelectedWardrobeItem(models.Model):
     def __str__(self):
         return f"Order {self.order.id} - {self.wardrobe_package_item.inventory_item.name} - Quantity: {self.selected_quantity}"
 
-# --- Order System ---
-ORDER_STATUS_CHOICES = (
+class ExternalService(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    provider_name = models.CharField(max_length=255)  # Name of the service provider
+    provider_phone = models.CharField(max_length=20)  # Phone number of the service provider
+    provider_email = models.EmailField()             # Email of the service provider
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.name} (Provider: {self.provider_name})"
+    
+class Service(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.name} - ₱{self.price}"
+    
+class EventPackage(models.Model):
+    name = models.CharField(max_length=255)
+    base_price = models.DecimalField(max_digits=10, decimal_places=2)
+    description = models.TextField()
+
+    def __str__(self):
+        return self.name
+
+class PackageItem(models.Model):
+    package = models.ForeignKey(EventPackage, on_delete=models.CASCADE, related_name="items")
+    service = models.ForeignKey(
+        Service,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+    external_service = models.ForeignKey(
+        ExternalService,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+
+    def clean(self):
+        """Ensure that either 'service' or 'external_service' is selected, but not both."""
+        if not self.service and not self.external_service:
+            raise ValidationError("Either 'service' or 'external_service' must be selected.")
+        if self.service and self.external_service:
+            raise ValidationError("Only one of 'service' or 'external_service' can be selected.")
+
+    def __str__(self):
+        if self.service:
+            return f"Internal Service: {self.service.name}"
+        elif self.external_service:
+            return f"External Service: {self.external_service.name} (Provider: {self.external_service.provider_name})"
+
+class SelectedPackageItem(models.Model):
+    order = models.ForeignKey("CustomerOrder", related_name="selected_items", on_delete=models.CASCADE)
+    item = models.ForeignKey(PackageItem, on_delete=models.CASCADE)
+    selected = models.BooleanField(default=True)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Order {self.order.id} - Item {self.item} - {'Selected' if self.selected else 'Not Selected'}"
+
+
+class CustomerOrder(models.Model):
+    ORDER_STATUS_CHOICES = (
     ("Pending", "Pending"),
     ("Confirmed", "Confirmed"),
     ("Completed", "Completed"),
     ("Cancelled", "Cancelled"),
 )
-
-class CustomerOrder(models.Model):
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="orders")
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="handled_orders")
-    package = models.ForeignKey(EventPackage, null=True, blank=True, on_delete=models.SET_NULL, related_name="orders")
-    wardrobe_package = models.ForeignKey(WardrobePackage, null=True, blank=True, on_delete=models.SET_NULL, related_name="orders")
-    total_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    status = models.CharField(max_length=10, choices=ORDER_STATUS_CHOICES, default="Pending")
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.CASCADE,
+        related_name="orders"
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="handled_orders"
+    )
+    package = models.ForeignKey(
+        EventPackage,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="orders"
+    )
+    wardrobe_package = models.ForeignKey(
+        WardrobePackage,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="orders"
+    )
+    total_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True
+    )
+    status = models.CharField(
+        max_length=10,
+        choices=ORDER_STATUS_CHOICES,
+        default="Pending"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def calculate_total_price(self):
-        # Calculate total price from selected wedding package items
-        wedding_total = sum(
+        """
+        Calculate the total price of the order by summing up:
+        1. The base price of the wedding package.
+        2. The prices of selected services.
+        3. The prices of selected wardrobe items.
+        """
+        # Base price of the wedding package
+        wedding_total = self.package.base_price if self.package else 0
+
+        # Add prices of selected wedding package items
+        wedding_total += sum(
             item.item.price for item in self.selected_items.filter(selected=True)
         )
-        # Calculate total price from selected wardrobe package items
+
+        # Add prices of selected wardrobe package items
         wardrobe_total = sum(
             item.selected_quantity * item.wardrobe_package_item.inventory_item.rental_price
             for item in self.selected_wardrobe_items.all()
         )
+
         self.total_price = wedding_total + wardrobe_total
         self.save(update_fields=["total_price"])
 
     def __str__(self):
         return f"Order #{self.id} - {self.status}"
-
-@receiver(post_save, sender=SelectedPackageItem)
-@receiver(post_delete, sender=SelectedPackageItem)
-def update_order_total(sender, instance, **kwargs):
-    instance.order.calculate_total_price()
-
-@receiver(post_save, sender=SelectedWardrobeItem)
-@receiver(post_delete, sender=SelectedWardrobeItem)
-def update_order_total(sender, instance, **kwargs):
-    instance.order.calculate_total_price()
-
 
 # --- Calendar/Event Model ---
 class Event(models.Model):

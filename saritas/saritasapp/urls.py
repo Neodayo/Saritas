@@ -68,4 +68,10 @@ urlpatterns = [
     path('additional-services/', views.additional_services, name='additional_services'),
     path('debut-confirmation/', views.debut_confirmation, name='debut_confirmation'),
     path('additional-confirmation/', views.additional_confirmation, name='additional_confirmation'),
+    path('packages/', views.event_package_list, name='event_package_list'),
+    path('packages/new/', views.event_package_form, name='event_package_form'),
+    path('packages/<int:pk>/', views.event_package_form, name='event_package_form'),
+    path('packages/<int:package_pk>/add-item/', views.package_item_form, name='package_item_form'),
+    path('packages/<int:package_pk>/add-item/<int:item_pk>/', views.package_item_form, name='package_item_form'),
+    path('orders/<int:order_pk>/customize/', views.customize_wedding_package, name='customize_wedding_package'),
 ]

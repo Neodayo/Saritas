@@ -1,5 +1,5 @@
 from django import forms
-from .models import Inventory, Category, User, WardrobePackage, WardrobePackageItem, Branch, Event, Color, Size, Staff
+from .models import EventPackage, ExternalService, Inventory, Category, PackageItem, SelectedPackageItem, Service, User, WardrobePackage, WardrobePackageItem, Branch, Event, Color, Size, Staff
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model, authenticate
 from django.core.exceptions import ValidationError
@@ -214,18 +214,6 @@ class CategoryForm(forms.ModelForm):
         return name
 
 
-
-
-class WardrobePackageForm(forms.ModelForm):
-    class Meta:
-        model = WardrobePackage
-        fields = ["name", "tier"]
-
-class WardrobePackageItemForm(forms.ModelForm):
-    class Meta:
-        model = WardrobePackageItem
-        fields = ["package", "inventory_item", "quantity"]
-
 class StaffSignUpForm(UserCreationForm):
     # Staff-specific fields (not part of User model)
     branch = forms.ModelChoiceField(
@@ -330,3 +318,64 @@ class LoginForm(AuthenticationForm):
             self.confirm_login_allowed(self.user_cache)
 
         return self.cleaned_data
+    
+class EventPackageForm(forms.ModelForm):
+    class Meta:
+        model = EventPackage
+        fields = ['name', 'base_price', 'description']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'base_price': forms.NumberInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+class ServiceForm(forms.ModelForm):
+    class Meta:
+        model = Service
+        fields = ['name', 'description', 'price']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'price': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
+
+class ExternalServiceForm(forms.ModelForm):
+    class Meta:
+        model = ExternalService
+        fields = ['name', 'description', 'provider_name', 'provider_phone', 'provider_email', 'price']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'provider_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'provider_phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'provider_email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'price': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
+
+class PackageItemForm(forms.ModelForm):
+    class Meta:
+        model = PackageItem
+        fields = ['package', 'service', 'external_service']
+        widgets = {
+            'package': forms.Select(attrs={'class': 'form-select'}),
+            'service': forms.Select(attrs={'class': 'form-select'}),
+            'external_service': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        service = cleaned_data.get('service')
+        external_service = cleaned_data.get('external_service')
+
+        if not service and not external_service:
+            raise forms.ValidationError("Either 'service' or 'external_service' must be selected.")
+        if service and external_service:
+            raise forms.ValidationError("Only one of 'service' or 'external_service' can be selected.")
+
+class SelectedPackageItemForm(forms.ModelForm):
+    class Meta:
+        model = SelectedPackageItem
+        fields = ['selected']
+        widgets = {
+            'selected': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }

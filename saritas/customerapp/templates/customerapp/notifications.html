@@ -66,35 +66,40 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Handle click on notifications
     document.querySelectorAll('.notification').forEach(item => {
         item.addEventListener('click', function(e) {
+            // Don't interfere with mark-all button clicks
+            if (e.target.closest('.btn-mark-all')) return;
+            
             const notificationId = this.dataset.notificationId;
             const notificationUrl = this.dataset.notificationUrl;
             const markAsReadUrl = `{% url 'customerapp:mark_notification_as_read' 0 %}`.replace('0', notificationId);
             
-            // Mark as read via AJAX
-            fetch(markAsReadUrl, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
-                    'Accept': 'application/json',
-                }
-            }).then(response => {
-                if (response.ok) {
-                    // Update UI without reload
-                    this.classList.remove('unread');
-                    const badge = this.querySelector('.unread-badge');
-                    if (badge) badge.remove();
-                    
-                    // Navigate to URL if it exists (same tab)
-                    if (notificationUrl) {
+            // Only prevent default if we have a URL to handle
+            if (notificationUrl) {
+                e.preventDefault();
+                
+                fetch(markAsReadUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Accept': 'application/json',
+                    }
+                }).then(response => {
+                    if (response.ok) {
+                        // Update UI
+                        this.classList.remove('unread');
+                        const badge = this.querySelector('.unread-badge');
+                        if (badge) badge.remove();
+                        
+                        // Navigate to the URL
                         window.location.href = notificationUrl;
                     }
-                }
-            }).catch(error => {
-                console.error('Error marking notification as read:', error);
-            });
+                }).catch(error => {
+                    console.error('Error:', error);
+                    window.location.href = markAsReadUrl; // Fallback
+                });
+            }
         });
     });
 });
