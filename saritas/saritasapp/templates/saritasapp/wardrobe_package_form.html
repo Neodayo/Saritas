@@ -1,0 +1,175 @@
+{% extends 'saritasapp/base.html' %}
+{% load static %}
+
+{% block title %}Wardrobe Packages | Sarita's{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    .form-control, .form-select {
+        border-radius: 0.375rem;
+        padding: 0.5rem 0.75rem;
+    }
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
+    }
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    .price-input-group .input-group-text {
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h2 class="mb-0">{% if object %}Update{% else %}Create{% endif %} Wardrobe Package</h2>
+        </div>
+        <div class="card-body">
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <div class="row">
+                    <!-- Basic Information -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.name.id_for_label }}" class="form-label required-field">Package Name</label>
+                            <input type="text" class="form-control" id="{{ form.name.id_for_label }}" 
+                                   name="{{ form.name.html_name }}" value="{{ form.name.value|default_if_none:'' }}" 
+                                   required>
+                            <div class="invalid-feedback">Please provide a package name.</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.tier.id_for_label }}" class="form-label">Tier</label>
+                            <select class="form-select" id="{{ form.tier.id_for_label }}" name="{{ form.tier.html_name }}">
+                                {% for value, label in form.tier.field.choices %}
+                                    <option value="{{ value }}" {% if form.tier.value == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                            <textarea class="form-control" id="{{ form.description.id_for_label }}" 
+                                      name="{{ form.description.html_name }}" rows="3">{{ form.description.value|default_if_none:'' }}</textarea>
+                            <small class="help-text">Describe what this package includes</small>
+                        </div>
+                    </div>
+
+                    <!-- Pricing Information -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.base_price.id_for_label }}" class="form-label required-field">Base Price</label>
+                            <div class="input-group price-input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" step="0.01" class="form-control" id="{{ form.base_price.id_for_label }}" 
+                                       name="{{ form.base_price.html_name }}" value="{{ form.base_price.value|default_if_none:'' }}" 
+                                       required min="0">
+                            </div>
+                            <div class="invalid-feedback">Please provide a valid price.</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.deposit_price.id_for_label }}" class="form-label">Deposit Price</label>
+                            <div class="input-group price-input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" step="0.01" class="form-control" id="{{ form.deposit_price.id_for_label }}" 
+                                       name="{{ form.deposit_price.html_name }}" value="{{ form.deposit_price.value|default_if_none:'' }}" 
+                                       min="0">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.discount.id_for_label }}" class="form-label">Discount (%)</label>
+                            <div class="input-group price-input-group">
+                                <input type="number" step="0.01" class="form-control" id="{{ form.discount.id_for_label }}" 
+                                       name="{{ form.discount.html_name }}" value="{{ form.discount.value|default_if_none:'' }}" 
+                                       min="0" max="100">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.min_rental_days.id_for_label }}" class="form-label">Minimum Rental Days</label>
+                            <input type="number" class="form-control" id="{{ form.min_rental_days.id_for_label }}" 
+                                   name="{{ form.min_rental_days.html_name }}" value="{{ form.min_rental_days.value|default_if_none:'1' }}" 
+                                   min="1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Checkboxes -->
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="{{ form.includes_accessories.id_for_label }}" 
+                                   name="{{ form.includes_accessories.html_name }}" {% if form.includes_accessories.value %}checked{% endif %}>
+                            <label class="form-check-label" for="{{ form.includes_accessories.id_for_label }}">Includes Accessories</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
+                            <select class="form-select" id="{{ form.status.id_for_label }}" name="{{ form.status.html_name }}">
+                                {% for value, label in form.status.field.choices %}
+                                    <option value="{{ value }}" {% if form.status.value == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'saritasapp:wardrobe_package_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Package
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Client-side form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Format price inputs to show 2 decimal places
+document.querySelectorAll('input[type="number"][step="0.01"]').forEach(input => {
+    input.addEventListener('blur', function() {
+        if (this.value && !isNaN(this.value)) {
+            this.value = parseFloat(this.value).toFixed(2);
+        }
+    });
+});
+</script>
+{% endblock %}

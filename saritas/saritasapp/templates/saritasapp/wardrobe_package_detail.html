@@ -1,52 +1,274 @@
 {% extends 'saritasapp/base.html' %}
 {% load static %}
 
-{% block title %}{{ package.name }}{% endblock %}
+{% block title %}{{ object.name }} | Worldwide Customs{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --gold: #AD974F;
+        --gold-dark: #8a793d;
+        --light-bg: #f9f9f9;
+    }
+    
+    .package-header {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        padding: 1.5rem 0;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .compact-card {
+        width: 220px;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        margin-right: 15px;
+        margin-bottom: 20px;
+        background: white;
+        display: inline-block;
+        vertical-align: top;
+    }
+    
+    .compact-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    }
+    
+    .card-image-container {
+        height: 160px;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .card-image {
+        height: 100%;
+        width: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    
+    .compact-card:hover .card-image {
+        transform: scale(1.05);
+    }
+    
+    .item-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: var(--gold);
+        color: white;
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .card-body {
+        padding: 12px;
+    }
+    
+    .item-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .item-details {
+        font-size: 0.75rem;
+        color: #666;
+        margin-bottom: 5px;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .item-price {
+        color: var(--gold);
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+    
+    .item-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.7rem;
+        color: #888;
+        margin-top: 5px;
+    }
+    
+    .cards-scroller {
+        white-space: nowrap;
+        overflow-x: auto;
+        padding: 10px 0;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .cards-scroller::-webkit-scrollbar {
+        height: 5px;
+    }
+    
+    .cards-scroller::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    
+    .cards-scroller::-webkit-scrollbar-thumb {
+        background: var(--gold);
+        border-radius: 10px;
+    }
+    
+    .package-summary {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+    
+    .summary-label {
+        color: #666;
+        font-size: 0.85rem;
+    }
+    
+    .summary-value {
+        font-weight: 600;
+    }
+    
+    .gold-text {
+        color: var(--gold);
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state {
+        width: 100%;
+        text-align: center;
+        padding: 2rem 0;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<h2>{{ package.name }} - {{ package.get_tier_display }}</h2>
-<p><strong>Base Price:</strong> ₱{{ package.base_price }}</p>
-<p><strong>Refundable Deposit:</strong> ₱{{ package.refundable_deposit }}</p>
-
-<h3>Items in Package:</h3>
-<form method="post" action="{% url 'saritasapp:select_wardrobe_package' package.id %}">
-    {% csrf_token %}
-
-    <!-- Select Existing Customer -->
-    <label for="customer">Select Customer:</label>
-    <select name="customer_id" id="customer" required>
-        <option value="" disabled selected>Choose a customer</option>
-        {% for customer in customers %}
-        <option value="{{ customer.id }}">{{ customer.first_name }} {{ customer.last_name }}</option>
-        {% endfor %}
-    </select>
-
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Select</th>
-                <th>Item Name</th>
-                <th>Quantity</th>
-                <th>Rental Price</th>
-                <th>Subtotal</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in items %}
-            <tr>
-                <td>
-                    <input type="checkbox" name="selected_items" value="{{ item.id }}" checked>
-                </td>
-                <td>{{ item.inventory_item.name }}</td>
-                <td>{{ item.quantity }}</td>
-                <td>₱{{ item.inventory_item.rental_price }}</td>
-                <td>₱{{ item.inventory_item.rental_price|floatformat:2 }}</td>
-            </tr>
+<!-- Add this near the top of your template -->
+<div class="alert {% if package_complete %}alert-success{% else %}alert-warning{% endif %} mb-4">
+    {% if package_complete %}
+        <i class="fas fa-check-circle"></i> Package is complete
+    {% else %}
+        <i class="fas fa-exclamation-triangle"></i> Package is missing required items:
+        <ul>
+            {% for type in missing_required %}
+                <li>{{ type }}</li>
             {% endfor %}
-        </tbody>
-    </table>
+        </ul>
+    {% endif %}
+</div>
 
-    <p><strong>Total Price:</strong> ₱{{ total_price }}</p>
-    <button type="submit">Select Package</button>
-</form>
+<div class="package-header">
+    <div class="container">
+        <h2 class="text-center mb-1">{{ object.name }}</h2>
+        <p class="text-center text-muted mb-0">{{ object.description }}</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="package-summary">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="summary-item">
+                    <span class="summary-label">Base Price</span>
+                    <span class="summary-value gold-text">₱{{ object.base_price|floatformat:2 }}</span>
+                </div>
+                <small class="text-muted">Per rental period</small>
+            </div>
+            <div class="col-md-4">
+                <div class="summary-item">
+                    <span class="summary-label">Deposit</span>
+                    <span class="summary-value gold-text">₱{{ object.deposit_price|floatformat:2 }}</span>
+                </div>
+                <small class="text-muted">Refundable</small>
+            </div>
+            <div class="col-md-4">
+                <div class="summary-item">
+                    <span class="summary-label">Status</span>
+                    <span class="summary-value">
+                        <span class="badge badge-{% if object.status == 'available' %}success{% else %}secondary{% endif %}">
+                            {{ object.get_status_display }}
+                        </span>
+                    </span>
+                </div>
+                <small class="text-muted">Current availability</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-header">
+        <h5>Featured Pieces <small class="text-muted">({{ object.package_items.count }} items)</small></h5>
+        <a href="{% url 'saritasapp:add_package_item' object.pk %}" class="btn btn-success btn-sm">
+            <i class="fas fa-plus mr-1"></i> Add Items
+        </a>
+    </div>
+    
+    <div class="cards-scroller">
+        {% for item in object.package_items.all %}
+        <div class="compact-card">
+            <div class="card-image-container">
+                {% if item.inventory_item.image %}
+                <img src="{{ item.inventory_item.image.url }}" class="card-image" alt="{{ item.display_name }}">
+                {% else %}
+                <div class="card-image" style="background: #eee; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-image fa-2x text-muted"></i>
+                </div>
+                {% endif %}
+                <span class="item-badge">{{ item.inventory_item.get_item_type_display|truncatechars:12 }}</span>
+            </div>
+            <div class="card-body">
+                <h6 class="item-title">{{ item.inventory_item.name }}</h6>
+                <div class="item-details">
+                    <span>Category: {{ item.inventory_item.category.name }}</span>
+                </div>
+                <div class="item-details">
+                    <span>Size: {{ item.inventory_item.size|default:"-" }}</span>
+                    <span>Qty: {{ item.quantity }}</span>
+                </div>
+                <div class="item-details">
+                    <span>Color: {{ item.inventory_item.color|default:"-" }}</span>
+                </div>
+                <div class="item-meta">
+                    <span class="item-price">₱{{ item.inventory_item.rental_price|floatformat:2 }}</span>
+                    <span>
+                        {% if item.is_required %}
+                        <span class="badge badge-danger">Required</span>
+                        {% endif %}
+                        {% if not item.replacement_allowed %}
+                        <span class="badge badge-warning">No Replace</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <div class="alert alert-info">
+                <i class="fas fa-box-open mr-2"></i> No items added to this package yet.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}

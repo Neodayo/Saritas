@@ -1,5 +1,8 @@
+import os
+from tkinter import Image
 from django import forms
-from .models import EventPackage, ExternalService, Inventory, Category, PackageItem, SelectedPackageItem, Service, User, WardrobePackage, WardrobePackageItem, Branch, Event, Color, Size, Staff
+from django.urls import reverse_lazy
+from .models import CustomizedWardrobePackage, Inventory, Category, ItemType, PackageCustomization, User, WardrobePackage, WardrobePackageItem, Branch, Event, Color, Size, Staff
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model, authenticate
 from django.core.exceptions import ValidationError
@@ -17,137 +20,163 @@ class EventForm(forms.ModelForm):
             'venue': forms.TextInput(attrs={'class': 'form-control'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
-
+        
 class InventoryForm(forms.ModelForm):
+    name = forms.CharField(
+        label="Item Name",
+        max_length=255,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'style': 'text-transform: capitalize;',
+            'placeholder': 'Enter item name'
+        })
+    )
     quantity = forms.IntegerField(
-        min_value=1, 
-        label="Quantity", 
-        widget=forms.NumberInput(attrs={'class': 'form-control'})
+        min_value=0,
+        label="Quantity",
+        required=True,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'oninput': "validity.valid||(value='');"
+        })
     )
     rental_price = forms.DecimalField(
-        min_value=0, 
-        max_digits=10, 
-        decimal_places=2, 
+        min_value=0,
+        max_digits=10,
+        decimal_places=2,
         label="Rental Price",
-        widget=forms.NumberInput(attrs={'class': 'form-control'})
+        required=True,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'step': '0.01'
+        })
     )
     reservation_price = forms.DecimalField(
-        min_value=0, 
-        max_digits=10, 
-        decimal_places=2, 
-        required=False, 
+        min_value=0,
+        max_digits=10,
+        decimal_places=2,
+        required=True,
         label="Reservation Price",
-        widget=forms.NumberInput(attrs={'class': 'form-control'})
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'step': '0.01'
+        })
     )
     deposit_price = forms.DecimalField(
-        min_value=0, 
-        max_digits=10, 
-        decimal_places=2, 
-        required=False, 
+        min_value=0,
+        max_digits=10,
+        decimal_places=2,
+        required=True,
         label="Deposit Price",
-        widget=forms.NumberInput(attrs={'class': 'form-control'})
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'step': '0.01'
+        })
     )
     purchase_price = forms.DecimalField(
-        min_value=0, 
-        max_digits=10, 
-        decimal_places=2, 
-        required=False, 
+        min_value=0,
+        max_digits=10,
+        decimal_places=2,
+        required=False,
         label="Purchase Price",
-        widget=forms.NumberInput(attrs={'class': 'form-control'})
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'step': '0.01'
+        })
     )
     size = forms.ModelChoiceField(
-        queryset=Size.objects.all(), 
-        required=False, 
+        queryset=Size.objects.all().order_by('name'),
+        required=True,
         label="Size",
-        widget=forms.Select(attrs={'class': 'form-select'})
+        widget=forms.Select(attrs={'class': 'form-select select2'})
     )
     branch = forms.ModelChoiceField(
-        queryset=Branch.objects.all(),
+        queryset=Branch.objects.all().order_by('branch_name'),
         required=True,
         label="Branch",
         widget=forms.Select(attrs={'class': 'form-select'})
     )
     image = forms.ImageField(
-        required=True, 
+        required=True,
         label="Upload Image",
-        widget=forms.ClearableFileInput(attrs={'class': 'form-control'})
+        widget=forms.ClearableFileInput(attrs={
+            'class': 'form-control',
+            'accept': 'image/*'
+        })
     )
 
     class Meta:
         model = Inventory
-        fields = ['name', 'branch', 'category', 'color', 'size', 'quantity',
-                 'rental_price', 'reservation_price', 'deposit_price', 'purchase_price',
-                 'available', 'image']
+        fields = [
+            'name', 'branch', 'category', 'item_type', 'color', 'size', 'quantity',
+            'rental_price', 'reservation_price', 'deposit_price', 'purchase_price',
+            'available', 'image'
+        ]
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'category': forms.Select(attrs={'class': 'form-select'}),
-            'color': forms.Select(attrs={'class': 'form-select'}),
+            'category': forms.Select(attrs={
+                'class': 'form-select select2',
+                'data-placeholder': 'Select category'
+            }),
+            'item_type': forms.Select(attrs={
+                'class': 'form-select select2',
+                'data-placeholder': 'Select item type'
+            }),
+            'color': forms.Select(attrs={
+                'class': 'form-select select2',
+                'data-placeholder': 'Select color'
+            }),
             'available': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-        
-        # Set initial branch for staff users
+
         if self.user and hasattr(self.user, 'staff_profile'):
             self.fields['branch'].initial = self.user.staff_profile.branch
-            # Make it read-only for staff
             self.fields['branch'].disabled = True
+
+        # Order dropdowns alphabetically
+        self.fields['category'].queryset = Category.objects.all().order_by('name')
+        self.fields['color'].queryset = Color.objects.all().order_by('name')
         
-        # Set required fields
-        self.fields['category'].required = True
-        self.fields['color'].required = True
+        # Handle ItemType - only show existing choices with empty label
+        self.fields['item_type'].queryset = ItemType.objects.all().order_by('name')
+        self.fields['item_type'].empty_label = "Select item type"
+        
+        # Disable adding/changing item types in admin
+        if hasattr(self, 'admin_helper'):
+            self.fields['item_type'].widget.can_add_related = False
+            self.fields['item_type'].widget.can_change_related = False
+            self.fields['item_type'].widget.can_delete_related = False
+        
+        # Make required fields more obvious
+        for field in ['name', 'category', 'quantity', 'rental_price']:
+            self.fields[field].widget.attrs['required'] = 'required'
 
     def clean(self):
         cleaned_data = super().clean()
-        required_fields = ['name', 'branch', 'category', 'color', 'quantity', 'rental_price']
-        for field in required_fields:
-            if not cleaned_data.get(field):
-                self.add_error(field, f"{field.replace('_', ' ').title()} is required.")
         
-        # Ensure staff users can't modify their branch
-        if hasattr(self.user, 'staff_profile'):
-            cleaned_data['branch'] = self.user.staff_profile.branch
-            
-        return cleaned_data
-
-    def clean_image(self):
-        image = self.cleaned_data.get('image')
-        if not image:
-            raise ValidationError("Image field must not be empty.")
-        return image
-
-    def clean(self):
-        cleaned_data = super().clean()
-        required_fields = ['name', 'category', 'color', 'quantity', 'rental_price']
-        for field in required_fields:
-            if not cleaned_data.get(field):
-                self.add_error(field, f"{field.replace('_', ' ').title()} is required.")
+        # Ensure deposit >= rental price if both exist
         
-        # For staff users, ensure branch is set
-        if hasattr(self.user, 'staff_profile') and not cleaned_data.get('branch'):
-            cleaned_data['branch'] = self.user.staff_profile.branch
-            
         return cleaned_data
-
-    def clean_image(self):
-        image = self.cleaned_data.get('image')
-        if not image:
-            raise ValidationError("Image field must not be empty.")
-        return image
 
     def save(self, commit=True):
         instance = super().save(commit=False)
-        
-        # Auto-assign branch for staff users if not set
-        if not instance.branch and hasattr(self.user, 'staff_profile'):
-            instance.branch = self.user.staff_profile.branch
-            
+
+        # Capitalize name before saving
+        if instance.name:
+            instance.name = instance.name.title()
+
+        # Set created_by if new instance
+        if not instance.pk and hasattr(self.user, 'staff_profile'):
+            instance.created_by = self.user
+
         if commit:
             instance.save()
             self.save_m2m()
-            
+
         return instance
 
 class ColorForm(forms.ModelForm):
@@ -156,6 +185,7 @@ class ColorForm(forms.ModelForm):
         widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': 'e.g., Ivory, Champagne, Navy Blue',
+            'style': 'text-transform: capitalize;',
             'autofocus': True
         }),
         help_text="Enter a descriptive color name"
@@ -164,12 +194,16 @@ class ColorForm(forms.ModelForm):
     class Meta:
         model = Color
         fields = ['name']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'})
+        }
 
     def clean_name(self):
-        name = self.cleaned_data.get('name').strip()
+        name = self.cleaned_data.get('name').strip().title()
         if Color.objects.filter(name__iexact=name).exists():
             raise forms.ValidationError("This color already exists.")
         return name
+
 
 class SizeForm(forms.ModelForm):
     name = forms.CharField(
@@ -177,6 +211,7 @@ class SizeForm(forms.ModelForm):
         widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': 'e.g., S, M, L, XL, XXL or Plus Sizes',
+            'style': 'text-transform: capitalize;',
             'autofocus': True
         }),
         help_text="Enter a size designation"
@@ -187,10 +222,11 @@ class SizeForm(forms.ModelForm):
         fields = ['name']
 
     def clean_name(self):
-        name = self.cleaned_data.get('name').strip()
+        name = self.cleaned_data.get('name').strip().upper()  # Convert to uppercase for sizes
         if Size.objects.filter(name__iexact=name).exists():
             raise forms.ValidationError("This size already exists.")
         return name
+
 
 class CategoryForm(forms.ModelForm):
     name = forms.CharField(
@@ -198,6 +234,7 @@ class CategoryForm(forms.ModelForm):
         widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': 'e.g., Wedding Gowns, Bridesmaid Dresses',
+            'style': 'text-transform: capitalize;',
             'autofocus': True
         }),
         help_text="Enter a descriptive category name"
@@ -208,7 +245,7 @@ class CategoryForm(forms.ModelForm):
         fields = ['name']
 
     def clean_name(self):
-        name = self.cleaned_data.get('name').strip()
+        name = self.cleaned_data.get('name').strip().title()
         if Category.objects.filter(name__iexact=name).exists():
             raise forms.ValidationError("This category already exists.")
         return name
@@ -319,63 +356,250 @@ class LoginForm(AuthenticationForm):
 
         return self.cleaned_data
     
-class EventPackageForm(forms.ModelForm):
+class WardrobePackageForm(forms.ModelForm):
     class Meta:
-        model = EventPackage
-        fields = ['name', 'base_price', 'description']
+        model = WardrobePackage
+        fields = [
+            'name', 'tier', 'description', 'base_price', 
+            'deposit_price', 'discount', 'status', 
+            'min_rental_days', 'includes_accessories'
+        ]
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'base_price': forms.NumberInput(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter package name'
+            }),
+            'tier': forms.Select(attrs={
+                'class': 'form-select',
+                'data-placeholder': 'Select package tier'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Describe package contents...'
+            }),
+            'base_price': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0'
+            }),
+            'deposit_price': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0'
+            }),
+            'discount': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'max': '100'
+            }),
+            'status': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'min_rental_days': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '1'
+            }),
+            'includes_accessories': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
         }
-
-class ServiceForm(forms.ModelForm):
-    class Meta:
-        model = Service
-        fields = ['name', 'description', 'price']
-        widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'price': forms.NumberInput(attrs={'class': 'form-control'}),
+        labels = {
+            'includes_accessories': 'Includes accessories'
         }
-
-class ExternalServiceForm(forms.ModelForm):
-    class Meta:
-        model = ExternalService
-        fields = ['name', 'description', 'provider_name', 'provider_phone', 'provider_email', 'price']
-        widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'provider_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'provider_phone': forms.TextInput(attrs={'class': 'form-control'}),
-            'provider_email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'price': forms.NumberInput(attrs={'class': 'form-control'}),
-        }
-
-class PackageItemForm(forms.ModelForm):
-    class Meta:
-        model = PackageItem
-        fields = ['package', 'service', 'external_service']
-        widgets = {
-            'package': forms.Select(attrs={'class': 'form-select'}),
-            'service': forms.Select(attrs={'class': 'form-select'}),
-            'external_service': forms.Select(attrs={'class': 'form-select'}),
+        help_texts = {
+            'tier': 'Predefined package tier or custom',
+            'status': 'Fixed packages cannot be modified by customers'
         }
 
     def clean(self):
         cleaned_data = super().clean()
-        service = cleaned_data.get('service')
-        external_service = cleaned_data.get('external_service')
+        tier = cleaned_data.get('tier')
+        status = cleaned_data.get('status')
+        
+        if tier and tier != 'custom' and status == 'customizable':
+            raise forms.ValidationError(
+                "Predefined packages (A, B, C) must be fixed composition"
+            )
+        
+        return cleaned_data
 
-        if not service and not external_service:
-            raise forms.ValidationError("Either 'service' or 'external_service' must be selected.")
-        if service and external_service:
-            raise forms.ValidationError("Only one of 'service' or 'external_service' can be selected.")
 
-class SelectedPackageItemForm(forms.ModelForm):
+class WardrobePackageItemForm(forms.ModelForm):
     class Meta:
-        model = SelectedPackageItem
-        fields = ['selected']
+        model = WardrobePackageItem
+        fields = ['inventory_item', 'quantity', 'is_required', 'label', 'replacement_allowed']
         widgets = {
-            'selected': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'inventory_item': forms.Select(attrs={
+                'class': 'form-select select2',
+                'data-placeholder': 'Select inventory item'
+            }),
+            'quantity': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '1'
+            }),
+            'label': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Optional display name'
+            }),
+            'is_required': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+            'replacement_allowed': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
         }
+
+    def __init__(self, *args, **kwargs):
+        item_type = kwargs.pop('item_type', None)
+        super().__init__(*args, **kwargs)
+        
+        # Filter available inventory items
+        queryset = Inventory.objects.filter(available=True)
+        if item_type:
+            queryset = queryset.filter(item_type__name=item_type)
+        self.fields['inventory_item'].queryset = queryset.order_by('name')
+        
+        # Disable is_required if replacement not allowed
+        if self.instance.pk and not self.instance.replacement_allowed:
+            self.fields['is_required'].initial = True
+            self.fields['is_required'].disabled = True
+
+    def clean(self):
+        cleaned_data = super().clean()
+        inventory_item = cleaned_data.get('inventory_item')
+        quantity = cleaned_data.get('quantity', 1)
+        is_required = cleaned_data.get('is_required', True)
+        replacement_allowed = cleaned_data.get('replacement_allowed', True)
+
+        if inventory_item and quantity > inventory_item.quantity:
+            raise forms.ValidationError(
+                f"Not enough stock. Only {inventory_item.quantity} available."
+            )
+
+        if not replacement_allowed and not is_required:
+            raise forms.ValidationError(
+                "Non-replaceable items must be required"
+            )
+
+        return cleaned_data
+
+class PackageCustomizationForm(forms.ModelForm):
+    class Meta:
+        model = PackageCustomization
+        fields = ['action', 'original_item', 'inventory_item', 'new_quantity', 'price_adjustment', 'notes']
+        widgets = {
+            'action': forms.RadioSelect(attrs={'class': 'form-check-input'}),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Enter customization notes...'
+            }),
+        }
+
+    def __init__(self, package=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if package:
+            self.fields['original_item'].queryset = package.package_items.all()
+            self.fields['inventory_item'].queryset = Inventory.objects.filter(available=True)
+
+class CustomizePackageForm(forms.ModelForm):
+    class Meta:
+        model = CustomizedWardrobePackage
+        fields = ['notes']
+        widgets = {
+            'notes': forms.Textarea(attrs={
+                'rows': 3,
+                'placeholder': 'Describe your customization requests...'
+            }),
+        }
+
+class AddPackageItemForm(forms.ModelForm):
+    item_type = forms.ModelChoiceField(
+        queryset=ItemType.objects.all(),
+        empty_label="Select item type",
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            'hx-get': reverse_lazy('saritasapp:filter_inventory_items'),
+            'hx-target': '#id_inventory_item',
+            'hx-trigger': 'change'
+        })
+    )
+    
+    class Meta:
+        model = WardrobePackageItem
+        fields = ['item_type', 'inventory_item', 'quantity', 'label']
+        widgets = {
+            'inventory_item': forms.Select(attrs={'class': 'form-control'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'label': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., "3 BRIDESMAIDS"'
+            }),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        self.package = kwargs.pop('package', None)
+        super().__init__(*args, **kwargs)
+        
+        # Filter inventory items based on what's already in package
+        existing_item_ids = []
+        if self.package:
+            existing_item_ids = self.package.package_items.values_list(
+                'inventory_item_id', flat=True)
+        
+        # Only show items not already in package
+        self.fields['inventory_item'].queryset = Inventory.objects.none()
+        
+        if 'item_type' in self.data:
+            try:
+                item_type_id = int(self.data.get('item_type'))
+                self.fields['inventory_item'].queryset = Inventory.objects.filter(
+                    item_type_id=item_type_id,
+                    available=True
+                ).exclude(id__in=existing_item_ids)
+            except (ValueError, TypeError):
+                pass
+
+class PackageItemForm(forms.Form):
+    item_type = forms.ModelChoiceField(
+        queryset=ItemType.objects.all(),
+        widget=forms.HiddenInput()
+    )
+    inventory_item_id = forms.IntegerField(  # Changed from ModelChoiceField
+        widget=forms.HiddenInput()
+    )
+    quantity = forms.IntegerField(
+        min_value=1,
+        initial=1,
+        widget=forms.NumberInput(attrs={'class': 'form-control quantity-input'})
+    )
+    label = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Custom label (e.g. "3 BRIDESMAIDS")'
+        })
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.package = kwargs.pop('package', None)
+        super().__init__(*args, **kwargs)
+
+class BulkPackageItemForm(forms.Form):
+    items = forms.ModelMultipleChoiceField(
+        queryset=Inventory.objects.none(),
+        widget=forms.MultipleHiddenInput()
+    )
+    
+    def __init__(self, *args, **kwargs):
+        package = kwargs.pop('package', None)
+        super().__init__(*args, **kwargs)
+        
+        if package:
+            self.fields['items'].queryset = Inventory.objects.filter(
+                available=True
+            ).exclude(
+                id__in=package.package_items.values_list('inventory_item_id', flat=True)
+            )

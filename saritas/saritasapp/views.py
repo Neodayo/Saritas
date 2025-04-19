@@ -1,14 +1,15 @@
 # Standard library imports
 from calendar import month_name
 from datetime import date, datetime, timedelta
-from venv import logger
 
 # Django core imports
+from django import forms
 from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import transaction
@@ -16,28 +17,35 @@ from django.db.models import Count, F, Q, Sum
 from django.db.models.functions import ExtractMonth, ExtractWeek, ExtractYear, TruncMonth
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse_lazy, reverse
 from django.utils import timezone
+from django.views import View
+from django.views.generic import ListView, CreateView, UpdateView, DetailView, DeleteView, TemplateView
 
 # Third-party imports
+import plotly.graph_objects as go
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.pdfgen import canvas
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
-import plotly.graph_objects as go
 
 # Local app imports
 from .forms import (
-    AdminSignUpForm, CategoryForm, ColorForm, EditProfileForm, EventForm, EventPackageForm,
-    InventoryForm, LoginForm, PackageItemForm, SelectedPackageItemForm, SizeForm, StaffSignUpForm
+    AddPackageItemForm, AdminSignUpForm, BulkPackageItemForm, CategoryForm, ColorForm, EditProfileForm, EventForm,
+    InventoryForm, LoginForm, PackageItemForm, SizeForm, StaffSignUpForm,
+    WardrobePackageForm, WardrobePackageItemForm,
+    PackageCustomizationForm, CustomizePackageForm
 )
 from .models import (
-    Branch, Category, Color, Customer, CustomerOrder, Event, EventPackage, Inventory, Notification, PackageItem,
-    Receipt, Rental, Reservation, Size, User, Venue, WardrobePackage
+    Branch, Category, Color, Customer, Event, Inventory, ItemType, Notification, PackageCustomization,
+    Receipt, Rental, Reservation, Size, User, Venue,
+    WardrobePackage, CustomizedWardrobePackage, WardrobePackageItem
 )
 from .utils import send_notification
 from customerapp.tasks import notify_staff_about_rental_request
-from saritasapp.tasks import send_notification
+
+
  # Make sure Venue model is imported
 
 @login_required
@@ -46,13 +54,35 @@ def add_inventory(request):
         form = InventoryForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             try:
-                form.save()
-                messages.success(request, "Inventory added successfully!")
+                inventory_item = form.save(commit=False)
+                
+                # Additional checks for empty fields (redundant but safe)
+                required_fields = ['name', 'branch', 'category', 'quantity', 'rental_price']
+                for field in required_fields:
+                    if not form.cleaned_data.get(field):
+                        messages.error(request, f"{field.replace('_', ' ').title()} is required!")
+                        return render(request, 'saritasapp/add_inventory.html', {
+                            'form': form,
+                            'categories': Category.objects.all(),
+                            'colors': Color.objects.all(),
+                            'sizes': Size.objects.all()
+                        })
+                
+                # Set additional fields
+                if hasattr(request.user, 'staff_profile'):
+                    inventory_item.created_by = request.user
+                    inventory_item.branch = request.user.staff_profile.branch
+                
+                inventory_item.save()
+                messages.success(request, f"Successfully added {inventory_item.name}!")
                 return redirect('saritasapp:inventory_list')
+                
+            except IntegrityError:
+                messages.error(request, "This item already exists!")
             except Exception as e:
-                messages.error(request, f"Error saving inventory: {str(e)}")
+                messages.error(request, f"Error: {str(e)}")
         else:
-            messages.error(request, "Please correct the errors below")
+            messages.error(request, "Please fill all required fields!")
     else:
         form = InventoryForm(user=request.user)
     
@@ -62,8 +92,6 @@ def add_inventory(request):
         'colors': Color.objects.all(),
         'sizes': Size.objects.all()
     })
-
-
 @login_required
 def add_category(request):
     if request.method == 'POST':
@@ -104,7 +132,6 @@ def add_size(request):
         form = SizeForm()
     return render(request, 'saritasapp/add_size.html', {'form': form})
 
-
 @login_required
 def view_item(request, item_id):
     item = get_object_or_404(Inventory, id=item_id)
@@ -113,31 +140,25 @@ def view_item(request, item_id):
 @login_required
 def edit_inventory(request, item_id):
     item = get_object_or_404(Inventory, id=item_id)
-    branches = Branch.objects.all()  # Add this line
-    categories = Category.objects.all()
-    colors = Color.objects.all()
-    sizes = Size.objects.all()
 
     if request.method == 'POST':
-        form = InventoryForm(request.POST, request.FILES, instance=item)
+        form = InventoryForm(request.POST, request.FILES, instance=item, user=request.user)
         if form.is_valid():
-            item = form.save(commit=False)
-            # These fields are already handled by the form
-            item.save()
+            form.save()
             messages.success(request, 'Inventory item updated successfully!')
             return redirect('saritasapp:inventory_list')
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
-        form = InventoryForm(instance=item)
+        form = InventoryForm(instance=item, user=request.user)
 
     return render(request, 'saritasapp/edit_inventory.html', {
         'form': form,
-        'branches': branches,  # Add this
-        'categories': categories,
-        'colors': colors,
-        'sizes': sizes,
-        'item': item 
+        'categories': Category.objects.all(),
+        'colors': Color.objects.all(),
+        'sizes': Size.objects.all(),
+        'item': item
+        # Removed item_types from context since we're using predefined choices
     })
 
 @login_required
@@ -1333,41 +1354,312 @@ def additional_confirmation(request):
         'services': services
     })
 
-def event_package_list(request):
-    packages = EventPackage.objects.all()
-    return render(request, 'wedding/event_package_list.html', {'packages': packages})
+#wardrobe packages view
+class WardrobePackageForm(forms.ModelForm):
+    class Meta:
+        model = WardrobePackage
+        fields = [
+            'name', 'tier', 'description', 'base_price', 'deposit_price',
+            'discount', 'status', 'min_rental_days', 'includes_accessories'
+        ]
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 3}),
+        }
 
-def event_package_form(request, pk=None):
-    instance = get_object_or_404(EventPackage, pk=pk) if pk else None
-    form = EventPackageForm(request.POST or None, instance=instance)
-    if request.method == 'POST':
+
+class WardrobePackageItemForm(forms.ModelForm):
+    class Meta:
+        model = WardrobePackageItem
+        fields = ['inventory_item', 'quantity']
+
+    def __init__(self, *args, item_type=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if item_type:
+            self.fields['inventory_item'].queryset = Inventory.objects.filter(
+                available=True,
+                item_type=item_type
+            ).order_by('name')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        inventory_item = cleaned_data.get('inventory_item')
+        quantity = cleaned_data.get('quantity')
+
+        if inventory_item and quantity:
+            if quantity > inventory_item.quantity:
+                raise ValidationError(
+                    f"Only {inventory_item.quantity} available in stock"
+                )
+        return cleaned_data
+
+
+class PackageCustomizationForm(forms.ModelForm):
+    class Meta:
+        model = PackageCustomization
+        fields = ['action', 'original_item', 'inventory_item', 'new_quantity', 'price_adjustment', 'notes']
+        widgets = {
+            'action': forms.RadioSelect(),
+            'notes': forms.Textarea(attrs={'rows': 2}),
+        }
+
+    def __init__(self, package=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if package:
+            self.fields['original_item'].queryset = package.package_items.all()
+            self.fields['inventory_item'].queryset = Inventory.objects.filter(available=True)
+
+
+class CustomizePackageForm(forms.ModelForm):
+    class Meta:
+        model = CustomizedWardrobePackage
+        fields = ['notes']
+        widgets = {
+            'notes': forms.Textarea(attrs={
+                'rows': 3,
+                'placeholder': 'Describe your customization requests...'
+            }),
+        }
+
+
+class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_staff
+
+
+class WardrobePackageListView(StaffRequiredMixin, ListView):
+    model = WardrobePackage
+    template_name = 'saritasapp/wardrobe_package_list.html'
+    context_object_name = 'packages'
+
+
+class WardrobePackageCreateView(StaffRequiredMixin, CreateView):
+    model = WardrobePackage
+    form_class = WardrobePackageForm
+    template_name = 'saritasapp/wardrobe_package_form.html'
+    success_url = reverse_lazy('saritasapp:wardrobe_package_list')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, f'Package "{self.object.name}" created successfully!')
+        return response
+
+
+class WardrobePackageUpdateView(StaffRequiredMixin, UpdateView):
+    model = WardrobePackage
+    form_class = WardrobePackageForm
+    template_name = 'saritasapp/wardrobe_package_form.html'
+    success_url = reverse_lazy('saritasapp:wardrobe_package_list')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, f'Package "{self.object.name}" updated successfully!')
+        return response
+
+
+# ✅ This is the fixed function that determines which item types a package includes
+def package_needs_this_type(package, item_type):
+    # Example logic based on the package tier
+    tier_rules = {
+        'A': ['dress', 'tuxedo'],
+        'B': ['dress', 'tuxedo', 'barong'],
+        'C': ['dress', 'tuxedo', 'barong', 'gown', 'accessory'],
+    }
+    allowed_types = tier_rules.get(package.tier, [])
+    return item_type in allowed_types
+
+
+class WardrobePackageDetailView(StaffRequiredMixin, DetailView):
+    model = WardrobePackage
+    template_name = 'saritasapp/wardrobe_package_detail.html'
+
+    def validate_package_completeness(self, package):
+        """Check if package has all required item types based on its tier"""
+        # Define required item types for each package tier
+        tier_requirements = {
+            'A': ['bridal_gown', 'groom_tuxedo'],
+            'B': ['bridal_gown', 'groom_tuxedo', 'maid_honor', 'bestman'],
+            'C': ['bridal_gown', 'groom_tuxedo', 'maid_honor', 'bestman',
+                 'mother_gown', 'father_attire'],
+            'custom': []  # Custom packages have no required items
+        }
+
+        # Get item types already in the package
+        existing_types = set(
+            package.package_items
+            .select_related('inventory_item__item_type')
+            .values_list('inventory_item__item_type__name', flat=True)
+        )
+
+        # Check for missing required types
+        missing_types = []
+        for required_type in tier_requirements.get(package.tier, []):
+            if required_type not in existing_types:
+                missing_types.append(required_type)
+
+        return missing_types
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        package = self.object
+        
+        # Package completeness check
+        missing_required = self.validate_package_completeness(package)
+        context['missing_required'] = missing_required
+        context['package_complete'] = not missing_required
+        
+        # Group items by type for better display
+        items_by_type = {}
+        for item in package.package_items.select_related('inventory_item__item_type').all():
+            item_type = item.inventory_item.item_type.name
+            if item_type not in items_by_type:
+                items_by_type[item_type] = []
+            items_by_type[item_type].append(item)
+        
+        context['items_by_type'] = items_by_type
+        
+        # Add item types for add item form
+        context['item_types'] = ItemType.objects.all()
+        
+        return context
+
+
+class AddPackageItemView(StaffRequiredMixin, TemplateView):
+    template_name = 'saritasapp/add_package_item.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        package = get_object_or_404(WardrobePackage, pk=self.kwargs['package_id'])
+        
+        # Get all item types with their available items
+        item_types = []
+        for item_type in ItemType.objects.all():
+            items = Inventory.objects.filter(
+                item_type=item_type,
+                available=True,
+                quantity__gt=0
+            ).exclude(
+                id__in=package.package_items.values_list('inventory_item_id', flat=True)
+            )
+            
+            if items.exists():
+                item_types.append({
+                    'type': item_type,
+                    'items': items
+                })
+        
+        context.update({
+            'package': package,
+            'item_types': item_types,
+            'existing_items': package.package_items.select_related('inventory_item')
+        })
+        return context
+
+
+class SubmitBulkPackageItemsView(StaffRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        package = get_object_or_404(WardrobePackage, pk=kwargs['package_id'])
+        selected_items = request.POST.get('selected_items', '').split(',')
+        
+        if not selected_items or selected_items[0] == '':
+            messages.error(request, "No items selected")
+            return redirect('saritasapp:add_package_item', package_id=package.pk)
+        
+        try:
+            with transaction.atomic():
+                # Validate only one item per type is selected
+                selected_types = set()
+                for item_id in selected_items:
+                    item = Inventory.objects.get(id=item_id)
+                    if item.item_type in selected_types:
+                        messages.error(request, f"Can only select one {item.item_type.get_name_display()} per package")
+                        return redirect('saritasapp:add_package_item', package_id=package.pk)
+                    selected_types.add(item.item_type)
+                
+                # Create package items
+                for item_id in selected_items:
+                    quantity = int(request.POST.get(f'quantity_{item_id}', 1))
+                    label = request.POST.get(f'label_{item_id}', '')
+                    
+                    item = Inventory.objects.get(
+                        id=item_id,
+                        available=True,
+                        quantity__gte=quantity
+                    )
+                    
+                    WardrobePackageItem.objects.create(
+                        package=package,
+                        inventory_item=item,
+                        quantity=quantity,
+                        label=label,
+                        is_required=True
+                    )
+                
+                messages.success(request, f"Added {len(selected_items)} items to package")
+                return redirect('saritasapp:wardrobe_package_detail', pk=package.pk)
+                
+        except Inventory.DoesNotExist:
+            messages.error(request, "One or more items are no longer available")
+        except Exception as e:
+            messages.error(request, f"Error adding items: {str(e)}")
+        
+        return redirect('saritasapp:add_package_item', package_id=package.pk)
+
+class AddPackageItemSubmitView(StaffRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        package = get_object_or_404(WardrobePackage, pk=kwargs['package_id'])
+        form = PackageItemForm(request.POST, package=package)
+        
         if form.is_valid():
-            form.save()
-            return redirect('event_package_list')
-    return render(request, 'wedding/event_package_form.html', {'form': form})
+            try:
+                item = Inventory.objects.get(
+                    id=form.cleaned_data['inventory_item_id'],
+                    available=True
+                )
+                
+                WardrobePackageItem.objects.create(
+                    package=package,
+                    inventory_item=item,
+                    quantity=form.cleaned_data['quantity'],
+                    label=form.cleaned_data['label'],
+                    is_required=True
+                )
+                messages.success(request, f"Added {item.name} to package")
+            except Inventory.DoesNotExist:
+                messages.error(request, "Selected item is no longer available")
+        else:
+            messages.error(request, "Error adding item to package")
+        
+        return redirect('saritasapp:add_package_item', package_id=package.pk)
 
-def package_item_form(request, package_pk, item_pk=None):
-    package = get_object_or_404(EventPackage, pk=package_pk)
-    instance = get_object_or_404(PackageItem, pk=item_pk) if item_pk else None
-    form = PackageItemForm(request.POST or None, instance=instance)
-    if request.method == 'POST':
-        if form.is_valid():
-            item = form.save(commit=False)
-            item.package = package
-            item.save()
-            return redirect('event_package_detail', pk=package_pk)
-    return render(request, 'wedding/package_item_form.html', {'form': form, 'package': package})
-
-def customize_wedding_package(request, order_pk):
-    order = get_object_or_404(CustomerOrder, pk=order_pk)
-    if request.method == 'POST':
-        forms = [SelectedPackageItemForm(request.POST, instance=item) for item in order.selected_items.all()]
-        if all(form.is_valid() for form in forms):
-            for form in forms:
-                form.save()
-            order.calculate_total_price()
-            return redirect('order_detail', pk=order_pk)
-    else:
-        forms = [SelectedPackageItemForm(instance=item) for item in order.selected_items.all()]
-    return render(request, 'wedding/customize_wedding_package.html', {'order': order, 'forms': forms})
-
+class EditPackageItemView(StaffRequiredMixin, UpdateView):
+    model = WardrobePackageItem
+    form_class = WardrobePackageItemForm
+    template_name = 'saritasapp/edit_package_item.html'
+    
+    def get_success_url(self):
+        return reverse('saritasapp:wardrobe_package_detail', kwargs={'pk': self.object.package.pk})
+    
+class FilterInventoryItemsView(StaffRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        item_type_id = request.GET.get('item_type')
+        package_id = request.GET.get('package')
+        
+        # Get items already in package
+        existing_item_ids = []
+        if package_id:
+            existing_item_ids = WardrobePackageItem.objects.filter(
+                package_id=package_id
+            ).values_list('inventory_item_id', flat=True)
+        
+        # Filter available items by type
+        items = Inventory.objects.filter(
+            item_type_id=item_type_id,
+            available=True
+        ).exclude(id__in=existing_item_ids)
+        
+        return JsonResponse({
+            'results': [{
+                'id': item.id,
+                'text': f"{item.name} ({item.size}) - ₱{item.rental_price}"
+            } for item in items]
+        })

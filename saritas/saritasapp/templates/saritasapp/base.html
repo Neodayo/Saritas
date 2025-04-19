@@ -11,9 +11,6 @@
             background-image: linear-gradient(rgba(128, 128, 128, 0.7), rgba(128, 128, 128, 0.625)), url("{% static 'images/background.jpg' %}");
             background-attachment: fixed;
         }
-        /* .font-rouge-script {
-            font-family: 'Rouge Script', cursive;
-        } */
         .sidebar-transition {
             transition: transform 0.3s ease-in-out;
         }
@@ -51,6 +48,9 @@
                     <i class="fas fa-chevron-down transition-transform"></i>
                 </button>
                 <div class="dropdown-content pl-4 max-h-0 overflow-hidden transition-all duration-300">
+                    <a href="{% url 'saritasapp:wardrobe_package_list' %}" class="block px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                        Wardrobe Packages
+                    </a>
                     <a href="{% url 'saritasapp:wedding_packages' %}" class="block px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
                         Wedding Packages
                     </a>
@@ -126,6 +126,34 @@
     <!-- Desktop Sidebar -->
     <div class="hidden lg:block fixed top-0 left-0 h-full w-60 bg-[#EAEAEA] shadow-lg z-40 overflow-y-auto">
         <div class="p-4 space-y-2 mt-16">
+            <a href="{% url 'saritasapp:made_to_order' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                <i class="fas fa-cut w-6 text-center mr-2"></i>
+                <span>Made to Order</span>
+            </a>
+            
+            <!-- Desktop Packages Dropdown -->
+            <div class="dropdown relative">
+                <button class="w-full px-4 py-2 text-left text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors flex justify-between items-center">
+                    <i class="fas fa-boxes w-6 text-center mr-2"></i>
+                    <span>Packages</span>
+                    <i class="fas fa-chevron-down transition-transform text-sm"></i>
+                </button>
+                <div class="dropdown-content pl-4 max-h-0 overflow-hidden transition-all duration-300">
+                    <a href="{% url 'saritasapp:wardrobe_package_list' %}" class="block px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                        Wardrobe Packages
+                    </a>
+                    <a href="{% url 'saritasapp:wedding_packages' %}" class="block px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                        Wedding Packages
+                    </a>
+                    <a href="{% url 'saritasapp:debut_packages' %}" class="block px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                        Debut Packages
+                    </a>
+                    <a href="{% url 'saritasapp:additional_services' %}" class="block px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                        Additional Services
+                    </a>
+                </div>
+            </div>
+
             <a href="{% url 'saritasapp:inventory_list' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
                 <i class="fas fa-box w-6 text-center mr-2"></i>
                 <span>Inventory</span>
@@ -182,31 +210,8 @@
             </a>
         </div>
 
-        <!-- Desktop Header Items -->
+        <!-- Desktop Header Items - Simplified -->
         <div class="hidden lg:flex items-center gap-6 mr-4">
-            <a href="{% url 'saritasapp:made_to_order' %}" class="text-black font-semibold hover:text-[#AD974F] transition-colors">
-                Made to Order
-            </a>
-            
-            <!-- Desktop Packages Dropdown -->
-            <div class="relative group">
-                <button class="flex items-center text-black font-semibold hover:text-[#AD974F] transition-colors">
-                    Packages
-                    <i class="fas fa-chevron-down ml-2 text-sm"></i>
-                </button>
-                <div class="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-xl overflow-hidden transform origin-top transition-all scale-y-0 group-hover:scale-y-100">
-                    <a href="{% url 'saritasapp:wedding_packages' %}" class="block px-4 py-3 text-gray-800 hover:bg-[#AD974F]/10 transition-colors border-b border-gray-100">
-                        Wedding Packages
-                    </a>
-                    <a href="{% url 'saritasapp:debut_packages' %}" class="block px-4 py-3 text-gray-800 hover:bg-[#AD974F]/10 transition-colors border-b border-gray-100">
-                        Debut Packages
-                    </a>
-                    <a href="{% url 'saritasapp:additional_services' %}" class="block px-4 py-3 text-gray-800 hover:bg-[#AD974F]/10 transition-colors">
-                        Additional Services
-                    </a>
-                </div>
-            </div>
-
             <a href="{% url 'saritasapp:staff_profile' %}" class="text-black hover:text-[#AD974F] transition-colors">
                 <i class="fas fa-user text-xl"></i>
             </a>
@@ -250,13 +255,11 @@
                     }
                 });
 
-                
                 content.style.maxHeight = isOpen ? '0' : `${content.scrollHeight}px`;
                 chevron.classList.toggle('rotate-180', !isOpen);
             });
         });
 
-        
         document.addEventListener('click', (e) => {
             document.querySelectorAll('.dropdown').forEach(dropdown => {
                 const content = dropdown.querySelector('.dropdown-content');
@@ -269,7 +272,6 @@
             });
         });
 
-        
         const mobileSidebar = document.getElementById('mobile-sidebar');
         const mobileToggle = document.getElementById('mobile-toggle');
 

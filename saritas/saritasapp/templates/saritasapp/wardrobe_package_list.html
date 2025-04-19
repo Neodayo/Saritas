@@ -1,17 +1,51 @@
 {% extends 'saritasapp/base.html' %}
-{% load static %}
-{% block title %}Wardrobe Packages{% endblock %}
-{% block content %}
-<h2>Wardrobe Packages</h2>
-<ul>
-    {% for package in packages %}
-        <li>
-            <a href="{% url 'saritasapp:wardrobe_package_detail' package.id %}">
-                {{ package.name }} - {{ package.get_tier_display }} 
-                (₱{{ package.final_price }})
-            </a>
-        </li>
-    {% endfor %}
-</ul>
 
+{% block title %}Wardrobe Packages{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Wardrobe Packages</h1>
+        <a href="{% url 'saritasapp:wardrobe_package_create' %}" 
+           class="bg-[#AD974F] hover:bg-[#8a793d] text-white px-4 py-2 rounded-lg transition-colors">
+            Create New Package
+        </a>
+    </div>
+
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+            {% for package in packages %}
+            <div class="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                <div class="bg-gray-100 p-4 border-b">
+                    <h3 class="text-xl font-semibold text-gray-800">
+                        {{ package.name }} 
+                        <span class="text-sm font-normal text-gray-600">({{ package.get_tier_display }})</span>
+                    </h3>
+                </div>
+                <div class="p-4">
+                    <p class="text-lg font-bold text-[#AD974F] mb-2">
+                        ₱{{ package.base_price|floatformat:2 }}
+                        <span class="text-sm font-normal text-gray-600">+ ₱{{ package.deposit_price|floatformat:2 }} deposit</span>
+                    </p>
+                    <p class="text-gray-600 mb-4">{{ package.description|truncatewords:15 }}</p>
+                    <div class="flex space-x-2">
+                        <a href="{% url 'saritasapp:wardrobe_package_detail' package.pk %}" 
+                           class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-3 rounded text-center text-sm transition-colors">
+                            View
+                        </a>
+                        <a href="{% url 'saritasapp:wardrobe_package_update' package.pk %}" 
+                           class="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-800 py-1 px-3 rounded text-center text-sm transition-colors">
+                            Edit
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full text-center py-8 text-gray-500">
+                No packages available yet.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
 {% endblock %}

@@ -9,9 +9,9 @@
 
 {% block content %}
 <div class="container">
-    <h1>Add New Inventory Item</h1>
+    <h1 class="mb-4">Add New Inventory Item</h1>
 
-    <form method="POST" action="{% url 'saritasapp:add_inventory' %}" enctype="multipart/form-data">
+    <form method="POST" enctype="multipart/form-data" action="{% url 'saritasapp:add_inventory' %}">
         {% csrf_token %}
 
         {% if form.non_field_errors %}
@@ -22,141 +22,46 @@
             </div>
         {% endif %}
 
-        <!-- Name Field -->
-        <div class="form-group">
-            <label for="{{ form.name.id_for_label }}">Name</label>
-            {{ form.name }}
-            {% if form.name.errors %}
-                <div class="error-message">
-                    {{ form.name.errors|striptags }}
-                </div>
-            {% endif %}
-        </div>
+        {% for field in form.visible_fields %}
+            <div class="form-group mb-3">
+                {% if field.name != 'available' %}
+                    <label for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                        {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                    </label>
+                {% endif %}
 
-        <!-- Category Field -->
-        <div class="form-group">
-            <label for="{{ form.category.id_for_label }}">Category</label>
-            {{ form.category }}
-            {% if form.category.errors %}
-                <div class="error-message">
-                    {{ form.category.errors|striptags }}
-                </div>
-            {% endif %}
-            <div class="category-link">
-                <a href="{% url 'saritasapp:add_category' %}">Add new category</a>
+                {% if field.name == 'available' %}
+                    <div class="form-check">
+                        {{ field }} <label for="{{ field.id_for_label }}">Available</label>
+                    </div>
+                {% else %}
+                    {{ field }}
+                {% endif %}
+
+                {% if field.errors %}
+                    <div class="error-message text-danger">
+                        {{ field.errors|striptags }}
+                    </div>
+                {% endif %}
+
+                {% if field.name == "category" %}
+                    <div class="category-link">
+                        <a href="{% url 'saritasapp:add_category' %}?next={{ request.path }}">Add new category</a>
+                    </div>
+                {% elif field.name == "color" %}
+                    <div class="category-link">
+                        <a href="{% url 'saritasapp:add_color' %}?next={{ request.path }}">Add new color</a>
+                    </div>
+                {% elif field.name == "size" %}
+                    <div class="category-link">
+                        <a href="{% url 'saritasapp:add_size' %}?next={{ request.path }}">Add new size</a>
+                    </div>
+                {% endif %}
             </div>
-        </div>
+        {% endfor %}
 
-        <!-- Color Field -->
-        <div class="form-group">
-            <label for="{{ form.color.id_for_label }}">Color</label>
-            {{ form.color }}
-            {% if form.color.errors %}
-                <div class="error-message">
-                    {{ form.color.errors|striptags }}
-                </div>
-            {% endif %}
-            <div class="category-link">
-                <a href="{% url 'saritasapp:add_color' %}">Add new color</a>
-            </div>
-        </div>
-
-        <!-- Size Field -->
-        <div class="form-group">
-            <label for="{{ form.size.id_for_label }}">Size</label>
-            {{ form.size }}
-            {% if form.size.errors %}
-                <div class="error-message">
-                    {{ form.size.errors|striptags }}
-                </div>
-            {% endif %}
-            <div class="category-link">
-                <a href="{% url 'saritasapp:add_size' %}">Add new size</a>
-            </div>
-        </div>
-
-        <!-- Other Fields -->
-        <div class="form-group">
-            <label for="{{ form.quantity.id_for_label }}">Quantity</label>
-            {{ form.quantity }}
-            {% if form.quantity.errors %}
-                <div class="error-message">
-                    {{ form.quantity.errors|striptags }}
-                </div>
-            {% endif %}
-        </div>
-
-        <!-- Price Fields -->
-        <div class="form-group">
-            <label for="{{ form.rental_price.id_for_label }}">Rental Price</label>
-            {{ form.rental_price }}
-            {% if form.rental_price.errors %}
-                <div class="error-message">
-                    {{ form.rental_price.errors|striptags }}
-                </div>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            <label for="{{ form.deposit_price.id_for_label }}">Deposit Price</label>
-            {{ form.deposit_price }}
-            {% if form.deposit_price.errors %}
-                <div class="error-message">
-                    {{ form.deposit_price.errors|striptags }}
-                </div>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            <label for="{{ form.reservation_price.id_for_label }}">Reservation Price</label>
-            {{ form.reservation_price }}
-            {% if form.reservation_price.errors %}
-                <div class="error-message">
-                    {{ form.reservation_price.errors|striptags }}
-                </div>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            <label for="{{ form.purchase_price.id_for_label }}">Purchase Price</label>
-            {{ form.purchase_price }}
-            {% if form.purchase_price.errors %}
-                <div class="error-message">
-                    {{ form.purchase_price.errors|striptags }}
-                </div>
-            {% endif %}
-        </div>
-                <!-- Branch Field -->
-        <div class="form-group">
-            <label for="{{ form.branch.id_for_label }}">Branch</label>
-            {{ form.branch }}
-            {% if form.branch.errors %}
-                <div class="error-message">
-                    {{ form.branch.errors|striptags }}
-                </div>
-            {% endif %}
-        </div>
-
-        <!-- Available Field -->
-        <div class="form-group">
-            <label for="{{ form.available.id_for_label }}">
-                {{ form.available }} Available
-            </label>
-        </div>
-
-        <!-- Image Field -->
-        <div class="form-group">
-            <label for="{{ form.image.id_for_label }}">Upload Image</label>
-            {{ form.image }}
-            {% if form.image.errors %}
-                <div class="error-message">
-                    {{ form.image.errors|striptags }}
-                </div>
-            {% endif %}
-        </div>
-
-        <!-- Submit Button -->
-        <div class="form-actions">
+        <div class="form-actions mt-4">
             <button type="submit" class="btn btn-primary">
                 <i class="fas fa-save"></i> Add Item
             </button>

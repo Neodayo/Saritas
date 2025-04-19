@@ -1,0 +1,259 @@
+{% extends 'saritasapp/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <h2>Add Items to {{ package.name }}</h2>
+    
+    <form id="bulk-add-form" method="post" action="{% url 'saritasapp:submit_bulk_package_items' package.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="selected_items" id="selected-items-input">
+        
+        <div class="package-items-container">
+            <!-- Existing Items -->
+            <div class="existing-items mb-4">
+                <h4>Current Package Items</h4>
+                {% if existing_items %}
+                    <div class="list-group">
+                        {% for item in existing_items %}
+                        <div class="list-group-item">
+                            {{ item.inventory_item.name }} ({{ item.quantity }})
+                            <span class="badge bg-primary">{{ item.inventory_item.item_type.get_name_display }}</span>
+                            {% if item.label %}<small class="text-muted">- {{ item.label }}</small>{% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No items added yet</p>
+                {% endif %}
+            </div>
+            
+            <!-- Add New Items by Type -->
+            <div class="add-items-section">
+                <h4>Select Items to Add (One per category)</h4>
+                
+                {% for item_data in item_types %}
+                <div class="card mb-3 item-type-card" data-item-type="{{ item_data.type.name }}">
+                    <div class="card-header">
+                        <h5>{{ item_data.type.get_name_display }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="item-grid">
+                            {% for item in item_data.items %}
+                            <div class="item-card" 
+                                 data-item-id="{{ item.id }}"
+                                 data-item-name="{{ item.name }}"
+                                 data-item-type="{{ item_data.type.name }}"
+                                 data-max-quantity="{{ item.quantity }}">
+                                {% if item.image %}
+                                <img src="{{ item.image.url }}" alt="{{ item.name }}" class="item-image">
+                                {% else %}
+                                <div class="item-image placeholder-image">
+                                    <i class="fas fa-image"></i>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="item-info">
+                                    <h6>{{ item.name }}</h6>
+                                    <div class="item-details">
+                                        <small>Size: {{ item.size|default:"-" }}</small>
+                                        <small>Color: {{ item.color|default:"-" }}</small>
+                                        <small>Available: {{ item.quantity }}</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="item-controls">
+                                    <input type="number" 
+                                           name="quantity_{{ item.id }}" 
+                                           min="1" 
+                                           max="{{ item.quantity }}" 
+                                           value="1" 
+                                           class="form-control form-control-sm quantity-input">
+                                    <input type="text" 
+                                           name="label_{{ item.id }}" 
+                                           placeholder="Label" 
+                                           class="form-control form-control-sm label-input">
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="fixed-bottom bg-white p-3 border-top">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span id="selected-count">0</span> items selected
+                    </div>
+                    <div>
+                        <button type="submit" class="btn btn-primary" id="bulk-add-btn" disabled>
+                            <i class="fas fa-save"></i> Add Selected Items
+                        </button>
+                        <a href="{% url 'saritasapp:wardrobe_package_detail' pk=package.pk %}" 
+                           class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+    .item-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 15px;
+    }
+    
+    .item-card {
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        transition: all 0.2s;
+        cursor: pointer;
+        position: relative;
+    }
+    
+    .item-card:hover {
+        border-color: #AD974F;
+    }
+    
+    .item-card.selected {
+        border-color: #AD974F;
+        background-color: #f8f5ee;
+        box-shadow: 0 0 0 2px rgba(173, 151, 79, 0.3);
+    }
+    
+    .item-card.disabled {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+    
+    .item-image {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 5px;
+        margin-bottom: 10px;
+    }
+    
+    .placeholder-image {
+        background: #f5f5f5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ccc;
+        font-size: 2rem;
+    }
+    
+    .item-info h6 {
+        font-size: 0.95rem;
+        margin-bottom: 5px;
+    }
+    
+    .item-details {
+        font-size: 0.8rem;
+        color: #666;
+    }
+    
+    .item-controls {
+        margin-top: 10px;
+        display: none;
+    }
+    
+    .item-card.selected .item-controls {
+        display: block;
+    }
+    
+    .fixed-bottom {
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('bulk-add-form');
+    const itemsInput = document.getElementById('selected-items-input');
+    const bulkAddBtn = document.getElementById('bulk-add-btn');
+    const selectedCount = document.getElementById('selected-count');
+    
+    let selectedItems = [];
+    let selectedTypes = {};
+    
+    // Handle item card selection
+    document.querySelectorAll('.item-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            // Don't trigger if clicking on inputs inside the card
+            if (e.target.tagName === 'INPUT') return;
+            
+            const itemId = this.dataset.itemId;
+            const itemType = this.dataset.itemType;
+            const index = selectedItems.indexOf(itemId);
+            
+            if (index === -1) {
+                // Check if we already have an item of this type selected
+                if (selectedTypes[itemType]) {
+                    // Deselect the previously selected item of this type
+                    const prevCard = document.querySelector(`.item-card[data-item-id="${selectedTypes[itemType]}"]`);
+                    prevCard.classList.remove('selected');
+                    
+                    // Remove from selected items
+                    const prevIndex = selectedItems.indexOf(selectedTypes[itemType]);
+                    selectedItems.splice(prevIndex, 1);
+                }
+                
+                // Select the new item
+                this.classList.add('selected');
+                selectedItems.push(itemId);
+                selectedTypes[itemType] = itemId;
+                
+                // Ensure quantity is at least 1
+                const quantityInput = this.querySelector('.quantity-input');
+                if (parseInt(quantityInput.value) < 1) {
+                    quantityInput.value = 1;
+                }
+            } else {
+                // Deselect the item
+                this.classList.remove('selected');
+                selectedItems.splice(index, 1);
+                delete selectedTypes[itemType];
+            }
+            
+            // Update hidden field with selected item IDs
+            itemsInput.value = selectedItems.join(',');
+            
+            // Update UI
+            selectedCount.textContent = selectedItems.length;
+            bulkAddBtn.disabled = selectedItems.length === 0;
+        });
+    });
+    
+    // Validate before submit
+    form.addEventListener('submit', function(e) {
+        let valid = true;
+        
+        selectedItems.forEach(itemId => {
+            const card = document.querySelector(`.item-card[data-item-id="${itemId}"]`);
+            const quantityInput = card.querySelector('.quantity-input');
+            const maxQuantity = parseInt(card.dataset.maxQuantity);
+            
+            if (parseInt(quantityInput.value) > maxQuantity) {
+                alert(`Quantity for ${card.dataset.itemName} exceeds available stock (${maxQuantity})`);
+                quantityInput.focus();
+                valid = false;
+            }
+        });
+        
+        if (!valid) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

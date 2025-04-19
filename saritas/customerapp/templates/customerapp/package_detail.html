@@ -1,826 +1,115 @@
-
-{% extends "customerapp/base.html" %}
-{% load static %}
-
-{% block title %}Packages{% endblock %}
-
-{% block extra_css %}
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background: #f8f8f8;
-            padding: 20px;
-            color: #333;
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 32px;
-            color: #333;
-            position: relative;
-            padding-bottom: 15px;
-        }
-
-        h1:after {
-            content: "";
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100px;
-            height: 3px;
-            background: #9E8729;
-        }
-
-        .packages-section {
-            margin-bottom: 50px;
-        }
-
-        .section-title {
-            font-size: 26px;
-            color: #9E8729;
-            margin-bottom: 25px;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-            display: flex;
-            align-items: center;
-        }
-
-        .section-title i {
-            margin-right: 10px;
-        }
-
-        .package-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 25px;
-            justify-content: center;
-        }
-
-        .package-box {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-            padding: 25px;
-            width: 320px;
-            flex: 1;
-            min-width: 300px;
-            max-width: 350px;
-            transition: transform 0.3s, box-shadow 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .package-box:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        .package-box.popular:before {
-            content: "POPULAR";
-            position: absolute;
-            top: 15px;
-            right: -30px;
-            background: #9E8729;
-            color: white;
-            padding: 5px 30px;
-            font-size: 12px;
-            font-weight: bold;
-            transform: rotate(45deg);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-
-        .package-box h2 {
-            font-size: 22px;
-            margin-bottom: 15px;
-            color: #333;
-            position: relative;
-            padding-bottom: 10px;
-        }
-
-        .package-box h2:after {
-            content: "";
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 50px;
-            height: 2px;
-            background: #9E8729;
-        }
-
-        .package-price {
-            font-size: 20px;
-            font-weight: bold;
-            color: #9E8729;
-            margin-bottom: 5px;
-        }
-
-        .package-deposit {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 20px;
-        }
-
-        .package-inclusions {
-            margin: 20px 0;
-        }
-
-        .package-inclusions h3 {
-            font-size: 17px;
-            margin-bottom: 12px;
-            color: #444;
-            display: flex;
-            align-items: center;
-        }
-
-        .package-inclusions h3 i {
-            margin-right: 8px;
-            color: #9E8729;
-        }
-
-        .package-box ul {
-            list-style: none;
-            padding: 0;
-            margin: 0 0 15px 0;
-        }
-
-        .package-box li {
-            margin: 10px 0;
-            display: flex;
-            align-items: flex-start;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-
-        .package-box li:before {
-            content: "✓";
-            color: #9E8729;
-            font-weight: bold;
-            display: inline-block;
-            width: 1.5em;
-            margin-right: 5px;
-        }
-
-        .avail-btn {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 12px 25px;
-            background-color: #9E8729;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: bold;
-            transition: background 0.3s, transform 0.2s;
-            width: 100%;
-            box-sizing: border-box;
-            border: none;
-            cursor: pointer;
-            font-size: 15px;
-        }
-
-        .avail-btn:hover {
-            background-color: #AD974F;
-            transform: translateY(-2px);
-        }
-
-        .avail-btn:active {
-            transform: translateY(0);
-        }
-
-        .note {
-            font-size: 13px;
-            color: #666;
-            margin-top: 15px;
-            font-style: italic;
-            line-height: 1.4;
-        }
-
-        .corkage-note {
-            color: #d9534f;
-            font-weight: bold;
-            margin: 15px 0;
-            padding: 8px;
-            background: #f9f2f2;
-            border-radius: 4px;
-            font-size: 13px;
-        }
-
-        .filter-container {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .filter-btn {
-            padding: 8px 15px;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 14px;
-        }
-
-        .filter-btn:hover {
-            background: #f0f0f0;
-        }
-
-        .filter-btn.active {
-            background: #9E8729;
-            color: white;
-            border-color: #9E8729;
-        }
-
-        .comparison-btn {
-            display: block;
-            margin: 30px auto;
-            padding: 12px 25px;
-            background: #333;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.3s;
-        }
-
-        .comparison-btn:hover {
-            background: #555;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.5);
-        }
-
-        .modal-content {
-            background-color: #fefefe;
-            margin: 5% auto;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            width: 80%;
-            max-width: 900px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .close:hover {
-            color: #333;
-        }
-
-        .comparison-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        .comparison-table th, .comparison-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .comparison-table th {
-            background-color: #f5f5f5;
-            font-weight: bold;
-        }
-
-        .comparison-table tr:hover {
-            background-color: #f9f9f9;
-        }
-
-        .checkmark {
-            color: #9E8729;
-            font-weight: bold;
-        }
-
-        @media (max-width: 768px) {
-            .package-container {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .package-box {
-                width: 100%;
-                max-width: 100%;
-            }
-            
-            .modal-content {
-                width: 95%;
-                margin: 10% auto;
-            }
-        }
-    </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-{% endblock %}
+{% extends 'customerapp/base.html' %}
 
 {% block content %}
-
-<h1>Our Wedding & Debut Packages</h1>
-
-<div class="filter-container">
-    <button class="filter-btn active" data-filter="all">All Packages</button>
-    <button class="filter-btn" data-filter="wedding">Wedding</button>
-    <button class="filter-btn" data-filter="debut">Debut</button>
-    <button class="filter-btn" data-filter="addons">Add-ons</button>
-</div>
-
-<button id="compareBtn" class="comparison-btn" disabled>
-    <i class="fas fa-exchange-alt"></i> Compare Selected Packages (0)
-</button>
-
-<div class="packages-section">
-    <h2 class="section-title">
-        <i class="fas fa-heart"></i> Wedding Packages
-    </h2>
-    
-    <div class="package-container">
-        <!-- Wedding Package 1 -->
-        <div class="package-box wedding" data-id="wedding-1">
-            <div class="compare-checkbox">
-                <input type="checkbox" id="compare-wedding-1" class="compare-check" data-id="wedding-1">
-                <label for="compare-wedding-1">Compare</label>
-            </div>
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-6">
+            {% if package.image %}
+            <img src="{{ package.image.url }}" class="img-fluid rounded mb-4" alt="{{ package.name }}">
+            {% endif %}
             
-            <h2>Basic Wedding Package</h2>
-            <div class="package-price">₱270,000 - ₱280,000</div>
-            <div class="package-deposit">+ ₱10,000 refundable deposit</div>
-            
-            <div class="package-inclusions">
-                <h3><i class="fas fa-hotel"></i> Hotel Venue / Food</h3>
-                <ul>
-                    <li>150 guests at ₱390 per head</li>
-                    <li>Free overnight stay room accommodation</li>
-                    <li>Free bridal car</li>
-                    <li>Client's choice of menu</li>
-                </ul>
-                <div class="corkage-note">
-                    <i class="fas fa-exclamation-circle"></i> All corkages will be charged to client
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h2 class="mb-0">{{ package.name }}</h2>
                 </div>
-                
-                <h3><i class="fas fa-spa"></i> Floral Arrangement</h3>
-                <ul>
-                    <li>Church to venue (Christian wedding)</li>
-                    <li>Bridal bouquet (fresh flower)</li>
-                    <li>Groom's corsage</li>
-                    <li>10 pairs principal sponsors corsage</li>
-                    <li>3 pairs secondary sponsors corsage</li>
-                    <li>1 maid of honor flower bouquet</li>
-                    <li>1 bestman buttoner</li>
-                    <li>4 bridesmaids flower bouquet</li>
-                    <li>4 groomsmen buttoners</li>
-                    <li>4 flowergirls headress and flower basket</li>
-                    <li>Bridal car bouquet</li>
-                    <li>Artificial flower stand aisle</li>
-                </ul>
+                <div class="card-body">
+                    <p class="lead">{{ package.description }}</p>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h4 class="mb-0 text-gold">₱{{ package.base_price|floatformat:2 }}</h4>
+                            <small class="text-muted">+ ₱{{ package.deposit_price|floatformat:2 }} refundable deposit</small>
+                        </div>
+                        <div>
+                            <span class="badge bg-primary">{{ package.get_tier_display }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#rentModal">
+                            <i class="fas fa-calendar-check me-2"></i> Rent This Package
+                        </button>
+                    </div>
+                </div>
             </div>
-            
-            <button class="avail-btn">
-                <i class="fas fa-envelope"></i> Inquire Now
-            </button>
         </div>
-
-        <!-- Wedding Package 2 - Marked as popular -->
-        <div class="package-box wedding popular" data-id="wedding-2">
-            <div class="compare-checkbox">
-                <input type="checkbox" id="compare-wedding-2" class="compare-check" data-id="wedding-2">
-                <label for="compare-wedding-2">Compare</label>
-            </div>
-            
-            <h2>Premium Wedding Package</h2>
-            <div class="package-price">₱300,000 - ₱310,000</div>
-            <div class="package-deposit">+ ₱10,000 refundable deposit</div>
-            
-            <div class="package-inclusions">
-                <h3><i class="fas fa-hotel"></i> Hotel Venue / Food</h3>
-                <ul>
-                    <li>Regency Hall (entire hall)</li>
-                    <li>150 guests at ₱390 per head</li>
-                    <li>Free room overnight stay only</li>
-                    <li>Free bridal car</li>
-                    <li>Client's choice of menu</li>
-                </ul>
-                <div class="corkage-note">
-                    <i class="fas fa-exclamation-circle"></i> All corkages will be charged to client
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h3 class="mb-0">Package Contents</h3>
                 </div>
-                
-                <h3><i class="fas fa-spa"></i> Floral Arrangement</h3>
-                <ul>
-                    <li>Church to venue (Christian wedding)</li>
-                    <li>Bridal bouquet (fresh flower)</li>
-                    <li>Groom's corsage</li>
-                    <li>10 pairs principal sponsors corsage</li>
-                    <li>3 pairs secondary sponsors corsage</li>
-                    <li>1 maid of honor flower bouquet</li>
-                    <li>1 bestman buttoner</li>
-                    <li>4 bridesmaids flower bouquet</li>
-                    <li>4 groomsmen buttoners</li>
-                    <li>4 flowergirls headress and flower basket</li>
-                    <li>Bridal car bouquet</li>
-                    <li>Artificial flower stand aisle</li>
-                </ul>
-                
-                <h3><i class="fas fa-camera"></i> Photo & Video</h3>
-                <ul>
-                    <li>With same day edit</li>
-                    <li>Prenup photoshoot</li>
-                    <li>Postnuptial shots</li>
-                    <li>2 set up cameras</li>
-                    <li>Free USB full coverage video</li>
-                    <li>Free wedding album</li>
-                    <li>Same day edit video</li>
-                </ul>
-                <div class="corkage-note">
-                    <i class="fas fa-exclamation-circle"></i> All corkages will be charged to client
+                <div class="card-body">
+                    {% for type_name, items in items_by_type.items %}
+                    <div class="mb-4">
+                        <h5>{{ type_name }}</h5>
+                        <ul class="list-group">
+                            {% for item in items %}
+                            <li class="list-group-item">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        {{ item.inventory_item.name }}
+                                        {% if item.label %} <small class="text-muted">({{ item.label }})</small>{% endif %}
+                                    </div>
+                                    <span class="badge bg-secondary">Qty: {{ item.quantity }}</span>
+                                </div>
+                                {% if item.inventory_item.image %}
+                                <img src="{{ item.inventory_item.image.url }}" 
+                                     class="img-thumbnail mt-2" 
+                                     style="max-height: 100px;"
+                                     alt="{{ item.inventory_item.name }}">
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
-            
-            <button class="avail-btn">
-                <i class="fas fa-envelope"></i> Inquire Now
-            </button>
-        </div>
-
-        <!-- Wedding Package 3 -->
-        <div class="package-box wedding" data-id="wedding-3">
-            <div class="compare-checkbox">
-                <input type="checkbox" id="compare-wedding-3" class="compare-check" data-id="wedding-3">
-                <label for="compare-wedding-3">Compare</label>
-            </div>
-            
-            <h2>Custom Wedding Package</h2>
-            <div class="package-price">Custom Pricing</div>
-            <div class="note">Contact us for a personalized quote based on your needs</div>
-            
-            <div class="package-inclusions">
-                <h3><i class="fas fa-birthday-cake"></i> Wedding Cake</h3>
-                <ul>
-                    <li>2 tiered customized wedding cake</li>
-                    <li>8 satellite cake</li>
-                    <li>Client's choice of motif</li>
-                </ul>
-                
-                <h3><i class="fas fa-envelope-open-text"></i> Wedding Invitation</h3>
-                <ul>
-                    <li>Customized lacer cut invitations (50pcs)</li>
-                    <li>Client's choice of design and motif</li>
-                </ul>
-                
-                <h3><i class="fas fa-users-cog"></i> Coordination Team</h3>
-                <ul>
-                    <li>Professional coordinator</li>
-                    <li>Professional emcee</li>
-                    <li>Assistant coordinators</li>
-                    <li>Program flow</li>
-                    <li>Table tags</li>
-                    <li>Wedding acoustic singer</li>
-                </ul>
-                
-                <h3><i class="fas fa-paint-brush"></i> Make Up Package</h3>
-                <ul>
-                    <li>Bride prenup photoshoot</li>
-                    <li>Bride's on the day make up</li>
-                    <li>10 heads on the day entourage make up</li>
-                    <li>Included 2 mothers</li>
-                </ul>
-                
-                <h3><i class="fas fa-lightbulb"></i> Lights & Sounds</h3>
-                <ul>
-                    <li>With LED wall</li>
-                    <li>4 moving heads</li>
-                    <li>Pallow spot</li>
-                    <li>LED lights</li>
-                    <li>Spot light</li>
-                    <li>With smoke and bubbles machine</li>
-                </ul>
-                <div class="corkage-note">
-                    <i class="fas fa-exclamation-circle"></i> All corkages will be charged to client
-                </div>
-            </div>
-            
-            <button class="avail-btn">
-                <i class="fas fa-cogs"></i> Customize Your Package
-            </button>
         </div>
     </div>
 </div>
 
-<div class="packages-section">
-    <h2 class="section-title">
-        <i class="fas fa-star"></i> Debut Packages
-    </h2>
-    
-    <div class="package-container">
-        <!-- Debut Package -->
-        <div class="package-box debut" data-id="debut-1">
-            <div class="compare-checkbox">
-                <input type="checkbox" id="compare-debut-1" class="compare-check" data-id="debut-1">
-                <label for="compare-debut-1">Compare</label>
+<!-- Rent Modal -->
+<div class="modal fade" id="rentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Rent {{ package.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            
-            <h2>Standard Debut Package</h2>
-            <div class="package-price">₱180,000</div>
-            
-            <div class="package-inclusions">
-                <h3><i class="fas fa-hotel"></i> Hotel Venue / Food</h3>
-                <div class="corkage-note">
-                    <i class="fas fa-exclamation-circle"></i> All corkages will be charged to client
+            <form method="post" action="{% url 'customerapp:create_rental' package.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Rental Period</label>
+                        <select class="form-select" name="rental_days" required>
+                            <option value="">Select duration</option>
+                            <option value="1">1 day</option>
+                            <option value="3">3 days</option>
+                            <option value="7">1 week</option>
+                            <option value="14">2 weeks</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Event Date</label>
+                        <input type="date" class="form-control" name="event_date" required>
+                    </div>
+                    <div class="alert alert-info">
+                        <h6>Pricing Summary</h6>
+                        <ul class="mb-0">
+                            <li>Package: ₱{{ package.base_price|floatformat:2 }}</li>
+                            <li>Deposit: ₱{{ package.deposit_price|floatformat:2 }}</li>
+                            <li class="fw-bold">Total: ₱{{ total_price|floatformat:2 }}</li>
+                        </ul>
+                    </div>
                 </div>
-                
-                <h3><i class="fas fa-camera"></i> Photo & Video</h3>
-                <ul>
-                    <li>Same day edit (SDE)</li>
-                    <li>2 set up cameras</li>
-                    <li>100 copies 3R size pictures</li>
-                    <li>Free USB full coverage video</li>
-                    <li>Free album</li>
-                    <li>Free projector</li>
-                </ul>
-                <div class="corkage-note">
-                    <i class="fas fa-exclamation-circle"></i> All corkages will be charged to client
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Confirm Rental</button>
                 </div>
-                
-                <h3><i class="fas fa-images"></i> Photoshoot</h3>
-                <ul>
-                    <li>25 set up cameras</li>
-                    <li>100 copies 3R size pictures</li>
-                    <li>Free USB full coverage video</li>
-                    <li>Free album</li>
-                    <li>Free projector</li>
-                </ul>
-                
-                <h3><i class="fas fa-tshirt"></i> Wardrobe Package</h3>
-                <ul>
-                    <li>Mother</li>
-                    <li>Father</li>
-                    <li>Ballgown</li>
-                    <li>Cocktail</li>
-                </ul>
-                
-                <h3><i class="fas fa-birthday-cake"></i> Debutant Cake</h3>
-                <ul>
-                    <li>3 layers customized cake</li>
-                    <li>18 cupcakes</li>
-                    <li>Client's choice of motif</li>
-                </ul>
-                
-                <h3><i class="fas fa-users-cog"></i> Coordination Team</h3>
-                <ul>
-                    <li>Professional coordinator</li>
-                    <li>Professional emcee</li>
-                    <li>Assistant coordinators</li>
-                    <li>Program flow</li>
-                    <li>Table tags</li>
-                </ul>
-                
-                <h3><i class="fas fa-paint-brush"></i> Make Up Package</h3>
-                <ul>
-                    <li>Debut photoshoot</li>
-                    <li>Debut on the day make up</li>
-                    <li>Mother</li>
-                </ul>
-                
-                <h3><i class="fas fa-lightbulb"></i> Lights & Sounds</h3>
-                <ul>
-                    <li>With LED wall</li>
-                    <li>4 moving heads</li>
-                    <li>Pallow spot</li>
-                    <li>LED lights</li>
-                    <li>Spot light</li>
-                    <li>With smoke and bubbles machine</li>
-                </ul>
-                <div class="corkage-note">
-                    <i class="fas fa-exclamation-circle"></i> All corkages will be charged to client
-                </div>
-            </div>
-            
-            <button class="avail-btn">
-                <i class="fas fa-envelope"></i> Inquire Now
-            </button>
+            </form>
         </div>
     </div>
 </div>
-
-<div class="packages-section">
-    <h2 class="section-title">
-        <i class="fas fa-plus-circle"></i> Additional Services
-    </h2>
-    
-    <div class="package-container">
-        <!-- Additional Service 1 -->
-        <div class="package-box addons" data-id="addon-1">
-            <div class="compare-checkbox">
-                <input type="checkbox" id="compare-addon-1" class="compare-check" data-id="addon-1">
-                <label for="compare-addon-1">Compare</label>
-            </div>
-            
-            <h2>Venue Decoration</h2>
-            <div class="package-price">Starting at ₱25,000</div>
-            
-            <div class="package-inclusions">
-                <ul>
-                    <li>Stage decoration</li>
-                    <li>Ceiling tenting decoration</li>
-                    <li>Tussels</li>
-                    <li>Flowy flowers</li>
-                    <li>Entrance tunnel</li>
-                    <li>VIP presidential table</li>
-                </ul>
-                
-                <h3><i class="fas fa-fire"></i> Fireworks</h3>
-                <ul>
-                    <li>2 sets indoor fireworks</li>
-                    <li>Professional installed</li>
-                </ul>
-            </div>
-            
-            <button class="avail-btn">
-                <i class="fas fa-cart-plus"></i> Add to Package
-            </button>
-        </div>
-
-        <!-- Additional Service 2 -->
-        <div class="package-box addons" data-id="addon-2">
-            <div class="compare-checkbox">
-                <input type="checkbox" id="compare-addon-2" class="compare-check" data-id="addon-2">
-                <label for="compare-addon-2">Compare</label>
-            </div>
-            
-            <h2>Wedding Cake</h2>
-            <div class="package-price">Starting at ₱15,000</div>
-            
-            <div class="package-inclusions">
-                <ul>
-                    <li>Customized wedding cake</li>
-                    <li>4 satellite cake</li>
-                    <li>Client's choice of design</li>
-                </ul>
-                
-                <h3><i class="fas fa-envelope-open-text"></i> Invitations</h3>
-                <ul>
-                    <li>Customized lacer cut invitations (50pcs)</li>
-                    <li>Client's choice of design and motif</li>
-                </ul>
-            </div>
-            
-            <button class="avail-btn">
-                <i class="fas fa-cart-plus"></i> Add to Package
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Comparison Modal -->
-<div id="comparisonModal" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-        <h2>Package Comparison</h2>
-        <div id="comparisonResults"></div>
-    </div>
-</div>
-
-<script>
-    // Package filtering functionality
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            // Update active state of filter buttons
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            
-            const filter = this.getAttribute('data-filter');
-            const packages = document.querySelectorAll('.package-box');
-            
-            packages.forEach(pkg => {
-                if (filter === 'all' || pkg.classList.contains(filter)) {
-                    pkg.style.display = 'block';
-                } else {
-                    pkg.style.display = 'none';
-                }
-            });
-        });
-    });
-
-    // Package comparison functionality
-    const compareCheckboxes = document.querySelectorAll('.compare-check');
-    const compareBtn = document.getElementById('compareBtn');
-    const comparisonModal = document.getElementById('comparisonModal');
-    const closeModal = document.querySelector('.close');
-    const comparisonResults = document.getElementById('comparisonResults');
-    
-    let selectedPackages = [];
-    
-    compareCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            const packageId = this.getAttribute('data-id');
-            
-            if (this.checked) {
-                selectedPackages.push(packageId);
-            } else {
-                selectedPackages = selectedPackages.filter(id => id !== packageId);
-            }
-            
-            updateCompareButton();
-        });
-    });
-    
-    function updateCompareButton() {
-        const count = selectedPackages.length;
-        compareBtn.disabled = count < 2;
-        compareBtn.textContent = ` Compare Selected Packages (${count})`;
-        
-        if (count >= 2) {
-            compareBtn.innerHTML = `<i class="fas fa-exchange-alt"></i> Compare Selected Packages (${count})`;
-        } else {
-            compareBtn.innerHTML = `<i class="fas fa-exchange-alt"></i> Compare Selected Packages (${count})`;
-        }
-    }
-    
-    compareBtn.addEventListener('click', function() {
-        if (selectedPackages.length < 2) return;
-        
-        // Generate comparison table
-        const packagesToCompare = Array.from(document.querySelectorAll('.package-box'))
-            .filter(pkg => selectedPackages.includes(pkg.getAttribute('data-id')));
-        
-        let tableHTML = `
-            <table class="comparison-table">
-                <thead>
-                    <tr>
-                        <th>Feature</th>
-                        ${packagesToCompare.map(pkg => `<th>${pkg.querySelector('h2').textContent}</th>`).join('')}
-                    </tr>
-                    <tr>
-                        <th>Price</th>
-                        ${packagesToCompare.map(pkg => `<td>${pkg.querySelector('.package-price').textContent}</td>`).join('')}
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-        
-        // Get all unique features from all packages being compared
-        const allFeatures = new Set();
-        packagesToCompare.forEach(pkg => {
-            const features = pkg.querySelectorAll('.package-inclusions li');
-            features.forEach(li => allFeatures.add(li.textContent.trim()));
-        });
-        
-        // Add rows for each feature
-        Array.from(allFeatures).forEach(feature => {
-            tableHTML += `
-                <tr>
-                    <td>${feature}</td>
-                    ${packagesToCompare.map(pkg => {
-                        const features = Array.from(pkg.querySelectorAll('.package-inclusions li'))
-                            .map(li => li.textContent.trim());
-                        return `<td class="checkmark">${features.includes(feature) ? '✓' : ''}</td>`;
-                    }).join('')}
-                </tr>
-            `;
-        });
-        
-        tableHTML += `</tbody></table>`;
-        comparisonResults.innerHTML = tableHTML;
-        comparisonModal.style.display = 'block';
-    });
-    
-    closeModal.addEventListener('click', function() {
-        comparisonModal.style.display = 'none';
-    });
-    
-    window.addEventListener('click', function(event) {
-        if (event.target === comparisonModal) {
-            comparisonModal.style.display = 'none';
-        }
-    });
-
-    // Smooth scroll for anchor links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function(e) {
-            e.preventDefault();
-            document.querySelector(this.getAttribute('href')).scrollIntoView({
-                behavior: 'smooth'
-            });
-        });
-    });
-</script>
-
 {% endblock %}

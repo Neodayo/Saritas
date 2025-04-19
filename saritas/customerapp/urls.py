@@ -23,4 +23,7 @@ urlpatterns = [
     path('notifications/', views.notifications, name='notifications'),
     path('notifications/mark-as-read/<int:notification_id>/', views.mark_notification_as_read, name='mark_notification_as_read'),
     path('notifications/mark-all-as-read/', views.mark_all_notifications_as_read, name='mark_all_notifications_as_read'),
+    path('packages/', views.CustomerPackageListView.as_view(), name='package_list'),
+    path('packages/<int:pk>/', views.CustomerPackageDetailView.as_view(), name='package_detail'),
+    path('packages/<int:pk>/rent/', views.CreateRentalView.as_view(), name='create_rental'),
 ]

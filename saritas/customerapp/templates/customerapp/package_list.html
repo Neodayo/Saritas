@@ -1,0 +1,35 @@
+{% extends 'customerapp/base.html' %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="mb-4">Our Wardrobe Packages</h1>
+    
+    <div class="row">
+        {% for package in packages %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                {% if package.image %}
+                <img src="{{ package.image.url }}" class="card-img-top" alt="{{ package.name }}">
+                {% endif %}
+                <div class="card-body">
+                    <h3 class="card-title">{{ package.name }}</h3>
+                    <h4 class="text-gold">₱{{ package.base_price|floatformat:2 }}</h4>
+                    <p class="text-muted">+ ₱{{ package.deposit_price|floatformat:2 }} refundable deposit</p>
+                    <p class="card-text">{{ package.description|truncatewords:20 }}</p>
+                </div>
+                <div class="card-footer bg-white">
+                    <a href="{% url 'customerapp:package_detail' package.pk %}" 
+                       class="btn btn-primary w-100">
+                        View Package Details
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">No packages available at this time.</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

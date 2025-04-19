@@ -1,0 +1,112 @@
+{% extends 'customerapp/base.html' %}
+{% load static %}
+
+{% block title %}Wardrobe Packages | Sarita's{% endblock %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Customize {{ base_package.name }}</h2>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Original Package Items</h5>
+        </div>
+        <div class="card-body">
+            <ul class="list-group mb-3">
+                {% for item in base_package.package_items.all %}
+                <li class="list-group-item">
+                    {{ item.quantity }}x {{ item.display_label }}
+                    {% if not item.is_required %}(Optional){% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h5>Your Customizations</h5>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {{ customize_form.as_p }}
+                
+                <div id="customizations-container">
+                    <!-- Customization forms will be added here via JavaScript -->
+                </div>
+                
+                <button type="button" id="add-customization" class="btn btn-sm btn-outline-primary mb-3">
+                    Add Customization
+                </button>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Submit Custom Package</button>
+                    <a href="{% url 'customer:package_detail' base_package.pk %}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('customizations-container');
+    const addButton = document.getElementById('add-customization');
+    let counter = 0;
+    
+    addButton.addEventListener('click', function() {
+        counter++;
+        const div = document.createElement('div');
+        div.className = 'customization-form mb-3 p-3 border rounded';
+        div.innerHTML = `
+            <h6>Customization #${counter}</h6>
+            <div class="form-group">
+                <label>Action:</label>
+                <select name="customization-${counter}-action" class="form-control">
+                    <option value="add">Add Item</option>
+                    <option value="remove">Remove Item</option>
+                    <option value="replace">Replace Item</option>
+                    <option value="quantity">Adjust Quantity</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Item to Modify (if applicable):</label>
+                <select name="customization-${counter}-original_item" class="form-control">
+                    {% for item in base_package.package_items.all %}
+                    <option value="{{ item.id }}">{{ item.display_label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>New Item (if adding/replacing):</label>
+                <select name="customization-${counter}-inventory_item" class="form-control">
+                    {% for item in modification_form.fields.inventory_item.queryset %}
+                    <option value="{{ item.id }}">{{ item.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>New Quantity (if adjusting):</label>
+                <input type="number" name="customization-${counter}-new_quantity" class="form-control" min="1">
+            </div>
+            <div class="form-group">
+                <label>Notes:</label>
+                <textarea name="customization-${counter}-notes" class="form-control" rows="2"></textarea>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger remove-customization">Remove</button>
+        `;
+        
+        container.appendChild(div);
+        
+        div.querySelector('.remove-customization').addEventListener('click', function() {
+            container.removeChild(div);
+        });
+    });
+});
+</script>
+{% endblock %}

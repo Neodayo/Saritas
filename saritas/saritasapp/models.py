@@ -10,6 +10,7 @@ from django.dispatch import receiver
 from django.urls import reverse
 from django.utils import timezone
 from django.conf import settings
+from django.db.models.signals import post_migrate
 
 
 
@@ -110,12 +111,34 @@ class Size(models.Model):
     def __str__(self):
         return self.name
 
-
+class ItemType(models.Model):
+    ITEM_TYPES = [
+        ('bridal_gown', 'Bridal Gown'),
+        ('groom_tuxedo', 'Groom\'s Tuxedo'),
+        ('maid_of_honor', 'Maid of Honor'),
+        ('bestman', 'Bestman'),
+        ('bridesmaid', 'Bridesmaid'),
+        ('groomsmen', 'Groomsmen'),
+        ('flowergirl', 'Flowergirl'),
+        ('bearer', 'Bearer'),
+        ('mother_gown', 'Mother\'s Gown'),
+        ('father_attire', 'Father\'s Suit or Barong Attire'),
+    ]
+    
+    name = models.CharField(
+        max_length=50,
+        choices=ITEM_TYPES,
+        unique=True
+    )
+    
+    def __str__(self):
+        return self.get_name_display()
 # --- Inventory ---
 class Inventory(models.Model):
     name = models.CharField(max_length=255)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name="inventory_items")
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="items")
+    item_type = models.ForeignKey(ItemType, on_delete=models.SET_NULL, null=True, blank=True)
     color = models.ForeignKey(Color, null=True, blank=True, on_delete=models.SET_NULL, related_name="inventory_items")
     size = models.ForeignKey(Size, null=True, blank=True, on_delete=models.SET_NULL, related_name="inventory_items")
     quantity = models.IntegerField(default=0)
@@ -140,9 +163,13 @@ class Inventory(models.Model):
             details.append(f"Size: {self.size}")
         return " - ".join(details)
 
+    def display_name(self):
+        return f"{self.name} ({self.category.name}) - Size: {self.size}, Color: {self.color}"
+
     class Meta:
         verbose_name_plural = "Inventory"
         ordering = ['-created_at']
+
 
 
 # --- Rental ---
@@ -526,31 +553,96 @@ class Notification(models.Model):
     def mark_all_as_read(cls, user):
         return cls.objects.filter(user=user, is_read=False).update(is_read=True)
     
+from django.db import models
+from django.core.validators import MinValueValidator
+from django.core.exceptions import ValidationError
+
 class WardrobePackage(models.Model):
     PACKAGE_TIERS = [
-        ("A", "Package A (₱12,000)"),
-        ("B", "Package B (₱15,000)"),
-        ("C", "Package C (₱18,000)"),
+        ("A", "Package A"),
+        ("B", "Package B"),
+        ("C", "Package C"),
+        ("custom", "Custom Package"),
     ]
+
+    STATUS_CHOICES = [
+        ("fixed", "Fixed Composition"),
+        ("customizable", "Customizable"),
+        ("archived", "Archived"),
+    ]
+
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
-    tier = models.CharField(max_length=1, choices=PACKAGE_TIERS)
-    base_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    refundable_deposit = models.DecimalField(max_digits=10, decimal_places=2, default=10000.00)
-    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    STATUS_CHOICES = [
-        ("active", "Active"),
-        ("inactive", "Inactive"),
-    ]
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="active")
+    tier = models.CharField(
+        max_length=10, 
+        choices=PACKAGE_TIERS, 
+        blank=True, 
+        null=True,
+        help_text="Predefined package tier (A, B, C) or custom"
+    )
+    base_price = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0,
+        validators=[MinValueValidator(0)]
+    )
+    deposit_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=10000.00,
+        validators=[MinValueValidator(0)],
+        help_text="Refundable deposit amount"
+    )
+    discount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(0)]
+    )
+    status = models.CharField(
+        max_length=15, 
+        choices=STATUS_CHOICES, 
+        default="fixed",
+        help_text="Fixed packages cannot be modified by customers"
+    )
+    min_rental_days = models.PositiveIntegerField(
+        default=1,
+        help_text="Minimum rental period for this package"
+    )
+    includes_accessories = models.BooleanField(
+        default=False,
+        help_text="Does this package include free accessories?"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        ordering = ['tier', 'base_price']
+        verbose_name_plural = "Wardrobe Packages"
+
+    def clean(self):
+        if self.tier and self.tier != 'custom' and self.status == 'customizable':
+            raise ValidationError("Predefined packages (A, B, C) must be fixed composition")
+            
     def final_price(self):
-        """Calculate the final price after applying discounts."""
-        return self.base_price - self.discount
+        """Calculate price after discounts"""
+        return max(self.base_price - self.discount, 0)
+
+    def total_price(self):
+        """Total upfront payment required"""
+        return self.final_price() + self.deposit_price
+
+    def get_required_items(self):
+        """Returns required items that cannot be removed during customization"""
+        if self.status == 'fixed':
+            return self.package_items.all()
+        return self.package_items.filter(is_required=True)
 
     def __str__(self):
-        return f"{self.name} - {self.get_tier_display()}"
-    
+        display_name = f"{self.get_tier_display()}" if self.tier else "Custom Package"
+        return f"{display_name} - ₱{self.base_price:,.2f}"
+
+
 class WardrobePackageItem(models.Model):
     package = models.ForeignKey(
         WardrobePackage,
@@ -559,39 +651,197 @@ class WardrobePackageItem(models.Model):
     )
     inventory_item = models.ForeignKey(
         Inventory,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        limit_choices_to={'available': True}
     )
     quantity = models.PositiveIntegerField(default=1)
+    is_required = models.BooleanField(
+        default=True,
+        help_text="Whether this item is mandatory for the package"
+    )
+    label = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Display label (e.g., 'Barong/Vest')"
+    )
+    replacement_allowed = models.BooleanField(
+        default=True,
+        help_text="Can this item be replaced in customizations?"
+    )
+
+    class Meta:
+        unique_together = ('package', 'inventory_item')
+        ordering = ['package', '-is_required']
 
     def clean(self):
-        """Ensure there is enough stock in the inventory."""
         if self.quantity > self.inventory_item.quantity:
-            raise ValidationError(f"Not enough stock for {self.inventory_item.name} in inventory.")
+            raise ValidationError(
+                f"Not enough stock for {self.inventory_item.name}. Available: {self.inventory_item.quantity}"
+            )
+        if not self.replacement_allowed and not self.is_required:
+            raise ValidationError("Non-replaceable items must be required")
+
+    def display_name(self):
+        return self.label or f"{self.inventory_item.category.name} x{self.quantity}"
 
     def __str__(self):
-        return f"{self.inventory_item.name} in {self.package.name}"
-    
-class SelectedWardrobeItem(models.Model):
+        return f"{self.package.name}: {self.display_name()}"
+
+
+class CustomizedWardrobePackage(models.Model):
+    CUSTOMIZATION_STATUS = [
+        ('draft', 'Draft'),
+        ('pending', 'Pending Approval'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.CASCADE,
+        related_name='custom_packages'
+    )
+    base_package = models.ForeignKey(
+        WardrobePackage,
+        on_delete=models.CASCADE,
+        limit_choices_to={'status__in': ['fixed', 'customizable']}
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=CUSTOMIZATION_STATUS,
+        default='draft'
+    )
+    base_price = models.DecimalField(max_digits=10, decimal_places=2)
+    customization_fee = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    deposit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    notes = models.TextField(blank=True)
+    staff_notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+
+    def save(self, *args, **kwargs):
+        if not self.pk:  # New instance
+            self.base_price = self.base_package.final_price()
+            self.deposit_price = self.base_package.deposit_price
+        
+        self.total_price = self.base_price + self.deposit_price + self.customization_fee
+        super().save(*args, **kwargs)
+
+    def get_changes(self):
+        """Returns a summary of customizations made"""
+        changes = []
+        for item in self.modifications.all():
+            changes.append(str(item))
+        return changes
+
+    def __str__(self):
+        return f"Custom {self.base_package.name} for {self.customer} ({self.get_status_display()})"
+
+
+class PackageCustomization(models.Model):
+    ACTION_CHOICES = [
+        ('add', 'Add Item'),
+        ('remove', 'Remove Item'),
+        ('replace', 'Replace Item'),
+        ('quantity', 'Adjust Quantity')
+    ]
+
+    customized_package = models.ForeignKey(
+        CustomizedWardrobePackage,
+        on_delete=models.CASCADE,
+        related_name='modifications'
+    )
+    action = models.CharField(max_length=10, choices=ACTION_CHOICES)
+    original_item = models.ForeignKey(
+        WardrobePackageItem,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    inventory_item = models.ForeignKey(
+        Inventory,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+    new_quantity = models.PositiveIntegerField(null=True, blank=True)
+    price_adjustment = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+    notes = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        verbose_name = "Package Customization"
+        verbose_name_plural = "Package Customizations"
+
+    def clean(self):
+        # Validate based on action type
+        if self.action in ['replace', 'remove', 'quantity'] and not self.original_item:
+            raise ValidationError("Original item is required for this action")
+        if self.action in ['add', 'replace'] and not self.inventory_item:
+            raise ValidationError("Inventory item is required for this action")
+        if self.action == 'quantity' and not self.new_quantity:
+            raise ValidationError("New quantity is required for quantity adjustments")
+
+    def __str__(self):
+        action_map = {
+            'add': f"Added {self.inventory_item}",
+            'remove': f"Removed {self.original_item}",
+            'replace': f"Replaced {self.original_item} with {self.inventory_item}",
+            'quantity': f"Changed quantity of {self.original_item} to {self.new_quantity}"
+        }
+        return action_map.get(self.action, "Customization")
+
+
+class OrderWardrobePackage(models.Model):
     order = models.ForeignKey(
         "CustomerOrder",
-        related_name="selected_wardrobe_items",
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='wardrobe_packages'
     )
-    wardrobe_package_item = models.ForeignKey(
-        WardrobePackageItem,
-        on_delete=models.CASCADE
+    package = models.ForeignKey(
+        WardrobePackage,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True
     )
-    selected_quantity = models.PositiveIntegerField(default=0)
+    customized_package = models.ForeignKey(
+        CustomizedWardrobePackage,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True
+    )
+    quantity = models.PositiveIntegerField(default=1)
+    rental_price = models.DecimalField(max_digits=10, decimal_places=2)
+    deposit_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    start_date = models.DateField()
+    end_date = models.DateField()
 
-    def clean(self):
-        """Ensure there is enough stock for the selected quantity."""
-        if self.selected_quantity > self.wardrobe_package_item.inventory_item.quantity:
-            raise ValidationError(
-                f"Not enough stock for {self.wardrobe_package_item.inventory_item.name}. Available: {self.wardrobe_package_item.inventory_item.quantity}"
-            )
+    class Meta:
+        verbose_name = "Ordered Wardrobe Package"
+        verbose_name_plural = "Ordered Wardrobe Packages"
+
+    @property
+    def is_custom(self):
+        return self.customized_package is not None
+
+    def get_package_name(self):
+        if self.customized_package:
+            return f"Custom {self.customized_package.base_package.name}"
+        return self.package.name
 
     def __str__(self):
-        return f"Order {self.order.id} - {self.wardrobe_package_item.inventory_item.name} - Quantity: {self.selected_quantity}"
+        return f"{self.get_package_name()} for Order #{self.order.id}"
 
 class ExternalService(models.Model):
     name = models.CharField(max_length=255)
@@ -662,11 +912,11 @@ class SelectedPackageItem(models.Model):
 
 class CustomerOrder(models.Model):
     ORDER_STATUS_CHOICES = (
-    ("Pending", "Pending"),
-    ("Confirmed", "Confirmed"),
-    ("Completed", "Completed"),
-    ("Cancelled", "Cancelled"),
-)
+        ("Pending", "Pending"),
+        ("Confirmed", "Confirmed"),
+        ("Completed", "Completed"),
+        ("Cancelled", "Cancelled"),
+    )
     customer = models.ForeignKey(
         Customer,
         on_delete=models.CASCADE,
@@ -709,29 +959,24 @@ class CustomerOrder(models.Model):
     def calculate_total_price(self):
         """
         Calculate the total price of the order by summing up:
-        1. The base price of the wedding package.
-        2. The prices of selected services.
-        3. The prices of selected wardrobe items.
+        1. The base price of the wardrobe package.
+        2. The prices of selected items.
+        3. The deposit price.
         """
-        # Base price of the wedding package
-        wedding_total = self.package.base_price if self.package else 0
-
-        # Add prices of selected wedding package items
-        wedding_total += sum(
-            item.item.price for item in self.selected_items.filter(selected=True)
-        )
+        # Base price of the wardrobe package
+        wardrobe_total = self.wardrobe_package.final_price() if self.wardrobe_package else 0
 
         # Add prices of selected wardrobe package items
-        wardrobe_total = sum(
+        wardrobe_total += sum(
             item.selected_quantity * item.wardrobe_package_item.inventory_item.rental_price
             for item in self.selected_wardrobe_items.all()
         )
 
-        self.total_price = wedding_total + wardrobe_total
-        self.save(update_fields=["total_price"])
+        # Include deposit price
+        deposit_price = self.wardrobe_package.deposit_price if self.wardrobe_package else 0
 
-    def __str__(self):
-        return f"Order #{self.id} - {self.status}"
+        self.total_price = wardrobe_total + deposit_price
+        self.save(update_fields=["total_price"])
 
 # --- Calendar/Event Model ---
 class Event(models.Model):
