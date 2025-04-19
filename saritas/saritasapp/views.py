@@ -841,7 +841,6 @@ def dashboard(request):
 @login_required
 def logout_view(request):
     logout(request)
-    messages.info(request, "You have been logged out.")
     return redirect('customerapp:homepage')
 
 

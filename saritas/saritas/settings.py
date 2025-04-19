@@ -52,6 +52,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'saritasapp.context_processors.notifications',  # Custom context processor
                 'customerapp.context_processors.notifications',
+                 'customerapp.context_processors.categories_processor', # this adds categories to all pages
             ],
         },
     },
@@ -91,7 +92,7 @@ USE_TZ = True
 
 # Static and Media Files
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']  # Add any additional static directories if necessary
+STATICFILES_DIRS = [BASE_DIR / 'saritasapp' / 'static',]  # Add any additional static directories if necessary
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'

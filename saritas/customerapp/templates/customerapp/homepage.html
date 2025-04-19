@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/customerhomepage.css' %}">
+<!-- Remove this if you're fully using Tailwind -->
 <style>
     /* Additional homepage-specific styles */
     .hero-banner {
@@ -10,11 +10,11 @@
         padding-top: 80px;
         height: calc(100vh - 80px);
     }
-    
+
     .section:first-child {
         padding-top: 40px;
     }
-    
+
     /* Ensure content appears below fixed header */
     main {
         position: relative;
@@ -24,69 +24,125 @@
 {% endblock %}
 
 {% block content %}
-<main>
+<main class="relative z-10">
     <!-- Hero Banner -->
-    <section class="hero-banner">
-        <div class="hero-content">
-            <h1>Elevate Your Special Occasion</h1>
-            <p>Premium fashion rentals for weddings, debuts, and galas</p>
-            <a href="#featured" class="btn btn-primary">Browse Collection</a>
+    <section class="hero-banner relative overflow-hidden"
+        style="margin-top: -80px; padding-top: 80px; height: calc(100vh - 80px);">
+        <!-- Background image -->
+        <img src="{% static 'images/customerbackground.jpg' %}" alt="Fashion rental collection"
+            class="absolute inset-0 w-full h-full object-cover blur-sm"> <!-- blur-sm/md/lg -->
+
+
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+
+        <!-- Content -->
+        <div class="relative z-10 h-full flex items-center justify-center text-white">
+            <div class="text-center px-4">
+                <h1 class="text-4xl md:text-5xl font-bold mb-4">Elevate Your Special Occasion</h1>
+                <p class="text-xl mb-8">Premium fashion rentals for weddings, debuts, and galas</p>
+                <a href="#collection"
+                    class="bg-[#9E8729] hover:bg-[#AD974F] text-white py-3 px-6 rounded-md inline-block transition">
+                    Browse Collection
+                </a>
+            </div>
         </div>
     </section>
 
     <!-- Featured Items Section -->
-    <section id="featured" class="section">
-        <h2>Featured Pieces</h2>
-        <div class="scroll-container">
-            {% for item in featured_items %}
-            <div class="product-card">
-                <img src="{{ item.image.url|default:'/static/images/default-dress.jpg' }}" alt="{{ item.name }}">
-                <h3>{{ item.name }}</h3>
-                <p class="price">₱{{ item.rental_price }} rental</p>
-                <a href="{% url 'customerapp:item_detail' item.id %}" class="btn btn-outline">View Details</a>
+    <section id="featured" class="py-16 px-4" style="padding-top: 40px;">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-3xl font-bold text-center mb-12">Featured Pieces</h2>
+            <div class="flex overflow-x-auto gap-6 pb-4 -mx-4 px-4">
+                {% for item in featured_items %}
+                <div class="flex-shrink-0 w-64 bg-white rounded-lg shadow-md overflow-hidden">
+                    <img src="{{ item.image.url|default:'/static/images/default-dress.jpg' }}" alt="{{ item.name }}"
+                        class="w-full h-64 object-cover">
+                    <div class="p-4">
+                        <h3 class="font-bold text-lg mb-2">{{ item.name }}</h3>
+                        <p class="text-gray-700 mb-4">₱{{ item.rental_price }} rental</p>
+                        <a href="{% url 'customerapp:item_detail' item.id %}"
+                            class="border border-[#9E8729] text-[#9E8729] hover:bg-[#AD974F] hover:text-white py-2 px-4 rounded-md inline-block transition">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Event Decoration Features -->
+    <section class="py-16 px-4 bg-gray-100">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-3xl font-bold text-center mb-12">Decorations</h2>
+            <!-- <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for category in categories %}
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <img src="{% static 'images/category-'|add:category.name|lower|add:'.jpg' %}"
+                        onerror="this.onerror=null;this.src='/static/images/default-category.jpg'"
+                        class="w-full h-48 object-cover">
+                    <div class="p-4 text-center">
+                        <h3 class="font-bold text-xl mb-4">{{ category.name }}</h3>
+                        <a href=""
+                            class="bg-[#9E8729] hover:bg-[#AD974F] text-white py-2 px-4 rounded-md inline-block transition">
+                            View Collection
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div> -->
         </div>
     </section>
 
     <!-- Categories Section -->
-    <section class="section bg-light">
-        <h2>Shop by Category</h2>
-        <div class="categories-grid">
-            {% for category in categories %}    
-            <div class="category-card">
-                <img src="{% static 'images/category-'|add:category.name|lower|add:'.jpg' %}" 
-                     onerror="this.onerror=null;this.src='/static/images/default-category.jpg'">
-                <div class="category-info">
-                    <h3>{{ category.name }}</h3>
-                    <a href="" class="btn btn-category">View Collection</a>
+    <section id="collection" class="py-16 px-4 bg-gray-100">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-3xl font-bold text-center mb-12">Collection</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for category in categories %}
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <img src="{% static 'images/category-'|add:category.name|lower|add:'.jpg' %}"
+                        onerror="this.onerror=null;this.src='/static/images/default-category.jpg'"
+                        class="w-full h-48 object-cover">
+                    <div class="p-4 text-center">
+                        <h3 class="font-bold text-xl mb-4">{{ category.name }}</h3>
+                        <a href=""
+                            class="bg-[#9E8729] hover:bg-[#AD974F] text-white py-2 px-4 rounded-md inline-block transition">
+                            View Collection 
+                        </a>
+                    </div>
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
     </section>
 
+    
     <!-- Wardrobe Packages Section -->
-    <section class="section">
-        <h2>Complete Wardrobe Packages</h2>
-        <h1> --- ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING --- </h1>
-        <div class="packages-grid">
-            {% for package in wardrobe_packages %}
-            <div class="package-card">
-                <h3>{{ package.name }}</h3>
-                <p class="price">₱{{ package.base_price }}</p>
-                <p class="tier">{{ package.get_tier_display }}</p>
-                <ul class="package-features">
-                    {% for item in package.package_items.all|slice:":3" %}
-                    <li>{{ item.inventory_item.name }}</li>
-                    {% endfor %}
-                </ul>
-                <a href="" class="btn btn-primary">View Package</a>
+    <section class="py-16 px-4">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-3xl font-bold text-center mb-12">Complete Wardrobe Packages</h2>
+            <h1 class="text-center mb-12">--- ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING
+                ---</h1>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for package in wardrobe_packages %}
+                <div class="bg-white rounded-lg shadow-md overflow-hidden p-6">
+                    <h3 class="font-bold text-xl mb-2">{{ package.name }}</h3>
+                    <p class="text-gray-700 text-lg mb-2">₱{{ package.base_price }}</p>
+                    <p class="text-gray-500 mb-4">{{ package.get_tier_display }}</p>
+                    <ul class="mb-6">
+                        {% for item in package.package_items.all|slice:":3" %}
+                        <li class="mb-1">• {{ item.inventory_item.name }}</li>
+                        {% endfor %}
+                    </ul>
+                    <a href=""
+                        class="bg-[#5a3e2b] hover:bg-[#3a281c] text-white py-2 px-4 rounded-md inline-block transition">
+                        View Package
+                    </a>
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
     </section>
-
-
 </main>
 {% endblock %}

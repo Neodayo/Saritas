@@ -1,5 +1,6 @@
 from django.core.cache import cache
 from saritasapp.models import Notification
+from saritasapp.models import Category
 
 def notifications(request):
     if request.user.is_authenticated:
@@ -13,3 +14,8 @@ def notifications(request):
             cache.set(cache_key, count, 60)  # Cache for 60 seconds
         return {'unread_count': count}
     return {'unread_count': 0}
+
+def categories_processor(request):
+    return {
+        'categories': Category.objects.all()
+    }
