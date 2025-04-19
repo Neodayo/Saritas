@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,9 +10,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Load Bootstrap Modal CSS ONLY with print/onload trick -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
-          integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" 
-          crossorigin="anonymous"
-          media="print" onload="this.media='all'">
+        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous"
+        media="print" onload="this.media='all'">
     <noscript>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
     </noscript>
@@ -19,15 +19,19 @@
         .bg-custom {
             background-color: #f9f4f1;
         }
+
         .sidebar-transition {
             transition: transform 0.3s ease-in-out;
         }
+
         .rotate-180 {
             transform: rotate(180deg);
         }
+
         .dropdown-content {
             transition: max-height 0.3s ease-out, opacity 0.2s ease;
         }
+
         /* Welcome Modal Styles */
         .checkmark-circle {
             width: 80px;
@@ -39,48 +43,89 @@
             justify-content: center;
             margin: 0 auto 20px;
         }
+
         .checkmark {
             color: white;
             font-size: 40px;
             font-weight: bold;
             animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
         }
+
         @keyframes fill {
-            100% { box-shadow: inset 0 0 0 100px #28a745; }
+            100% {
+                box-shadow: inset 0 0 0 100px #28a745;
+            }
         }
+
         @keyframes scale {
-            0%, 100% { transform: none; }
-            50% { transform: scale3d(1.1, 1.1, 1); }
+
+            0%,
+            100% {
+                transform: none;
+            }
+
+            50% {
+                transform: scale3d(1.1, 1.1, 1);
+            }
         }
+
         /* Isolate Bootstrap modal styles */
         .bootstrap-modal {
             all: initial;
         }
+
         .bootstrap-modal .modal {
             position: fixed;
         }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Rouge+Script&display=swap" rel="stylesheet">   
+    <link href="https://fonts.googleapis.com/css2?family=Rouge+Script&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@600&display=swap"
+        rel="stylesheet">
     {% block extra_css %}
-        <link rel="stylesheet" href="{% static 'css/notifications.css' %}">
+    <link rel="stylesheet" href="{% static 'css/notifications.css' %}">
     {% endblock %}
 </head>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const logoutForm = document.querySelector('#logoutModal form');
+        if (logoutForm) {
+            logoutForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                fetch(this.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(new FormData(this))
+                }).then(response => {
+                    if (response.ok) {
+                        window.location.href = "{% url 'customerapp:homepage' %}";
+                    }
+                });
+            });
+        }
+    });
+</script>
+
 <body class="bg-custom min-h-screen pt-20">
     <!-- Mobile Sidebar -->
-    <div id="mobile-sidebar" class="fixed lg:hidden top-0 left-0 h-full w-64 bg-[#EAEAEA] shadow-lg sidebar-transition transform -translate-x-full z-50 overflow-y-auto">
+    <div id="mobile-sidebar"
+        class="fixed lg:hidden top-0 left-0 h-full w-64 bg-[#EAEAEA] shadow-lg sidebar-transition transform -translate-x-full z-50 overflow-y-auto">
         <div class="p-4 space-y-2 mt-16">
-          
+
             <!-- Shop by Category Dropdown -->
             <div class="dropdown relative">
-                <button class="w-full px-4 py-2 text-left text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors flex justify-between items-center">
+                <button
+                    class="w-full px-4 py-2 text-left text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors flex justify-between items-center">
                     <span>SHOP BY CATEGORY</span>
                     <i class="fas fa-chevron-down transition-transform"></i>
                 </button>
                 <div class="dropdown-content pl-4 max-h-0 overflow-hidden transition-all duration-300">
                     {% for category in categories %}
-                    <a href="{% url 'customerapp:wardrobe' %}?category={{ category.id }}" class="block px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                    <a href="{% url 'customerapp:wardrobe' %}?category={{ category.id }}"
+                        class="block px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
                         {{ category.name }}
                     </a>
                     {% empty %}
@@ -91,7 +136,8 @@
 
             <!-- Packages Dropdown -->
             <div class="dropdown relative">
-                <button class="w-full px-4 py-2 text-left text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors flex justify-between items-center">
+                <button
+                    class="w-full px-4 py-2 text-left text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors flex justify-between items-center">
                     <span>PACKAGES</span>
                     <i class="fas fa-chevron-down transition-transform"></i>
                 </button>
@@ -105,34 +151,38 @@
                 </div>
             </div>
 
-            <a href="{% url 'customerapp:about_us' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+            <a href="{% url 'customerapp:about_us' %}"
+                class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
                 <span>ABOUT</span>
             </a>
 
             <!-- Auth Section -->
             <div class="mt-4 border-t pt-4">
                 {% if user.is_authenticated %}
-                <a href="{% url 'customerapp:notifications' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors relative">
+                <a href="{% url 'customerapp:notifications' %}"
+                    class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors relative">
                     <i class="fas fa-bell w-6 text-center mr-2"></i>
                     <span>Notifications</span>
                     {% if unread_count > 0 %}
-                    <span class="absolute right-4 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                    <span
+                        class="absolute right-4 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
                         {{ unread_count }}
                     </span>
                     {% endif %}
                 </a>
-                <a href="{% url 'customerapp:customer_profile' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                <a href="{% url 'customerapp:customer_profile' %}"
+                    class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
                     <i class="fas fa-user w-6 text-center mr-2"></i>
                     <span>Profile</span>
                 </a>
-                <form method="post" action="{% url 'customerapp:logout' %}" class="w-full">
-                    {% csrf_token %}
-                    <button type="submit" class="w-full px-4 py-2 text-left text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors">
-                        Logout
-                    </button>
-                </form>
+                <button type="button"
+                    class="w-full px-4 py-2 text-left text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
+                    data-bs-toggle="modal" data-bs-target="#logoutModal">
+                    Logout
+                </button>
                 {% else %}
-                <a href="{% url 'saritasapp:sign_in' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                <a href="{% url 'saritasapp:sign_in' %}"
+                    class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
                     <i class="fas fa-sign-in-alt w-6 text-center mr-2"></i>
                     <span>Login</span>
                 </a>
@@ -142,7 +192,8 @@
     </div>
 
     <!-- Header -->
-    <header class="fixed top-0 left-0 right-0 h-16 bg-[#EAEAEA] flex items-center px-4 z-50 border-b border-gray-800 shadow-sm">
+    <header
+        class="fixed top-0 left-0 right-0 h-16 bg-[#EAEAEA] flex items-center px-4 z-50 border-b border-gray-800 shadow-sm">
         <!-- Left side - Branding -->
         <div class="flex items-center">
             <button id="mobile-toggle" class="lg:hidden text-2xl mr-2">
@@ -153,12 +204,13 @@
                 <span class="text-2xl font-bold text-black" style="font-family: 'Great Vibes', cursive;">
                     Wedding Creations
                 </span>
-                <span class="text-xl font-semibold text-black hidden sm:inline-block" style="font-family: 'Playfair Display', serif;">
+                <span class="text-xl font-semibold text-black hidden sm:inline-block"
+                    style="font-family: 'Playfair Display', serif;">
                     & Event Stylist
                 </span>
             </a>
         </div>
-    
+
         <!-- Navigation items -->
         <div class="hidden lg:flex items-center justify-center absolute left-0 right-0 mx-auto w-fit">
             <div class="flex items-center gap-6">
@@ -168,10 +220,11 @@
                         SHOP BY CATEGORY
                         <i class="fas fa-chevron-down ml-2 text-sm"></i>
                     </button>
-                    <div class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-48 bg-white rounded-lg shadow-xl overflow-hidden transform origin-top transition-all scale-y-0 group-hover:scale-y-100">
+                    <div
+                        class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-48 bg-white rounded-lg shadow-xl overflow-hidden transform origin-top transition-all scale-y-0 group-hover:scale-y-100">
                         {% for category in categories %}
-                        <a href="{% url 'customerapp:wardrobe' %}?category={{ category.id }}" 
-                           class="block px-4 py-3 text-gray-800 hover:bg-[#AD974F]/10 transition-colors border-b border-gray-100">
+                        <a href="{% url 'customerapp:wardrobe' %}?category={{ category.id }}"
+                            class="block px-4 py-3 text-gray-800 hover:bg-[#AD974F]/10 transition-colors border-b border-gray-100">
                             {{ category.name }}
                         </a>
                         {% empty %}
@@ -179,15 +232,17 @@
                         {% endfor %}
                     </div>
                 </div>
-    
+
                 <!-- Packages Dropdown -->
                 <div class="relative group">
                     <button class="flex items-center text-black font-semibold hover:text-[#AD974F] transition-colors">
                         PACKAGES
                         <i class="fas fa-chevron-down ml-2 text-sm"></i>
                     </button>
-                    <div class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-48 bg-white rounded-lg shadow-xl overflow-hidden transform origin-top transition-all scale-y-0 group-hover:scale-y-100">
-                        <a href="#" class="block px-4 py-3 text-gray-800 hover:bg-[#AD974F]/10 transition-colors border-b border-gray-100">
+                    <div
+                        class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-48 bg-white rounded-lg shadow-xl overflow-hidden transform origin-top transition-all scale-y-0 group-hover:scale-y-100">
+                        <a href="#"
+                            class="block px-4 py-3 text-gray-800 hover:bg-[#AD974F]/10 transition-colors border-b border-gray-100">
                             Wedding Packages
                         </a>
                         <a href="#" class="block px-4 py-3 text-gray-800 hover:bg-[#AD974F]/10 transition-colors">
@@ -195,35 +250,38 @@
                         </a>
                     </div>
                 </div>
-    
-                <a href="{% url 'customerapp:about_us' %}" class="text-black font-semibold hover:text-[#AD974F] transition-colors">
+
+                <a href="{% url 'customerapp:about_us' %}"
+                    class="text-black font-semibold hover:text-[#AD974F] transition-colors">
                     ABOUT
                 </a>
             </div>
         </div>
-    
+
         <!-- User actions -->
         <div class="hidden lg:flex items-center gap-4 ml-auto">
             {% if user.is_authenticated %}
-            <a href="{% url 'customerapp:notifications' %}" class="text-black hover:text-[#AD974F] transition-colors relative">
+            <a href="{% url 'customerapp:notifications' %}"
+                class="text-black hover:text-[#AD974F] transition-colors relative">
                 <i class="fas fa-bell text-xl"></i>
                 {% if unread_count > 0 %}
-                <span class="absolute -top-2 -right-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform bg-red-600 rounded-full">
+                <span
+                    class="absolute -top-2 -right-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform bg-red-600 rounded-full">
                     {{ unread_count }}
                 </span>
                 {% endif %}
             </a>
-            <a href="{% url 'customerapp:customer_profile' %}" class="text-black hover:text-[#AD974F] transition-colors">
+            <a href="{% url 'customerapp:customer_profile' %}"
+                class="text-black hover:text-[#AD974F] transition-colors">
                 <i class="fas fa-user text-xl"></i>
             </a>
-            <form method="post" action="{% url 'customerapp:logout' %}">
-                {% csrf_token %}
-                <button type="submit" class="px-4 py-2 text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors">
-                    Logout
-                </button>
-            </form>
+            <button type="button" class="px-4 py-2 text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
+                data-bs-toggle="modal" data-bs-target="#logoutModal">
+                Logout
+            </button>
             {% else %}
-            <a href="{% url 'saritasapp:sign_in' %}" class="text-black font-semibold hover:text-[#AD974F] transition-colors">
+            <a href="{% url 'saritasapp:sign_in' %}"
+                class="text-black font-semibold hover:text-[#AD974F] transition-colors">
                 Login
             </a>
             {% endif %}
@@ -246,9 +304,41 @@
                         <div class="checkmark-circle">
                             <div class="checkmark">✓</div>
                         </div>
-                            <h3 class="mt-4">Successfully logged in!</h3>
-                            <p class="mb-4">Welcome back, <span id="welcomeUsername"></span>!</p>
-                        <button type="button" class="btn bg-[#5a3e2b] hover:bg-[#3a281c] text-white px-5 py-2 rounded" data-bs-dismiss="modal">Continue</button>
+                        <h3 class="mt-4">Successfully logged in!</h3>
+                        <p class="mb-4">Welcome back, <span id="welcomeUsername"></span>!</p>
+                        <button type="button" class="btn bg-[#AD974F] hover:bg-[#8a7a3f] text-white px-5 py-2 rounded"
+                            data-bs-dismiss="modal">Continue</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="bootstrap-modal">
+        <div class="modal fade" id="logoutModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body text-center p-5">
+                        <div class="mb-4">
+                            <i class="fas fa-sign-out-alt text-4xl text-[#AD974F] mb-3"></i>
+                            <h3 class="text-xl font-semibold">Ready to leave?</h3>
+                            <p class="text-gray-600 mt-2">Are you sure you want to log out?</p>
+                        </div>
+                        <div class="flex justify-center gap-4 mt-6">
+                            <button type="button"
+                                class="px-5 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+                                data-bs-dismiss="modal">
+                                Cancel
+                            </button>
+                            <form method="post" action="{% url 'customerapp:logout' %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit"
+                                    class="px-5 py-2 bg-[#AD974F] text-white rounded-lg hover:bg-[#8a7a3f] transition-colors">
+                                    Logout
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -257,64 +347,64 @@
 
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Enhanced dropdown functionality
-        document.querySelectorAll('.dropdown').forEach(dropdown => {
-            const button = dropdown.querySelector('button');
-            const content = dropdown.querySelector('.dropdown-content');
-            const chevron = dropdown.querySelector('.fa-chevron-down');
-
-            button.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const isOpen = content.style.maxHeight !== '0px' && content.style.maxHeight !== '';
-                
-                // Close all other dropdowns
-                document.querySelectorAll('.dropdown-content').forEach(otherContent => {
-                    if(otherContent !== content) {
-                        otherContent.style.maxHeight = '0';
-                        otherContent.previousElementSibling.querySelector('.fa-chevron-down').classList.remove('rotate-180');
-                    }
-                });
-
-                content.style.maxHeight = isOpen ? '0' : `${content.scrollHeight}px`;
-                chevron.classList.toggle('rotate-180', !isOpen);
-            });
-        });
-
-        document.addEventListener('click', (e) => {
+        document.addEventListener('DOMContentLoaded', function () {
+            // Enhanced dropdown functionality
             document.querySelectorAll('.dropdown').forEach(dropdown => {
+                const button = dropdown.querySelector('button');
                 const content = dropdown.querySelector('.dropdown-content');
                 const chevron = dropdown.querySelector('.fa-chevron-down');
-                
-                if(!dropdown.contains(e.target)) {
-                    content.style.maxHeight = '0';
-                    chevron.classList.remove('rotate-180');
+
+                button.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isOpen = content.style.maxHeight !== '0px' && content.style.maxHeight !== '';
+
+                    // Close all other dropdowns
+                    document.querySelectorAll('.dropdown-content').forEach(otherContent => {
+                        if (otherContent !== content) {
+                            otherContent.style.maxHeight = '0';
+                            otherContent.previousElementSibling.querySelector('.fa-chevron-down').classList.remove('rotate-180');
+                        }
+                    });
+
+                    content.style.maxHeight = isOpen ? '0' : `${content.scrollHeight}px`;
+                    chevron.classList.toggle('rotate-180', !isOpen);
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                document.querySelectorAll('.dropdown').forEach(dropdown => {
+                    const content = dropdown.querySelector('.dropdown-content');
+                    const chevron = dropdown.querySelector('.fa-chevron-down');
+
+                    if (!dropdown.contains(e.target)) {
+                        content.style.maxHeight = '0';
+                        chevron.classList.remove('rotate-180');
+                    }
+                });
+            });
+
+            // Mobile menu toggle
+            const mobileSidebar = document.getElementById('mobile-sidebar');
+            const mobileToggle = document.getElementById('mobile-toggle');
+
+            mobileToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                mobileSidebar.classList.toggle('-translate-x-full');
+            });
+
+            // Close sidebar when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!mobileSidebar.contains(e.target) && !mobileToggle.contains(e.target)) {
+                    mobileSidebar.classList.add('-translate-x-full');
                 }
             });
-        });
 
-        // Mobile menu toggle
-        const mobileSidebar = document.getElementById('mobile-sidebar');
-        const mobileToggle = document.getElementById('mobile-toggle');
+            // Welcome modal functionality
+            const welcomeModal = new bootstrap.Modal(document.getElementById('welcomeModal'));
 
-        mobileToggle.addEventListener('click', (e) => {
-            e.stopPropagation();
-            mobileSidebar.classList.toggle('-translate-x-full');
-        });
-
-        // Close sidebar when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!mobileSidebar.contains(e.target) && !mobileToggle.contains(e.target)) {
-                mobileSidebar.classList.add('-translate-x-full');
-            }
-        });
-
-        // Welcome modal functionality
-        const welcomeModal = new bootstrap.Modal(document.getElementById('welcomeModal'));
-        
-        {% if request.session.show_welcome_message %}
+            {% if request.session.show_welcome_message %}
             // Set the username
             document.getElementById('welcomeUsername').textContent = '{{ request.session.welcome_username }}';
             // Show the modal
@@ -333,8 +423,9 @@
             }).catch(error => {
                 console.error('Fetch error:', error);
             });
-        {% endif %}
-    });
+            {% endif %}
+        });
     </script>
 </body>
+
 </html>
