@@ -1,33 +1,43 @@
-# Standard library
-from datetime import timedelta
-from django.core.cache import cache
+# Standard Library
 import logging
+from datetime import timedelta
 from urllib import request
 
-# Django core
+# Django Core
 from django.conf import settings
 from django.utils import timezone
 from django.utils.timezone import now
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from django.urls import reverse
-from django.http import JsonResponse
-from django.template.loader import render_to_string
-from django.core.mail import send_mail
-from django.views.decorators.http import require_POST
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth.decorators import login_required
-from django.db import transaction, IntegrityError
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
+from django.core.validators import validate_email
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
+from django.urls import reverse, reverse_lazy
+from django.template.loader import render_to_string
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm
+from django.db import transaction, IntegrityError
+from django.views.decorators.http import require_POST
+from django.views.generic import (
+    ListView, CreateView, UpdateView, DetailView, DeleteView
+)
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
-# Local app
-from .forms import CustomerRegistrationForm, RentalForm, ReservationForm, CustomerUpdateForm, UserUpdateForm
+# Local Apps
+from .forms import (
+    CustomerRegistrationForm, RentalForm, ReservationForm,
+    CustomerUpdateForm, UserUpdateForm
+)
+from saritasapp.forms import CustomizePackageForm, PackageCustomizationForm
 from .tasks import send_reservation_notification, notify_staff_about_rental_request
 from saritasapp.models import (
-    Inventory, Category, Color, Size,
+    CustomizedWardrobePackage, Inventory, Category, Color, Size,
     Rental, Reservation, Notification, User, WardrobePackage, Customer
 )
+
 
 
 @require_POST  # Optional: Only allow POST requests
@@ -44,7 +54,7 @@ def homepage(request):
         quantity__gt=0
     ).order_by('?')[:8]
     
-    categories = Category.objects.all()
+    categories = Category.objects.all()[:4]
     wardrobe_packages = []  # Empty list for now
     
     new_arrivals = Inventory.objects.filter(
@@ -374,7 +384,67 @@ def package_detail(request, pk):
     return render(request, 'customerapp/package_detail.html', context)
 
 def about_us(request):
-    categories = Category.objects.all()
-    return render(request, 'customerapp/about_us.html', {
-        'categories': categories
-    })
+    return render(request, 'customerapp/about_us.html')
+
+#wardrobe packages
+class CustomerPackageListView(ListView):
+    model = WardrobePackage
+    template_name = 'customerapp/package_list.html'
+    context_object_name = 'packages'
+    
+    def get_queryset(self):
+        return WardrobePackage.objects.filter(
+            status='fixed',
+            package_items__isnull=False
+        ).distinct().prefetch_related('package_items__inventory_item')
+
+class CustomerPackageDetailView(DetailView):
+    model = WardrobePackage
+    template_name = 'customerapp/package_detail.html'
+    context_object_name = 'package'
+    
+    def get_queryset(self):
+        return WardrobePackage.objects.filter(
+            status='fixed'
+        ).prefetch_related(
+            'package_items__inventory_item',
+            'package_items__inventory_item__item_type'
+        )
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        package = self.object
+        
+        # Group items by type for display
+        items_by_type = {}
+        for item in package.package_items.all():
+            type_name = item.inventory_item.item_type.get_name_display()
+            if type_name not in items_by_type:
+                items_by_type[type_name] = []
+            items_by_type[type_name].append(item)
+        
+        context['items_by_type'] = items_by_type
+        context['total_price'] = package.base_price + package.deposit_price
+        return context
+
+class CreateRentalView(CreateView):
+    model = Rental
+    fields = ['rental_days', 'event_date']
+    template_name = 'customerapp/rental_confirmation.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.package = get_object_or_404(WardrobePackage, pk=kwargs['pk'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        rental = form.save(commit=False)
+        rental.customer = self.request.user.customer_profile
+        rental.package = self.package
+        rental.start_date = timezone.now().date()
+        rental.end_date = rental.start_date + timedelta(days=form.cleaned_data['rental_days'])
+        rental.total_price = self.package.base_price
+        rental.deposit_amount = self.package.deposit_price
+        rental.save()
+        
+        messages.success(self.request, "Your rental has been confirmed!")
+        return redirect('customerapp:rental_detail', pk=rental.pk)  

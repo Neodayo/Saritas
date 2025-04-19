@@ -3,19 +3,20 @@
 
 {% block title %}Inventory{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/inventory.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="pt-20 px-4 bg-[#f9f4f1] min-h-screen">
-    <div class="bg-white rounded-xl shadow-md p-6 max-w-7xl mx-auto">
-        <div class="flex items-center mb-6">
-            <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                <i class="fas fa-boxes text-[#5a3e2b]"></i> PRODUCTS
-            </h1>
+<div class="content-wrapper">
+    <div class="white-container">
+        <div class="inventory-header">
+            <h1><i class="fas fa-boxes"></i> PRODUCTS</h1>
         </div>
 
-        <div class="flex flex-wrap gap-4 mb-6">
-            <div class="flex-1 min-w-[150px]">
-                <select id="category" name="category" onchange="filterInventory()"
-                    class="w-full border rounded-lg p-2">
+        <div class="filter-row">
+            <div class="filter-box">
+                <select id="category" name="category" onchange="filterInventory()">
                     <option value="">All Categories</option>
                     {% for category in categories %}
                         <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
@@ -25,9 +26,8 @@
                 </select>
             </div>
 
-            <div class="flex-1 min-w-[150px]">
-                <select id="color" name="color" onchange="filterInventory()"
-                    class="w-full border rounded-lg p-2">
+            <div class="filter-box">
+                <select id="color" name="color" onchange="filterInventory()">
                     <option value="">All Colors</option>
                     {% for color in colors %}
                         <option value="{{ color.id }}" {% if selected_color == color.id|stringformat:"s" %}selected{% endif %}>
@@ -37,9 +37,8 @@
                 </select>
             </div>
 
-            <div class="flex-1 min-w-[150px]">
-                <select id="size" name="size" onchange="filterInventory()"
-                    class="w-full border rounded-lg p-2">
+            <div class="filter-box">
+                <select id="size" name="size" onchange="filterInventory()">
                     <option value="">All Sizes</option>
                     {% for size in sizes %}
                         <option value="{{ size.id }}" {% if selected_size == size.id|stringformat:"s" %}selected{% endif %}>
@@ -49,9 +48,8 @@
                 </select>
             </div>
 
-            <div class="flex-1 min-w-[150px]">
-                <select id="sort" name="sort" onchange="filterInventory()"
-                    class="w-full border rounded-lg p-2">
+            <div class="filter-box">
+                <select id="sort" name="sort" onchange="filterInventory()">
                     <option value="">Default Sorting</option>
                     <option value="name_asc">Name (A-Z)</option>
                     <option value="name_desc">Name (Z-A)</option>
@@ -60,54 +58,46 @@
                 </select>
             </div>
 
-            <button type="button" onclick="clearFilters()"
-                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+            <button type="button" onclick="clearFilters()" class="clear-btn">
                 <i class="fas fa-times"></i> Clear Filters
             </button>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="inventory-items">
             {% if inventory_items %}
                 {% for item in inventory_items %}
-                <div class="border rounded-lg shadow-sm bg-white overflow-hidden">
-                    <div class="p-2 text-sm font-semibold text-center 
-                                {% if item.available %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+                <div class="item-card">
+                    <div class="item-status {% if item.available %}in-stock{% else %}out-stock{% endif %}">
                         {{ item.available|yesno:"In Stock,Out of Stock" }}
                     </div>
-                    <div class="h-48 bg-white flex items-center justify-center overflow-hidden rounded-md">
+                    <div class="item-image">
                         {% if item.image %}
-                            <img src="{{ item.image.url }}" alt="{{ item.name }}" class="object-contain h-full">
+                            <img src="{{ item.image.url }}" alt="{{ item.name }}">
                         {% else %}
-                            <img src="{% static 'image/default-placeholder.png' %}" alt="No image" class="object-contain h-full">
+                            <img src="{% static 'image/default-placeholder.png' %}" alt="No image">
                         {% endif %}
                     </div>
-                    <div class="p-4 space-y-2">
-                        <h3 class="text-lg font-bold">{{ item.name }}</h3>
-                        <div class="text-sm text-gray-600 space-y-1">
-                            <div><i class="fas fa-tag mr-1"></i> {{ item.category.name }}</div>
-                            <div><i class="fas fa-palette mr-1"></i> {{ item.color.name|default:"N/A" }}</div>
-                            <div><i class="fas fa-ruler mr-1"></i> {{ item.size.name|default:"N/A" }}</div>
+                    <div class="item-info">
+                        <h3>{{ item.name }}</h3>
+                        <div class="item-meta">
+                            <span><i class="fas fa-tag"></i> {{ item.category.name }}</span>
+                            <span><i class="fas fa-palette"></i> {{ item.color.name|default:"N/A" }}</span>
+                            <span><i class="fas fa-ruler"></i> {{ item.size.name|default:"N/A" }}</span>
                         </div>
-                        <div class="text-sm mt-2 text-gray-800">
-                            <i class="fas fa-box-open mr-1"></i> {{ item.quantity }} available
+                        <div class="item-quantity">
+                            <i class="fas fa-box-open"></i> {{ item.quantity }} available
                         </div>
                     </div>
-                    <div class="p-4">
-                        <a href="{% url 'customerapp:item_detail' item.id %}"
-                           class="block text-center bg-[#5a3e2b] hover:bg-[#3a281c] text-white py-2 rounded-md">
-                            <i class="fas fa-eye"></i> View Details
-                        </a>
-                    </div>
+                    <a href="{% url 'customerapp:item_detail' item.id %}" class="view-btn">
+                        <i class="fas fa-eye"></i> View Details
+                    </a>
                 </div>
                 {% endfor %}
             {% else %}
-                <div class="col-span-full text-center text-gray-600 py-10">
-                    <i class="fas fa-search text-3xl mb-4"></i>
-                    <p class="mb-4">No items match your filters</p>
-                    <button onclick="clearFilters()"
-                            class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800">
-                        Clear Filters
-                    </button>
+                <div class="no-items">
+                    <i class="fas fa-search"></i>
+                    <p>No items match your filters</p>
+                    <button onclick="clearFilters()">Clear Filters</button>
                 </div>
             {% endif %}
         </div>
@@ -120,13 +110,13 @@
         const color = document.getElementById('color').value;
         const size = document.getElementById('size').value;
         const sort = document.getElementById('sort').value;
-
+        
         let url = "{% url 'customerapp:wardrobe' %}?";
         if (category) url += `category=${category}&`;
         if (color) url += `color=${color}&`;
         if (size) url += `size=${size}&`;
         if (sort) url += `sort=${sort}`;
-
+        
         window.location.href = url;
     }
 
