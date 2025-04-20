@@ -54,7 +54,7 @@ def homepage(request):
         quantity__gt=0
     ).order_by('?')[:8]
     
-    categories = Category.objects.all()[:4]
+    categories = Category.objects.all()
     wardrobe_packages = []  # Empty list for now
     
     new_arrivals = Inventory.objects.filter(
@@ -385,6 +385,21 @@ def package_detail(request, pk):
 
 def about_us(request):
     return render(request, 'customerapp/about_us.html')
+
+from django.db.models import OuterRef, Subquery, ImageField
+
+def collections_view(request):
+    # Get the first image for each category
+    first_item_image = Inventory.objects.filter(
+        category=OuterRef('pk'),
+        available=True
+    ).order_by('id').values('image')[:1]
+
+    categories = Category.objects.annotate(
+        first_image=Subquery(first_item_image)
+    ).all()
+
+    return render(request, 'customerapp/collections.html', {'categories': categories})
 
 #wardrobe packages
 class CustomerPackageListView(ListView):
