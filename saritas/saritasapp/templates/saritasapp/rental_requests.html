@@ -1,0 +1,38 @@
+{% extends 'saritsapp/base.html' %}
+{% load static %}
+{% block title %}Rental Requests{% endblock %}
+{% block content %}
+
+<h2>Pending Rental Requests</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Rental ID</th>
+            <th>Customer</th>
+            <th>Package</th>
+            <th>Event Date</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for rental in pending_rentals %}
+        <tr>
+            <td>{{ rental.id }}</td>
+            <td>{{ rental.customer.user.get_full_name }}</td>
+            <td>{{ rental.package.name }}</td>
+            <td>{{ rental.event_date }}</td>
+            <td>
+                <a href="{% url 'staff_manage_rental' rental.id %}" class="btn btn-sm btn-primary">
+                    Review
+                </a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">No pending rentals!</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+    
+    {% endblock %}

@@ -29,13 +29,13 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 # Local Apps
 from .forms import (
     CustomerRegistrationForm, RentalForm, ReservationForm,
-    CustomerUpdateForm, UserUpdateForm
+    CustomerUpdateForm, UserUpdateForm, WardrobePackageRentalForm
 )
 from saritasapp.forms import CustomizePackageForm, PackageCustomizationForm
 from .tasks import send_reservation_notification, notify_staff_about_rental_request
 from saritasapp.models import (
-    CustomizedWardrobePackage, Inventory, Category, Color, Size,
-    Rental, Reservation, Notification, User, WardrobePackage, Customer
+    CustomizedWardrobePackage, Inventory, Category, Color, PackageRentalItem, Size,
+    Rental, Reservation, Notification, User, WardrobePackage, Customer, WardrobePackageRental
 )
 
 
@@ -427,24 +427,109 @@ class CustomerPackageDetailView(DetailView):
         context['total_price'] = package.base_price + package.deposit_price
         return context
 
-class CreateRentalView(CreateView):
-    model = Rental
-    fields = ['rental_days', 'event_date']
-    template_name = 'customerapp/rental_confirmation.html'
+class CreateRentalView(LoginRequiredMixin, CreateView):
+    model = WardrobePackageRental
+    form_class = WardrobePackageRentalForm
+    template_name = 'customerapp/rent_package.html'  # Consistent with your other views
 
     def dispatch(self, request, *args, **kwargs):
         self.package = get_object_or_404(WardrobePackage, pk=kwargs['pk'])
         return super().dispatch(request, *args, **kwargs)
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['initial'] = {
+            'event_date': timezone.now().date() + timedelta(days=7)
+        }
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['package'] = self.package
+        context['min_date'] = (timezone.now() + timedelta(days=1)).strftime('%Y-%m-%d')
+        return context
+
     def form_valid(self, form):
-        rental = form.save(commit=False)
-        rental.customer = self.request.user.customer_profile
-        rental.package = self.package
-        rental.start_date = timezone.now().date()
-        rental.end_date = rental.start_date + timedelta(days=form.cleaned_data['rental_days'])
-        rental.total_price = self.package.base_price
-        rental.deposit_amount = self.package.deposit_price
-        rental.save()
-        
-        messages.success(self.request, "Your rental has been confirmed!")
-        return redirect('customerapp:rental_detail', pk=rental.pk)  
+        try:
+            with transaction.atomic():
+                rental = form.save(commit=False)
+                rental.customer = self.request.user.customer_profile
+                rental.package = self.package
+                rental.status = 'pending'
+                rental.save()
+                
+                # Send notification (if you have this functionality)
+                notify_staff_about_rental_request.delay(rental.id)
+                
+                messages.success(
+                    self.request, 
+                    f"Your {self.package.name} package has been reserved for {rental.event_date}!"
+                )
+                return redirect('customerapp:package_rental_detail', rental_id=rental.pk)
+                
+        except Exception as e:
+            messages.error(self.request, f"Error: {str(e)}")
+            return self.form_invalid(form)
+    
+@login_required
+def rent_package(request, package_id):
+    package = get_object_or_404(WardrobePackage, pk=package_id)
+    
+    if request.method == 'POST':
+        form = WardrobePackageRentalForm(request.POST)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    rental = form.save(commit=False)
+                    rental.customer = request.user.customer_profile
+                    rental.package = package
+                    rental.status = 'pending'
+                    
+                    # Save will automatically calculate dates and price
+                    rental.save()
+                    
+                    messages.success(request, 
+                        f"Your {package.name} package has been reserved for {rental.event_date}!"
+                    )
+                    return redirect('customerapp:my_package_rentals')
+                    
+            except Exception as e:
+                messages.error(request, f"Error: {str(e)}")
+    else:
+        form = WardrobePackageRentalForm(initial={
+            'event_date': timezone.now().date() + timedelta(days=7)  # Default: 1 week from today
+        })
+    
+    return render(request, 'customerapp/rent_package.html', {
+        'form': form,
+        'package': package,
+        'min_date': (timezone.now() + timedelta(days=1)).strftime('%Y-%m-%d')
+    })
+
+@login_required
+def package_rental_detail(request, rental_id):
+    rental = get_object_or_404(
+        WardrobePackageRental, 
+        pk=rental_id,
+        customer=request.user.customer_profile
+    )
+    rental_items = rental.package.package_items.select_related(
+        'inventory_item',
+        'inventory_item__item_type',
+        'inventory_item__color',
+        'inventory_item__size'
+    ).all()
+    
+    return render(request, 'customerapp/package_rental_detail.html', {
+        'rental': rental,
+        'rental_items': rental_items
+    })
+
+@login_required
+def my_package_rentals(request):
+    rentals = WardrobePackageRental.objects.filter(
+        customer=request.user.customer_profile
+    ).order_by('-created_at')
+    return render(request, 'customerapp/my_package_rentals.html', {
+        'rentals': rentals
+    })

@@ -1,0 +1,11 @@
+<h3>Manage Rental #{{ rental.id }}</h3>
+<p><strong>Customer:</strong> {{ rental.customer.user.get_full_name }}</p>
+<p><strong>Package:</strong> {{ rental.package.name }}</p>
+<p><strong>Event Date:</strong> {{ rental.event_date }}</p>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">Update Status</button>
+    <a href="{% url 'staff_rental_requests' %}" class="btn btn-secondary">Back</a>
+</form>

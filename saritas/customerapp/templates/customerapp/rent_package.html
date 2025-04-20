@@ -1,0 +1,56 @@
+{% extends 'customerapp/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h3>Reserve {{ package.name }}</h3>
+        </div>
+        
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Wedding/Event Date*</label>
+                            {{ form.event_date }}
+                            <div class="form-text">Pickup will be 1 day before this date</div>
+                        </div>
+                        
+                        <div class="alert alert-info mt-4">
+                            <h5><i class="bi bi-info-circle"></i> Package Details</h5>
+                            <ul class="mb-0">
+                                <li>Base Price: ₱{{ package.base_price|floatformat:2 }}</li>
+                                <li>Deposit: ₱{{ package.deposit_price|floatformat:2 }}</li>
+                                <li>Total: ₱{{ package.total_price|floatformat:2 }}</li>
+                            </ul>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-lg w-100 mt-3">
+                            <i class="bi bi-check-circle"></i> Confirm Reservation
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="col-md-6">
+                    <h5 class="mb-3">Included Items:</h5>
+                    <div class="list-group">
+                        {% for item in package.package_items.all %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <span>{{ item.inventory_item.name }}</span>
+                                <span class="badge bg-primary rounded-pill">x{{ item.quantity }}</span>
+                            </div>
+                            <small class="text-muted">{{ item.inventory_item.category.name }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

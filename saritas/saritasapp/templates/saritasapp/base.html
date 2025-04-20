@@ -76,10 +76,31 @@
                 <i class="fas fa-chart-line w-6 text-center mr-2"></i>
                 <span>Rental Tracker</span>
             </a>
+            
+            <!-- Staff-only Approvals Dropdown (Mobile) -->
+            {% if user.is_staff %}
+            <div class="dropdown relative">
+                <button class="w-full px-4 py-2 text-left text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors flex justify-between items-center">
+                    <i class="fas fa-clipboard-check w-6 text-center mr-2"></i>
+                    <span>Approvals</span>
+                    <i class="fas fa-chevron-down transition-transform"></i>
+                </button>
+                <div class="dropdown-content pl-4 max-h-0 overflow-hidden transition-all duration-300">
+                    <a href="{% url 'saritasapp:rental_approvals' %}" class="block px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                        Item Rentals
+                    </a>
+                    <a href="{% url 'saritasapp:package_rental_approvals' %}" class="block px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                        Package Rentals
+                    </a>
+                </div>
+            </div>
+            {% else %}
             <a href="{% url 'saritasapp:rental_approvals' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
                 <i class="fas fa-clipboard-check w-6 text-center mr-2"></i>
                 <span>Rental Approvals</span>
             </a>
+            {% endif %}
+            
             <a href="{% url 'saritasapp:view_reservations' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
                 <i class="fas fa-calendar-check w-6 text-center mr-2"></i>
                 <span>View Reservations</span>
@@ -166,10 +187,31 @@
                 <i class="fas fa-chart-line w-6 text-center mr-2"></i>
                 <span>Rental Tracker</span>
             </a>
+            
+            <!-- Staff-only Approvals Dropdown (Desktop) -->
+            {% if user.is_staff %}
+            <div class="dropdown relative">
+                <button class="w-full px-4 py-2 text-left text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors flex justify-between items-center">
+                    <i class="fas fa-clipboard-check w-6 text-center mr-2"></i>
+                    <span>Approvals</span>
+                    <i class="fas fa-chevron-down transition-transform text-sm"></i>
+                </button>
+                <div class="dropdown-content pl-4 max-h-0 overflow-hidden transition-all duration-300">
+                    <a href="{% url 'saritasapp:rental_approvals' %}" class="block px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                        Item Rentals
+                    </a>
+                    <a href="{% url 'saritasapp:package_rental_approvals' %}" class="block px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
+                        Package Rentals
+                    </a>
+                </div>
+            </div>
+            {% else %}
             <a href="{% url 'saritasapp:rental_approvals' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
                 <i class="fas fa-clipboard-check w-6 text-center mr-2"></i>
                 <span>Rental Approvals</span>
             </a>
+            {% endif %}
+            
             <a href="{% url 'saritasapp:view_reservations' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
                 <i class="fas fa-calendar-check w-6 text-center mr-2"></i>
                 <span>View Reservations</span>

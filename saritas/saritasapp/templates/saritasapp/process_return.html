@@ -1,0 +1,21 @@
+{% extends 'saritasapp/base.html' %}
+
+{% block content %}
+<h2>Process Return for Rental #{{ rental.id }}</h2>
+
+<form method="post">
+    {% csrf_token %}
+    
+    <div class="mb-3">
+        <label>Actual Return Date:</label>
+        {{ form.actual_return_date }}
+    </div>
+    
+    <div class="mb-3">
+        <label>Condition:</label>
+        {{ form.return_condition }}
+    </div>
+    
+    <button type="submit" class="btn btn-primary">Mark as Returned</button>
+</form>
+{% endblock %}

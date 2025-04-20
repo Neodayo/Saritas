@@ -26,4 +26,9 @@ urlpatterns = [
     path('packages/', views.CustomerPackageListView.as_view(), name='package_list'),
     path('packages/<int:pk>/', views.CustomerPackageDetailView.as_view(), name='package_detail'),
     path('packages/<int:pk>/rent/', views.CreateRentalView.as_view(), name='create_rental'),
+    path('packages/<int:package_id>/rent/', views.rent_package, name='rent_package'),
+    path('package-rentals/<int:rental_id>/', views.package_rental_detail, name='package_rental_detail'),
+    path('my-package-rentals/', views.my_package_rentals, name='my_package_rentals'),
+    path('packages/<int:package_id>/rent/', views.rent_package, name='rent_package'),
 ]
+

@@ -76,4 +76,6 @@ urlpatterns = [
     path('wardrobe-packages/<int:package_id>/add-item/',views.AddPackageItemView.as_view(),name='add_package_item'),
     path('wardrobe-packages/<int:package_id>/add-item/submit/', views.AddPackageItemSubmitView.as_view(),name='submit_package_item'),
     path('wardrobe-packages/<int:package_id>/add-items/bulk/', views.SubmitBulkPackageItemsView.as_view(),  name='submit_bulk_package_items'),
+    path('package-approvals/', views.package_rental_approvals, name='package_rental_approvals'),
+    path('package-approvals/<int:rental_id>/<str:action>/', views.update_package_rental_status, name='update_package_rental_status'),
 ]

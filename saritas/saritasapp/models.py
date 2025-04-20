@@ -1,4 +1,5 @@
 from datetime import timedelta
+from decimal import Decimal
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
@@ -978,6 +979,198 @@ class CustomerOrder(models.Model):
         self.total_price = wardrobe_total + deposit_price
         self.save(update_fields=["total_price"])
 
+    def create_package_rental(self, package, customized_package=None, rental_start=None, rental_end=None):
+        """
+        Helper method to create a package rental from an order
+        """
+        rental = WardrobePackageRental.objects.create(
+            customer=self.customer,
+            order=self,
+            package=package,
+            customized_package=customized_package,
+            rental_start=rental_start,
+            rental_end=rental_end
+        )
+        
+        # Add inventory items to the rental
+        if customized_package:
+            # Handle customized package items
+            pass
+        else:
+            # Handle standard package items
+            for item in package.package_items.all():
+                PackageRentalItem.objects.create(
+                    package_rental=rental,
+                    inventory_item=item.inventory_item,
+                    quantity=item.quantity,
+                    rental_price=item.inventory_item.rental_price
+                )
+        
+        return rental
+    
+class WardrobePackageRental(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+        ('completed', 'Completed'),
+        ('returned', 'Returned'),  # Added returned status
+    ]
+
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    package = models.ForeignKey(WardrobePackage, on_delete=models.PROTECT)
+    event_date = models.DateField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    # Date fields
+    pickup_date = models.DateField(null=True, blank=True)
+    return_date = models.DateField(null=True, blank=True)
+    actual_return_date = models.DateField(null=True, blank=True)  # Added this field
+    
+    # Staff fields
+    staff = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='handled_rentals'
+    )
+    notes = models.TextField(blank=True, null=True)
+    
+    def approve(self, staff_user):
+        """Approve the package rental and handle inventory"""
+        if self.status != 'pending':
+            raise ValidationError("Only pending rentals can be approved")
+        
+        with transaction.atomic():
+            # Check inventory for all items in the package
+            for package_item in self.package.package_items.all():
+                item = package_item.inventory_item
+                if item.quantity < package_item.quantity:
+                    raise ValidationError(
+                        f"Not enough stock for {item.name}. "
+                        f"Available: {item.quantity}, Needed: {package_item.quantity}"
+                    )
+            
+            # Update inventory if all checks pass
+            for package_item in self.package.package_items.all():
+                item = package_item.inventory_item
+                item.quantity -= package_item.quantity
+                item.save()
+
+            self.status = 'approved'
+            self.staff = staff_user
+            self.save()
+
+    def reject(self, staff_user, reason=""):
+        """Reject the package rental with optional reason"""
+        if self.status != 'pending':
+            raise ValidationError("Only pending rentals can be rejected")
+            
+        self.status = 'rejected'
+        self.staff = staff_user
+        self.notes = reason or "Rental rejected by staff"
+        self.save()
+
+    def mark_as_completed(self, staff_user):
+        """Mark rental as completed after event"""
+        if self.status != 'approved':
+            raise ValidationError("Only approved rentals can be completed")
+            
+        self.status = 'completed'
+        self.staff = staff_user
+        self.save()
+
+    def mark_as_returned(self, staff_user, actual_return_date=None):
+        """Mark items as returned and update inventory"""
+        if self.status not in ['approved', 'completed']:
+            raise ValidationError("Only approved/completed rentals can be returned")
+        
+        with transaction.atomic():
+            # Return items to inventory
+            for package_item in self.package.package_items.all():
+                item = package_item.inventory_item
+                item.quantity += package_item.quantity
+                item.save()
+
+            self.status = 'returned'
+            self.staff = staff_user
+            self.actual_return_date = actual_return_date or timezone.now().date()
+            self.save()
+
+    @property
+    def is_overdue(self):
+        """Check if the package is overdue for return"""
+        if self.status in ['returned', 'rejected']:
+            return False
+        return self.return_date and self.return_date < timezone.now().date()
+
+    def get_status_badge(self):
+        """Return Bootstrap badge class for current status"""
+        status_classes = {
+            'pending': 'bg-warning',
+            'approved': 'bg-success',
+            'rejected': 'bg-danger',
+            'completed': 'bg-info',
+            'returned': 'bg-secondary',
+        }
+        return status_classes.get(self.status, 'bg-secondary')
+
+    def clean(self):
+        """Validate the rental dates"""
+        if self.event_date and self.event_date < timezone.now().date():
+            raise ValidationError("Event date cannot be in the past")
+            
+        if self.return_date and self.pickup_date and self.return_date <= self.pickup_date:
+            raise ValidationError("Return date must be after pickup date")
+        
+        super().clean()
+
+    def save(self, *args, **kwargs):
+        """Override save to include validation and auto-set dates"""
+        self.full_clean()
+        
+        # Auto-set pickup and return dates if not set
+        if self.event_date and not self.pickup_date:
+            self.pickup_date = self.event_date - timedelta(days=1)
+            self.return_date = self.event_date + timedelta(days=1)
+            
+        super().save(*args, **kwargs)
+    
+class PackageRentalItem(models.Model):
+    CONDITION_CHOICES = [
+        ('excellent', 'Excellent - No visible wear'),
+        ('good', 'Good - Minor wear'),
+        ('fair', 'Fair - Some wear but functional'),
+        ('poor', 'Poor - Significant wear/damage'),
+        ('damaged', 'Damaged - Needs repair'),
+    ]
+
+    package_rental = models.ForeignKey(WardrobePackageRental, on_delete=models.CASCADE, related_name='rented_items')
+    inventory_item = models.ForeignKey(Inventory, on_delete=models.PROTECT, related_name='package_rentals')
+    quantity = models.PositiveIntegerField(default=1)
+    rental_price = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    # Return information
+    returned = models.BooleanField(default=False)
+    returned_date = models.DateField(null=True, blank=True)
+    condition = models.CharField(max_length=20, choices=CONDITION_CHOICES, blank=True)
+    notes = models.TextField(blank=True, null=True)
+
+    class Meta:
+        unique_together = ('package_rental', 'inventory_item')
+        verbose_name = 'Rented Package Item'
+        verbose_name_plural = 'Rented Package Items'
+
+    def __str__(self):
+        return f"{self.inventory_item.name} (x{self.quantity}) in Package Rental #{self.package_rental_id}"
+
+    def save(self, *args, **kwargs):
+        if not self.pk and not self.rental_price:
+            self.rental_price = self.inventory_item.rental_price
+        super().save(*args, **kwargs)
+    
 # --- Calendar/Event Model ---
 class Event(models.Model):
     title = models.CharField(max_length=200)

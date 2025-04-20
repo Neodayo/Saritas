@@ -33,14 +33,14 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 # Local app imports
 from .forms import (
     AddPackageItemForm, AdminSignUpForm, BulkPackageItemForm, CategoryForm, ColorForm, EditProfileForm, EventForm,
-    InventoryForm, LoginForm, PackageItemForm, SizeForm, StaffSignUpForm,
+    InventoryForm, LoginForm, PackageItemForm, PackageReturnForm, SizeForm, StaffRentalApprovalForm, StaffSignUpForm,
     WardrobePackageForm, WardrobePackageItemForm,
     PackageCustomizationForm, CustomizePackageForm
 )
 from .models import (
     Branch, Category, Color, Customer, Event, Inventory, ItemType, Notification, PackageCustomization,
     Receipt, Rental, Reservation, Size, User, Venue,
-    WardrobePackage, CustomizedWardrobePackage, WardrobePackageItem
+    WardrobePackage, CustomizedWardrobePackage, WardrobePackageItem, WardrobePackageRental
 )
 from .utils import send_notification
 from customerapp.tasks import notify_staff_about_rental_request
@@ -1662,3 +1662,135 @@ class FilterInventoryItemsView(StaffRequiredMixin, View):
                 'text': f"{item.name} ({item.size}) - ₱{item.rental_price}"
             } for item in items]
         })
+
+# Staff-only view to see pending rentals
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def staff_rental_requests(request):
+    pending_rentals = WardrobePackageRental.objects.filter(status='pending').order_by('event_date')
+    return render(request, 'staff/rental_requests.html', {
+        'pending_rentals': pending_rentals
+    })
+
+# Staff approval/rejection
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def staff_manage_rental(request, rental_id):
+    rental = get_object_or_404(WardrobePackageRental, pk=rental_id)
+    
+    if request.method == 'POST':
+        form = StaffRentalApprovalForm(request.POST, instance=rental)
+        if form.is_valid():
+            rental = form.save(commit=False)
+            rental.staff = request.user  # Assign staff member handling this
+            rental.save()
+            
+            messages.success(request, f"Rental #{rental.id} updated to {rental.get_status_display()}!")
+            return redirect('staff_rental_requests')
+    else:
+        form = StaffRentalApprovalForm(instance=rental)
+    
+    return render(request, 'staff/manage_rental.html', {
+        'rental': rental,
+        'form': form
+    })
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def process_return(request, rental_id):
+    rental = get_object_or_404(WardrobePackageRental, pk=rental_id)
+    
+    if request.method == 'POST':
+        form = PackageReturnForm(request.POST, instance=rental)
+        if form.is_valid():
+            rental = form.save(commit=False)
+            rental.status = 'returned'
+            rental.staff = request.user  # Assign staff member processing return
+            rental.save()
+            
+            messages.success(request, f"Package #{rental.id} marked as returned!")
+            return redirect('staff_dashboard')
+    else:
+        form = PackageReturnForm(instance=rental)
+    
+    return render(request, 'staff/process_return.html', {
+        'form': form,
+        'rental': rental
+    })
+
+@staff_member_required
+def package_rental_approvals(request):
+    status_filter = request.GET.get('status', 'pending')
+    
+    rentals = WardrobePackageRental.objects.select_related(
+        'customer__user', 'package'
+    ).order_by('-created_at')
+
+    if status_filter != 'all':
+        rentals = rentals.filter(status=status_filter)
+
+    stats = {
+        'pending': WardrobePackageRental.objects.filter(status='pending').count(),
+        'approved': WardrobePackageRental.objects.filter(status='approved').count(),
+        'rejected': WardrobePackageRental.objects.filter(status='rejected').count(),
+        'completed': WardrobePackageRental.objects.filter(status='completed').count(),
+        'returned': WardrobePackageRental.objects.filter(status='returned').count(),
+    }
+
+    return render(request, 'saritasapp/package_rental_approvals.html', {
+        'rentals': rentals,
+        'stats': stats,
+        'status_filter': status_filter,
+    })
+
+@staff_member_required
+def update_package_rental_status(request, rental_id, action):
+    rental = get_object_or_404(WardrobePackageRental, pk=rental_id)
+    
+    try:
+        with transaction.atomic():
+            if action == 'approve':
+                rental.approve(request.user)
+                action_message = 'approved'
+            elif action == 'reject':
+                reason = request.POST.get('notes', '')
+                rental.reject(request.user, reason)
+                action_message = 'rejected'
+            elif action == 'complete':
+                rental.mark_as_completed(request.user)
+                action_message = 'completed'
+            elif action == 'return':
+                return_date = request.POST.get('actual_return_date')
+                notes = request.POST.get('notes', '')
+                
+                if return_date:
+                    return_date = timezone.datetime.strptime(return_date, '%Y-%m-%d').date()
+                
+                rental.mark_as_returned(
+                    request.user,
+                    actual_return_date=return_date
+                )
+                if notes:
+                    rental.notes = notes
+                    rental.save()
+                action_message = 'returned'
+            else:
+                messages.error(request, "Invalid action")
+                return redirect('saritasapp:package_rental_approvals')
+
+            # Create notification
+            Notification.objects.create(
+                user=rental.customer.user,
+                notification_type=f'package_rental_{action_message}',
+                message=f"Your package rental for {rental.package.name} has been {action_message}!",
+                is_read=False
+            )
+
+            messages.success(request, f"Package rental successfully {action_message}!")
+    except ValidationError as e:
+        messages.error(request, str(e))
+    except Exception as e:
+        logger.error(f"Error updating package rental status: {str(e)}")
+        messages.error(request, "An error occurred while updating the rental status")
+
+    return redirect('saritasapp:package_rental_approvals')

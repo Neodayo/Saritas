@@ -1,8 +1,9 @@
+from datetime import timezone
 import os
 from tkinter import Image
 from django import forms
 from django.urls import reverse_lazy
-from .models import CustomizedWardrobePackage, Inventory, Category, ItemType, PackageCustomization, User, WardrobePackage, WardrobePackageItem, Branch, Event, Color, Size, Staff
+from .models import CustomizedWardrobePackage, Inventory, Category, ItemType, PackageCustomization, User, WardrobePackage, WardrobePackageItem, Branch, Event, Color, Size, Staff, WardrobePackageRental
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model, authenticate
 from django.core.exceptions import ValidationError
@@ -603,3 +604,60 @@ class BulkPackageItemForm(forms.Form):
             ).exclude(
                 id__in=package.package_items.values_list('inventory_item_id', flat=True)
             )
+
+# In saritasapp/forms.py
+class StaffRentalApprovalForm(forms.ModelForm):
+    class Meta:
+        model = WardrobePackageRental
+        fields = ['status', 'staff', 'notes']  # Only include fields that exist
+        widgets = {
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'staff': forms.Select(attrs={'class': 'form-control'}),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Enter any notes...'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Limit staff choices to actual staff users
+        self.fields['staff'].queryset = User.objects.filter(
+            is_staff=True
+        ).order_by('username')
+
+class PackageReturnForm(forms.ModelForm):
+    class Meta:
+        model = WardrobePackageRental
+        fields = ['actual_return_date', 'status', 'notes']  # Only use existing fields
+        widgets = {
+            'actual_return_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control'
+            }),
+            'status': forms.Select(attrs={
+                'class': 'form-control',
+                'disabled': 'disabled'  # Auto-set to 'returned'
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Enter condition notes...'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['status'].initial = 'returned'  # Auto-set status
+
+    def clean(self):
+        cleaned_data = super().clean()
+        actual_return_date = cleaned_data.get('actual_return_date')
+        
+        if actual_return_date and actual_return_date < self.instance.event_date:
+            raise forms.ValidationError(
+                "Return date cannot be before the event date"
+            )
+        
+        return cleaned_data

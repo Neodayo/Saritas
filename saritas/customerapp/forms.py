@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
-from saritasapp.models import Customer, User, Rental, Reservation
+from saritasapp.models import Customer, PackageRentalItem, User, Rental, Reservation, WardrobePackageRental
 from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
@@ -203,3 +203,31 @@ class ReservationForm(forms.ModelForm):
                 )
 
         return cleaned_data
+    
+class WardrobePackageRentalForm(forms.ModelForm):
+    class Meta:
+        model = WardrobePackageRental
+        fields = ['event_date']  # Only ask for event date
+        
+        widgets = {
+            'event_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control',
+                'min': (timezone.now() + timedelta(days=1)).strftime('%Y-%m-%d')
+            })
+        }
+
+    def clean_event_date(self):
+        event_date = self.cleaned_data.get('event_date')
+        if event_date <= timezone.now().date():
+            raise forms.ValidationError("Event date must be in the future.")
+        return event_date
+
+class PackageItemReturnForm(forms.ModelForm):
+    class Meta:
+        model = PackageRentalItem
+        fields = ['returned', 'condition', 'notes']
+        widgets = {
+            'condition': forms.Select(attrs={'class': 'form-control'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
