@@ -47,24 +47,30 @@ def clear_welcome_message(request):
     return JsonResponse({'status': 'ok'})
 
 
+from django.db.models import Prefetch
+
+from django.db.models import Prefetch
+
 def homepage(request):
     """Public homepage (no login required)"""
-    featured_items = Inventory.objects.filter(
-        available=True,
-        quantity__gt=0
-    ).order_by('?')[:8]
+    # First get the 4 categories we want to feature
+    featured_categories = Category.objects.filter(
+        name__in=['Wedding Gown', 'Dress', 'Suit', 'Tuxedo']
+    )[:4]
+    
+    # Now get the first available item for each category
+    for category in featured_categories:
+        category.featured_item = category.items.filter(
+            available=True, 
+            image__isnull=False
+        ).order_by('?').first()  # Get random item
     
     categories = Category.objects.all()
-    wardrobe_packages = []  # Empty list for now
-    
-    new_arrivals = Inventory.objects.filter(
-        available=True
-    ).order_by('-id')[:6]
+    new_arrivals = Inventory.objects.filter(available=True).order_by('-id')[:6]
     
     return render(request, 'customerapp/homepage.html', {
-        'featured_items': featured_items,
+        'featured_categories': featured_categories,
         'categories': categories,
-        'wardrobe_packages': wardrobe_packages,
         'new_arrivals': new_arrivals,
     })
 
@@ -386,18 +392,19 @@ def package_detail(request, pk):
 def about_us(request):
     return render(request, 'customerapp/about_us.html')
 
-from django.db.models import OuterRef, Subquery, ImageField
-
 def collections_view(request):
-    # Get the first image for each category
-    first_item_image = Inventory.objects.filter(
-        category=OuterRef('pk'),
-        available=True
-    ).order_by('id').values('image')[:1]
-
-    categories = Category.objects.annotate(
-        first_image=Subquery(first_item_image)
+    # Get all categories with their first available item that has an image
+    categories = Category.objects.prefetch_related(
+        Prefetch(
+            'items',
+            queryset=Inventory.objects.filter(available=True, image__isnull=False).order_by('id'),
+            to_attr='available_items'
+        )
     ).all()
+
+    # Attach the first image to each category
+    for category in categories:
+        category.first_image = category.available_items[0].image if category.available_items else None
 
     return render(request, 'customerapp/collections.html', {'categories': categories})
 
