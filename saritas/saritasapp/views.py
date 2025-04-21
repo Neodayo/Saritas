@@ -1794,3 +1794,19 @@ def update_package_rental_status(request, rental_id, action):
         messages.error(request, "An error occurred while updating the rental status")
 
     return redirect('saritasapp:package_rental_approvals')
+
+@login_required
+def package_rental_detail(request, rental_id):
+    try:
+        rental = get_object_or_404(
+            WardrobePackageRental, 
+            pk=rental_id,
+            customer=request.user.customer_profile
+        )
+    except PermissionDenied:
+        raise PermissionDenied("You don't have a customer profile")
+    
+    return render(request, 'customerapp/package_rental_detail.html', {
+        'rental': rental,
+        'rental_items': rental.package.package_items.all()
+    })

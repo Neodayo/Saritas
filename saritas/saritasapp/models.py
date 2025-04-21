@@ -13,10 +13,6 @@ from django.utils import timezone
 from django.conf import settings
 from django.db.models.signals import post_migrate
 
-
-
-
-
 # --- Branch ---
 class Branch(models.Model):
     branch_name = models.CharField(max_length=255, unique=True)
@@ -123,7 +119,7 @@ class ItemType(models.Model):
         ('flowergirl', 'Flowergirl'),
         ('bearer', 'Bearer'),
         ('mother_gown', 'Mother\'s Gown'),
-        ('father_attire', 'Father\'s Suit or Barong Attire'),
+        ('father_attire', 'Father\'s Suit'),
     ]
     
     name = models.CharField(
@@ -197,13 +193,6 @@ class Rental(models.Model):
     ]
 
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="rentals")
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="managed_rentals"
-    )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

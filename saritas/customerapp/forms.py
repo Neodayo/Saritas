@@ -93,11 +93,10 @@ class RentalForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        # Remove inventory from kwargs if present (we'll handle it separately)
         self.inventory = kwargs.pop('inventory', None)
+        self.customer = kwargs.pop('customer', None)  # Add customer parameter
         super().__init__(*args, **kwargs)
         
-        # Initialize dynamic fields
         if self.inventory:
             self.fields['deposit_amount'].initial = self.inventory.deposit_price or 0.00
             self.fields['estimated_total'].initial = (self.inventory.rental_price or 0) + (self.inventory.deposit_price or 0.00)
@@ -107,17 +106,28 @@ class RentalForm(forms.ModelForm):
         rental_start = cleaned_data.get('rental_start')
         rental_end = cleaned_data.get('rental_end')
 
-        # Ensure rental_end is after rental_start
-        if rental_end and rental_start:
-            if rental_end <= rental_start:
-                raise forms.ValidationError("Return date must be after the rental start date.")
+        if not self.inventory:
+            raise forms.ValidationError("Inventory item is required")
+            
+        if self.inventory.quantity <= 0:
+            raise forms.ValidationError("This item is no longer available for rent")
+
+        if rental_end and rental_start and rental_end <= rental_start:
+            raise forms.ValidationError("Return date must be after the rental start date.")
         
         return cleaned_data
 
     def save(self, commit=True):
         rental = super().save(commit=False)
         if self.inventory:
+            rental.inventory = self.inventory
             rental.deposit = self.inventory.deposit_price or 0.00
+        
+        if self.customer:
+            rental.customer = self.customer
+            
+        rental.status = Rental.PENDING  # Set default status
+        
         if commit:
             rental.save()
         return rental

@@ -157,34 +157,35 @@ def item_detail(request, item_id):
     item = get_object_or_404(Inventory, id=item_id)
     return render(request, 'customerapp/view_item.html', {'item': item})
 
+import logging
 logger = logging.getLogger(__name__)
-from saritasapp.models import Notification, User
-
-...
 
 @login_required
 def rent_item(request, inventory_id):
     item = get_object_or_404(Inventory, pk=inventory_id)
-
+    
     if request.method == 'POST':
-        form = RentalForm(request.POST)
+        # Pass both inventory and customer to the form
+        form = RentalForm(request.POST, inventory=item, customer=request.user.customer_profile)
         if form.is_valid():
             try:
                 with transaction.atomic():
-                    # Check availability
+                    # Refresh inventory to prevent race conditions
+                    item.refresh_from_db()
                     if item.quantity <= 0:
                         messages.error(request, 'Item no longer available')
                         return redirect('customerapp:wardrobe')
 
-                    # Create and save rental with inventory
-                    rental = form.save(commit=False)
-                    rental.inventory = item  # CRUCIAL: Assign inventory before saving
-                    rental.customer = request.user.customer_profile
-                    rental.status = 'Pending'
-                    rental.deposit = item.deposit_price or 0.00
+                    # Save the rental - form.save() now handles all required fields
+                    rental = form.save()
+                    
+                    # Decrement inventory
+                    item.quantity -= 1
+                    item.save()
+                    rental.inventory_decremented = True
                     rental.save()
 
-                    # Create notifications for staff
+                    # Create notifications
                     staff_users = User.objects.filter(role='staff')
                     for staff in staff_users:
                         Notification.objects.create(
@@ -199,17 +200,19 @@ def rent_item(request, inventory_id):
                     return redirect('customerapp:my_rentals')
 
             except ValidationError as e:
-                logger.error(f"Validation error during rental creation: {e}")
                 messages.error(request, f'Validation error: {e}')
             except Exception as e:
-                logger.error(f"Unexpected error during rental creation: {e}", exc_info=True)
-                messages.error(request, f'An unexpected error occurred: {e}')
+                logger.error(f"Error creating rental: {str(e)}", exc_info=True)
+                messages.error(request, 'An error occurred while processing your request')
     else:
-        # Initialize form with default dates
-        form = RentalForm(initial={
-            'rental_start': timezone.now().date(),
-            'rental_end': timezone.now().date() + timedelta(days=7)
-        })
+        form = RentalForm(
+            initial={
+                'rental_start': timezone.now().date(),
+                'rental_end': timezone.now().date() + timedelta(days=7)
+            },
+            inventory=item,
+            customer=request.user.customer_profile
+        )
 
     return render(request, 'customerapp/rent_item.html', {
         'form': form,
