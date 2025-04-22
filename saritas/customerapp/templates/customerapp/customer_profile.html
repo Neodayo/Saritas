@@ -4,17 +4,164 @@
 {% block title %}My Profile - Sarita's{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="card p-4 shadow" style="max-width: 600px; margin: auto;">
-        <h2 class="mb-4 text-center">My Profile</h2>
-        <div class="text-center mb-3">
+<style>
+    .profile-container {
+        background-color: #EAEAEA;
+        min-height: 100vh;
+        padding: 40px 0;
+        font-family: 'Arial', sans-serif;
+    }
+    
+    .profile-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 30px;
+    }
+    
+    .profile-title {
+        color: #8E793E;
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 25px;
+        text-align: center;
+        position: relative;
+        padding-bottom: 10px;
+    }
+    
+    .profile-title:after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 3px;
+        background: #AD974F;
+    }
+    
+    .profile-image-container {
+        text-align: center;
+        margin-bottom: 15px;
+    }
+    
+    .profile-image {
+        width: 150px;
+        height: 150px;
+        border-radius: 8px;
+        object-fit: cover;
+        border: 3px solid #AD974F;
+        margin: 0 auto 10px;
+        display: block;
+        transition: all 0.3s ease;
+    }
+    
+    .profile-image:hover {
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(142, 121, 62, 0.3);
+    }
+    
+    .add-profile-text {
+        display: block;
+        color: #8E793E;
+        font-size: 14px;
+        margin-top: 8px;
+        cursor: pointer;
+        text-decoration: underline;
+        transition: color 0.3s;
+    }
+    
+    .add-profile-text:hover {
+        color: #AD974F;
+    }
+    
+    .profile-table {
+        width: 100%;
+        margin-bottom: 25px;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .profile-table th {
+        color: #8E793E;
+        font-weight: 500;
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #EAEAEA;
+        width: 35%;
+    }
+    
+    .profile-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #EAEAEA;
+        color: #555;
+    }
+    
+    .profile-table tr:last-child th,
+    .profile-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .edit-profile-btn {
+        background-color: #8E793E;
+        color: white;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 10px;
+    }
+    
+    .edit-profile-btn:hover {
+        background-color: #AD974F;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(142, 121, 62, 0.2);
+    }
+    
+    .empty-field {
+        color: #999;
+        font-style: italic;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 576px) {
+        .profile-card {
+            padding: 20px;
+            margin: 0 15px;
+        }
+        
+        .profile-image {
+            width: 120px;
+            height: 120px;
+        }
+        
+        .profile-table th,
+        .profile-table td {
+            padding: 10px 8px;
+            font-size: 14px;
+        }
+    }
+</style>
+
+<div class="profile-container">
+    <div class="profile-card">
+        <h2 class="profile-title">My Profile</h2>
+        
+        <div class="profile-image-container">
             {% if customer.image %}
-                <img src="{{ customer.image.url }}" alt="Profile Picture" class="rounded-circle" width="120" height="120">
+                <img src="{{ customer.image.url }}" alt="Profile Picture" class="profile-image">
             {% else %}
-                <img src="{% static 'images/default-user.png' %}" alt="Default Image" class="rounded-circle" width="120" height="120">
+                <img src="{% static 'images/default-user.png' %}" alt="Default Image" class="profile-image">
             {% endif %}
         </div>
-        <table class="table">
+        
+        <table class="profile-table">
             <tr>
                 <th>Full Name</th>
                 <td>{{ customer.user.get_full_name }}</td>
@@ -29,15 +176,20 @@
             </tr>
             <tr>
                 <th>Address</th>
-                <td>{{ customer.address|default:"Not provided" }}</td>
+                <td class="{% if not customer.address %}empty-field{% endif %}">
+                    {{ customer.address|default:"Not provided" }}
+                </td>
             </tr>
             <tr>
                 <th>Joined</th>
                 <td>{{ customer.created_at|date:"F j, Y" }}</td>
             </tr>
         </table>
+        
         <div class="text-center">
-            <a href="{% url 'customerapp:edit_profile' %}" class="btn btn-outline-primary">Edit Profile</a>
+            <a href="{% url 'customerapp:edit_profile' %}" class="edit-profile-btn">
+                Edit Profile
+            </a>
         </div>
     </div>
 </div>
