@@ -555,3 +555,8 @@ def my_package_rentals(request):
     return render(request, 'customerapp/my_package_rentals.html', {
         'rentals': rentals
     })
+def terms(request):
+    return render(request, 'customerapp/terms.html')
+
+def privacy(request):
+    return render(request, 'customerapp/privacy.html')
