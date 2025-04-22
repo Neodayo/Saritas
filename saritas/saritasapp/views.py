@@ -229,47 +229,36 @@ def rental_tracker(request):
     today = timezone.now().date()
 
     # Apply filters to rental query
-    rentals = Rental.objects.all()
+    rentals = Rental.objects.select_related(
+        'inventory',
+        'customer',
+        'customer__user',
+        'approved_by'
+    ).prefetch_related(
+        'inventory__category',
+        'inventory__size'
+    )
 
     if status_filter:
         rentals = rentals.filter(status=status_filter)
 
-    # Handle date filters if provided
     if start_date:
         rentals = rentals.filter(rental_start__gte=start_date)
     if end_date:
         rentals = rentals.filter(rental_end__lte=end_date)
 
-    with transaction.atomic():
-        # Only mark as overdue if the rental's item quantity was properly decremented
-        overdue_rentals = Rental.objects.filter(
-            rental_end__lt=today,
-            status="Renting"
-        )
+    # Calculate display status without saving to DB
+    for rental in rentals:
+        if rental.status == 'Approved' and rental.rental_start <= today <= rental.rental_end:
+            rental.display_status = 'Renting'
+        elif rental.status == 'Approved' and today > rental.rental_end:
+            rental.display_status = 'Overdue'
+        else:
+            rental.display_status = rental.status
 
-        for rental in overdue_rentals:
-            # Verify the item was actually checked out (inventory decremented)
-            if not rental.inventory_was_decremented:
-                logger.warning(f"Overdue rental {rental.id} never had inventory decremented.")
-                continue
-                
-            rental.status = "Overdue"
-            rental.save()
-
-        # Only mark as "Renting" if the quantity was decremented during approval
-        approved_rentals = Rental.objects.filter(
-            rental_start__lte=today,
-            rental_end__gte=today,
-            status="Approved"
-        )
-
-        for rental in approved_rentals:
-            rental.status = "Renting"
-            rental.save()
-
-    # Render the rental tracker page with filtered rentals
     return render(request, 'saritasapp/rental_tracker.html', {
-        'rentals': rentals
+        'rentals': rentals,
+        'today': today
     })
 
 

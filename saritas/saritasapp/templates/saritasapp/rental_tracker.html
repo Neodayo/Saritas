@@ -3,6 +3,8 @@
 {% block title %}Rental Tracker{% endblock %}
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'css/rental_tracker.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -11,13 +13,13 @@
         <!-- Header Section -->
         <div class="px-6 py-4">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
-            <h1 class="gold-heading text-2xl font-bold text-[#FFD700] mb-2 md:mb-0" style="font-family: 'Playfair Display', serif;">
-            <i class="fas fa-concierge-bell mr-2"></i>Rental Management
-            </h1>
-            <div class="flex items-center space-x-2 bg-[#FFD700] px-3 py-1 rounded-lg">
-            <span class="text-sm text-amber-700">Total Rentals:</span>
-            <span class="text-lg font-semibold text-amber-700">{{ rentals|length }}</span>
-            </div>
+                <h1 class="gold-heading text-2xl font-bold text-[#FFD700] mb-2 md:mb-0" style="font-family: 'Playfair Display', serif;">
+                    <i class="fas fa-concierge-bell mr-2"></i>Rental Management
+                </h1>
+                <div class="flex items-center space-x-2 bg-[#FFD700] px-3 py-1 rounded-lg">
+                    <span class="text-sm text-amber-700">Total Rentals:</span>
+                    <span class="text-lg font-semibold text-amber-700">{{ rentals|length }}</span>
+                </div>
             </div>
         </div>
 
@@ -29,10 +31,21 @@
                     <select name="status" id="statusFilter" onchange="this.form.submit()" 
                             class="w-full px-4 py-2 border border-amber-300 rounded-lg shadow-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white">
                         <option value="">All Status</option>
+                        <option value="Approved" {% if request.GET.status == "Approved" %}selected{% endif %}>Approved</option>
                         <option value="Renting" {% if request.GET.status == "Renting" %}selected{% endif %}>Renting</option>
                         <option value="Returned" {% if request.GET.status == "Returned" %}selected{% endif %}>Returned</option>
                         <option value="Overdue" {% if request.GET.status == "Overdue" %}selected{% endif %}>Overdue</option>
                     </select>
+                </div>
+                <div class="flex-1 w-full md:w-auto">
+                    <label class="block text-sm font-medium text-amber-700 mb-1">Start Date:</label>
+                    <input type="date" name="start_date" value="{{ request.GET.start_date }}" 
+                           class="w-full px-4 py-2 border border-amber-300 rounded-lg shadow-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white">
+                </div>
+                <div class="flex-1 w-full md:w-auto">
+                    <label class="block text-sm font-medium text-amber-700 mb-1">End Date:</label>
+                    <input type="date" name="end_date" value="{{ request.GET.end_date }}" 
+                           class="w-full px-4 py-2 border border-amber-300 rounded-lg shadow-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white">
                 </div>
                 <button type="submit" name="status" value="" 
                         class="w-full md:w-auto px-4 py-2 border border-amber-600 text-amber-600 rounded-lg hover:bg-amber-100 transition-colors font-medium">
@@ -41,7 +54,7 @@
             </form>
         </div>
 
-        <!-- Table Section (Unchanged from previous version) -->
+        <!-- Table Section -->
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead class="bg-gray-50">
@@ -57,35 +70,46 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     {% for rental in rentals %}
-                    <tr class="hover:bg-gray-50 transition-colors">
+                    <tr class="hover:bg-gray-50 transition-colors {% if rental.display_status == 'Overdue' %}bg-red-50{% endif %}">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-600">#{{ rental.id }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ rental.customer.first_name }} {{ rental.customer.last_name }}
+                            {{ rental.customer.user.get_full_name }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {{ rental.inventory.name }}
+                            <div class="text-xs text-gray-500">
+                                {{ rental.inventory.category.name }} | {{ rental.inventory.size.name }}
+                            </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ rental.rental_start|date:"M d, Y" }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ rental.rental_end|date:"M d, Y" }}
+                            <div class="text-xs text-gray-500">
+                                {{ rental.duration }} day{{ rental.duration|pluralize }}
+                            </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            {% if rental.status == "Overdue" %}
+                            {% if rental.display_status == "Overdue" %}
                                 <span class="inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-red-800 text-sm font-medium">
                                     <span class="w-2 h-2 mr-2 bg-red-500 rounded-full"></span>
                                     Overdue
                                 </span>
-                            {% elif rental.status == "Returned" %}
+                            {% elif rental.display_status == "Returned" %}
                                 <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">
                                     <span class="w-2 h-2 mr-2 bg-green-500 rounded-full"></span>
                                     Returned
                                 </span>
+                            {% elif rental.display_status == "Renting" %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm font-medium">
+                                    <span class="w-2 h-2 mr-2 bg-blue-500 rounded-full"></span>
+                                    Renting
+                                </span>
                             {% else %}
                                 <span class="inline-flex items-center px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-sm font-medium">
                                     <span class="w-2 h-2 mr-2 bg-yellow-500 rounded-full"></span>
-                                    Renting
+                                    {{ rental.display_status }}
                                 </span>
                             {% endif %}
                         </td>
@@ -110,7 +134,7 @@
                             <div class="flex flex-col items-center justify-center text-amber-400">
                                 <i class="fas fa-clipboard-list text-4xl mb-4"></i>
                                 <p class="text-lg font-medium">No rentals found</p>
-                                <p class="text-sm mt-1">Start by creating new rentals</p>
+                                <p class="text-sm mt-1">Try adjusting your filters</p>
                             </div>
                         </td>
                     </tr>
