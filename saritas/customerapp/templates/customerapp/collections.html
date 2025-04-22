@@ -1,0 +1,41 @@
+{% extends "customerapp/base.html" %}
+{% load static %}
+
+{% block title %}Collections{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-10">
+    <h1 class="text-center text-2xl font-semibold tracking-widest mb-10">COLLECTIONS</h1>
+    
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {% for category in categories %}
+        <a href="{% url 'customerapp:wardrobe' %}?category={{ category.id }}" 
+           class="group relative overflow-hidden rounded-lg shadow hover:scale-105 transition-transform duration-300">
+            
+            {% if category.first_image %}
+                <img src="{{ category.first_image.url }}" alt="{{ category.name }}" class="w-full h-[400px] object-cover" />
+            {% else %}
+                <div class="w-full h-[400px] bg-gray-200 flex items-center justify-center">
+                    <span class="text-gray-800 text-lg font-bold tracking-wider uppercase">{{ category.name }}</span>
+                </div>
+            {% endif %}
+
+            <!-- Always-visible text & underline -->
+            {% if category.first_image %}
+            <div class="absolute inset-0 flex items-center justify-center z-10">
+                <div class="text-center">
+                    <span class="text-white text-xl md:text-2xl font-bold uppercase tracking-widest block">{{ category.name }}</span>
+                    <div class="w-12 h-1 mt-2 mx-auto bg-white"></div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Hover black dim layer -->
+            {% if category.first_image %}
+            <div class="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition duration-300 z-0"></div>
+            {% endif %}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

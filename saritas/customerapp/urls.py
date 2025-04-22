@@ -30,5 +30,7 @@ urlpatterns = [
     path('package-rentals/<int:rental_id>/', views.package_rental_detail, name='package_rental_detail'),
     path('my-package-rentals/', views.my_package_rentals, name='my_package_rentals'),
     path('packages/<int:package_id>/rent/', views.rent_package, name='rent_package'),
-]
+    path('collections/', views.collections_view, name='collections'),
+      
+    ]
 
