@@ -4,14 +4,157 @@
 {% block title %}Edit Profile - Sarita's{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="card p-4 shadow" style="max-width: 600px; margin: auto;">
-        <h2 class="mb-4 text-center">Edit Profile</h2>
+<style>
+    .profile-edit-container {
+        background-color: #EAEAEA;
+        min-height: 100vh;
+        padding: 40px 0;
+        font-family: 'Arial', sans-serif;
+    }
+    
+    .profile-edit-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 30px;
+    }
+    
+    .profile-edit-title {
+        color: #8E793E;
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 25px;
+        text-align: center;
+        position: relative;
+        padding-bottom: 10px;
+    }
+    
+    .profile-edit-title:after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 3px;
+        background: #AD974F;
+    }
+    
+    .section-title {
+        color: #8E793E;
+        font-size: 18px;
+        font-weight: 600;
+        margin: 25px 0 15px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #EAEAEA;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        color: #8E793E;
+        font-weight: 500;
+        margin-bottom: 8px;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #EAEAEA;
+        border-radius: 6px;
+        font-size: 15px;
+        transition: all 0.3s;
+    }
+    
+    .form-control:focus {
+        border-color: #AD974F;
+        box-shadow: 0 0 0 3px rgba(173, 151, 79, 0.2);
+        outline: none;
+    }
+    
+    .current-image {
+        max-height: 150px;
+        border-radius: 8px;
+        border: 2px solid #AD974F;
+        margin-bottom: 10px;
+    }
+    
+    .btn-primary {
+        background-color: #8E793E;
+        color: white;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+    
+    .btn-primary:hover {
+        background-color: #AD974F;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(142, 121, 62, 0.2);
+    }
+    
+    .btn-outline {
+        background-color: white;
+        color: #8E793E;
+        border: 1px solid #8E793E;
+        padding: 10px 25px;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+    
+    .btn-outline:hover {
+        background-color: #EAEAEA;
+        color: #AD974F;
+        border-color: #AD974F;
+    }
+    
+    .alert {
+        padding: 12px 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+    }
+    
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .alert-error {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 576px) {
+        .profile-edit-card {
+            padding: 20px;
+            margin: 0 15px;
+        }
+        
+        .profile-edit-title {
+            font-size: 24px;
+        }
+    }
+</style>
+
+<div class="profile-edit-container">
+    <div class="profile-edit-card">
+        <h2 class="profile-edit-title">Edit Profile</h2>
 
         {% if messages %}
-            <div class="mb-3">
+            <div class="mb-4">
                 {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                    <div class="alert alert-{% if message.tags == 'error' %}error{% else %}success{% endif %}">
+                        {{ message }}
+                    </div>
                 {% endfor %}
             </div>
         {% endif %}
@@ -20,46 +163,70 @@
             {% csrf_token %}
 
             <div class="mb-4">
-                <h4>User Information</h4>
-                <div class="form-group mb-3">
+                <h4 class="section-title">User Information</h4>
+                <div class="form-group">
                     <label for="{{ user_form.first_name.id_for_label }}">First Name</label>
-                    {{ user_form.first_name }}
+                    <input type="text" 
+                           id="{{ user_form.first_name.id_for_label }}" 
+                           name="{{ user_form.first_name.html_name }}" 
+                           value="{{ user_form.first_name.value|default:'' }}" 
+                           class="form-control">
                 </div>
-                <div class="form-group mb-3">
+                <div class="form-group">
                     <label for="{{ user_form.last_name.id_for_label }}">Last Name</label>
-                    {{ user_form.last_name }}
+                    <input type="text" 
+                           id="{{ user_form.last_name.id_for_label }}" 
+                           name="{{ user_form.last_name.html_name }}" 
+                           value="{{ user_form.last_name.value|default:'' }}" 
+                           class="form-control">
                 </div>
-                <div class="form-group mb-3">
+                <div class="form-group">
                     <label for="{{ user_form.email.id_for_label }}">Email</label>
-                    {{ user_form.email }}
+                    <input type="email" 
+                           id="{{ user_form.email.id_for_label }}" 
+                           name="{{ user_form.email.html_name }}" 
+                           value="{{ user_form.email.value|default:'' }}" 
+                           class="form-control">
                 </div>
             </div>
 
             <div class="mb-4">
-                <h4>Customer Information</h4>
-                <div class="form-group mb-3">
+                <h4 class="section-title">Customer Information</h4>
+                <div class="form-group">
                     <label for="{{ customer_form.phone.id_for_label }}">Phone</label>
-                    {{ customer_form.phone }}
-                    <small class="form-text text-muted">Format: +1234567890</small>
+                    <input type="text" 
+                           id="{{ customer_form.phone.id_for_label }}" 
+                           name="{{ customer_form.phone.html_name }}" 
+                           value="{{ customer_form.phone.value|default:'' }}" 
+                           class="form-control">
+                    <small class="text-muted">Format: +1234567890</small>
                 </div>
-                <div class="form-group mb-3">
+                <div class="form-group">
                     <label for="{{ customer_form.address.id_for_label }}">Address</label>
-                    {{ customer_form.address }}
+                    <textarea id="{{ customer_form.address.id_for_label }}" 
+                              name="{{ customer_form.address.html_name }}" 
+                              class="form-control" 
+                              rows="3">{{ customer_form.address.value|default:'' }}</textarea>
                 </div>
-                <div class="form-group mb-3">
+                <div class="form-group">
                     <label for="{{ customer_form.image.id_for_label }}">Profile Picture</label>
                     {% if customer_form.instance.image %}
-                        <div class="mb-2">
-                            <img src="{{ customer_form.instance.image.url }}" alt="Current Profile Image" class="img-thumbnail" style="max-height: 150px;">
+                        <div class="mb-3">
+                            <img src="{{ customer_form.instance.image.url }}" 
+                                 alt="Current Profile Image" 
+                                 class="current-image">
                         </div>
                     {% endif %}
-                    {{ customer_form.image }}
+                    <input type="file" 
+                           id="{{ customer_form.image.id_for_label }}" 
+                           name="{{ customer_form.image.html_name }}" 
+                           class="form-control">
                 </div>
             </div>
 
-            <div class="text-center mt-4">
-                <button type="submit" class="btn btn-primary">Save Changes</button>
-                <a href="{% url 'customerapp:customer_profile' %}" class="btn btn-outline-secondary ml-2">Cancel</a>
+            <div class="text-center mt-5">
+                <button type="submit" class="btn-primary">Save Changes</button>
+                <a href="{% url 'customerapp:customer_profile' %}" class="btn-outline ml-2">Cancel</a>
             </div>
         </form>
     </div>
