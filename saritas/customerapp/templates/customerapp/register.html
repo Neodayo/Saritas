@@ -55,19 +55,15 @@
              background-position: center;">
     
     <div class="h-screen flex items-center justify-center p-4">
-        <!-- Registration Container -->
         <div class="flex w-full max-w-7xl h-[800px] bg-white/90 backdrop-blur-lg rounded-xl shadow-2xl overflow-hidden">
             
-            <!-- Left Side - Branding -->
+            <!-- Left Section -->
             <div class="hidden md:block w-1/2 p-12 border-r-2 border-gold-primary flex flex-col justify-between bg-white/95">
-                <!-- Back to Home button at the top -->
                 <div class="mb-8">
                     <a href="{% url 'customerapp:homepage' %}" class="text-gold-dark hover:text-gold-primary transition-colors flex items-center">
-                        <i class="fas fa-arrow-left mr-2"></i>
-                        Back to Homepage
+                        <i class="fas fa-arrow-left mr-2"></i> Back to Homepage
                     </a>
                 </div>
-                
                 <div class="text-center space-y-6">
                     <h1 class="font-allura text-7xl text-gold-dark">Sarita's</h1>
                     <div class="space-y-3">
@@ -75,209 +71,112 @@
                         <p class="font-playfair text-xl text-gold-secondary">& Event Stylist</p>
                     </div>
                 </div>
-                
-                <!-- Sign In Section -->
                 <div class="text-center mt-12">
                     <p class="text-gold-dark mb-4 font-playfair">Already have an account?</p>
-                    <a href="{% url 'saritasapp:sign_in' %}" 
-                       class="inline-block bg-gold-primary text-white px-8 py-3 rounded-lg font-playfair font-semibold 
-                              hover:bg-gold-dark transition-colors shadow-md hover:shadow-lg">
+                    <a href="{% url 'saritasapp:sign_in' %}" class="inline-block bg-gold-primary text-white px-8 py-3 rounded-lg font-playfair font-semibold hover:bg-gold-dark transition-colors shadow-md hover:shadow-lg">
                         Sign In Here
                     </a>
                 </div>
             </div>
 
-            <!-- Right Side - Registration Form -->
+            <!-- Right Section (Form) -->
             <div class="w-full md:w-1/2 p-6 md:p-12 overflow-y-auto">
-                <!-- Mobile Back button (only visible on small screens) -->
                 <div class="md:hidden mb-4">
                     <a href="{% url 'customerapp:homepage' %}" class="text-gold-dark hover:text-gold-primary transition-colors flex items-center">
-                        <i class="fas fa-arrow-left mr-2"></i>
-                        Back to Homepage
+                        <i class="fas fa-arrow-left mr-2"></i> Back to Homepage
                     </a>
                 </div>
                 
                 <h2 class="text-2xl font-playfair font-bold text-gold-dark mb-6 text-center">Create Account</h2>
-                
-                <!-- Error Messages -->
-                <!-- {% if form.errors %}
-                <div class="mb-6 p-4 bg-red-50 border-l-4 border-error-red rounded">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-exclamation-circle text-error-red"></i>
-                        </div>
-                        <div class="ml-3">
-                            <h3 class="text-sm font-medium text-error-red">Please correct the following errors:</h3>
-                            <div class="mt-2 text-sm text-error-red">
-                                <ul class="list-disc pl-5 space-y-1">
-                                    {% for field in form %}
-                                        {% for error in field.errors %}
-                                            <li>{{ error|escape }}</li>
-                                        {% endfor %}
-                                    {% endfor %}
-                                    {% for error in form.non_field_errors %}
-                                        <li>{{ error|escape }}</li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endif %} -->
-                
+
                 <form method="POST" class="space-y-4">
                     {% csrf_token %}
-                    
+
                     <div class="grid grid-cols-1 gap-4">
-                        <!-- Name Fields -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gold-dark mb-2">
-                                    First name <span class="text-error-red">*</span>
-                                </label>
-                                <input type="text" name="first_name" placeholder="Enter your first name" 
-                                       value="{{ form.first_name.value|default:'' }}"
-                                       class="w-full px-4 py-3 border border-gold-primary rounded-lg 
-                                              focus:outline-none focus:ring-2 focus:ring-gold-primary
-                                              placeholder-gold-secondary {% if form.first_name.errors %}form-error{% endif %}">
+                                <label class="block text-sm font-medium text-gold-dark mb-2">First name <span class="text-error-red">*</span></label>
+                                <input type="text" name="first_name" placeholder="Enter your first name" value="{{ form.first_name.value|default:'' }}" class="w-full px-4 py-3 border border-gold-primary rounded-lg placeholder-gold-secondary {% if form.first_name.errors %}form-error{% endif %}">
                                 {% if form.first_name.errors %}
                                     <div class="error-message">{{ form.first_name.errors.0 }}</div>
                                 {% endif %}
                             </div>
-                            
                             <div>
-                                <label class="block text-sm font-medium text-gold-dark mb-2">
-                                    Last name <span class="text-error-red">*</span>
-                                </label>
-                                <input type="text" name="last_name" placeholder="Enter your last name" 
-                                       value="{{ form.last_name.value|default:'' }}"
-                                       class="w-full px-4 py-3 border border-gold-primary rounded-lg 
-                                              focus:outline-none focus:ring-2 focus:ring-gold-primary
-                                              placeholder-gold-secondary {% if form.last_name.errors %}form-error{% endif %}">
+                                <label class="block text-sm font-medium text-gold-dark mb-2">Last name <span class="text-error-red">*</span></label>
+                                <input type="text" name="last_name" placeholder="Enter your last name" value="{{ form.last_name.value|default:'' }}" class="w-full px-4 py-3 border border-gold-primary rounded-lg placeholder-gold-secondary {% if form.last_name.errors %}form-error{% endif %}">
                                 {% if form.last_name.errors %}
                                     <div class="error-message">{{ form.last_name.errors.0 }}</div>
                                 {% endif %}
                             </div>
                         </div>
-                        
-                        <!-- Username -->
+
                         <div>
-                            <label class="block text-sm font-medium text-gold-dark mb-2">
-                                Username <span class="text-error-red">*</span>
-                            </label>
-                            <input type="text" name="username" placeholder="Enter your username" 
-                                   value="{{ form.username.value|default:'' }}"
-                                   class="w-full px-4 py-3 border border-gold-primary rounded-lg 
-                                          focus:outline-none focus:ring-2 focus:ring-gold-primary
-                                          placeholder-gold-secondary {% if form.username.errors %}form-error{% endif %}">
+                            <label class="block text-sm font-medium text-gold-dark mb-2">Username <span class="text-error-red">*</span></label>
+                            <input type="text" name="username" placeholder="Enter your username" value="{{ form.username.value|default:'' }}" class="w-full px-4 py-3 border border-gold-primary rounded-lg placeholder-gold-secondary {% if form.username.errors %}form-error{% endif %}">
                             {% if form.username.errors %}
                                 <div class="error-message">{{ form.username.errors.0 }}</div>
                             {% endif %}
                         </div>
-                        
-                        <!-- Email -->
+
                         <div>
-                            <label class="block text-sm font-medium text-gold-dark mb-2">
-                                Email <span class="text-error-red">*</span>
-                            </label>
-                            <input type="email" name="email" placeholder="Enter your email" 
-                                   value="{{ form.email.value|default:'' }}"
-                                   class="w-full px-4 py-3 border border-gold-primary rounded-lg 
-                                          focus:outline-none focus:ring-2 focus:ring-gold-primary
-                                          placeholder-gold-secondary {% if form.email.errors %}form-error{% endif %}">
+                            <label class="block text-sm font-medium text-gold-dark mb-2">Email <span class="text-error-red">*</span></label>
+                            <input type="email" name="email" placeholder="Enter your email" value="{{ form.email.value|default:'' }}" class="w-full px-4 py-3 border border-gold-primary rounded-lg placeholder-gold-secondary {% if form.email.errors %}form-error{% endif %}">
                             {% if form.email.errors %}
                                 <div class="error-message">{{ form.email.errors.0 }}</div>
                             {% endif %}
                         </div>
-                        
-                        <!-- Password Fields -->
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- Password Field -->
                             <div>
-                                <label class="block text-sm font-medium text-gold-dark mb-2">
-                                    Password <span class="text-error-red">*</span>
-                                </label>
+                                <label class="block text-sm font-medium text-gold-dark mb-2">Password <span class="text-error-red">*</span></label>
                                 <div class="relative">
-                                    <input type="password" name="password1" id="password1" placeholder="Password" 
-                                           class="w-full px-4 py-3 border border-gold-primary rounded-lg 
-                                                  focus:outline-none focus:ring-2 focus:ring-gold-primary
-                                                  placeholder-gold-secondary {% if form.password1.errors %}form-error{% endif %}">
-                                    <i class="fas fa-eye-slash absolute right-4 top-1/2 -translate-y-1/2 text-gold-secondary cursor-pointer" 
-                                       onclick="togglePassword('password1', this)"></i>
+                                    <input type="password" name="password1" id="password1" placeholder="Password" class="w-full px-4 py-3 border border-gold-primary rounded-lg placeholder-gold-secondary {% if form.password1.errors %}form-error{% endif %}">
+                                    <i class="fas fa-eye-slash password-toggle" onclick="togglePassword('password1', this)"></i>
                                 </div>
                                 {% if form.password1.errors %}
                                     <div class="error-message">{{ form.password1.errors.0 }}</div>
                                 {% endif %}
                             </div>
-                        
-                            <!-- Confirm Password Field -->
                             <div>
-                                <label class="block text-sm font-medium text-gold-dark mb-2">
-                                    Confirm Password <span class="text-error-red">*</span>
-                                </label>
+                                <label class="block text-sm font-medium text-gold-dark mb-2">Confirm Password <span class="text-error-red">*</span></label>
                                 <div class="relative">
-                                    <input type="password" name="password2" id="password2" placeholder="Confirm password" 
-                                           class="w-full px-4 py-3 border border-gold-primary rounded-lg 
-                                                  focus:outline-none focus:ring-2 focus:ring-gold-primary
-                                                  placeholder-gold-secondary {% if form.password2.errors %}form-error{% endif %}">
-                                    <i class="fas fa-eye-slash absolute right-4 top-1/2 -translate-y-1/2 text-gold-secondary cursor-pointer" 
-                                       onclick="togglePassword('password2', this)"></i>
+                                    <input type="password" name="password2" id="password2" placeholder="Confirm password" class="w-full px-4 py-3 border border-gold-primary rounded-lg placeholder-gold-secondary {% if form.password2.errors %}form-error{% endif %}">
+                                    <i class="fas fa-eye-slash password-toggle" onclick="togglePassword('password2', this)"></i>
                                 </div>
                                 {% if form.password2.errors %}
                                     <div class="error-message">{{ form.password2.errors.0 }}</div>
                                 {% endif %}
                             </div>
                         </div>
-                        
-                        
-                        <!-- Password Requirements -->
+
                         <div class="bg-gold-primary/10 p-3 rounded-lg">
                             <p class="text-xs text-gold-dark font-medium mb-2">Password Requirements:</p>
                             <ul class="text-xs text-gold-dark space-y-1">
-                                <li class="flex items-center">
-                                    <i class="fas fa-check-circle text-xs mr-2 text-green-600"></i>
-                                    Minimum 8 characters
-                                </li>
-                                <li class="flex items-center">
-                                    <i class="fas fa-check-circle text-xs mr-2 text-green-600"></i>
-                                    At least one uppercase letter
-                                </li>
-                                <li class="flex items-center">
-                                    <i class="fas fa-check-circle text-xs mr-2 text-green-600"></i>
-                                    At least one number
-                                </li>
-                                <li class="flex items-center">
-                                    <i class="fas fa-check-circle text-xs mr-2 text-green-600"></i>
-                                    At least one special character
-                                </li>
+                                <li><i class="fas fa-check-circle text-xs mr-2 text-green-600"></i> Minimum 8 characters</li>
+                                <li><i class="fas fa-check-circle text-xs mr-2 text-green-600"></i> At least one uppercase letter</li>
+                                <li><i class="fas fa-check-circle text-xs mr-2 text-green-600"></i> At least one number</li>
+                                <li><i class="fas fa-check-circle text-xs mr-2 text-green-600"></i> At least one special character</li>
                             </ul>
                         </div>
-                        
-                        <!-- Phone -->
+
                         <div>
-                            <label class="block text-sm font-medium text-gold-dark mb-2">
-                                Phone Number <span class="text-error-red">*</span>
-                            </label>
-                            <input type="tel" name="phone" placeholder="Enter your phone number" 
-                                   value="{{ form.phone.value|default:'' }}"
-                                   class="w-full px-4 py-3 border border-gold-primary rounded-lg 
-                                          focus:outline-none focus:ring-2 focus:ring-gold-primary
-                                          placeholder-gold-secondary {% if form.phone.errors %}form-error{% endif %}">
+                            <label class="block text-sm font-medium text-gold-dark mb-2">Phone Number <span class="text-error-red">*</span></label>
+                            <input type="tel" name="phone" placeholder="Enter your phone number" value="{{ form.phone.value|default:'' }}" class="w-full px-4 py-3 border border-gold-primary rounded-lg placeholder-gold-secondary {% if form.phone.errors %}form-error{% endif %}">
                             {% if form.phone.errors %}
                                 <div class="error-message">{{ form.phone.errors.0 }}</div>
                             {% endif %}
                         </div>
-                        
-                        <!-- Terms and Conditions -->
+
                         <div class="flex items-start">
                             <div class="flex items-center h-5">
-                                <input type="checkbox" name="terms" id="terms" 
-                                       class="focus:ring-gold-primary h-4 w-4 text-gold-primary border-gold-primary rounded">
+                                <input type="checkbox" name="terms" id="terms" class="focus:ring-gold-primary h-4 w-4 text-gold-primary border-gold-primary rounded">
                             </div>
                             <div class="ml-3 text-sm">
                                 <label for="terms" class="font-medium text-gold-dark">
-                                    I agree to the <a href="#" class="text-gold-primary hover:text-gold-dark underline">Terms of Service</a> and 
-                                    <a href="#" class="text-gold-primary hover:text-gold-dark underline">Privacy Policy</a>
+                                    I agree to the <a href="{% url 'customerapp:terms' %}" class="text-blue-500 underline">Terms of Service</a>
+                                    and 
+                                    <a href="{% url 'customerapp:privacy' %}" class="text-blue-500 underline">Privacy Policy</a>
+
                                 </label>
                             </div>
                         </div>
@@ -286,29 +185,45 @@
                         {% endif %}
                     </div>
 
-                    <button type="submit" 
-                            class="w-full bg-gold-primary hover:bg-gold-dark text-white py-3 rounded-lg 
-                                   font-medium transition-colors transform hover:scale-[1.01]
-                                   shadow-md hover:shadow-lg mt-6">
+                    <button type="submit" class="w-full bg-gold-primary hover:bg-gold-dark text-white py-3 rounded-lg font-medium transition-colors transform hover:scale-[1.01] shadow-md hover:shadow-lg mt-6">
                         Complete Registration
                     </button>
                 </form>
-                
-                <!-- Mobile Sign In Link -->
+
                 <div class="mt-6 text-center md:hidden">
                     <p class="text-gold-dark mb-4">Already have an account?</p>
-                    <a href="{% url 'saritasapp:sign_in' %}" 
-                       class="inline-block bg-gold-primary text-white px-8 py-3 rounded-lg font-medium 
-                              hover:bg-gold-dark transition-colors shadow-md hover:shadow-lg">
+                    <a href="{% url 'saritasapp:sign_in' %}" class="inline-block bg-gold-primary text-white px-8 py-3 rounded-lg font-medium hover:bg-gold-dark transition-colors shadow-md hover:shadow-lg">
                         Sign In Here
                     </a>
                 </div>
             </div>
         </div>
     </div>
+<!-- Terms & Conditions Modal -->
+<div id="termsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+  <div class="bg-white rounded-lg max-w-2xl w-full p-6 shadow-lg relative">
+    <h2 class="text-xl font-bold text-gold-dark mb-4">Terms and Conditions</h2>
+    <div class="text-sm text-gray-700 max-h-[300px] overflow-y-auto space-y-3">
+      <p>Welcome to Sarita's Wedding Creations. By registering, you agree to the following terms and conditions:</p>
+      <ul class="list-disc list-inside space-y-2">
+        <li>You are responsible for the accuracy of the information provided.</li>
+        <li>You agree not to misuse or abuse our system.</li>
+        <li>Your data is handled securely and in compliance with our privacy policy.</li>
+        <li>All transactions and reservations are subject to availability and confirmation.</li>
+        <li>We reserve the right to modify or terminate services without prior notice.</li>
+      </ul>
+      <p class="mt-4">Please review our full terms for more information.</p>
+    </div>
+    <div class="mt-6 text-right">
+      <button onclick="closeModal()" class="bg-gold-primary hover:bg-gold-dark text-white px-6 py-2 rounded-lg">Close</button>
+    </div>
+    <button onclick="closeModal()" class="absolute top-3 right-4 text-gold-dark hover:text-gold-primary text-xl">
+      &times;
+    </button>
+  </div>
+</div>
 
     <script>
-        // Toggle password visibility
         function togglePassword(fieldId, icon) {
             const field = document.getElementById(fieldId);
             if (field.type === 'password') {
@@ -321,25 +236,6 @@
                 icon.classList.add('fa-eye-slash');
             }
         }
-        
-        // Validate form before submission
-        document.querySelector('form').addEventListener('submit', function(e) {
-            const terms = document.getElementById('terms');
-            if (!terms.checked) {
-                e.preventDefault();
-                alert('Please agree to the Terms of Service and Privacy Policy');
-                terms.focus();
-            }
-        });
-        
-        // Phone number formatting
-        document.querySelector('input[name="phone"]').addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length > 0) {
-                value = value.match(/.{1,4}/g).join(' ');
-            }
-            e.target.value = value;
-        });
     </script>
 </body>
 </html>

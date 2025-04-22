@@ -253,7 +253,13 @@
         </div>
 
         <!-- Desktop Header Items - Simplified -->
+         
         <div class="hidden lg:flex items-center gap-6 mr-4">
+            <a href="{% url 'customerapp:homepage' %}" 
+            class="px-4 py-2 bg-[#AD974F] text-white rounded-lg hover:bg-[#8a7a3f] transition-colors">
+             Go to Homepage
+         </a>
+
             <a href="{% url 'saritasapp:staff_profile' %}" class="text-black hover:text-[#AD974F] transition-colors">
                 <i class="fas fa-user text-xl"></i>
             </a>
