@@ -30,7 +30,7 @@
         style="margin-top: -80px; padding-top: 80px; height: calc(100vh - 80px);">
         <!-- Background image -->
         <img src="{% static 'images/customerbackground.jpg' %}" alt="Fashion rental collection"
-            class="absolute inset-0 w-full h-full object-cover blur-sm"> 
+            class="absolute inset-0 w-full h-full object-cover blur-sm">
 
 
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
@@ -48,44 +48,45 @@
         </div>
     </section>
 
-<!-- Featured Categories Section -->
-<section id="featured-categories" class="py-16 px-4">
-    <div class="max-w-6xl mx-auto">
-        <h2 class="text-3xl font-bold text-center mb-12">Featured Collections</h2>
-        <div class="flex overflow-x-auto gap-6 pb-4 -mx-4 px-4">
-            {% for category in featured_categories %}
-            <a href="{% url 'customerapp:wardrobe' %}?category={{ category.id }}" 
-               class="group relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex-shrink-0 w-64 h-[22rem] flex flex-col">
-                
-                <!-- Category Image -->
-                {% if category.featured_item %}
-                    <div class="w-full h-full">
-                        <img src="{{ category.featured_item.image.url }}" 
-                             alt="{{ category.name }}"
-                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+    <!-- Featured Categories Section -->
+    <section id="featured-categories" class="py-16 px-4">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-3xl font-bold text-center mb-12">Featured Collections</h2>
+            <div class="flex overflow-x-auto gap-6 pb-4 -mx-4 px-4">
+                {% for category in featured_categories %}
+                <a href="{% url 'customerapp:wardrobe' %}?category={{ category.id }}"
+                    class="group relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex-shrink-0 w-64 h-[22rem] flex flex-col">
+
+                    <!-- Category Image with slower zoom -->
+                    {% if category.featured_item %}
+                    <div class="w-full h-full overflow-hidden">
+                        <img src="{{ category.featured_item.image.url }}" alt="{{ category.name }}"
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out">
                     </div>
-                {% else %}
+                    {% else %}
                     <div class="w-full h-full bg-gray-100 flex items-center justify-center">
                         <span class="text-gray-500">No items available</span>
                     </div>
-                {% endif %}
+                    {% endif %}
 
-                <!-- Category Name Overlay -->
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4 pointer-events-none">
-                    <h3 class="text-white text-xl font-bold">{{ category.name }}</h3>
-                </div>
+                    <!-- Category Name Overlay -->
+                    <div
+                        class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4 pointer-events-none">
+                        <h3 class="text-white text-xl font-bold">{{ category.name }}</h3>
+                    </div>
 
-                <!-- View Collection Button -->
-                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/30 pointer-events-none">
-                    <span class="bg-[#AD974F] text-white px-4 py-2 rounded-md font-medium">
-                        View Collection
-                    </span>
-                </div>
-            </a>
-            {% endfor %}
+                    <!-- View Collection Button -->
+                    <div
+                        class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/30 pointer-events-none">
+                        <span class="bg-[#AD974F] text-white px-4 py-2 rounded-md font-medium">
+                            View Collection
+                        </span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 
 
 
