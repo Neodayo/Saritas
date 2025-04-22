@@ -1,141 +1,381 @@
 {% extends "saritasapp/base.html" %}
 {% load static %}
 
-{% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/view_customer.css' %}">
-{% endblock %}
-
 {% block title %}{{ customer.first_name }} {{ customer.last_name }}{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h2 class="text-center" style="color: #8E793E; font-family: Arial, sans-serif;">Customer Details</h2>
+<style>
+    /* Main Container */
+    .customer-details-container {
+        max-width: 1200px;
+        margin: 30px auto;
+        padding: 30px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        font-family: 'Arial', sans-serif;
+        border-top: 4px solid #AD974F;
+    }
 
-    <a href="{% url 'saritasapp:customer_list' %}" class="btn btn-back mb-3">
+    /* Header */
+    .page-header {
+        color: #8E793E;
+        font-size: 28px;
+        font-weight: 600;
+        text-align: center;
+        margin-bottom: 30px;
+        position: relative;
+        padding-bottom: 15px;
+    }
+
+    .page-header:after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 3px;
+        background: #AD974F;
+    }
+
+    /* Back Button */
+    .btn-back {
+        background-color: #EAEAEA;
+        color: #8E793E;
+        border: 1px solid #8E793E;
+        padding: 8px 15px;
+        border-radius: 6px;
+        font-size: 14px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+        margin-bottom: 20px;
+    }
+
+    .btn-back:hover {
+        background-color: #8E793E;
+        color: white;
+    }
+
+    /* Customer Profile Section */
+    .customer-profile {
+        display: flex;
+        gap: 30px;
+        padding: 25px;
+        margin-bottom: 30px;
+        background: #f9f8f5;
+        border-radius: 8px;
+    }
+
+    .customer-image-container {
+        flex: 0 0 200px;
+    }
+
+    .customer-image {
+        width: 180px;
+        height: 180px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 3px solid #AD974F;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .customer-info {
+        flex: 1;
+    }
+
+    .customer-info h4 {
+        color: #8E793E;
+        font-size: 24px;
+        margin-bottom: 15px;
+    }
+
+    .customer-info p {
+        margin-bottom: 10px;
+        font-size: 16px;
+    }
+
+    .customer-info strong {
+        color: #8E793E;
+        font-weight: 500;
+    }
+
+    /* Section Titles */
+    .section-title {
+        color: #8E793E;
+        font-size: 22px;
+        font-weight: 600;
+        margin: 30px 0 20px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #EAEAEA;
+    }
+
+    /* Tables */
+    .data-section {
+        background: #f9f8f5;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th {
+        background-color: #8E793E;
+        color: white;
+        padding: 12px 15px;
+        text-align: left;
+        font-weight: 500;
+    }
+
+    td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #EAEAEA;
+        vertical-align: middle;
+    }
+
+    tr:hover {
+        background-color: rgba(173, 151, 79, 0.05);
+    }
+
+    /* Badges */
+    .badge {
+        padding: 6px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .bg-warning {
+        background-color: #FFC107;
+        color: #333;
+    }
+
+    .bg-success {
+        background-color: #28A745;
+        color: white;
+    }
+
+    .bg-danger {
+        background-color: #DC3545;
+        color: white;
+    }
+
+    /* Buttons */
+    .btn {
+        padding: 6px 12px;
+        border-radius: 5px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .btn-info {
+        background-color: #17A2B8;
+        color: white;
+        border: none;
+    }
+
+    .btn-info:hover {
+        background-color: #138496;
+        transform: translateY(-1px);
+    }
+
+    .btn-success {
+        background-color: #28A745;
+        color: white;
+        border: none;
+    }
+
+    .btn-success:hover {
+        background-color: #218838;
+        transform: translateY(-1px);
+    }
+
+    /* Empty State */
+    .empty-message {
+        background: white;
+        border-radius: 8px;
+        padding: 30px;
+        text-align: center;
+        color: #777;
+    }
+
+    /* Alert */
+    .alert {
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+    }
+
+    .alert-info {
+        background-color: #D1ECF1;
+        color: #0C5460;
+        border: 1px solid #BEE5EB;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .customer-details-container {
+            padding: 20px;
+            margin: 15px;
+        }
+        
+        .customer-profile {
+            flex-direction: column;
+        }
+        
+        .customer-image-container {
+            text-align: center;
+            flex: 0 0 auto;
+        }
+        
+        table {
+            display: block;
+            overflow-x: auto;
+        }
+    }
+</style>
+
+<div class="customer-details-container">
+    <h2 class="page-header">Customer Details</h2>
+
+    <a href="{% url 'saritasapp:customer_list' %}" class="btn-back">
         <i class="fa fa-arrow-left"></i> Back to Customer List
     </a>
 
-    <div class="card p-4 mb-4 customer-card">
-        <div class="row">
-            <div class="col-md-4 text-center">
-                {% if customer.image %}
-                    <img src="{{ customer.image.url }}" alt="{{ customer.first_name }}" class="customer-image">
-                {% else %}
-                    <img src="{% static 'image/default-placeholder.png' %}" alt="No image available" class="customer-image">
-                {% endif %}
-            </div>
-            <div class="col-md-8">
-                <h4>{{ customer.user.first_name }} {{ customer.user.last_name }}</h4>
-                <p><strong>Email:</strong> {{ customer.user.email }}</p>
-                <p><strong>Phone:</strong> {{ customer.phone }}</p>
-                <p><strong>Address:</strong> {{ customer.address }}</p>
-            </div>
+    <!-- Success Message Alert -->
+    {% if messages %}
+        <div class="alert alert-info">
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Customer Profile -->
+    <div class="customer-profile">
+        <div class="customer-image-container">
+            {% if customer.image %}
+                <img src="{{ customer.image.url }}" alt="{{ customer.first_name }}" class="customer-image">
+            {% else %}
+                <img src="{% static 'image/default-placeholder.png' %}" alt="No image available" class="customer-image">
+            {% endif %}
+        </div>
+        <div class="customer-info">
+            <h4>{{ customer.user.first_name }} {{ customer.user.last_name }}</h4>
+            <p><strong>Email:</strong> {{ customer.user.email }}</p>
+            <p><strong>Phone:</strong> {{ customer.phone }}</p>
+            <p><strong>Address:</strong> {{ customer.address }}</p>
         </div>
     </div>
 
     <!-- Availed Packages -->
     <h3 class="section-title">Availed Packages</h3>
-    {% if customer_orders %}
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Package Name</th>
-                    <th>Type</th>
-                    <th>Total Price</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for order in customer_orders %}
-                <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td>{{ order.package.name }}</td>
-                    <td>{{ order.package.get_package_type_display }}</td>
-                    <td>₱{{ order.total_price }}</td>
-                    <td>
-                        <span class="badge 
-                            {% if order.status == 'Pending' %}bg-warning
-                            {% else %}bg-success{% endif %}">
-                            {{ order.status }}
-                        </span>
-                    </td>
-                    <td>
-                        <a href="{% url 'saritasapp:order_details' order.id %}" class="btn btn-info btn-sm">
-                            <i class="fa fa-eye"></i> View Details
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <div class="empty-message">
-            <p class="text-muted">No packages availed by this customer.</p>
-        </div>
-    {% endif %}
+    <div class="data-section">
+        {% if customer_orders %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Package Name</th>
+                        <th>Type</th>
+                        <th>Total Price</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in customer_orders %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ order.package.name }}</td>
+                        <td>{{ order.package.get_package_type_display }}</td>
+                        <td>₱{{ order.total_price }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if order.status == 'Pending' %}bg-warning
+                                {% else %}bg-success{% endif %}">
+                                {{ order.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'saritasapp:order_details' order.id %}" class="btn btn-info">
+                                <i class="fa fa-eye"></i> View Details
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-message">
+                <p>No packages availed by this customer.</p>
+            </div>
+        {% endif %}
+    </div>
 
     <!-- Rental History -->
     <h3 class="section-title">Rental History</h3>
-    {% if rentals %}
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Item</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                    <th>Status</th>
-                    <th>Deposit</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for rental in rentals %}
-                <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td>{{ rental.inventory.name }}</td>
-                    <td>{{ rental.rental_start }}</td>
-                    <td>{{ rental.rental_end }}</td>
-                    <td>
-                        <span class="badge 
-                            {% if rental.status == 'Overdue' %}bg-danger
-                            {% elif rental.status == 'Returned' %}bg-success
-                            {% else %}bg-warning{% endif %}">
-                            {{ rental.status }}
-                        </span>
-                    </td>
-                    <td>₱{{ rental.deposit }}</td>
-                    <td>
-                        {% if rental.status == 'Renting' or rental.status == 'Overdue' %}
-                            <a href="{% url 'saritasapp:return_rental' rental.id %}" 
-                               class="btn btn-success btn-sm">
-                                <i class="fa fa-undo"></i> Return
-                            </a>
-                        {% else %}
-                            <span class="text-muted">Returned</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <div class="empty-message">
-            <p class="text-muted">No rentals found for this customer.</p>
-        </div>
-    {% endif %}
-</div>
-
-<!-- Success Message Alert -->
-{% if messages %}
-    <div class="alert alert-info mt-3">
-        {% for message in messages %}
-            {{ message }}
-        {% endfor %}
+    <div class="data-section">
+        {% if rentals %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Item</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Status</th>
+                        <th>Deposit</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rental in rentals %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ rental.inventory.name }}</td>
+                        <td>{{ rental.rental_start }}</td>
+                        <td>{{ rental.rental_end }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if rental.status == 'Overdue' %}bg-danger
+                                {% elif rental.status == 'Returned' %}bg-success
+                                {% else %}bg-warning{% endif %}">
+                                {{ rental.status }}
+                            </span>
+                        </td>
+                        <td>₱{{ rental.deposit }}</td>
+                        <td>
+                            {% if rental.status == 'Renting' or rental.status == 'Overdue' %}
+                                <a href="{% url 'saritasapp:return_rental' rental.id %}" 
+                                   class="btn btn-success">
+                                    <i class="fa fa-undo"></i> Return
+                                </a>
+                            {% else %}
+                                <span class="text-muted">Returned</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-message">
+                <p>No rentals found for this customer.</p>
+            </div>
+        {% endif %}
     </div>
-{% endif %}
+</div>
 {% endblock %}
-
-

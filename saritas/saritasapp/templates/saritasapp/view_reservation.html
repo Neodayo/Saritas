@@ -3,13 +3,320 @@
 
 {% block title %}Reservation Management | Sarita's{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/view_reservation.css' %}">
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-{% endblock %}
-
 {% block content %}
+<style>
+    /* Main Container */
+    .reservation-container {
+        max-width: 1400px;
+        margin: 30px auto;
+        padding: 30px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        font-family: 'Arial', sans-serif;
+      
+    }
+
+    /* Header */
+    .gold-heading {
+        color: #8E793E;
+        font-size: 28px;
+        font-weight: 600;
+        text-align: center;
+        margin-bottom: 30px;
+        position: relative;
+        padding-bottom: 15px;
+    }
+
+    .gold-heading:after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 3px;
+        background: #AD974F;
+    }
+
+    /* Filter Section */
+    .filter-container {
+        margin-bottom: 25px;
+        padding: 15px;
+        background: #f9f8f5;
+        border-radius: 8px;
+    }
+
+    .status-filter {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .filter-label {
+        color: #8E793E;
+        margin-right: 10px;
+        font-weight: 500;
+    }
+
+    .status-badge {
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 14px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+        border: 1px solid transparent;
+    }
+
+    .status-all {
+        background-color: #EAEAEA;
+        color: #333;
+    }
+
+    .status-pending {
+        background-color: #FFF3CD;
+        color: #856404;
+    }
+
+    .status-approved {
+        background-color: #D4EDDA;
+        color: #155724;
+    }
+
+    .status-rejected {
+        background-color: #F8D7DA;
+        color: #721C24;
+    }
+
+    .status-completed {
+        background-color: #D1ECF1;
+        color: #0C5460;
+    }
+
+    .status-badge.active {
+        border: 1px solid #8E793E;
+        transform: translateY(-2px);
+        box-shadow: 0 3px 6px rgba(142, 121, 62, 0.2);
+    }
+
+    /* Table Styling */
+    .table-responsive {
+        margin-top: 20px;
+        overflow-x: auto;
+    }
+
+    .reservation-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .reservation-table th {
+        background-color: #8E793E;
+        color: white;
+        padding: 12px 15px;
+        text-align: left;
+        font-weight: 500;
+    }
+
+    .reservation-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #EAEAEA;
+        vertical-align: middle;
+    }
+
+    .reservation-table tr:hover {
+        background-color: rgba(173, 151, 79, 0.05);
+    }
+
+    /* Customer Info */
+    .customer-info {
+        line-height: 1.4;
+    }
+
+    .customer-name {
+        font-weight: 500;
+        color: #333;
+    }
+
+    .customer-email {
+        font-size: 13px;
+        color: #777;
+    }
+
+    /* Item Display */
+    .item-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .item-thumb {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid #EAEAEA;
+    }
+
+    .item-details {
+        line-height: 1.4;
+    }
+
+    .item-name {
+        font-weight: 500;
+    }
+
+    .item-category {
+        font-size: 13px;
+        color: #777;
+    }
+
+    /* Date Display */
+    .date-range {
+        font-weight: 500;
+    }
+
+    .duration {
+        font-size: 13px;
+        color: #777;
+    }
+
+    /* Status Badges */
+    .status-container {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .status-badge {
+        padding: 6px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        width: fit-content;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        padding: 6px 12px;
+        border-radius: 5px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        border: none;
+    }
+
+    .btn-approve {
+        background-color: #28A745;
+        color: white;
+    }
+
+    .btn-approve:hover {
+        background-color: #218838;
+        transform: translateY(-1px);
+    }
+
+    .btn-reject {
+        background-color: #DC3545;
+        color: white;
+    }
+
+    .btn-reject:hover {
+        background-color: #C82333;
+        transform: translateY(-1px);
+    }
+
+    .btn-complete {
+        background-color: #17A2B8;
+        color: white;
+    }
+
+    .btn-complete:hover {
+        background-color: #138496;
+        transform: translateY(-1px);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        background: #f9f8f5;
+        border-radius: 8px;
+        margin-top: 20px;
+    }
+
+    .empty-state i {
+        font-size: 40px;
+        color: #AD974F;
+        margin-bottom: 15px;
+    }
+
+    .empty-state h4 {
+        color: #8E793E;
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+
+    .empty-state p {
+        color: #777;
+        margin: 0;
+    }
+
+    /* DataTables Overrides */
+    .dataTables_wrapper .dataTables_filter input {
+        border: 1px solid #AD974F;
+        border-radius: 4px;
+        padding: 6px 10px;
+        margin-left: 5px;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        color: #8E793E !important;
+        border: 1px solid transparent !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: #8E793E !important;
+        color: white !important;
+        border: 1px solid #8E793E !important;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .reservation-container {
+            padding: 20px;
+            margin: 15px;
+        }
+        
+        .status-filter {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .filter-label {
+            margin-bottom: 10px;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+    }
+</style>
+
 <div class="reservation-container">
     <h2 class="gold-heading">Reservation Management</h2>
 
