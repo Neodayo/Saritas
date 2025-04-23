@@ -1,11 +1,12 @@
 from pathlib import Path
 from decouple import config
+from dotenv import load_dotenv  # Import load_dotenv
 import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security
-SECRET_KEY = config('SECRET_KEY')
+SECRET_KEY = '@)t3&4*8elj!^&es4z%hr8q1((21r+ur3%t$qd2a)-1d2vk4e^'
 DEBUG = config('DEBUG', default=True, cast=bool)
 
 # Production settings
@@ -61,10 +62,16 @@ TEMPLATES = [
 WSGI_APPLICATION = 'saritas.wsgi.application'
 
 # Database Configuration
+load_dotenv()  # Loads the .env file
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'saritas_db',
+        'USER': 'root',
+        'PASSWORD': 'Magicdev2025',  # make sure this is correct
+        'HOST': '127.0.0.1',
+        'PORT': '3307',
     }
 }
 
