@@ -1,274 +1,295 @@
 {% extends 'saritasapp/base.html' %}
 {% load static %}
 
-{% block title %}{{ object.name }} | Worldwide Customs{% endblock %}
+{% block title %}Wardrobe Packages | Sarita's{% endblock %}
 
 {% block extra_css %}
 <style>
-    :root {
-        --gold: #AD974F;
-        --gold-dark: #8a793d;
-        --light-bg: #f9f9f9;
+    .form-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        border: 1px solid #EAEAEA;
     }
-    
-    .package-header {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        padding: 1.5rem 0;
-        margin-bottom: 1.5rem;
-        border-bottom: 1px solid rgba(0,0,0,0.1);
+
+    .form-header {
+        padding-bottom: 1.5rem;
+        margin-bottom: 2rem;
+        border-bottom: 3px solid #8E793E;
     }
-    
-    .compact-card {
-        width: 220px;
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+
+    .form-title {
+        color: #8E793E;
+        font-family: 'Playfair Display', serif;
+        font-size: 2rem;
+        margin: 0;
+    }
+
+    .form-group {
+        margin-bottom: 1.8rem;
+    }
+
+    .form-label {
+        color: #5a5a5a;
+        font-weight: 600;
+        margin-bottom: 0.8rem;
+        display: block;
+    }
+
+    .required-field::after {
+        content: " *";
+        color: #e74c3c;
+    }
+
+    .form-control, .form-select {
+        width: 100%;
+        padding: 0.8rem 1.2rem;
+        border: 2px solid #EAEAEA;
+        border-radius: 8px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        color: #5a5a5a;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #AD974F;
+        box-shadow: 0 0 0 3px rgba(142, 121, 62, 0.1);
+        outline: none;
+    }
+
+    .input-group-text {
+        background: #faf8f0;
+        border: 2px solid #EAEAEA;
+        color: #8E793E;
+        font-weight: 500;
+    }
+
+    .help-text {
+        font-size: 0.9rem;
+        color: #95a5a6;
+        margin-top: 0.5rem;
+        display: block;
+    }
+
+    .form-check-input {
+        width: 1.2em;
+        height: 1.2em;
+        border: 2px solid #AD974F;
+        margin-top: 0.2em;
+    }
+
+    .form-check-input:checked {
+        background-color: #8E793E;
+        border-color: #8E793E;
+    }
+
+    .form-check-label {
+        color: #5a5a5a;
+        margin-left: 0.5rem;
+    }
+
+    .form-switch .form-check-input {
+        width: 2.5em;
+        height: 1.5em;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #8E793E 0%, #AD974F 100%);
+        border: none;
+        padding: 0.8rem 1.8rem;
+        border-radius: 8px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(142, 121, 62, 0.2);
+    }
+
+    .btn-outline-secondary {
+        border: 2px solid #EAEAEA;
+        color: #5a5a5a;
+        padding: 0.8rem 1.8rem;
+        border-radius: 8px;
         transition: all 0.3s ease;
-        margin-right: 15px;
-        margin-bottom: 20px;
-        background: white;
-        display: inline-block;
-        vertical-align: top;
     }
-    
-    .compact-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+
+    .btn-outline-secondary:hover {
+        background: #faf8f0;
+        border-color: #AD974F;
+        color: #8E793E;
     }
-    
-    .card-image-container {
-        height: 160px;
-        width: 100%;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .card-image {
-        height: 100%;
-        width: 100%;
-        object-fit: cover;
-        transition: transform 0.5s ease;
-    }
-    
-    .compact-card:hover .card-image {
-        transform: scale(1.05);
-    }
-    
-    .item-badge {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: var(--gold);
-        color: white;
-        padding: 3px 8px;
-        border-radius: 10px;
-        font-size: 0.7rem;
-        font-weight: 600;
-        text-transform: uppercase;
-    }
-    
-    .card-body {
-        padding: 12px;
-    }
-    
-    .item-title {
+
+    .invalid-feedback {
+        color: #e74c3c;
         font-size: 0.9rem;
-        font-weight: 600;
-        margin-bottom: 5px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        margin-top: 0.5rem;
     }
-    
-    .item-details {
-        font-size: 0.75rem;
-        color: #666;
-        margin-bottom: 5px;
-        display: flex;
-        justify-content: space-between;
+
+    .was-validated .form-control:invalid,
+    .was-validated .form-select:invalid {
+        border-color: #e74c3c;
     }
-    
-    .item-price {
-        color: var(--gold);
-        font-weight: 700;
-        font-size: 0.9rem;
+
+    .was-validated .form-control:valid,
+    .was-validated .form-select:valid {
+        border-color: #2ecc71;
     }
-    
-    .item-meta {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.7rem;
-        color: #888;
-        margin-top: 5px;
-    }
-    
-    .cards-scroller {
-        white-space: nowrap;
-        overflow-x: auto;
-        padding: 10px 0;
-        -webkit-overflow-scrolling: touch;
-    }
-    
-    .cards-scroller::-webkit-scrollbar {
-        height: 5px;
-    }
-    
-    .cards-scroller::-webkit-scrollbar-track {
-        background: #f1f1f1;
-    }
-    
-    .cards-scroller::-webkit-scrollbar-thumb {
-        background: var(--gold);
-        border-radius: 10px;
-    }
-    
-    .package-summary {
-        background: white;
-        border-radius: 10px;
-        padding: 15px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-    
-    .summary-item {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 8px;
-    }
-    
-    .summary-label {
-        color: #666;
-        font-size: 0.85rem;
-    }
-    
-    .summary-value {
-        font-weight: 600;
-    }
-    
-    .gold-text {
-        color: var(--gold);
-    }
-    
-    .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-    }
-    
-    .empty-state {
-        width: 100%;
-        text-align: center;
-        padding: 2rem 0;
+
+    @media (max-width: 768px) {
+        .form-container {
+            padding: 1rem;
+            margin: 1rem;
+        }
+        
+        .form-title {
+            font-size: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Add this near the top of your template -->
-<div class="alert {% if package_complete %}alert-success{% else %}alert-warning{% endif %} mb-4">
-    {% if package_complete %}
-        <i class="fas fa-check-circle"></i> Package is complete
-    {% else %}
-        <i class="fas fa-exclamation-triangle"></i> Package is missing required items:
-        <ul>
-            {% for type in missing_required %}
-                <li>{{ type }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-</div>
-
-<div class="package-header">
-    <div class="container">
-        <h2 class="text-center mb-1">{{ object.name }}</h2>
-        <p class="text-center text-muted mb-0">{{ object.description }}</p>
-    </div>
-</div>
-
-<div class="container">
-    <div class="package-summary">
-        <div class="row">
-            <div class="col-md-4">
-                <div class="summary-item">
-                    <span class="summary-label">Base Price</span>
-                    <span class="summary-value gold-text">₱{{ object.base_price|floatformat:2 }}</span>
-                </div>
-                <small class="text-muted">Per rental period</small>
-            </div>
-            <div class="col-md-4">
-                <div class="summary-item">
-                    <span class="summary-label">Deposit</span>
-                    <span class="summary-value gold-text">₱{{ object.deposit_price|floatformat:2 }}</span>
-                </div>
-                <small class="text-muted">Refundable</small>
-            </div>
-            <div class="col-md-4">
-                <div class="summary-item">
-                    <span class="summary-label">Status</span>
-                    <span class="summary-value">
-                        <span class="badge badge-{% if object.status == 'available' %}success{% else %}secondary{% endif %}">
-                            {{ object.get_status_display }}
-                        </span>
-                    </span>
-                </div>
-                <small class="text-muted">Current availability</small>
-            </div>
-        </div>
+<div class="form-container">
+    <div class="form-header">
+        <h1 class="form-title">{% if object %}Update{% else %}Create{% endif %} Wardrobe Package</h1>
     </div>
 
-    <div class="section-header">
-        <h5>Featured Pieces <small class="text-muted">({{ object.package_items.count }} items)</small></h5>
-        <a href="{% url 'saritasapp:add_package_item' object.pk %}" class="btn btn-success btn-sm">
-            <i class="fas fa-plus mr-1"></i> Add Items
-        </a>
-    </div>
-    
-    <div class="cards-scroller">
-        {% for item in object.package_items.all %}
-        <div class="compact-card">
-            <div class="card-image-container">
-                {% if item.inventory_item.image %}
-                <img src="{{ item.inventory_item.image.url }}" class="card-image" alt="{{ item.display_name }}">
-                {% else %}
-                <div class="card-image" style="background: #eee; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-image fa-2x text-muted"></i>
+    <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Left Column -->
+            <div>
+                <div class="form-group">
+                    <label for="{{ form.name.id_for_label }}" class="form-label required-field">Package Name</label>
+                    <input type="text" class="form-control" id="{{ form.name.id_for_label }}" 
+                           name="{{ form.name.html_name }}" value="{{ form.name.value|default_if_none:'' }}" 
+                           required>
+                    <div class="invalid-feedback">Please provide a package name</div>
                 </div>
-                {% endif %}
-                <span class="item-badge">{{ item.inventory_item.get_item_type_display|truncatechars:12 }}</span>
+
+                <div class="form-group">
+                    <label for="{{ form.tier.id_for_label }}" class="form-label">Tier</label>
+                    <select class="form-select" id="{{ form.tier.id_for_label }}" name="{{ form.tier.html_name }}">
+                        {% for value, label in form.tier.field.choices %}
+                            <option value="{{ value }}" {% if form.tier.value == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                    <textarea class="form-control" id="{{ form.description.id_for_label }}" 
+                              name="{{ form.description.html_name }}" rows="4">{{ form.description.value|default_if_none:'' }}</textarea>
+                    <span class="help-text">Describe what this package includes</span>
+                </div>
             </div>
-            <div class="card-body">
-                <h6 class="item-title">{{ item.inventory_item.name }}</h6>
-                <div class="item-details">
-                    <span>Category: {{ item.inventory_item.category.name }}</span>
+
+            <!-- Right Column -->
+            <div>
+                <div class="form-group">
+                    <label for="{{ form.base_price.id_for_label }}" class="form-label required-field">Base Price</label>
+                    <div class="input-group">
+                        <span class="input-group-text">₱</span>
+                        <input type="number" step="0.01" class="form-control" id="{{ form.base_price.id_for_label }}" 
+                               name="{{ form.base_price.html_name }}" value="{{ form.base_price.value|default_if_none:'' }}" 
+                               required min="0">
+                    </div>
+                    <div class="invalid-feedback">Please provide a valid price</div>
                 </div>
-                <div class="item-details">
-                    <span>Size: {{ item.inventory_item.size|default:"-" }}</span>
-                    <span>Qty: {{ item.quantity }}</span>
+
+                <div class="form-group">
+                    <label for="{{ form.deposit_price.id_for_label }}" class="form-label">Deposit Price</label>
+                    <div class="input-group">
+                        <span class="input-group-text">₱</span>
+                        <input type="number" step="0.01" class="form-control" id="{{ form.deposit_price.id_for_label }}" 
+                               name="{{ form.deposit_price.html_name }}" value="{{ form.deposit_price.value|default_if_none:'' }}" 
+                               min="0">
+                    </div>
                 </div>
-                <div class="item-details">
-                    <span>Color: {{ item.inventory_item.color|default:"-" }}</span>
+
+                <div class="form-group">
+                    <label for="{{ form.discount.id_for_label }}" class="form-label">Discount (%)</label>
+                    <div class="input-group">
+                        <input type="number" step="0.01" class="form-control" id="{{ form.discount.id_for_label }}" 
+                               name="{{ form.discount.html_name }}" value="{{ form.discount.value|default_if_none:'' }}" 
+                               min="0" max="100">
+                        <span class="input-group-text">%</span>
+                    </div>
                 </div>
-                <div class="item-meta">
-                    <span class="item-price">₱{{ item.inventory_item.rental_price|floatformat:2 }}</span>
-                    <span>
-                        {% if item.is_required %}
-                        <span class="badge badge-danger">Required</span>
-                        {% endif %}
-                        {% if not item.replacement_allowed %}
-                        <span class="badge badge-warning">No Replace</span>
-                        {% endif %}
-                    </span>
+
+                <div class="form-group">
+                    <label for="{{ form.min_rental_days.id_for_label }}" class="form-label">Minimum Rental Days</label>
+                    <input type="number" class="form-control" id="{{ form.min_rental_days.id_for_label }}" 
+                           name="{{ form.min_rental_days.html_name }}" value="{{ form.min_rental_days.value|default_if_none:'1' }}" 
+                           min="1">
                 </div>
             </div>
         </div>
-        {% empty %}
-        <div class="empty-state">
-            <div class="alert alert-info">
-                <i class="fas fa-box-open mr-2"></i> No items added to this package yet.
+
+        <!-- Bottom Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <div class="form-group">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="{{ form.includes_accessories.id_for_label }}" 
+                           name="{{ form.includes_accessories.html_name }}" {% if form.includes_accessories.value %}checked{% endif %}>
+                    <label class="form-check-label" for="{{ form.includes_accessories.id_for_label }}">Includes Accessories</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
+                <select class="form-select" id="{{ form.status.id_for_label }}" name="{{ form.status.html_name }}">
+                    {% for value, label in form.status.field.choices %}
+                        <option value="{{ value }}" {% if form.status.value == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
             </div>
         </div>
-        {% endfor %}
-    </div>
+
+        <div class="flex flex-col md:flex-row justify-between gap-4 mt-8">
+            <a href="{% url 'saritasapp:wardrobe_package_list' %}" class="btn-outline-secondary text-center">
+                <i class="fas fa-arrow-left mr-2"></i>Cancel
+            </a>
+            <button type="submit" class="btn-primary">
+                <i class="fas fa-save mr-2"></i>Save Package
+            </button>
+        </div>
+    </form>
 </div>
+
+<script>
+// Form validation and input formatting
+document.addEventListener('DOMContentLoaded', function() {
+    // Bootstrap validation
+    var forms = document.querySelectorAll('.needs-validation');
+    Array.prototype.slice.call(forms).forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+
+    // Price formatting
+    document.querySelectorAll('input[type="number"][step="0.01"]').forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.value && !isNaN(this.value)) {
+                this.value = parseFloat(this.value).toFixed(2);
+            }
+        });
+    });
+});
+</script>
 {% endblock %}
