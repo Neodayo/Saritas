@@ -3,61 +3,119 @@
 
 {% block title %}Wardrobe{% endblock %}
 
+{% block extra_css %}
+<style>
+    .fade-in-up {
+        opacity: 0;
+        animation: fadeInUp 0.8s ease-out forwards;
+    }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .product-card img {
+        transition: transform 0.5s ease;
+    }
+    .product-card:hover img {
+        transform: scale(1.02);
+    }
+    .filter-btn {
+        background-color: #8E793E;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        font-size: 0.875rem;
+    }
+    .filter-btn:hover {
+        background-color: #AD974F;
+    }
+    
+    /* New dropdown styles */
+    select {
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid transparent;
+        padding: 0.25rem 0;
+        margin-right: 1rem;
+        outline: none;
+        transition: border-color 0.3s ease;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        cursor: pointer;
+        position: relative;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235a3e2b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right center;
+        padding-right: 1.5rem;
+    }
+    
+    select:hover {
+        border-bottom-color: #5a3e2b;
+    }
+    
+    select:focus {
+        border-bottom-color: #8E793E;
+    }
+    
+    label {
+        color: #5a3e2b;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="bg-gray-50 min-h-[calc(100vh-70px)] p-5">
-    <div class="bg-white rounded-lg shadow-md p-6 max-w-7xl mx-auto min-h-[300px]">
-        <!-- Header -->
-        <div class="flex justify-between items-center border-b border-gray-200 pb-4 mb-6">
-            <h1 class="text-2xl font-semibold text-[#8E793E] flex items-center gap-2">
-                <i class="fas fa-boxes"></i> PRODUCTS
-            </h1>
-        </div>
+<div class="max-w-7xl mx-auto px-4 py-10">
 
-        <!-- Filter Row -->
-        <div class="flex flex-wrap gap-4 mb-6 items-center">
-            <!-- Category Filter -->
-            <div class="flex-1 min-w-[180px]">
-                <select id="category" name="category" onchange="filterInventory()" 
-                    class="w-full p-2 border border-[#AD974F] rounded-md bg-white appearance-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzhlNzkzZSI+PHBhdGggZD0iTTcgMTBsNSA1IDUtNXoiLz48L3N2Zz4=')] bg-no-repeat bg-[right_10px_center] bg-[length:16px_16px]">
-                    <option value="">All Categories</option>
+    <h2 class="fade-in-up text-3xl text-center text-[#5a3e2b] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373] fade-up">
+       WARDROBE
+    </h2>
+
+    <form id="filter-form" method="get" class="flex flex-wrap items-center justify-between gap-4 mb-8 fade-in-up">
+        <div class="flex gap-6 flex-wrap items-center">
+            <!-- Categories -->
+            <div class="flex items-center">
+                <label for="category" class="mr-2">Categories:</label>
+                <select name="category" id="category" onchange="this.form.submit()">
+                    <option value="">All</option>
                     {% for category in categories %}
-                        <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
-                            {{ category.name }}
-                        </option>
+                        <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
                     {% endfor %}
                 </select>
             </div>
-
-            <!-- Color Filter -->
-            <div class="flex-1 min-w-[180px]">
-                <select id="color" name="color" onchange="filterInventory()" 
-                    class="w-full p-2 border border-[#AD974F] rounded-md bg-white appearance-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzhlNzkzZSI+PHBhdGggZD0iTTcgMTBsNSA1IDUtNXoiLz48L3N2Zz4=')] bg-no-repeat bg-[right_10px_center] bg-[length:16px_16px]">
-                    <option value="">All Colors</option>
-                    {% for color in colors %}
-                        <option value="{{ color.id }}" {% if selected_color == color.id|stringformat:"s" %}selected{% endif %}>
-                            {{ color.name }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <!-- Size Filter -->
-            <div class="flex-1 min-w-[180px]">
-                <select id="size" name="size" onchange="filterInventory()" 
-                    class="w-full p-2 border border-[#AD974F] rounded-md bg-white appearance-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzhlNzkzZSI+PHBhdGggZD0iTTcgMTBsNSA1IDUtNXoiLz48L3N2Zz4=')] bg-no-repeat bg-[right_10px_center] bg-[length:16px_16px]">
-                    <option value="">All Sizes</option>
+    
+            <!-- Size -->
+            <div class="flex items-center">
+                <label for="size" class="mr-2">Size:</label>
+                <select name="size" id="size" onchange="this.form.submit()">
+                    <option value="">All</option>
                     {% for size in sizes %}
-                        <option value="{{ size.id }}" {% if selected_size == size.id|stringformat:"s" %}selected{% endif %}>
-                            {{ size.name }}
-                        </option>
+                        <option value="{{ size.id }}" {% if request.GET.size == size.id|stringformat:"s" %}selected{% endif %}>{{ size.name }}</option>
                     {% endfor %}
                 </select>
             </div>
-
-            <!-- Sort Filter -->
-            <div class="flex-1 min-w-[180px]">
-                <select id="sort" name="sort" onchange="filterInventory()" 
-                    class="w-full p-2 border border-[#AD974F] rounded-md bg-white appearance-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzhlNzkzZSI+PHBhdGggZD0iTTcgMTBsNSA1IDUtNXoiLz48L3N2Zz4=')] bg-no-repeat bg-[right_10px_center] bg-[length:16px_16px]">
+    
+            <!-- Color -->
+            <div class="flex items-center">
+                <label for="color" class="mr-2">Color:</label>
+                <select name="color" id="color" onchange="this.form.submit()">
+                    <option value="">All</option>
+                    {% for color in colors %}
+                        <option value="{{ color.id }}" {% if request.GET.color == color.id|stringformat:"s" %}selected{% endif %}>{{ color.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    
+        <div class="flex items-center gap-4">
+            <!-- Sort -->
+            <div class="flex items-center">
+                <label for="sort" class="mr-2">Sort by:</label>
+                <select name="sort" id="sort" onchange="this.form.submit()">
                     <option value="">Default Sorting</option>
                     <option value="name_asc">Name (A-Z)</option>
                     <option value="name_desc">Name (Z-A)</option>
@@ -65,74 +123,41 @@
                     <option value="price_desc">Price (High to Low)</option>
                 </select>
             </div>
-
+            
             <!-- Clear Filters Button -->
-            <button onclick="clearFilters()" 
-                class="p-2 bg-gray-50 border border-[#AD974F] rounded-md flex items-center gap-2 cursor-pointer transition-all hover:bg-red-50 hover:text-red-700 hover:border-red-500">
-                <i class="fas fa-times"></i> Clear Filters
+            <button type="button" onclick="clearFilters()" class="filter-btn">
+                Clear Filters
             </button>
         </div>
+    </form>
 
-        <!-- Inventory Items Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-            {% if inventory_items %}
-                {% for item in inventory_items %}
-                <div class="bg-white rounded-lg overflow-hidden shadow-md transition-all hover:-translate-y-1 hover:shadow-lg relative border border-gray-200 flex flex-col h-[28rem]">
-                    <!-- Status Badge -->
-                    <div class="absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-semibold text-white {% if item.available %}bg-green-500{% else %}bg-red-500{% endif %}">
-                        {{ item.available|yesno:"In Stock,Out of Stock" }}
-                    </div>
-                    
-                    <!-- Item Image -->
-                    <div class="h-[270px] overflow-hidden">
-                        {% if item.image %}
-                            <img src="{{ item.image.url }}" alt="{{ item.name }}" class="w-full h-full object-cover transition-transform hover:scale-105">
-                        {% else %}
-                            <img src="{% static 'image/default-placeholder.png' %}" alt="No image" class="w-full h-full object-cover">
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Item Info -->
-                    <div class="p-3 flex-grow flex flex-col">
-                        <h3 class="text-base font-medium text-gray-900 mb-1 line-clamp-1">{{ item.name }}</h3>
-                        <div class="flex flex-wrap gap-1 mb-2 text-xs text-gray-600">
-                            <span class="flex items-center gap-1">
-                                <i class="fas fa-tag"></i> {{ item.category.name }}
-                            </span>
-                            <span class="flex items-center gap-1">
-                                <i class="fas fa-palette"></i> {{ item.color.name|default:"N/A" }}
-                            </span>
-                            <span class="flex items-center gap-1">
-                                <i class="fas fa-ruler"></i> {{ item.size.name|default:"N/A" }}
-                            </span>
-                        </div>
-                        <div class="flex items-center gap-1 text-xs text-gray-600 mb-2">
-                            <i class="fas fa-box-open"></i> {{ item.quantity }} available
-                        </div>
-                
-                        <!-- View Button -->
-                        <a href="{% url 'customerapp:item_detail' item.id %}" 
-                            class="mt-auto block p-2 bg-[#8E793E] text-white text-center rounded-md transition-colors hover:bg-[#AD974F] text-sm">
-                            <i class="fas fa-eye"></i> View Details
-                        </a>
-                    </div>
+    <!-- Product Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 fade-in-up">
+        {% if inventory_items %}
+            {% for item in inventory_items %}
+            <a href="{% url 'customerapp:item_detail' item.id %}" class="group block bg-white rounded overflow-hidden product-card hover:shadow-lg transition-all">
+                <div class="h-[380px] w-full overflow-hidden">
+                    {% if item.image %}
+                        <img src="{{ item.image.url }}" alt="{{ item.name }}" class="w-full h-full object-cover">
+                    {% else %}
+                        <img src="{% static 'image/default-placeholder.png' %}" alt="No image" class="w-full h-full object-cover">
+                    {% endif %}
                 </div>
-                
-                
-                {% endfor %}
-            {% else %}
-                <!-- No Items Found -->
-                <div class="col-span-full text-center p-10 bg-white rounded-lg shadow-md border border-gray-200">
-                    <i class="fas fa-search text-4xl text-[#8E793E] mb-4"></i>
-                    <p class="text-gray-600 mb-5">No items match your filters</p>
-                    <button onclick="clearFilters()" 
-                        class="px-4 py-2 bg-[#8E793E] text-white rounded-md border-none cursor-pointer transition-colors hover:bg-[#AD974F]">
-                        Clear Filters
-                    </button>
+                <div class="p-3 text-center">
+                    <h3 class="text-gray-800 font-medium text-base truncate">{{ item.name }}</h3>
+                    <p class="text-gray-700 mt-1"> ₱{{ item.rental_price }}</p>
                 </div>
-            {% endif %}
+            </a>
+            {% endfor %}
+        {% else %}
+        <div class="col-span-full text-center py-20 bg-white rounded-lg shadow border">
+            <i class="fas fa-search text-4xl text-[#8E793E] mb-4"></i>
+            <p class="text-gray-600 mb-4">No items match your filters</p>
+            <button onclick="clearFilters()" class="filter-btn">Clear Filters</button>
         </div>
+        {% endif %}
     </div>
+
 </div>
 
 <script>
