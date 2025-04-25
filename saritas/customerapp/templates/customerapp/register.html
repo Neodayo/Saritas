@@ -67,13 +67,13 @@
                 <div class="text-center space-y-6">
                     <h1 class="font-allura text-7xl text-gold-dark">Sarita's</h1>
                     <div class="space-y-3">
-                        <p class="font-playfair text-2xl text-gold-primary font-semibold">Wedding Creations</p>
+                        <p class="font-playfair text-4xl text-gold-primary font-semibold">Wedding Creations</p>
                         <p class="font-playfair text-xl text-gold-secondary">& Event Stylist</p>
                     </div>
                 </div>
                 <div class="text-center mt-12">
                     <p class="text-gold-dark mb-4 font-playfair">Already have an account?</p>
-                    <a href="{% url 'saritasapp:sign_in' %}" class="inline-block bg-gold-primary text-white px-8 py-3 rounded-lg font-playfair font-semibold hover:bg-gold-dark transition-colors shadow-md hover:shadow-lg">
+                    <a href="{% url 'saritasapp:sign_in' %}" class="inline-block bg-[#8E793E] text-white px-8 py-3 rounded-lg font-['Playfair Display'] font-semibold hover:bg-[#AD974F] transition-all duration-300 shadow-md hover:shadow-lg">
                         Sign In Here
                     </a>
                 </div>
@@ -87,7 +87,7 @@
                     </a>
                 </div>
                 
-                <h2 class="text-2xl font-playfair font-bold text-gold-dark mb-6 text-center">Create Account</h2>
+                <h2 class="text-3xl font-['Playfair Display'] font-bold text-[#8E793E] mb-8 text-center">Create Account</h2>
 
                 <form method="POST" class="space-y-4">
                     {% csrf_token %}
@@ -185,7 +185,7 @@
                         {% endif %}
                     </div>
 
-                    <button type="submit" class="w-full bg-gold-primary hover:bg-gold-dark text-white py-3 rounded-lg font-medium transition-colors transform hover:scale-[1.01] shadow-md hover:shadow-lg mt-6">
+                    <button type="submit" class="w-full bg-[#8E793E] hover:bg-[#AD974F] text-white py-4 rounded-xl font-['Playfair Display'] font-medium transition-all duration-300 shadow-lg hover:shadow-xl mt-8">
                         Complete Registration
                     </button>
                 </form>

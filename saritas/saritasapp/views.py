@@ -572,6 +572,7 @@ def return_rental(request, encrypted_id):
         'deposit': rental.deposit
     })
 
+
 # views.py
 @login_required
 def edit_staff(request, staff_id):

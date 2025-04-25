@@ -1,193 +1,261 @@
 {% extends "saritasapp/base.html" %}
 {% load static %}
 
-{% block title %}Data Analysis{% endblock %}
+{% block title %}Data Analysis Dashboard{% endblock %}
 
 {% block content %}
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background-color: #f2f2f2;
+    :root {
+        --primary-gold: #AD974F;
+        --dark-bg: #231F20;
+        --light-gold: #EADCA6;
+        --off-white: #FDF6E3;
+        --hover-gold: #8E793E;
     }
 
-    .container {
-        max-width: 1200px;
-        margin: auto;
-        padding: 30px;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    .data-analysis-container {
+        max-width: 1400px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
     }
 
-    h1 {
-        color: #AD974F;
+    .dashboard-header {
         text-align: center;
-        font-family: Arial, san-serif;
-        font-size: 3em;
-        margin-bottom: 30px;
+        margin-bottom: 2.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 3px solid var(--primary-gold);
     }
 
-    h2 {
-        color: #231F20;
-        margin-top: 40px;
-        border-bottom: 2px solid #AD974F;
-        padding-bottom: 5px;
+    .dashboard-header h1 {
+        color: var(--dark-bg);
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
         font-weight: 600;
     }
 
-    .stats {
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .stat-card {
+        background: var(--off-white);
+        padding: 1.5rem;
+        border-radius: 12px;
+        border-left: 4px solid var(--primary-gold);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-value {
+        font-size: 2.2rem;
+        color: var(--primary-gold);
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: var(--dark-bg);
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+    .chart-controls {
         display: flex;
         justify-content: space-between;
-        background: linear-gradient(to right, #FDF6E3, #FFF9E6);
-        padding: 20px 30px;
-        border-radius: 10px;
-        border: 1px solid #EADCA6;
-        margin-bottom: 30px;
-        box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
-        font-size: 1.2em;
-    }
-
-    .stats p {
-        margin: 0;
-        font-weight: bold;
-        color: #231F20;
-    }
-
-    ul {
-        background: #FAF8F0;
-        padding: 20px;
-        border-radius: 10px;
-        border: 1px solid #E0D6B3;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-        list-style-type: disc;
-        margin-top: 10px;
-    }
-
-    ul li {
-        margin-bottom: 8px;
-        color: #333;
-    }
-
-    label {
-        font-weight: bold;
-        color: #AD974F;
-    }
-
-    select {
-        padding: 10px 15px;
+        align-items: center;
+        margin: 2rem 0;
+        padding: 1rem;
+        background: var(--off-white);
         border-radius: 8px;
-        border: 1px solid #AD974F;
-        background-color: #fffdf5;
-        color: #231F20;
-        font-weight: 500;
-        margin-bottom: 20px;
-        transition: 0.3s ease;
     }
 
-    select:focus {
-        outline: none;
-        box-shadow: 0 0 5px rgba(173, 151, 79, 0.6);
-    }
-
-    .gold-button {
-        background-color: #8E793E;
-        color: #fff;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 5px;
+    .period-select {
+        padding: 0.8rem 1.5rem;
+        border: 2px solid var(--primary-gold);
+        border-radius: 8px;
+        background: white;
+        font-size: 1rem;
+        color: var(--dark-bg);
         cursor: pointer;
-        font-weight: bold;
-        transition: background 0.3s ease;
+        transition: all 0.3s ease;
     }
 
-    .gold-button:hover {
-        background-color: #AD974F;
+    .period-select:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(173, 151, 79, 0.3);
     }
 
     .charts-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Center horizontally */
-    gap: 30px;
-    margin-top: 20px;
-}
-
-.chart-box {
-    width: 80%; /* Make chart boxes bigger and centered */
-    background: #fffef8;
-    padding: 30px;
-    border-radius: 16px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-    border: 1px solid #f0e6c5;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.chart-box:hover {
-    transform: scale(1.02);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
-}
-
-@media (max-width: 768px) {
-    .chart-box {
-        width: 100%;
-        padding: 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
     }
 
-    .stats {
-        flex-direction: column;
-        gap: 10px;
+    .chart-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid #eee;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease;
     }
-}
 
+    .chart-card:hover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    .top-items-list {
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background: var(--off-white);
+        border-radius: 12px;
+    }
+
+    .top-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .item-name {
+        font-weight: 500;
+        color: var(--dark-bg);
+    }
+
+    .item-count {
+        color: var(--primary-gold);
+        font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+        .data-analysis-container {
+            padding: 1rem;
+            margin: 1rem;
+        }
+
+        .charts-container {
+            grid-template-columns: 1fr;
+        }
+
+        .dashboard-header h1 {
+            font-size: 2rem;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+        }
+    }
 </style>
 
-<div class="container">
-    <h1 style="color: #d4af37; text-align: center;">Data Analysis</h1>
-
-    <div class="stats">
-        <p><strong>Total Rentals:</strong> {{ total_rentals }}</p>
-        <p><strong>Total Customers:</strong> {{ total_customers }}</p>
+<div class="data-analysis-container">
+    <div class="dashboard-header">
+        <h1>Rental Analytics Dashboard</h1>
     </div>
 
-    <h2>Most Rented Items</h2>
-    <ul>
-        {% for item in most_rented_items %}
-            <li>{{ item.name }} - Rented {{ item.rental_count }} times</li>
-        {% endfor %}
-    </ul>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ total_rentals }}</div>
+            <div class="stat-label">Total Rentals</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ total_customers }}</div>
+            <div class="stat-label">Active Customers</div>
+        </div>
+    </div>
 
-    <h2>Rental & Income Statistics</h2>
-    <label for="time-period">Select Period:</label>
-    <select id="time-period">
-        <option value="weekly" selected>Weekly (Last 5 Weeks)</option>
-        <option value="monthly">Monthly (12 Months)</option>
-        <option value="yearly">Yearly (All Years)</option>
-    </select>
+    <div class="chart-controls">
+        <h3>Select Time Period:</h3>
+        <select class="period-select" id="time-period">
+            <option value="weekly">Weekly View</option>
+            <option value="monthly">Monthly View</option>
+            <option value="yearly">Yearly View</option>
+        </select>
+    </div>
 
     <div class="charts-container">
-        <div class="chart-box" id="weekly-income-chart">{{ weekly_income_chart|safe }}</div>
-        <div class="chart-box" id="weekly-rental-chart">{{ weekly_rental_chart|safe }}</div>
-        <div class="chart-box" id="monthly-income-chart" style="display:none;">{{ monthly_income_chart|safe }}</div>
-        <div class="chart-box" id="monthly-rental-chart" style="display:none;">{{ monthly_rental_chart|safe }}</div>
-        <div class="chart-box" id="yearly-income-chart" style="display:none;">{{ yearly_income_chart|safe }}</div>
-        <div class="chart-box" id="yearly-rental-chart" style="display:none;">{{ yearly_rental_chart|safe }}</div>
+        <!-- Income Charts -->
+        <div class="chart-card" id="weekly-income-chart">
+            <h3>Weekly Income</h3>
+            {{ weekly_income_chart|safe }}
+        </div>
+        
+        <div class="chart-card" id="monthly-income-chart" style="display:none;">
+            <h3>Monthly Income</h3>
+            {{ monthly_income_chart|safe }}
+        </div>
+
+        <div class="chart-card" id="yearly-income-chart" style="display:none;">
+            <h3>Yearly Income</h3>
+            {{ yearly_income_chart|safe }}
+        </div>
+
+        <!-- Rental Count Charts -->
+        <div class="chart-card" id="weekly-rental-chart">
+            <h3>Weekly Rentals</h3>
+            {{ weekly_rental_chart|safe }}
+        </div>
+
+        <div class="chart-card" id="monthly-rental-chart" style="display:none;">
+            <h3>Monthly Rentals</h3>
+            {{ monthly_rental_chart|safe }}
+        </div>
+
+        <div class="chart-card" id="yearly-rental-chart" style="display:none;">
+            <h3>Yearly Rentals</h3>
+            {{ yearly_rental_chart|safe }}
+        </div>
+    </div>
+
+    <div class="top-items-list">
+        <h2>Most Popular Items</h2>
+        {% for item in most_rented_items %}
+        <div class="top-item">
+            <span class="item-name">{{ item.name }}</span>
+            <span class="item-count">{{ item.rental_count }} rentals</span>
+        </div>
+        {% endfor %}
     </div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    $(document).ready(function() {
-        $("#time-period").change(function() {
-            var selectedPeriod = $(this).val();
-            $(".chart-box").hide();
-            if (selectedPeriod === "weekly") {
-                $("#weekly-income-chart, #weekly-rental-chart").show();
-            } else if (selectedPeriod === "monthly") {
-                $("#monthly-income-chart, #monthly-rental-chart").show();
-            } else {
-                $("#yearly-income-chart, #yearly-rental-chart").show();
-            }
-        });
+$(document).ready(function() {
+    // Chart visibility control
+    $('#time-period').change(function() {
+        $('.chart-card').hide();
+        const period = $(this).val();
+        
+        $(`#${period}-income-chart, #${period}-rental-chart`).fadeIn(400);
     });
+
+    // Initial setup
+    $('#time-period').trigger('change');
+
+    // Window resize handler for Plotly charts
+    $(window).resize(function() {
+        Plotly.Plots.resize(document.getElementById('weekly-income-chart'));
+        Plotly.Plots.resize(document.getElementById('weekly-rental-chart'));
+        Plotly.Plots.resize(document.getElementById('monthly-income-chart'));
+        Plotly.Plots.resize(document.getElementById('monthly-rental-chart'));
+        Plotly.Plots.resize(document.getElementById('yearly-income-chart'));
+        Plotly.Plots.resize(document.getElementById('yearly-rental-chart'));
+    });
+});
 </script>
 {% endblock %}
