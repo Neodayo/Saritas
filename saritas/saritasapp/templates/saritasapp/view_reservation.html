@@ -5,6 +5,9 @@
 
 {% block content %}
 <style>
+    /* Font imports */
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Source+Serif+Pro:wght@400;600&display=swap');
+    
     /* Main Container */
     .reservation-container {
         max-width: 1400px;
@@ -13,62 +16,70 @@
         background: white;
         border-radius: 12px;
         box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-        font-family: 'Arial', sans-serif;
+        font-family: 'Source Serif Pro', serif;
     }
 
     /* Header */
-    .gold-heading {
-        color: #8E793E;
-        font-size: 28px;
-        font-weight: 600;
-        text-align: center;
+    .page-header {
+        display: flex;
+        align-items: center;
         margin-bottom: 30px;
-        position: relative;
         padding-bottom: 15px;
+        border-bottom: 2px solid #AD974F;
     }
 
-    .gold-heading:after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 100px;
-        height: 3px;
-        background: #AD974F;
+    .header-icon {
+        font-size: 24px;
+        color: #8E793E;
+        width: 24px;
+        text-align: center;
+        margin-right: 15px;
+    }
+
+    .page-title {
+        color: #8E793E;
+        font-size: 32px;
+        font-weight: 600;
+        font-family: 'Playfair Display', serif;
+        letter-spacing: 0.5px;
+        margin: 0;
     }
 
     /* Filter Section */
     .filter-container {
         margin-bottom: 25px;
-        padding: 15px;
+        padding: 20px;
         background: #f9f8f5;
         border-radius: 8px;
+        border: 1px solid #e8e5d8;
     }
 
     .status-filter {
         display: flex;
         flex-wrap: wrap;
-        gap: 10px;
+        gap: 12px;
         align-items: center;
     }
 
     .filter-label {
         color: #8E793E;
         margin-right: 10px;
-        font-weight: 500;
+        font-weight: 600;
+        font-family: 'Playfair Display', serif;
+        font-size: 18px;
     }
 
     .status-badge {
-        padding: 8px 15px;
+        padding: 8px 18px;
         border-radius: 20px;
-        font-size: 14px;
+        font-size: 15px;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
         gap: 8px;
         transition: all 0.3s;
         border: 1px solid transparent;
+        font-family: 'Source Serif Pro', serif;
     }
 
     .status-all {
@@ -111,20 +122,25 @@
     .reservation-table {
         width: 100%;
         border-collapse: collapse;
+        font-family: 'Source Serif Pro', serif;
     }
 
     .reservation-table th {
         background-color: #8E793E;
         color: white;
-        padding: 12px 15px;
+        padding: 14px 18px;
         text-align: left;
-        font-weight: 500;
+        font-weight: 600;
+        font-family: 'Playfair Display', serif;
+        font-size: 16px;
+        letter-spacing: 0.5px;
     }
 
     .reservation-table td {
-        padding: 12px 15px;
+        padding: 14px 18px;
         border-bottom: 1px solid #EAEAEA;
         vertical-align: middle;
+        font-size: 15px;
     }
 
     .reservation-table tr:hover {
@@ -133,16 +149,17 @@
 
     /* Customer Info */
     .customer-info {
-        line-height: 1.4;
+        line-height: 1.5;
     }
 
     .customer-name {
-        font-weight: 500;
+        font-weight: 600;
         color: #333;
+        font-family: 'Playfair Display', serif;
     }
 
     .customer-email {
-        font-size: 13px;
+        font-size: 14px;
         color: #777;
     }
 
@@ -150,37 +167,39 @@
     .item-container {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
     }
 
     .item-thumb {
-        width: 50px;
-        height: 50px;
+        width: 55px;
+        height: 55px;
         object-fit: cover;
         border-radius: 4px;
         border: 1px solid #EAEAEA;
     }
 
     .item-details {
-        line-height: 1.4;
+        line-height: 1.5;
     }
 
     .item-name {
-        font-weight: 500;
+        font-weight: 600;
+        font-family: 'Playfair Display', serif;
     }
 
     .item-category {
-        font-size: 13px;
+        font-size: 14px;
         color: #777;
     }
 
     /* Date Display */
     .date-range {
-        font-weight: 500;
+        font-weight: 600;
+        font-family: 'Playfair Display', serif;
     }
 
     .duration {
-        font-size: 13px;
+        font-size: 14px;
         color: #777;
     }
 
@@ -192,9 +211,9 @@
     }
 
     .status-badge {
-        padding: 6px 10px;
+        padding: 7px 12px;
         border-radius: 20px;
-        font-size: 12px;
+        font-size: 13px;
         font-weight: 500;
         width: fit-content;
     }
@@ -202,21 +221,23 @@
     /* Action Buttons */
     .action-buttons {
         display: flex;
-        gap: 8px;
+        gap: 10px;
         flex-wrap: wrap;
     }
 
     .action-btn {
-        padding: 6px 12px;
+        padding: 8px 14px;
         border-radius: 5px;
-        font-size: 13px;
+        font-size: 14px;
         cursor: pointer;
         transition: all 0.3s;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
-        gap: 5px;
+        gap: 6px;
         border: none;
+        font-family: 'Source Serif Pro', serif;
+        font-weight: 600;
     }
 
     .btn-approve {
@@ -252,40 +273,46 @@
     /* Empty State */
     .empty-state {
         text-align: center;
-        padding: 40px 20px;
+        padding: 50px 20px;
         background: #f9f8f5;
         border-radius: 8px;
         margin-top: 20px;
+        border: 1px dashed #AD974F;
     }
 
     .empty-state i {
-        font-size: 40px;
+        font-size: 48px;
         color: #AD974F;
-        margin-bottom: 15px;
+        margin-bottom: 20px;
     }
 
     .empty-state h4 {
         color: #8E793E;
-        font-size: 18px;
-        margin-bottom: 10px;
+        font-size: 22px;
+        margin-bottom: 15px;
+        font-family: 'Playfair Display', serif;
     }
 
     .empty-state p {
         color: #777;
         margin: 0;
+        font-size: 16px;
     }
 
     /* DataTables Overrides */
     .dataTables_wrapper .dataTables_filter input {
         border: 1px solid #AD974F;
         border-radius: 4px;
-        padding: 6px 10px;
+        padding: 8px 12px;
         margin-left: 5px;
+        font-family: 'Source Serif Pro', serif;
     }
 
     .dataTables_wrapper .dataTables_paginate .paginate_button {
         color: #8E793E !important;
         border: 1px solid transparent !important;
+        font-family: 'Source Serif Pro', serif;
+        font-size: 15px;
     }
 
     .dataTables_wrapper .dataTables_paginate .paginate_button.current {
@@ -301,23 +328,48 @@
             margin: 15px;
         }
         
+        .page-title {
+            font-size: 26px;
+        }
+        
+        .header-icon {
+            font-size: 22px;
+            width: 22px;
+        }
+        
         .status-filter {
             flex-direction: column;
             align-items: flex-start;
         }
         
         .filter-label {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+        
+        .status-badge {
+            padding: 6px 12px;
+            font-size: 14px;
         }
         
         .action-buttons {
             flex-direction: column;
+            gap: 8px;
+        }
+        
+        .reservation-table th, 
+        .reservation-table td {
+            padding: 10px 12px;
+            font-size: 14px;
         }
     }
 </style>
 
 <div class="reservation-container">
-    <h2 class="gold-heading">Reservation Management</h2>
+    <div class="page-header">
+        <i class="header-icon fas fa-calendar-check w-6 text-center mr-2"></i>
+        <h1 class="page-title">Reservation Management</h1>
+    </div>
 
     <div class="filter-container">
         <div class="status-filter">
