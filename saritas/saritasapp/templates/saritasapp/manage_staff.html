@@ -245,12 +245,13 @@
                     <td>{{ staff_user.staff_profile.branch.branch_name }}</td>
                     <td>
                         <div class="action-buttons">
-                            <a href="#" class="btn-edit">
+                            <a href="{% url 'saritasapp:edit_staff' staff_user.id %}" class="btn-edit">
                                 <i class="fas fa-edit"></i> Edit
                             </a>
-                            <a href="#" class="btn-delete">
+                            <a href="{% url 'saritasapp:delete_staff' staff_user.id %}" class="btn-delete">
                                 <i class="fas fa-trash-alt"></i> Delete
                             </a>
+                            
                         </div>
                     </td>
                 </tr>

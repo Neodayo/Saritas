@@ -32,6 +32,9 @@ urlpatterns = [
 
     path('rental/return/<str:encrypted_id>/', views.return_rental, name='return_rental'),
     path('manage-staff/', views.manage_staff, name='manage_staff'),
+    path('manage-staff/edit/<int:staff_id>/', views.edit_staff, name='edit_staff'),
+    path('manage-staff/delete/<int:staff_id>/', views.delete_staff, name='delete_staff'),
+
 
     # Data analysis
     path('data-analysis/', views.data_analysis, name='data_analysis'),

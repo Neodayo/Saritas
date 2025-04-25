@@ -1,0 +1,164 @@
+{% extends 'saritasapp/base.html' %}
+
+{% block title %}Confirm Delete{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .staff-management-container {
+            padding: 2.5rem;
+            max-width: 600px;
+            margin: 2rem auto;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            border: 1px solid #EAEAEA;
+            animation: fadeInUp 0.4s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .staff-title {
+            font-size: 2rem;
+            color: #8E793E;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            font-family: 'Playfair Display', serif;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 2px solid #EAEAEA;
+            padding-bottom: 1rem;
+        }
+
+        .staff-title i {
+            color: #AD974F;
+            font-size: 1.8rem;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .confirmation-message {
+            font-size: 1.1rem;
+            color: #5a5a5a;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #fafafa;
+            border-radius: 8px;
+            border-left: 4px solid #8E793E;
+        }
+
+        .confirmation-message strong {
+            color: #8E793E;
+            font-weight: 600;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-delete,
+        .btn-cancel {
+            flex: 1;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-width: 200px;
+        }
+
+        .btn-delete {
+            background: linear-gradient(135deg, #8E793E 0%, #AD974F 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 6px rgba(142, 121, 62, 0.1);
+        }
+
+        .btn-delete:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(142, 121, 62, 0.2);
+            background: linear-gradient(135deg, #7a6935 0%, #978542 100%);
+        }
+
+        .btn-cancel {
+            background: #EAEAEA;
+            color: #5a5a5a;
+            border: 1px solid #d4d4d4;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-cancel:hover {
+            transform: translateY(-2px);
+            background: #e0e0e0;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        @media (max-width: 576px) {
+            .staff-management-container {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+            
+            .staff-title {
+                font-size: 1.5rem;
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .btn-delete,
+            .btn-cancel {
+                width: 100%;
+                min-width: auto;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="staff-management-container">
+    <h2 class="staff-title">
+        <i class="fas fa-exclamation-triangle"></i>Confirm Delete
+    </h2>
+    <p class="confirmation-message">
+        Are you sure you want to permanently delete <strong>{{ staff.get_full_name }}</strong>? 
+        This action cannot be undone and all associated data will be removed.
+    </p>
+    <form method="POST">
+        {% csrf_token %}
+        <div class="button-group">
+            <button type="submit" class="btn-delete">
+                <i class="fas fa-trash"></i> Confirm Delete
+            </button>
+            <a href="{% url 'saritasapp:manage_staff' %}" class="btn-cancel">
+                <i class="fas fa-times"></i> Cancel
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
