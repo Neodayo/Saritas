@@ -4,27 +4,34 @@
 
 {% block content %}
 <style>
+    /* Font Import */
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap');
+    
     /* Main Styles */
     .main-container {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 20px;
-        font-family: 'Arial', sans-serif;
+        padding: 30px;
+        font-family: 'Playfair Display', serif;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     .page-title {
         color: #8E793E;
-        font-size: 28px;
+        font-size: 32px;
         font-weight: 600;
-        margin-bottom: 25px;
-        padding-bottom: 10px;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
         border-bottom: 2px solid #AD974F;
         display: flex;
         align-items: center;
+        font-family: 'Playfair Display', serif;
     }
 
     .page-title i {
-        margin-right: 10px;
+        margin-right: 15px;
         color: #AD974F;
     }
 
@@ -32,11 +39,12 @@
     .filter-container {
         display: flex;
         flex-wrap: wrap;
-        gap: 15px;
-        margin-bottom: 25px;
-        background: #EAEAEA;
+        gap: 20px;
+        margin-bottom: 30px;
+        background: #f8f7f3;
         padding: 20px;
         border-radius: 8px;
+        font-family: 'Playfair Display', serif;
     }
 
     .search-box {
@@ -48,11 +56,12 @@
 
     .search-input {
         flex: 1;
-        padding: 10px 15px;
+        padding: 12px 18px;
         border: 1px solid #AD974F;
         border-radius: 6px;
-        font-size: 15px;
+        font-size: 16px;
         transition: all 0.3s;
+        font-family: serif;
     }
 
     .search-input:focus {
@@ -66,12 +75,13 @@
 
     .filter-select {
         width: 100%;
-        padding: 10px 15px;
+        padding: 12px 18px;
         border: 1px solid #AD974F;
         border-radius: 6px;
-        font-size: 15px;
+        font-size: 16px;
         background-color: white;
         cursor: pointer;
+        font-family: serif;
     }
 
     /* Table Styles */
@@ -86,20 +96,24 @@
     .custom-table {
         width: 100%;
         border-collapse: collapse;
+        font-family: serif;
     }
 
     .custom-table th {
         background-color: #8E793E;
         color: white;
-        padding: 12px 15px;
+        padding: 15px 20px;
         text-align: left;
         font-weight: 500;
+        font-family: 'Playfair Display', serif;
+        font-size: 18px;
     }
 
     .custom-table td {
-        padding: 12px 15px;
+        padding: 15px 20px;
         border-bottom: 1px solid #EAEAEA;
         vertical-align: middle;
+        font-size: 16px;
     }
 
     .custom-table tr:hover {
@@ -110,12 +124,13 @@
     .customer-name {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 15px;
+        font-family: 'Playfair Display', serif;
     }
 
     .customer-avatar {
-        width: 40px;
-        height: 40px;
+        width: 45px;
+        height: 45px;
         border-radius: 50%;
         object-fit: cover;
         border: 2px solid #AD974F;
@@ -123,20 +138,22 @@
 
     .text-muted {
         color: #777;
-        font-size: 13px;
+        font-size: 14px;
+        font-family: serif;
     }
 
     /* Buttons */
     .btn {
-        padding: 8px 15px;
+        padding: 10px 18px;
         border-radius: 6px;
-        font-size: 14px;
+        font-size: 15px;
         cursor: pointer;
         transition: all 0.3s;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
-        gap: 5px;
+        gap: 8px;
+        font-family: 'Playfair Display', serif;
     }
 
     .btn-primary {
@@ -154,24 +171,27 @@
     /* Empty State */
     .empty-state {
         text-align: center;
-        padding: 40px 20px;
+        padding: 50px 20px;
         color: #8E793E;
+        font-family: 'Playfair Display', serif;
     }
 
     .empty-state i {
-        font-size: 40px;
-        margin-bottom: 15px;
+        font-size: 50px;
+        margin-bottom: 20px;
         color: #AD974F;
     }
 
     .empty-state h4 {
-        font-size: 18px;
-        margin-bottom: 10px;
+        font-size: 22px;
+        margin-bottom: 15px;
     }
 
     .empty-state p {
         color: #777;
         margin: 0;
+        font-size: 16px;
+        font-family: serif;
     }
 
     /* Pagination */
@@ -180,20 +200,22 @@
         justify-content: center;
         list-style: none;
         padding: 0;
-        gap: 5px;
+        gap: 8px;
+        font-family: 'Playfair Display', serif;
     }
 
     .page-item {
-        margin: 0 2px;
+        margin: 0 3px;
     }
 
     .page-link {
-        padding: 8px 12px;
+        padding: 10px 15px;
         border: 1px solid #EAEAEA;
         border-radius: 6px;
         color: #8E793E;
         text-decoration: none;
         transition: all 0.3s;
+        font-size: 16px;
     }
 
     .page-link:hover {
@@ -208,6 +230,10 @@
 
     /* Responsive Design */
     @media (max-width: 768px) {
+        .main-container {
+            padding: 20px;
+        }
+        
         .filter-container {
             flex-direction: column;
         }
@@ -218,14 +244,14 @@
         
         .custom-table th, 
         .custom-table td {
-            padding: 10px;
-            font-size: 14px;
+            padding: 12px;
+            font-size: 15px;
         }
         
         .action-buttons {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 8px;
         }
     }
 </style>
