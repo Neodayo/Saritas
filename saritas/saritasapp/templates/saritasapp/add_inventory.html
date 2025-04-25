@@ -7,173 +7,347 @@
 
 {% block title %}Add Inventory Item{% endblock %}
 
-
 {% block content %}
 <div class="container py-4">
-    <h2 class="mb-4">Add New Inventory Item</h2>
-    
-    {% if messages %}
-    <div class="container mb-4">
-        {% for message in messages %}
-        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-    
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        
-        <div class="row g-3">
-            <!-- Left Column -->
-            <div class="col-md-6">
-                <div class="card mb-3">
-                    <div class="card-header bg-primary text-white">Basic Information</div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            {{ form.name.label_tag }}
-                            {{ form.name }}
-                            {% if form.name.errors %}
-                                <div class="text-danger">{{ form.name.errors }}</div>
-                            {% endif %}
-                        </div>
-                        {% if user.is_superuser %}
-                        <div class="mb-3">
-                            {{ form.branch.label_tag }}
-                            {% if form.branch.field.queryset.exists %}
-                                {{ form.branch }}
-                            {% else %}
-                                <div class="alert alert-warning">
-                                    No branches available. Please create branches first.
-                                </div>
-                            {% endif %}
-                            {% if form.branch.errors %}
-                                <div class="text-danger">{{ form.branch.errors }}</div>
-                            {% endif %}
-                        </div>
-                        {% else %}
-                            {{ form.branch }}  {# Hidden field for non-admin users #}
-                        {% endif %}
-                        
-                        <div class="row g-2">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    {{ form.category.label_tag }}
-                                    {{ form.category }}
-                                    {% if form.category.errors %}
-                                        <div class="text-danger">{{ form.category.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    {{ form.item_type.label_tag }}
-                                    {{ form.item_type }}
-                                    {% if form.item_type.errors %}
-                                        <div class="text-danger">{{ form.item_type.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row g-2">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    {{ form.size.label_tag }}
-                                    {{ form.size }}
-                                    {% if form.size.errors %}
-                                        <div class="text-danger">{{ form.size.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    {{ form.color.label_tag }}
-                                    {{ form.color }}
-                                    {% if form.color.errors %}
-                                        <div class="text-danger">{{ form.color.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            {{ form.quantity.label_tag }}
-                            {{ form.quantity }}
-                            {% if form.quantity.errors %}
-                                <div class="text-danger">{{ form.quantity.errors }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Right Column -->
-            <div class="col-md-6">
-                <div class="card mb-3">
-                    <div class="card-header bg-primary text-white">Pricing</div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            {{ form.rental_price.label_tag }}
-                            {{ form.rental_price }}
-                            {% if form.rental_price.errors %}
-                                <div class="text-danger">{{ form.rental_price.errors }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            {{ form.reservation_price.label_tag }}
-                            {{ form.reservation_price }}
-                            {% if form.reservation_price.errors %}
-                                <div class="text-danger">{{ form.reservation_price.errors }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            {{ form.deposit_price.label_tag }}
-                            {{ form.deposit_price }}
-                            {% if form.deposit_price.errors %}
-                                <div class="text-danger">{{ form.deposit_price.errors }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            {{ form.purchase_price.label_tag }}
-                            {{ form.purchase_price }}
-                            {% if form.purchase_price.errors %}
-                                <div class="text-danger">{{ form.purchase_price.errors }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-primary text-white py-3">
+                    <h2 class="mb-0 text-center">Add New Inventory Item</h2>
                 </div>
                 
-                <div class="card">
-                    <div class="card-header bg-primary text-white">Image</div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            {{ form.image.label_tag }}
-                            {{ form.image }}
-                            {% if form.image.errors %}
-                                <div class="text-danger">{{ form.image.errors }}</div>
-                            {% endif %}
+                <div class="card-body p-4">
+                    {% if messages %}
+                    <div class="container mb-4">
+                        {% for message in messages %}
+                        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
+                        {% endfor %}
                     </div>
+                    {% endif %}
+                    
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+
+                        
+                        <div class="mb-4">
+                            <div class="section-header mb-3">
+                                <h5 class="section-title">Basic Information</h5>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label fw-bold">{{ form.name.label }}</label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            {% if user.is_superuser %}
+                            <div class="mb-3">
+                                <label for="{{ form.branch.id_for_label }}" class="form-label fw-bold">{{ form.branch.label }}</label>
+                                {% if form.branch.field.queryset.exists %}
+                                    {{ form.branch }}
+                                {% else %}
+                                    <div class="alert alert-warning">
+                                        No branches available. Please create branches first.
+                                    </div>
+                                {% endif %}
+                                {% if form.branch.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.branch.errors }}</div>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                                {{ form.branch }}  {# Hidden field for non-admin users #}
+                            {% endif %}
+                            
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.category.id_for_label }}" class="form-label fw-bold">{{ form.category.label }}</label>
+                                        {{ form.category }}
+                                        {% if form.category.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.category.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.item_type.id_for_label }}" class="form-label fw-bold">{{ form.item_type.label }}</label>
+                                        {{ form.item_type }}
+                                        {% if form.item_type.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.item_type.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.size.id_for_label }}" class="form-label fw-bold">{{ form.size.label }}</label>
+                                        {{ form.size }}
+                                        {% if form.size.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.size.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.color.id_for_label }}" class="form-label fw-bold">{{ form.color.label }}</label>
+                                        {{ form.color }}
+                                        {% if form.color.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.color.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.quantity.id_for_label }}" class="form-label fw-bold">{{ form.quantity.label }}</label>
+                                {{ form.quantity }}
+                                {% if form.quantity.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.quantity.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="section-header mb-3">
+                                <h5 class="section-title">Pricing</h5>
+                            </div>
+                            
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.rental_price.id_for_label }}" class="form-label fw-bold">{{ form.rental_price.label }}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            {{ form.rental_price }}
+                                        </div>
+                                        {% if form.rental_price.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.rental_price.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.reservation_price.id_for_label }}" class="form-label fw-bold">{{ form.reservation_price.label }}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            {{ form.reservation_price }}
+                                        </div>
+                                        {% if form.reservation_price.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.reservation_price.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.deposit_price.id_for_label }}" class="form-label fw-bold">{{ form.deposit_price.label }}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            {{ form.deposit_price }}
+                                        </div>
+                                        {% if form.deposit_price.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.deposit_price.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.purchase_price.id_for_label }}" class="form-label fw-bold">{{ form.purchase_price.label }}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            {{ form.purchase_price }}
+                                        </div>
+                                        {% if form.purchase_price.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.purchase_price.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="section-header mb-3">
+                                <h5 class="section-title">Image</h5>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.image.id_for_label }}" class="form-label fw-bold">{{ form.image.label }}</label>
+                                {{ form.image }}
+                                {% if form.image.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.image.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'saritasapp:inventory_list' %}" class="btn btn-outline-secondary px-4">
+                                <i class="fas fa-arrow-left me-2"></i> Back to List
+                            </a>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fas fa-save me-2"></i> Save Item
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
-        
-        <div class="mt-4">
-            <button type="submit" class="btn btn-primary me-2">
-                <i class="fas fa-save"></i> Save Item
-            </button>
-            <a href="{% url 'saritasapp:inventory_list' %}" class="btn btn-secondary">
-                <i class="fas fa-times"></i> Cancel
-            </a>
-        </div>
-    </form>
+    </div>
 </div>
+
+<style>
+    /* Base styles */
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f8f9fa;
+        color: #212529;
+        overflow-y: auto;
+    }
+
+    .container {
+        max-width: 900px;
+    }
+
+    /* Card styling */
+    .card {
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-header {
+        border-radius: 0.5rem 0.5rem 0 0 !important;
+    }
+
+    /* Section headers */
+    .section-header {
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .section-title {
+        color: #495057;
+        font-weight: 600;
+    }
+
+    /* Form elements */
+    .form-control, .form-select {
+        border: 1px solid #ced4da;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.375rem;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        width: 100%;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    .form-label {
+        margin-bottom: 0.5rem;
+        color: #495057;
+        font-weight: 500;
+    }
+
+    /* Input groups */
+    .input-group-text {
+        background-color: #f8f9fa;
+        border: 1px solid #ced4da;
+    }
+
+    /* Buttons */
+    .btn {
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .btn-primary {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+
+    .btn-primary:hover {
+        background-color: #0b5ed7;
+        border-color: #0a58ca;
+    }
+
+    .btn-outline-secondary {
+        border-color: #6c757d;
+        color: #6c757d;
+    }
+
+    .btn-outline-secondary:hover {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    /* Validation */
+    .invalid-feedback {
+        display: none;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875em;
+        color: #dc3545;
+    }
+
+    .was-validated .form-control:invalid, 
+    .was-validated .form-select:invalid,
+    .form-control.is-invalid, 
+    .form-select.is-invalid {
+        border-color: #dc3545;
+    }
+
+    .was-validated .form-control:invalid:focus, 
+    .was-validated .form-select:invalid:focus,
+    .form-control.is-invalid:focus, 
+    .form-select.is-invalid:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+    }
+
+    .was-validated .invalid-feedback {
+        display: block;
+    }
+
+    /* Spacing and layout */
+    .mb-4 {
+        margin-bottom: 1.5rem !important;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .btn {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+        
+        .d-flex.justify-content-between {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .row.g-2 > [class*="col-"] {
+            padding-right: calc(var(--bs-gutter-x) * .5);
+            padding-left: calc(var(--bs-gutter-x) * .5);
+        }
+    }
+</style>
 {% endblock %}
 
 {% block scripts %}
@@ -184,6 +358,27 @@ $(document).ready(function() {
         theme: 'bootstrap-5',
         width: '100%'
     });
+    
+    // Add Bootstrap validation
+    (function() {
+        'use strict'
+        
+        // Fetch all the forms we want to apply custom Bootstrap validation styles to
+        var forms = document.querySelectorAll('.needs-validation')
+        
+        // Loop over them and prevent submission
+        Array.prototype.slice.call(forms)
+            .forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    
+                    form.classList.add('was-validated')
+                }, false)
+            })
+    })()
 });
 </script>
 {% endblock %}
