@@ -57,76 +57,46 @@ class CustomerUpdateForm(forms.ModelForm):
         }
 
 class RentalForm(forms.ModelForm):
-    deposit_amount = forms.DecimalField(
-        label="Deposit Amount",
-        disabled=True,
-        required=False,
-        widget=forms.NumberInput(attrs={'class': 'form-control'})
-    )
-
-    estimated_total = forms.DecimalField(
-        label="Estimated Total",
-        disabled=True,
-        required=False,
-        widget=forms.NumberInput(attrs={'class': 'form-control'})
-    )
-
     class Meta:
         model = Rental
         fields = ['rental_start', 'rental_end', 'notes']
         widgets = {
-            'rental_start': forms.DateInput(attrs={
-                'type': 'date',
-                'class': 'form-control',
-                'min': now().date().isoformat()
-            }),
-            'rental_end': forms.DateInput(attrs={
-                'type': 'date',
-                'class': 'form-control',
-                'min': (now() + timedelta(days=1)).date().isoformat()
-            }),
+            'rental_start': forms.DateInput(
+                attrs={
+                    'type': 'date',
+                    'class': 'form-control',
+                    'min': now().date().isoformat()
+                }
+            ),
+            'rental_end': forms.DateInput(
+                attrs={
+                    'type': 'date',
+                    'class': 'form-control',
+                    'min': (now() + timedelta(days=1)).date().isoformat()
+                }
+            ),
             'notes': forms.Textarea(attrs={
                 'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Any special requests or notes...'
+                'rows': 3
             }),
         }
 
     def __init__(self, *args, **kwargs):
         self.inventory = kwargs.pop('inventory', None)
-        self.customer = kwargs.pop('customer', None)  # Add customer parameter
+        self.customer = kwargs.pop('customer', None)
         super().__init__(*args, **kwargs)
-        
-        if self.inventory:
-            self.fields['deposit_amount'].initial = self.inventory.deposit_price or 0.00
-            self.fields['estimated_total'].initial = (self.inventory.rental_price or 0) + (self.inventory.deposit_price or 0.00)
 
     def clean(self):
         cleaned_data = super().clean()
-        rental_start = cleaned_data.get('rental_start')
-        rental_end = cleaned_data.get('rental_end')
-
-        if not self.inventory:
-            raise forms.ValidationError("Inventory item is required")
-            
-        if self.inventory.quantity <= 0:
-            raise forms.ValidationError("This item is no longer available for rent")
-
-        if rental_end and rental_start and rental_end <= rental_start:
-            raise forms.ValidationError("Return date must be after the rental start date.")
-        
+        if not self.inventory or self.inventory.quantity <= 0:
+            raise forms.ValidationError("This item is not available for rent")
         return cleaned_data
 
     def save(self, commit=True):
         rental = super().save(commit=False)
-        if self.inventory:
-            rental.inventory = self.inventory
-            rental.deposit = self.inventory.deposit_price or 0.00
-        
-        if self.customer:
-            rental.customer = self.customer
-            
-        rental.status = Rental.PENDING  # Set default status
+        rental.inventory = self.inventory
+        rental.customer = self.customer
+        rental.deposit = self.inventory.deposit_price or 0
         
         if commit:
             rental.save()

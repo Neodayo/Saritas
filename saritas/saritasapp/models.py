@@ -120,6 +120,7 @@ class ItemType(models.Model):
         ('bearer', 'Bearer'),
         ('mother_gown', 'Mother\'s Gown'),
         ('father_attire', 'Father\'s Suit'),
+        ('other', 'Other'),
     ]
     
     name = models.CharField(
@@ -128,6 +129,11 @@ class ItemType(models.Model):
         unique=True
     )
     
+    @classmethod
+    def initialize_choices(cls):
+        for value, label in cls.ITEM_TYPES:
+            cls.objects.get_or_create(name=value)
+
     def __str__(self):
         return self.get_name_display()
 # --- Inventory ---
@@ -171,7 +177,6 @@ class Inventory(models.Model):
 
 # --- Rental ---
 class Rental(models.Model):
-    # Status Constants
     PENDING = "Pending"
     APPROVED = "Approved"
     RENTED = "Rented"
@@ -179,10 +184,8 @@ class Rental(models.Model):
     OVERDUE = "Overdue"
     CANCELLED = "Cancelled"
     REJECTED = "Rejected"
-    RENTING = "Renting"
 
     STATUS_CHOICES = [
-        (RENTING, "Renting"),
         (PENDING, "Pending"),
         (APPROVED, "Approved"),
         (RENTED, "Rented"),
@@ -192,191 +195,84 @@ class Rental(models.Model):
         (REJECTED, "Rejected"),
     ]
 
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="rentals")
-    user = models.ForeignKey(
+    customer = models.ForeignKey('Customer', on_delete=models.CASCADE, related_name="rentals")
+    inventory = models.ForeignKey('Inventory', on_delete=models.CASCADE, related_name="rentals")
+    staff = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="managed_rentals"
+        related_name="processed_rentals"
     )
-    approved_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="approved_rentals"
-    )
-    inventory = models.ForeignKey(
-        'Inventory',
-        on_delete=models.CASCADE,
-        related_name="rentals"
-    )
-    rental_start = models.DateField(default=timezone.now, db_index=True)
-    rental_end = models.DateField(db_index=True)
-    deposit = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2, 
-        null=True, 
-        blank=True
-    )
-    status = models.CharField(
-        max_length=10, 
-        choices=STATUS_CHOICES, 
-        default=PENDING, 
-        db_index=True
-    )
-    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    rental_start = models.DateField(default=timezone.now)
+    rental_end = models.DateField()
+    deposit = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    approved_at = models.DateTimeField(null=True, blank=True)
-    rejection_reason = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     inventory_decremented = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['rental_start', 'rental_end']),
             models.Index(fields=['status']),
-            models.Index(fields=['created_at']),
+            models.Index(fields=['rental_start', 'rental_end']),
         ]
 
     def __str__(self):
-        return f"Rental #{self.pk} - {self.customer} - {self.inventory}"
+        return f"Rental #{self.id} - {self.customer} - {self.inventory}"
 
     def clean(self):
-        if not self.inventory_id:
-            raise ValidationError("Rental must be associated with an inventory item")
-
-        if self.rental_end < self.rental_start:
+        if self.rental_end <= self.rental_start:
             raise ValidationError("Return date must be after the rental start date.")
         
-        # Set deposit amount from inventory if not set
         if not self.deposit and self.inventory:
-            self.deposit = self.inventory.deposit_price
-        
+            self.deposit = self.inventory.deposit_price or 0
 
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
 
-    # --- Properties ---
-
     @property
     def duration_days(self):
-        """Calculate total rental duration in days"""
-        return (self.rental_end - self.rental_start).days + 1
-
-    @property
-    def days_left(self):
-        """Days remaining until due date"""
-        if self.status not in [self.RENTED, self.APPROVED]:
-            return None
-        return (self.rental_end - timezone.now().date()).days
-
-    @property
-    def rental_cost(self):
-        """Flat rental price (not multiplied by days)"""
-        return float(self.inventory.rental_price)
-
+        return (self.rental_end - self.rental_start).days
 
     @property
     def total_cost(self):
-        """Original total cost (rental + deposit)"""
-        return self.rental_cost + float(self.deposit or 0)
-
-    @property
-    def final_amount(self):
-        """Final amount after return (rental cost only)"""
-        if self.status == self.RETURNED:
-            return self.rental_cost
-        return self.total_cost
-
-    @property
-    def is_active(self):
-        """Check if rental is currently active"""
-        return self.status in [self.RENTED, self.APPROVED] and timezone.now().date() <= self.rental_end
-
-    @property
-    def is_overdue(self):
-        """Check if rental is overdue"""
-        return self.status == self.RENTED and timezone.now().date() > self.rental_end
-
-    # --- Rental Lifecycle Actions ---
+        return float(self.inventory.rental_price) + float(self.deposit)
 
     def approve(self, user):
-        """Approve a pending rental"""
         if self.status != self.PENDING:
             raise ValidationError("Only pending rentals can be approved.")
 
         with transaction.atomic():
-            self.inventory.refresh_from_db()
-            if self.inventory.quantity <= 0:
-                raise ValidationError(f"{self.inventory.name} is out of stock.")
-
             if not self.inventory_decremented:
                 self.inventory.quantity -= 1
-                self.inventory_decremented = True
                 self.inventory.save()
-
+                self.inventory_decremented = True
+            
             self.status = self.APPROVED
-            self.approved_by = user
-            self.approved_at = timezone.now()
+            self.staff = user
             self.save()
 
-    def reject(self, user, reason=""):
-        """Reject a pending rental"""
-        if self.status != self.PENDING:
-            raise ValidationError("Only pending rentals can be rejected.")
-
-        self.status = self.REJECTED
-        self.rejection_reason = reason
-        self.approved_by = user
-        self.approved_at = timezone.now()
-        self.save()
-
     def mark_as_rented(self, user):
-        """Mark approved rental as rented"""
         if self.status != self.APPROVED:
             raise ValidationError("Only approved rentals can be marked as rented.")
-
+        
         self.status = self.RENTED
-        self.user = user
+        self.staff = user
         self.save()
 
     def mark_as_returned(self):
-        """Mark rental as returned and handle inventory"""
-        if self.status not in ['Renting', 'Overdue']:
+        if self.status not in [self.RENTED, self.OVERDUE]:
             raise ValidationError("Only rented or overdue items can be returned.")
 
         with transaction.atomic():
-            # Return inventory item
             self.inventory.quantity += 1
             self.inventory.save()
-            
-            # Update rental status
-            self.status = 'Returned'
+            self.status = self.RETURNED
             self.save()
-
-    def mark_as_cancelled(self):
-        """Cancel a pending or approved rental"""
-        if self.status not in [self.APPROVED, self.PENDING]:
-            raise ValidationError("Only pending or approved rentals can be cancelled.")
-
-        with transaction.atomic():
-            if self.status == self.APPROVED and not self.inventory_decremented:
-                self.inventory.quantity += 1
-                self.inventory.save()
-
-            self.status = self.CANCELLED
-            self.save()
-
-    def check_and_update_overdue(self):
-        """Update status to overdue if past due date"""
-        if self.status == self.RENTED and timezone.now().date() > self.rental_end:
-            self.status = self.OVERDUE
-            self.save(update_fields=["status"])
-
 
 # --- Reservation ---
 class Reservation(models.Model):
@@ -552,7 +448,6 @@ class WardrobePackage(models.Model):
         ("A", "Package A"),
         ("B", "Package B"),
         ("C", "Package C"),
-        ("custom", "Custom Package"),
     ]
 
     STATUS_CHOICES = [
@@ -568,7 +463,7 @@ class WardrobePackage(models.Model):
         choices=PACKAGE_TIERS, 
         blank=True, 
         null=True,
-        help_text="Predefined package tier (A, B, C) or custom"
+        help_text="Predefined package tier (A, B, C)"
     )
     base_price = models.DecimalField(
         max_digits=10, 

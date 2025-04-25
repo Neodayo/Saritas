@@ -1,5 +1,7 @@
 {% extends 'saritasapp/base.html' %}
 
+
+
 {% block title %}Wardrobe Packages{% endblock %}
 
 {% block content %}
@@ -29,11 +31,11 @@
                     </p>
                     <p class="text-gray-600 mb-4">{{ package.description|truncatewords:15 }}</p>
                     <div class="flex space-x-2">
-                        <a href="{% url 'saritasapp:wardrobe_package_detail' package.pk %}" 
+                        <a href="{% url 'saritasapp:wardrobe_package_detail' encrypted_id=package.encrypted_id %}"
                            class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-3 rounded text-center text-sm transition-colors">
                             View
                         </a>
-                        <a href="{% url 'saritasapp:wardrobe_package_update' package.pk %}" 
+                        <a href="{% url 'saritasapp:wardrobe_package_update' encrypted_id=package.encrypted_id %}" 
                            class="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-800 py-1 px-3 rounded text-center text-sm transition-colors">
                             Edit
                         </a>

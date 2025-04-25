@@ -2,6 +2,7 @@
 import logging
 from datetime import timedelta
 from urllib import request
+from utils.security import encrypt_id, decrypt_id
 
 # Django Core
 from django.conf import settings
@@ -168,61 +169,44 @@ logger = logging.getLogger(__name__)
 
 @login_required
 def rent_item(request, inventory_id):
-    item = get_object_or_404(Inventory, pk=inventory_id)
+    inventory = get_object_or_404(Inventory, pk=inventory_id)
+    
+    if not hasattr(request.user, 'customer_profile'):
+        messages.error(request, "Customer profile not found")
+        return redirect('home')
     
     if request.method == 'POST':
-        # Pass both inventory and customer to the form
-        form = RentalForm(request.POST, inventory=item, customer=request.user.customer_profile)
+        form = RentalForm(request.POST, inventory=inventory, customer=request.user.customer_profile)
         if form.is_valid():
             try:
                 with transaction.atomic():
                     # Refresh inventory to prevent race conditions
-                    item.refresh_from_db()
-                    if item.quantity <= 0:
-                        messages.error(request, 'Item no longer available')
-                        return redirect('customerapp:wardrobe')
-
-                    # Save the rental - form.save() now handles all required fields
-                    rental = form.save()
+                    inventory.refresh_from_db()
+                    if inventory.quantity <= 0:
+                        messages.error(request, "Item is no longer available")
+                        return redirect('inventory_list')
                     
-                    # Decrement inventory
-                    item.quantity -= 1
-                    item.save()
+                    rental = form.save()
+                    inventory.quantity -= 1
+                    inventory.save()
                     rental.inventory_decremented = True
                     rental.save()
-
-                    # Create notifications
-                    staff_users = User.objects.filter(role='staff')
-                    for staff in staff_users:
-                        Notification.objects.create(
-                            user=staff,
-                            notification_type='rental_request',
-                            rental=rental,
-                            message=f'New rental request for {item.name} from {request.user.get_full_name()}',
-                            url=reverse('saritasapp:rental_approvals')
-                        )
-
-                    messages.success(request, 'Rental request submitted for approval!')
-                    return redirect('customerapp:my_rentals')
-
-            except ValidationError as e:
-                messages.error(request, f'Validation error: {e}')
+                    
+                    messages.success(request, "Rental request submitted successfully!")
+                    return redirect('my_rentals')
+            
             except Exception as e:
-                logger.error(f"Error creating rental: {str(e)}", exc_info=True)
-                messages.error(request, 'An error occurred while processing your request')
+                messages.error(request, f"Error processing rental: {str(e)}")
     else:
-        form = RentalForm(
-            initial={
-                'rental_start': timezone.now().date(),
-                'rental_end': timezone.now().date() + timedelta(days=7)
-            },
-            inventory=item,
-            customer=request.user.customer_profile
-        )
-
-    return render(request, 'customerapp/rent_item.html', {
+        initial = {
+            'rental_start': timezone.now().date(),
+            'rental_end': timezone.now().date() + timedelta(days=7)
+        }
+        form = RentalForm(initial=initial, inventory=inventory, customer=request.user.customer_profile)
+    
+    return render(request, 'rent_item.html', {
         'form': form,
-        'item': item
+        'inventory': inventory
     })
 
 @login_required

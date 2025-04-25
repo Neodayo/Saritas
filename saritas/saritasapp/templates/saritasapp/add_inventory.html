@@ -1,74 +1,189 @@
-{% extends "saritasapp/base.html" %}
+{% extends 'saritasapp/base.html' %}
 {% load static %}
 
-{% block title %}Add Inventory | Sarita's{% endblock %}
+{%block extra_css%}
+<link rel="stylesheet" href="{% static 'css/add_inventory.css' %}">
+{%endblock%}
 
-{% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/add_inventory.css' %}">
-{% endblock %}
+{% block title %}Add Inventory Item{% endblock %}
+
 
 {% block content %}
-<div class="container">
-    <h1 class="mb-4">Add New Inventory Item</h1>
-
-    <form method="POST" enctype="multipart/form-data" action="{% url 'saritasapp:add_inventory' %}">
-        {% csrf_token %}
-
-        {% if form.non_field_errors %}
-            <div class="alert alert-danger">
-                {% for error in form.non_field_errors %}
-                    <p>{{ error }}</p>
-                {% endfor %}
-            </div>
-        {% endif %}
-
-        {% for field in form.visible_fields %}
-            <div class="form-group mb-3">
-                {% if field.name != 'available' %}
-                    <label for="{{ field.id_for_label }}">
-                        {{ field.label }}
-                        {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
-                    </label>
-                {% endif %}
-
-                {% if field.name == 'available' %}
-                    <div class="form-check">
-                        {{ field }} <label for="{{ field.id_for_label }}">Available</label>
-                    </div>
-                {% else %}
-                    {{ field }}
-                {% endif %}
-
-                {% if field.errors %}
-                    <div class="error-message text-danger">
-                        {{ field.errors|striptags }}
-                    </div>
-                {% endif %}
-
-                {% if field.name == "category" %}
-                    <div class="category-link">
-                        <a href="{% url 'saritasapp:add_category' %}?next={{ request.path }}">Add new category</a>
-                    </div>
-                {% elif field.name == "color" %}
-                    <div class="category-link">
-                        <a href="{% url 'saritasapp:add_color' %}?next={{ request.path }}">Add new color</a>
-                    </div>
-                {% elif field.name == "size" %}
-                    <div class="category-link">
-                        <a href="{% url 'saritasapp:add_size' %}?next={{ request.path }}">Add new size</a>
-                    </div>
-                {% endif %}
-            </div>
+<div class="container py-4">
+    <h2 class="mb-4">Add New Inventory Item</h2>
+    
+    {% if messages %}
+    <div class="container mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
         {% endfor %}
-
-        <div class="form-actions mt-4">
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save"></i> Add Item
+    </div>
+    {% endif %}
+    
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="row g-3">
+            <!-- Left Column -->
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">Basic Information</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            {{ form.name.label_tag }}
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="text-danger">{{ form.name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        {% if user.is_superuser %}
+                        <div class="mb-3">
+                            {{ form.branch.label_tag }}
+                            {% if form.branch.field.queryset.exists %}
+                                {{ form.branch }}
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    No branches available. Please create branches first.
+                                </div>
+                            {% endif %}
+                            {% if form.branch.errors %}
+                                <div class="text-danger">{{ form.branch.errors }}</div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                            {{ form.branch }}  {# Hidden field for non-admin users #}
+                        {% endif %}
+                        
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.category.label_tag }}
+                                    {{ form.category }}
+                                    {% if form.category.errors %}
+                                        <div class="text-danger">{{ form.category.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.item_type.label_tag }}
+                                    {{ form.item_type }}
+                                    {% if form.item_type.errors %}
+                                        <div class="text-danger">{{ form.item_type.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.size.label_tag }}
+                                    {{ form.size }}
+                                    {% if form.size.errors %}
+                                        <div class="text-danger">{{ form.size.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.color.label_tag }}
+                                    {{ form.color }}
+                                    {% if form.color.errors %}
+                                        <div class="text-danger">{{ form.color.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.quantity.label_tag }}
+                            {{ form.quantity }}
+                            {% if form.quantity.errors %}
+                                <div class="text-danger">{{ form.quantity.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column -->
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">Pricing</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            {{ form.rental_price.label_tag }}
+                            {{ form.rental_price }}
+                            {% if form.rental_price.errors %}
+                                <div class="text-danger">{{ form.rental_price.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.reservation_price.label_tag }}
+                            {{ form.reservation_price }}
+                            {% if form.reservation_price.errors %}
+                                <div class="text-danger">{{ form.reservation_price.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.deposit_price.label_tag }}
+                            {{ form.deposit_price }}
+                            {% if form.deposit_price.errors %}
+                                <div class="text-danger">{{ form.deposit_price.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.purchase_price.label_tag }}
+                            {{ form.purchase_price }}
+                            {% if form.purchase_price.errors %}
+                                <div class="text-danger">{{ form.purchase_price.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header bg-primary text-white">Image</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            {{ form.image.label_tag }}
+                            {{ form.image }}
+                            {% if form.image.errors %}
+                                <div class="text-danger">{{ form.image.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary me-2">
+                <i class="fas fa-save"></i> Save Item
             </button>
             <a href="{% url 'saritasapp:inventory_list' %}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Back to Inventory
+                <i class="fas fa-times"></i> Cancel
             </a>
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Initialize select2 for better dropdowns
+$(document).ready(function() {
+    $('.select2').select2({
+        theme: 'bootstrap-5',
+        width: '100%'
+    });
+});
+</script>
 {% endblock %}

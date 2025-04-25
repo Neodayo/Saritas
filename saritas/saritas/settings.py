@@ -1,14 +1,19 @@
+from dotenv import load_dotenv
 from pathlib import Path
+import sys
 from decouple import config
-from dotenv import load_dotenv  # Import load_dotenv
 import os
+from cryptography.fernet import Fernet
 
+
+load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+sys.path.append(str(BASE_DIR)) 
 # Security
 SECRET_KEY = '@)t3&4*8elj!^&es4z%hr8q1((21r+ur3%t$qd2a)-1d2vk4e^'
 DEBUG = config('DEBUG', default=True, cast=bool)
-
+FERNET_KEY = config('FERNET_KEY')
+ENCRYPTION_KEY = FERNET_KEY  
 # Production settings
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
@@ -66,14 +71,11 @@ load_dotenv()  # Loads the .env file
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'saritas_db',
-        'USER': 'root',
-        'PASSWORD': 'Magicdev2025',  # make sure this is correct
-        'HOST': '127.0.0.1',
-        'PORT': '3307',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -99,14 +101,14 @@ USE_TZ = True
 
 # Static and Media Files
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'saritasapp' / 'static',]  # Add any additional static directories if necessary
+STATICFILES_DIRS = [BASE_DIR / 'static',]  # Add any additional static directories if necessary
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_ROOT.mkdir(parents=True, exist_ok=True)  # Ensure media directory exists
 
 # Authentication
-AUTH_USER_MODEL = "saritasapp.User"
+AUTH_USER_MODEL = 'saritasapp.User'
 LOGIN_URL = 'saritasapp:sign_in'
 LOGIN_REDIRECT_URL = 'customerapp:homepage'
 LOGOUT_REDIRECT_URL = 'customerapp:homepage'

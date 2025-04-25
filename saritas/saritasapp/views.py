@@ -1,6 +1,8 @@
 # Standard library imports
+import base64
 from calendar import month_name
 from datetime import date, datetime, timedelta
+import logging
 
 # Django core imports
 from django import forms
@@ -15,7 +17,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import transaction
 from django.db.models import Count, F, Q, Sum
 from django.db.models.functions import ExtractMonth, ExtractWeek, ExtractYear, TruncMonth
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
@@ -42,12 +44,62 @@ from .models import (
     Receipt, Rental, Reservation, Size, User, Venue,
     WardrobePackage, CustomizedWardrobePackage, WardrobePackageItem, WardrobePackageRental
 )
-from .utils import send_notification
+# In your views.py
+from .tasks import send_notification
 from customerapp.tasks import notify_staff_about_rental_request
+from django.core.exceptions import BadRequest
+from cryptography.fernet import Fernet, InvalidToken
+from django.conf import settings
+from django.utils.timezone import now
+from .utils.encryption import encrypt_id, decrypt_id
 
+fernet = Fernet(settings.ENCRYPTION_KEY)
+logger = logging.getLogger(__name__)
+try:
+    fernet = Fernet(settings.ENCRYPTION_KEY.encode())
+except Exception as e:
+    logger.error(f"Encryption setup failed: {str(e)}")
+    raise
 
- # Make sure Venue model is imported
+def encrypt_id(id_value):
+    """Encrypt ID to URL-safe string"""
+    try:
+        encrypted = fernet.encrypt(str(id_value).encode())
+        return base64.urlsafe_b64encode(encrypted).decode().rstrip('=')
+    except Exception as e:
+        logger.error(f"Encryption failed: {str(e)}")
+        raise ValueError("Failed to encrypt ID")
 
+def decrypt_id(encrypted_id):
+    """Decrypt URL-safe ID back to original"""
+    try:
+        # Add padding if needed
+        pad_length = len(encrypted_id) % 4
+        if pad_length:
+            encrypted_id += '=' * (4 - pad_length)
+            
+        decrypted = fernet.decrypt(base64.urlsafe_b64decode(encrypted_id.encode()))
+        return int(decrypted.decode())
+    except InvalidToken:
+        logger.error("Invalid token - possible tampering")
+        raise ValueError("Invalid encrypted ID")
+    except Exception as e:
+        logger.error(f"Decryption failed: {str(e)}")
+        raise ValueError("Failed to decrypt ID")
+
+def get_decrypted_object_or_404(model, encrypted_id):
+    """Safe object retrieval with decryption"""
+    try:
+        obj_id = decrypt_id(encrypted_id)
+        return get_object_or_404(model, pk=obj_id)
+    except ValueError as e:
+        logger.warning(f"Invalid ID decryption: {encrypted_id} - {str(e)}")
+        raise BadRequest("Invalid item identifier")
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        raise BadRequest("Invalid request")
+
+    
 @login_required
 def add_inventory(request):
     if request.method == 'POST':
@@ -56,42 +108,40 @@ def add_inventory(request):
             try:
                 inventory_item = form.save(commit=False)
                 
-                # Additional checks for empty fields (redundant but safe)
-                required_fields = ['name', 'branch', 'category', 'quantity', 'rental_price']
-                for field in required_fields:
-                    if not form.cleaned_data.get(field):
-                        messages.error(request, f"{field.replace('_', ' ').title()} is required!")
-                        return render(request, 'saritasapp/add_inventory.html', {
-                            'form': form,
-                            'categories': Category.objects.all(),
-                            'colors': Color.objects.all(),
-                            'sizes': Size.objects.all()
-                        })
-                
-                # Set additional fields
+                # Set creator
                 if hasattr(request.user, 'staff_profile'):
                     inventory_item.created_by = request.user
-                    inventory_item.branch = request.user.staff_profile.branch
+                    # Branch is already set via the form for staff users
+                elif request.user.is_superuser:
+                    inventory_item.created_by = request.user
+                    # Admin can choose branch in the form
                 
                 inventory_item.save()
-                messages.success(request, f"Successfully added {inventory_item.name}!")
+                form.save_m2m()
+                
+                messages.success(request, f"Successfully added {inventory_item.name}")
                 return redirect('saritasapp:inventory_list')
                 
-            except IntegrityError:
-                messages.error(request, "This item already exists!")
             except Exception as e:
-                messages.error(request, f"Error: {str(e)}")
+                messages.error(request, f"Error saving item: {str(e)}")
         else:
-            messages.error(request, "Please fill all required fields!")
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{form.fields[field].label}: {error}")
     else:
         form = InventoryForm(user=request.user)
     
-    return render(request, 'saritasapp/add_inventory.html', {
+    context = {
         'form': form,
-        'categories': Category.objects.all(),
-        'colors': Color.objects.all(),
-        'sizes': Size.objects.all()
-    })
+        'user': request.user,
+        'categories': Category.objects.all().order_by('name'),
+        'colors': Color.objects.all().order_by('name'),
+        'sizes': Size.objects.all().order_by('name'),
+        'item_types': ItemType.objects.all().order_by('name'),
+        'user': request.user  # Make sure user is passed to template
+    }
+    return render(request, 'saritasapp/add_inventory.html', context)
+
 @login_required
 def add_category(request):
     if request.method == 'POST':
@@ -133,13 +183,18 @@ def add_size(request):
     return render(request, 'saritasapp/add_size.html', {'form': form})
 
 @login_required
-def view_item(request, item_id):
-    item = get_object_or_404(Inventory, id=item_id)
-    return render(request, 'saritasapp/view_item.html', {'item': item})
+def view_item(request, encrypted_id):
+    try:
+        item = get_decrypted_object_or_404(Inventory, encrypted_id)
+        return render(request, 'saritasapp/view_item.html', {'item': item})
+    except BadRequest:
+        return HttpResponseBadRequest("Invalid item ID")
+    except Http404:
+        return HttpResponseNotFound("Item not found")
 
 @login_required
-def edit_inventory(request, item_id):
-    item = get_object_or_404(Inventory, id=item_id)
+def edit_inventory(request, encrypted_id):
+    item = get_decrypted_object_or_404(Inventory, encrypted_id)
 
     if request.method == 'POST':
         form = InventoryForm(request.POST, request.FILES, instance=item, user=request.user)
@@ -158,12 +213,11 @@ def edit_inventory(request, item_id):
         'colors': Color.objects.all(),
         'sizes': Size.objects.all(),
         'item': item
-        # Removed item_types from context since we're using predefined choices
     })
 
 @login_required
-def delete_inventory(request, item_id):
-    item = get_object_or_404(Inventory, id=item_id)
+def delete_inventory(request, encrypted_id):
+    item = get_decrypted_object_or_404(Inventory, encrypted_id)
     
     if request.method == 'POST':
         item.delete()
@@ -211,14 +265,8 @@ def inventory_view(request):
         'sort': sort
     })
 
-from django.shortcuts import render
-from django.db import transaction
-from django.utils import timezone
-from .models import Rental
-import logging
-
 # Create a logger instance
-logger = logging.getLogger(__name__)
+
 
 @login_required
 def rental_tracker(request):
@@ -282,12 +330,11 @@ def rental_approvals(request):
 
 @staff_member_required
 @login_required
-def approve_or_reject_rental(request, rental_id, action):
-    rental = get_object_or_404(Rental, pk=rental_id)
+def approve_or_reject_rental(request, encrypted_id, action):
+    rental = get_decrypted_object_or_404(Rental, encrypted_id)
 
     try:
         if action == 'approve':
-            # This now includes the quantity decrement
             rental.approve(request.user)
             action_message = 'approved'
         elif action == 'reject':
@@ -304,7 +351,6 @@ def approve_or_reject_rental(request, rental_id, action):
         messages.error(request, "An error occurred processing this request")
         return redirect('saritasapp:rental_approvals')
 
-    # Notifications
     Notification.objects.create(
         user=rental.customer.user,
         notification_type=f'rental_{action_message}',
@@ -339,8 +385,8 @@ def view_reservations(request):
 
 
 @staff_member_required
-def update_reservation(request, pk, action):
-    reservation = get_object_or_404(Reservation, pk=pk)
+def update_reservation(request, encrypted_id, action):
+    reservation = get_decrypted_object_or_404(Reservation, encrypted_id)
 
     if request.method == 'POST':
         if action == 'approve':
@@ -430,10 +476,9 @@ def approve_rental(request, rental_id, action):
 
 @staff_member_required
 @login_required
-def rental_detail(request, rental_id):
-    rental = get_object_or_404(Rental, id=rental_id)
+def rental_detail(request, encrypted_id):
+    rental = get_decrypted_object_or_404(Rental, encrypted_id)
     
-    # Get last rental excluding current one
     last_rental = None
     if rental.customer:
         last_rental = rental.customer.rentals.exclude(id=rental.id).order_by('-created_at').first()
@@ -491,10 +536,9 @@ def customer_list(request):
     })
 
 @login_required
-def view_customer(request, customer_id):
-    customer = get_object_or_404(Customer.objects.select_related('user'), id=customer_id)
+def view_customer(request, encrypted_id):
+    customer = get_decrypted_object_or_404(Customer.objects.select_related('user'), encrypted_id)
     
-    # Automatically update overdue rentals
     today = now().date()
     rentals = Rental.objects.filter(customer=customer)
     rentals.filter(status="Renting", rental_end__lt=today).update(status="Overdue")
@@ -505,8 +549,8 @@ def view_customer(request, customer_id):
     })
 
 @login_required
-def return_rental(request, rental_id):
-    rental = get_object_or_404(Rental, id=rental_id)
+def return_rental(request, encrypted_id):
+    rental = get_decrypted_object_or_404(Rental, encrypted_id)
     
     if request.method == 'POST':
         if rental.status in ['Renting', 'Overdue']:
@@ -516,12 +560,11 @@ def return_rental(request, rental_id):
                 f"{rental.inventory.name} has been returned. "
                 f"Deposit of ₱{rental.deposit} will be refunded."
             )
-            return redirect('saritasapp:view_customer', rental.customer.id)
+            return redirect('saritasapp:view_customer', encrypt_id(rental.customer.id))
         else:
             messages.warning(request, "This item cannot be returned.")
-            return redirect('saritasapp:view_customer', rental.customer.id)
+            return redirect('saritasapp:view_customer', encrypt_id(rental.customer.id))
     
-    # For GET requests, show confirmation page
     return render(request, 'saritasapp/confirm_return.html', {
         'rental': rental,
         'rental_cost': rental.inventory.rental_price * rental.duration_days,
@@ -531,7 +574,6 @@ def return_rental(request, rental_id):
 # views.py
 @login_required
 def manage_staff(request):
-    # Get all staff users with their related staff profiles
     staff_list = User.objects.filter(
         role='staff'
     ).select_related('staff_profile').order_by('last_name', 'first_name')
@@ -718,9 +760,9 @@ def create_event(request):
     return render(request, "saritasapp/create_event.html")
 
 @login_required
-def view_event(request, event_id):
-    event = get_object_or_404(Event, id=event_id)
-    return render(request, "saritasapp/view_event.html", {"event": event})
+def view_event(request, encrypted_id):
+    event = get_decrypted_object_or_404(Event, encrypted_id)
+    return render(request, 'saritasapp/view_event.html', {'event': event})
 
 @login_required
 def get_events(request):
@@ -837,12 +879,15 @@ def logout_view(request):
 def receipt_view(request):
     return render(request, 'saritasapp/receipt.html')
 
+@login_required
+def receipt_detail(request, encrypted_id):
+    receipt = get_decrypted_object_or_404(Receipt, encrypted_id)
+    return render(request, 'saritasapp/receipt_detail.html', {'receipt': receipt})
 
 #Receipt
 @login_required
-def update_receipt(request, receipt_id):
-    """Update receipt details and ensure new fields are saved properly."""
-    receipt = get_object_or_404(Receipt, id=receipt_id)
+def update_receipt(request, encrypted_id):
+    receipt = get_decrypted_object_or_404(Receipt, encrypted_id)
 
     if request.method == "POST":
         try:
@@ -878,11 +923,9 @@ def update_receipt(request, receipt_id):
             for field in measurement_fields:
                 value = request.POST.get(field, "").strip()
                 setattr(receipt, field, float(value) if value.replace('.', '', 1).isdigit() else getattr(receipt, field))
-
             
             receipt.save()
-
-            return redirect("saritasapp:receipt-detail", receipt_id=receipt.id)
+            return redirect("saritasapp:receipt-detail", encrypted_id=encrypt_id(receipt.id))
 
         except ValueError as e:
             return render(request, "saritasapp/receipt.html", {
@@ -893,12 +936,11 @@ def update_receipt(request, receipt_id):
     return render(request, "saritasapp/receipt.html", {"receipt": receipt})
 
 @login_required
-def generate_receipt_pdf(request, receipt_id):
-    """Generate and download a PDF receipt with all details."""
-    receipt = get_object_or_404(Receipt, id=receipt_id)
+def generate_receipt_pdf(request, encrypted_id):
+    receipt = get_decrypted_object_or_404(Receipt, encrypted_id)
 
     response = HttpResponse(content_type="application/pdf")
-    response["Content-Disposition"] = f'attachment; filename="receipt_{receipt_id}.pdf"'
+    response["Content-Disposition"] = f'attachment; filename="receipt_{receipt.id}.pdf"'
 
     doc = SimpleDocTemplate(response, pagesize=letter)
     elements = []
@@ -974,10 +1016,9 @@ def generate_receipt_pdf(request, receipt_id):
 
 
 @login_required
-def wardrobe_package_view(request, package_id):
-    package = get_object_or_404(WardrobePackage, id=package_id)
+def wardrobe_package_view(request, encrypted_id):
+    package = get_decrypted_object_or_404(WardrobePackage, encrypted_id)
 
-    # Organizing inventory by category for better display
     inventory = {}
     items = Inventory.objects.filter(package=package)
     for item in items:
@@ -985,7 +1026,6 @@ def wardrobe_package_view(request, package_id):
             inventory[item.category] = []
         inventory[item.category].append(item)
 
-    # Calculate total price including refundable deposit
     total_price = package.base_price + package.refundable_deposit + sum(item.rental_price for item in items)
 
     context = {
@@ -998,19 +1038,19 @@ def wardrobe_package_view(request, package_id):
         selected_items = request.POST.getlist('wardrobe_items')
         selected_item_prices = Inventory.objects.filter(id__in=selected_items).values_list('rental_price', flat=True)
         total_price = package.base_price + package.refundable_deposit + sum(selected_item_prices)
-
         context['total_price'] = total_price
 
     return render(request, 'saritasapp/wardrobe_package.html', context)
 
+
 @login_required
 def wardrobe_package_list(request):
-    packages = WardrobePackage.objects.filter(status='active')  # Only show active packages
+    packages = WardrobePackage.objects.filter(status='active')
     return render(request, 'saritasapp/wardrobe_package_list.html', {'packages': packages})
 
 @login_required
-def wardrobe_package_view(request, package_id):
-    package = get_object_or_404(WardrobePackage, id=package_id)
+def wardrobe_package_view(request, encrypted_id):
+    package = get_decrypted_object_or_404(WardrobePackage, encrypted_id)
     customers = Customer.objects.all()
 
     # Organizing inventory items by category
@@ -1036,10 +1076,6 @@ def wardrobe_package_view(request, package_id):
 
         selected_item_prices = Inventory.objects.filter(id__in=selected_items).values_list('rental_price', flat=True)
         total_price = package.base_price + package.refundable_deposit + sum(selected_item_prices)
-
-        # You can optionally save the selected package to the customer's record here
-        # For example:
-        # CustomerPackage.objects.create(customer_id=customer_id, package=package, total_price=total_price)
 
         context['total_price'] = total_price
         context['success'] = "Package selected successfully!"
@@ -1080,9 +1116,9 @@ def made_to_order_view(request):
     return render(request, "saritasapp/made_to_order.html", {"receipt": receipt})
 
 @login_required
-def receipt_detail(request, receipt_id):
+def receipt_detail(request, encrypted_id):
     """Display receipt details."""
-    receipt = get_object_or_404(Receipt, id=receipt_id) 
+    receipt = get_decrypted_object_or_404(Receipt, encrypted_id)
     return render(request, "saritasapp/receipt.html", {"receipt": receipt})
 
 #calnder
@@ -1097,8 +1133,8 @@ def calendar_view(request):
     return render(request, "saritasapp/calendar.html", {"events": events})
 
 @login_required
-def view_event(request, event_id):
-    event = get_object_or_404(Event, id=event_id)
+def view_event(request, encrypted_id):
+    event = get_decrypted_object_or_404(Event, encrypted_id)
     return render(request, "saritasapp/view_event.html", {"event": event})
 
 @login_required
@@ -1188,15 +1224,16 @@ def sign_out(request):
 
 @login_required
 
-def edit_event(request, event_id):
-    event = get_object_or_404(Event, id=event_id)
+@login_required
+def edit_event(request, encrypted_id):
+    event = get_decrypted_object_or_404(Event, encrypted_id)
 
     if request.method == 'POST':
         form = EventForm(request.POST, instance=event)
         if form.is_valid():
             form.save()
             messages.success(request, 'Event updated successfully.')
-            return redirect('saritasapp:view_event', event_id=event.id)
+            return redirect('saritasapp:view_event', encrypted_id=encrypt_id(event.id))
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
@@ -1204,8 +1241,9 @@ def edit_event(request, event_id):
 
     return render(request, 'saritasapp/edit_event.html', {'form': form, 'event': event})
 
-def delete_event(request, event_id):
-    event = get_object_or_404(Event, id=event_id)
+@login_required
+def delete_event(request, encrypted_id):
+    event = get_decrypted_object_or_404(Event, encrypted_id)
 
     if request.method == 'POST':
         event.delete()
@@ -1221,12 +1259,11 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from .models import Venue  # Make sure Venue model is imported
 
+@login_required
 def wedding_packages(request):
     if request.method == 'POST':
-        # Handle custom venues from DB if needed (or from session)
         custom_venues = {v.venue_id: v.base_price for v in Venue.objects.filter(is_custom=True, created_by=request.user)}
 
-        # Get selected venue
         venue_id = request.POST.get('venue')
         venue_price = 0
         venue_name = ""
@@ -1235,7 +1272,6 @@ def wedding_packages(request):
             venue_price = custom_venues.get(venue_id, 0)
             venue_name = request.POST.get(f'venue_{venue_id}_name', 'Custom Venue')
         else:
-            # Handle predefined venues from the DB
             try:
                 venue_obj = Venue.objects.get(venue_id=venue_id)
                 venue_name = venue_obj.name
@@ -1244,7 +1280,6 @@ def wedding_packages(request):
                 venue_name = "Unknown"
                 venue_price = 0
 
-        # Collect other data
         data = {
             'sizes': {
                 'bride': request.POST.get('bride_size'),
@@ -1260,13 +1295,13 @@ def wedding_packages(request):
             'total_price': float(request.POST.get('total_price', 0))
         }
 
-        # Save to session
         request.session['wedding_customization'] = data
-        return redirect('wedding_confirmation')
+        return redirect('saritasapp:wedding_confirmation')
 
     return render(request, 'saritasapp/wedding_packages.html')
 
 
+@login_required
 def wedding_confirmation(request):
     customization = request.session.get('wedding_customization', {})
     return render(request, 'saritasapp/wedding_confirmation.html', {
@@ -1274,13 +1309,13 @@ def wedding_confirmation(request):
     })
 
 
+@login_required
 def add_custom_venue(request):
     if request.method == 'POST':
         name = request.POST.get('name')
         price = request.POST.get('price')
 
         if name and price:
-            # Generate a unique venue ID using a prefix and timestamp
             from datetime import datetime
             venue_id = f'custom_{int(datetime.now().timestamp())}'
 
@@ -1295,7 +1330,7 @@ def add_custom_venue(request):
         
         return JsonResponse({'status': 'invalid data'}, status=400)
 
-    return JsonResponse({'status': 'error'}, status=400)
+    return JsonResponse({'status': 'error'}, status=400)    
 
 from django.shortcuts import render, redirect
 
@@ -1316,6 +1351,7 @@ def debut_packages(request):
     return render(request, 'saritasapp/debut_packages.html')
 
 # Additional Services View
+@login_required
 def additional_services(request):
     if request.method == 'POST':
         request.session['additional_services'] = {
@@ -1323,7 +1359,7 @@ def additional_services(request):
             'duration': request.POST.get('duration'),
             'requests': request.POST.get('special_requests')
         }
-        return redirect('additional_services')
+        return redirect('saritasapp:additional_confirmation')
     return render(request, 'saritasapp/additional_services.html')
 
 # Debut Confirmation View
@@ -1335,90 +1371,33 @@ def debut_confirmation(request):
     })
 
 # Additional Services Confirmation View
+@login_required
 def additional_confirmation(request):
     services = request.session.get('additional_services', {})
-    # Add price calculation logic if needed
-    return render(request, 'saritasapp/additional_services.html', {
+    return render(request, 'saritasapp/additional_confirmation.html', {
         'services': services
     })
 
 #wardrobe packages view
-class WardrobePackageForm(forms.ModelForm):
-    class Meta:
-        model = WardrobePackage
-        fields = [
-            'name', 'tier', 'description', 'base_price', 'deposit_price',
-            'discount', 'status', 'min_rental_days', 'includes_accessories'
-        ]
-        widgets = {
-            'description': forms.Textarea(attrs={'rows': 3}),
-        }
-
-
-class WardrobePackageItemForm(forms.ModelForm):
-    class Meta:
-        model = WardrobePackageItem
-        fields = ['inventory_item', 'quantity']
-
-    def __init__(self, *args, item_type=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        if item_type:
-            self.fields['inventory_item'].queryset = Inventory.objects.filter(
-                available=True,
-                item_type=item_type
-            ).order_by('name')
-
-    def clean(self):
-        cleaned_data = super().clean()
-        inventory_item = cleaned_data.get('inventory_item')
-        quantity = cleaned_data.get('quantity')
-
-        if inventory_item and quantity:
-            if quantity > inventory_item.quantity:
-                raise ValidationError(
-                    f"Only {inventory_item.quantity} available in stock"
-                )
-        return cleaned_data
-
-
-class PackageCustomizationForm(forms.ModelForm):
-    class Meta:
-        model = PackageCustomization
-        fields = ['action', 'original_item', 'inventory_item', 'new_quantity', 'price_adjustment', 'notes']
-        widgets = {
-            'action': forms.RadioSelect(),
-            'notes': forms.Textarea(attrs={'rows': 2}),
-        }
-
-    def __init__(self, package=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if package:
-            self.fields['original_item'].queryset = package.package_items.all()
-            self.fields['inventory_item'].queryset = Inventory.objects.filter(available=True)
-
-
-class CustomizePackageForm(forms.ModelForm):
-    class Meta:
-        model = CustomizedWardrobePackage
-        fields = ['notes']
-        widgets = {
-            'notes': forms.Textarea(attrs={
-                'rows': 3,
-                'placeholder': 'Describe your customization requests...'
-            }),
-        }
-
-
 class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     def test_func(self):
         return self.request.user.is_staff
 
+
+def encrypt_id(id):
+    f = Fernet(settings.FERNET_KEY)
+    return f.encrypt(str(id).encode()).decode()
 
 class WardrobePackageListView(StaffRequiredMixin, ListView):
     model = WardrobePackage
     template_name = 'saritasapp/wardrobe_package_list.html'
     context_object_name = 'packages'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        for package in context['packages']:
+            package.encrypted_id = encrypt_id(package.id)
+        return context 
 
 class WardrobePackageCreateView(StaffRequiredMixin, CreateView):
     model = WardrobePackage
@@ -1431,18 +1410,34 @@ class WardrobePackageCreateView(StaffRequiredMixin, CreateView):
         messages.success(self.request, f'Package "{self.object.name}" created successfully!')
         return response
 
-
+def decrypt_id(encrypted_id):
+    try:
+        from cryptography.fernet import Fernet
+        cipher_suite = Fernet(settings.ENCRYPTION_KEY)
+        decrypted_data = cipher_suite.decrypt(encrypted_id.encode()).decode()
+        return int(decrypted_data)  # Convert decrypted ID back to integer
+    except Exception as e:
+        raise ValueError(f"Decryption failed: {e}")
+    
 class WardrobePackageUpdateView(StaffRequiredMixin, UpdateView):
     model = WardrobePackage
     form_class = WardrobePackageForm
     template_name = 'saritasapp/wardrobe_package_form.html'
     success_url = reverse_lazy('saritasapp:wardrobe_package_list')
 
+    def get_object(self, queryset=None):
+        """Override to handle encrypted ID decryption"""
+        encrypted_id = self.kwargs.get('encrypted_id')
+        try:
+            package_id = decrypt_id(encrypted_id)  # Decrypt the ID
+            return get_object_or_404(WardrobePackage, pk=package_id)  # Get the object using the decrypted ID
+        except (ValueError, TypeError):
+            raise Http404("Invalid package ID")  # Raise 404 if decryption fails
+
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, f'Package "{self.object.name}" updated successfully!')
         return response
-
 
 # ✅ This is the fixed function that determines which item types a package includes
 def package_needs_this_type(package, item_type):
@@ -1456,34 +1451,46 @@ def package_needs_this_type(package, item_type):
     return item_type in allowed_types
 
 
+from django.shortcuts import get_object_or_404
+from django.http import Http404
+from utils.security import decrypt_id, encrypt_id
+from .models import WardrobePackage, ItemType
+
 class WardrobePackageDetailView(StaffRequiredMixin, DetailView):
     model = WardrobePackage
     template_name = 'saritasapp/wardrobe_package_detail.html'
+    context_object_name = 'package'
+    pk_url_kwarg = 'encrypted_id'  # Use encrypted_id for primary key instead of default pk
+
+    def get_object(self, queryset=None):
+        """Override to handle encrypted ID decryption"""
+        encrypted_id = self.kwargs.get('encrypted_id')
+        try:
+            package_id = decrypt_id(encrypted_id)  # Decrypt the ID
+            return get_object_or_404(WardrobePackage, pk=package_id)  # Get the object using the decrypted ID
+        except (ValueError, TypeError):
+            raise Http404("Invalid package ID")  # Raise 404 if decryption fails
 
     def validate_package_completeness(self, package):
         """Check if package has all required item types based on its tier"""
-        # Define required item types for each package tier
         tier_requirements = {
             'A': ['bridal_gown', 'groom_tuxedo'],
             'B': ['bridal_gown', 'groom_tuxedo', 'maid_honor', 'bestman'],
             'C': ['bridal_gown', 'groom_tuxedo', 'maid_honor', 'bestman',
                  'mother_gown', 'father_attire'],
-            'custom': []  # Custom packages have no required items
+            'custom': []
         }
 
-        # Get item types already in the package
         existing_types = set(
             package.package_items
             .select_related('inventory_item__item_type')
             .values_list('inventory_item__item_type__name', flat=True)
         )
 
-        # Check for missing required types
-        missing_types = []
-        for required_type in tier_requirements.get(package.tier, []):
-            if required_type not in existing_types:
-                missing_types.append(required_type)
-
+        missing_types = [
+            t for t in tier_requirements.get(package.tier, [])
+            if t not in existing_types
+        ]
         return missing_types
 
     def get_context_data(self, **kwargs):
@@ -1492,23 +1499,22 @@ class WardrobePackageDetailView(StaffRequiredMixin, DetailView):
         
         # Package completeness check
         missing_required = self.validate_package_completeness(package)
-        context['missing_required'] = missing_required
-        context['package_complete'] = not missing_required
-        
-        # Group items by type for better display
-        items_by_type = {}
-        for item in package.package_items.select_related('inventory_item__item_type').all():
-            item_type = item.inventory_item.item_type.name
-            if item_type not in items_by_type:
-                items_by_type[item_type] = []
-            items_by_type[item_type].append(item)
-        
-        context['items_by_type'] = items_by_type
-        
-        # Add item types for add item form
-        context['item_types'] = ItemType.objects.all()
-        
+        context.update({
+            'missing_required': missing_required,
+            'package_complete': not missing_required,
+            'items_by_type': self._group_items_by_type(package),
+            'item_types': ItemType.objects.all(),
+            'encrypted_id': self.kwargs['encrypted_id']  # Pass encrypted_id to template
+        })
         return context
+
+    def _group_items_by_type(self, package):
+        """Helper method to group package items by their type"""
+        items_by_type = {}
+        for item in package.package_items.select_related('inventory_item__item_type'):
+            item_type = item.inventory_item.item_type.name
+            items_by_type.setdefault(item_type, []).append(item)
+        return items_by_type
 
 
 class AddPackageItemView(StaffRequiredMixin, TemplateView):
@@ -1516,9 +1522,9 @@ class AddPackageItemView(StaffRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        package = get_object_or_404(WardrobePackage, pk=self.kwargs['package_id'])
+        encrypted_id = self.kwargs['encrypted_id']
+        package = get_decrypted_object_or_404(WardrobePackage, encrypted_id)
         
-        # Get all item types with their available items
         item_types = []
         for item_type in ItemType.objects.all():
             items = Inventory.objects.filter(
@@ -1541,29 +1547,29 @@ class AddPackageItemView(StaffRequiredMixin, TemplateView):
             'existing_items': package.package_items.select_related('inventory_item')
         })
         return context
+    
 
 
 class SubmitBulkPackageItemsView(StaffRequiredMixin, View):
     def post(self, request, *args, **kwargs):
-        package = get_object_or_404(WardrobePackage, pk=kwargs['package_id'])
+        encrypted_id = kwargs['encrypted_id']
+        package = get_decrypted_object_or_404(WardrobePackage, encrypted_id)
         selected_items = request.POST.get('selected_items', '').split(',')
         
         if not selected_items or selected_items[0] == '':
             messages.error(request, "No items selected")
-            return redirect('saritasapp:add_package_item', package_id=package.pk)
+            return redirect('saritasapp:add_package_item', encrypted_id=encrypt_id(package.pk))
         
         try:
             with transaction.atomic():
-                # Validate only one item per type is selected
                 selected_types = set()
                 for item_id in selected_items:
                     item = Inventory.objects.get(id=item_id)
                     if item.item_type in selected_types:
                         messages.error(request, f"Can only select one {item.item_type.get_name_display()} per package")
-                        return redirect('saritasapp:add_package_item', package_id=package.pk)
+                        return redirect('saritasapp:add_package_item', encrypted_id=encrypt_id(package.pk))
                     selected_types.add(item.item_type)
                 
-                # Create package items
                 for item_id in selected_items:
                     quantity = int(request.POST.get(f'quantity_{item_id}', 1))
                     label = request.POST.get(f'label_{item_id}', '')
@@ -1583,18 +1589,19 @@ class SubmitBulkPackageItemsView(StaffRequiredMixin, View):
                     )
                 
                 messages.success(request, f"Added {len(selected_items)} items to package")
-                return redirect('saritasapp:wardrobe_package_detail', pk=package.pk)
+                return redirect('saritasapp:wardrobe_package_detail', encrypted_id=encrypt_id(package.pk))
                 
         except Inventory.DoesNotExist:
             messages.error(request, "One or more items are no longer available")
         except Exception as e:
             messages.error(request, f"Error adding items: {str(e)}")
         
-        return redirect('saritasapp:add_package_item', package_id=package.pk)
+        return redirect('saritasapp:add_package_item', encrypted_id=encrypt_id(package.pk))
 
 class AddPackageItemSubmitView(StaffRequiredMixin, View):
     def post(self, request, *args, **kwargs):
-        package = get_object_or_404(WardrobePackage, pk=kwargs['package_id'])
+        encrypted_id = kwargs['encrypted_id']
+        package = get_decrypted_object_or_404(WardrobePackage, encrypted_id)
         form = PackageItemForm(request.POST, package=package)
         
         if form.is_valid():
@@ -1617,29 +1624,36 @@ class AddPackageItemSubmitView(StaffRequiredMixin, View):
         else:
             messages.error(request, "Error adding item to package")
         
-        return redirect('saritasapp:add_package_item', package_id=package.pk)
+        return redirect('saritasapp:add_package_item', encrypted_id=encrypt_id(package.pk))
 
 class EditPackageItemView(StaffRequiredMixin, UpdateView):
     model = WardrobePackageItem
     form_class = WardrobePackageItemForm
     template_name = 'saritasapp/edit_package_item.html'
     
-    def get_success_url(self):
-        return reverse('saritasapp:wardrobe_package_detail', kwargs={'pk': self.object.package.pk})
+    def get_object(self, queryset=None):
+        encrypted_id = self.kwargs.get('encrypted_id')
+        return get_decrypted_object_or_404(WardrobePackageItem, encrypted_id)
     
+    def get_success_url(self):
+        return reverse('saritasapp:wardrobe_package_detail', 
+                      kwargs={'encrypted_id': encrypt_id(self.object.package.pk)})
+
 class FilterInventoryItemsView(StaffRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         item_type_id = request.GET.get('item_type')
-        package_id = request.GET.get('package')
+        encrypted_package_id = request.GET.get('package')
         
-        # Get items already in package
         existing_item_ids = []
-        if package_id:
-            existing_item_ids = WardrobePackageItem.objects.filter(
-                package_id=package_id
-            ).values_list('inventory_item_id', flat=True)
+        if encrypted_package_id:
+            try:
+                package_id = decrypt_id(encrypted_package_id)
+                existing_item_ids = WardrobePackageItem.objects.filter(
+                    package_id=package_id
+                ).values_list('inventory_item_id', flat=True)
+            except (ValueError, TypeError):
+                pass
         
-        # Filter available items by type
         items = Inventory.objects.filter(
             item_type_id=item_type_id,
             available=True
@@ -1652,7 +1666,7 @@ class FilterInventoryItemsView(StaffRequiredMixin, View):
             } for item in items]
         })
 
-# Staff-only view to see pending rentals
+# Rental Approval Views
 @login_required
 @user_passes_test(lambda u: u.is_staff)
 def staff_rental_requests(request):
@@ -1661,21 +1675,20 @@ def staff_rental_requests(request):
         'pending_rentals': pending_rentals
     })
 
-# Staff approval/rejection
 @login_required
 @user_passes_test(lambda u: u.is_staff)
-def staff_manage_rental(request, rental_id):
-    rental = get_object_or_404(WardrobePackageRental, pk=rental_id)
+def staff_manage_rental(request, encrypted_id):
+    rental = get_decrypted_object_or_404(WardrobePackageRental, encrypted_id)
     
     if request.method == 'POST':
         form = StaffRentalApprovalForm(request.POST, instance=rental)
         if form.is_valid():
             rental = form.save(commit=False)
-            rental.staff = request.user  # Assign staff member handling this
+            rental.staff = request.user
             rental.save()
             
-            messages.success(request, f"Rental #{rental.id} updated to {rental.get_status_display()}!")
-            return redirect('staff_rental_requests')
+            messages.success(request, f"Rental updated to {rental.get_status_display()}!")
+            return redirect('saritasapp:staff_rental_requests')
     else:
         form = StaffRentalApprovalForm(instance=rental)
     
@@ -1686,19 +1699,19 @@ def staff_manage_rental(request, rental_id):
 
 @login_required
 @user_passes_test(lambda u: u.is_staff)
-def process_return(request, rental_id):
-    rental = get_object_or_404(WardrobePackageRental, pk=rental_id)
+def process_return(request, encrypted_id):
+    rental = get_decrypted_object_or_404(WardrobePackageRental, encrypted_id)
     
     if request.method == 'POST':
         form = PackageReturnForm(request.POST, instance=rental)
         if form.is_valid():
             rental = form.save(commit=False)
             rental.status = 'returned'
-            rental.staff = request.user  # Assign staff member processing return
+            rental.staff = request.user
             rental.save()
             
-            messages.success(request, f"Package #{rental.id} marked as returned!")
-            return redirect('staff_dashboard')
+            messages.success(request, f"Package marked as returned!")
+            return redirect('saritasapp:staff_dashboard')
     else:
         form = PackageReturnForm(instance=rental)
     
@@ -1733,8 +1746,8 @@ def package_rental_approvals(request):
     })
 
 @staff_member_required
-def update_package_rental_status(request, rental_id, action):
-    rental = get_object_or_404(WardrobePackageRental, pk=rental_id)
+def update_package_rental_status(request, encrypted_id, action):
+    rental = get_decrypted_object_or_404(WardrobePackageRental, encrypted_id)
     
     try:
         with transaction.atomic():
@@ -1767,7 +1780,6 @@ def update_package_rental_status(request, rental_id, action):
                 messages.error(request, "Invalid action")
                 return redirect('saritasapp:package_rental_approvals')
 
-            # Create notification
             Notification.objects.create(
                 user=rental.customer.user,
                 notification_type=f'package_rental_{action_message}',
@@ -1785,11 +1797,11 @@ def update_package_rental_status(request, rental_id, action):
     return redirect('saritasapp:package_rental_approvals')
 
 @login_required
-def package_rental_detail(request, rental_id):
+def package_rental_detail(request, encrypted_id):
     try:
-        rental = get_object_or_404(
+        rental = get_decrypted_object_or_404(
             WardrobePackageRental, 
-            pk=rental_id,
+            encrypted_id,
             customer=request.user.customer_profile
         )
     except PermissionDenied:

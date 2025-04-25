@@ -1,5 +1,6 @@
 from datetime import timezone
 import os
+from pyexpat.errors import messages
 from tkinter import Image
 from django import forms
 from django.urls import reverse_lazy
@@ -22,6 +23,7 @@ class EventForm(forms.ModelForm):
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
         
+
 class InventoryForm(forms.ModelForm):
     name = forms.CharField(
         label="Item Name",
@@ -48,43 +50,31 @@ class InventoryForm(forms.ModelForm):
         decimal_places=2,
         label="Rental Price",
         required=True,
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'step': '0.01'
-        })
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'})
     )
     reservation_price = forms.DecimalField(
         min_value=0,
         max_digits=10,
         decimal_places=2,
-        required=True,
         label="Reservation Price",
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'step': '0.01'
-        })
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+        required=False,
     )
     deposit_price = forms.DecimalField(
         min_value=0,
         max_digits=10,
         decimal_places=2,
-        required=True,
         label="Deposit Price",
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'step': '0.01'
-        })
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+        required=False,
     )
     purchase_price = forms.DecimalField(
         min_value=0,
         max_digits=10,
         decimal_places=2,
-        required=False,
         label="Purchase Price",
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'step': '0.01'
-        })
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+        required=False,
     )
     size = forms.ModelChoiceField(
         queryset=Size.objects.all().order_by('name'),
@@ -99,12 +89,33 @@ class InventoryForm(forms.ModelForm):
         widget=forms.Select(attrs={'class': 'form-select'})
     )
     image = forms.ImageField(
-        required=True,
+        required=True, 
         label="Upload Image",
-        widget=forms.ClearableFileInput(attrs={
-            'class': 'form-control',
-            'accept': 'image/*'
-        })
+        widget=forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+    )
+    item_type = forms.ModelChoiceField(
+        queryset=ItemType.objects.all().order_by('name'),
+        required=True,
+        widget=forms.Select(attrs={'class': 'form-select select2', 'data-placeholder': 'Select item type'}),
+        label="Item Role Type",
+        empty_label="Select item type"
+    )
+    category = forms.ModelChoiceField(
+        queryset=Category.objects.all().order_by('name'),
+        required=True,
+        label="Category",
+        widget=forms.Select(attrs={'class': 'form-select select2', 'data-placeholder': 'Select category'})
+    )
+    color = forms.ModelChoiceField(
+        queryset=Color.objects.all().order_by('name'),
+        required=False,
+        label="Color",
+        widget=forms.Select(attrs={'class': 'form-select select2', 'data-placeholder': 'Select color'}),
+    )
+    available = forms.BooleanField(
+        label="Available",
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
     )
 
     class Meta:
@@ -114,69 +125,79 @@ class InventoryForm(forms.ModelForm):
             'rental_price', 'reservation_price', 'deposit_price', 'purchase_price',
             'available', 'image'
         ]
-        widgets = {
-            'category': forms.Select(attrs={
-                'class': 'form-select select2',
-                'data-placeholder': 'Select category'
-            }),
-            'item_type': forms.Select(attrs={
-                'class': 'form-select select2',
-                'data-placeholder': 'Select item type'
-            }),
-            'color': forms.Select(attrs={
-                'class': 'form-select select2',
-                'data-placeholder': 'Select color'
-            }),
-            'available': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        }
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
-        if self.user and hasattr(self.user, 'staff_profile'):
-            self.fields['branch'].initial = self.user.staff_profile.branch
-            self.fields['branch'].disabled = True
+        # Ensure item types exist in the database
+        if not ItemType.objects.exists():
+            ItemType.initialize_choices()
+            self.fields['item_type'].queryset = ItemType.objects.all().order_by('name')
 
-        # Order dropdowns alphabetically
-        self.fields['category'].queryset = Category.objects.all().order_by('name')
-        self.fields['color'].queryset = Color.objects.all().order_by('name')
-        
-        # Handle ItemType - only show existing choices with empty label
-        self.fields['item_type'].queryset = ItemType.objects.all().order_by('name')
-        self.fields['item_type'].empty_label = "Select item type"
-        
-        # Disable adding/changing item types in admin
-        if hasattr(self, 'admin_helper'):
-            self.fields['item_type'].widget.can_add_related = False
-            self.fields['item_type'].widget.can_change_related = False
-            self.fields['item_type'].widget.can_delete_related = False
-        
-        # Make required fields more obvious
-        for field in ['name', 'category', 'quantity', 'rental_price']:
-            self.fields[field].widget.attrs['required'] = 'required'
+        # Handle branch field based on user type
+        if self.user and hasattr(self.user, 'staff_profile'):
+            # Staff users - auto-set to their branch
+            self.fields['branch'].initial = self.user.staff_profile.branch
+            self.fields['branch'].widget = forms.HiddenInput()
+            self.fields['branch'].queryset = Branch.objects.filter(pk=self.user.staff_profile.branch.pk)
+        elif self.user and self.user.is_superuser:
+            # For admin users - show all branches
+            self.fields['branch'].queryset = Branch.objects.all().order_by('branch_name')
+            self.fields['branch'].widget.attrs.update({'class': 'form-select'})
+        else:
+            # For other users (shouldn't happen since view requires login)
+            self.fields['branch'].widget = forms.HiddenInput()
+
+        # Set required fields with asterisk
+        for field in self.fields:
+            if self.fields[field].required:
+                self.fields[field].label = f"{self.fields[field].label} *"
+
+        # If editing an existing item, make image not required
+        if self.instance and self.instance.pk:
+            self.fields['image'].required = False
 
     def clean(self):
         cleaned_data = super().clean()
         
-        # Ensure deposit >= rental price if both exist
-        
+        # Validate deposit price is >= rental price
+        deposit_price = cleaned_data.get("deposit_price")
+        rental_price = cleaned_data.get("rental_price")
+
+        # Validate item_type exists
+        item_type = cleaned_data.get('item_type')
+        if item_type and not ItemType.objects.filter(pk=item_type.pk).exists():
+            self.add_error('item_type', 'Selected item type does not exist.')
+
         return cleaned_data
 
     def save(self, commit=True):
         instance = super().save(commit=False)
-
-        # Capitalize name before saving
-        if instance.name:
-            instance.name = instance.name.title()
-
-        # Set created_by if new instance
+        
+        # Format name properly
+        instance.name = instance.name.title() if instance.name else ""
+        
+        # Set availability based on quantity
+        instance.available = instance.quantity > 0
+        
+        # Set created_by if this is a new item
         if not instance.pk and hasattr(self.user, 'staff_profile'):
             instance.created_by = self.user
 
         if commit:
             instance.save()
             self.save_m2m()
+
+            # Handle image separately to avoid issues with existing images
+            if 'image' in self.changed_data:
+                if self.cleaned_data['image']:
+                    instance.image = self.cleaned_data['image']
+                    instance.save()
+                elif not self.cleaned_data['image'] and self.instance.image:
+                    # Keep existing image if no new one was uploaded
+                    instance.image = self.instance.image
+                    instance.save()
 
         return instance
 
