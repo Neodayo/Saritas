@@ -1,6 +1,6 @@
 from django.urls import path, register_converter
 
-from saritas.core.converters import EncryptedIDConverter
+from core.converters import EncryptedIDConverter
 from . import views
 
 app_name = 'customerapp'

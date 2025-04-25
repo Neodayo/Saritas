@@ -17,7 +17,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import transaction
 from django.db.models import Count, F, Q, Sum
 from django.db.models.functions import ExtractMonth, ExtractWeek, ExtractYear, TruncMonth
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
@@ -34,7 +34,7 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 
 # Local app imports
 from .forms import (
-    AddPackageItemForm, AdminSignUpForm, BulkPackageItemForm, CategoryForm, ColorForm, EditProfileForm, EventForm,
+    AddPackageItemForm, AdminSignUpForm, BulkPackageItemForm, CategoryForm, ColorForm, EditProfileForm, EditStaffForm, EventForm,
     InventoryForm, LoginForm, PackageItemForm, PackageReturnForm, SizeForm, StaffRentalApprovalForm, StaffSignUpForm,
     WardrobePackageForm, WardrobePackageItemForm,
     PackageCustomizationForm, CustomizePackageForm
@@ -51,7 +51,6 @@ from django.core.exceptions import BadRequest
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
 from django.utils.timezone import now
-from .utils.encryption import encrypt_id, decrypt_id
 from core.utils.encryption import (
     get_decrypted_object_or_404,
     encrypt_id,
@@ -547,11 +546,32 @@ def return_rental(request, encrypted_id):
 
 # views.py
 @login_required
+def edit_staff(request, staff_id):
+    staff = get_object_or_404(User, id=staff_id, role='staff')
+    if request.method == 'POST':
+        form = EditStaffForm(request.POST, instance=staff)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Staff details updated successfully.')
+            return redirect('saritasapp:manage_staff')
+    else:
+        form = EditStaffForm(instance=staff)
+    return render(request, 'saritasapp/edit_staff.html', {'form': form, 'staff': staff})
+
+@login_required
+def delete_staff(request, staff_id):
+    staff = get_object_or_404(User, id=staff_id, role='staff')
+    if request.method == 'POST':
+        staff.delete()
+        messages.success(request, 'Staff member deleted successfully.')
+        return redirect('saritasapp:manage_staff')
+    return render(request, 'saritasapp/confirm_delete_staff.html', {'staff': staff})
+
+@login_required
 def manage_staff(request):
-    staff_list = User.objects.filter(
-        role='staff'
-    ).select_related('staff_profile').order_by('last_name', 'first_name')
-    
+    staff_list = User.objects.filter(role='staff') \
+                             .select_related('staff_profile') \
+                             .order_by('last_name', 'first_name')
     context = {
         'staff_list': staff_list,
         'user': request.user
@@ -1425,10 +1445,6 @@ def package_needs_this_type(package, item_type):
     return item_type in allowed_types
 
 
-from django.shortcuts import get_object_or_404
-from django.http import Http404
-from utils.security import decrypt_id, encrypt_id
-from .models import WardrobePackage, ItemType
 
 class WardrobePackageDetailView(StaffRequiredMixin, DetailView):
     model = WardrobePackage
