@@ -1,272 +1,349 @@
 {% extends 'saritasapp/base.html' %}
 {% load static %}
 
-{% block title %}{{ object.name }} | Worldwide Customs{% endblock %}
+{% block title %}{{ object.name }} | Sarita's{% endblock %}
 
 {% block extra_css %}
 <style>
-    :root {
-        --gold: #AD974F;
-        --gold-dark: #8a793d;
-        --light-bg: #f9f9f9;
+    .package-detail-container {
+        max-width: 1400px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        border: 1px solid #EAEAEA;
     }
-    
+
     .package-header {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        padding: 1.5rem 0;
-        margin-bottom: 1.5rem;
-        border-bottom: 1px solid rgba(0,0,0,0.1);
+        background: #faf8f0;
+        padding: 2rem;
+        border-radius: 12px;
+        /* margin-bottom: 2rem;
+        border-bottom: 3px solid #8E793E; */
     }
-    
-    .compact-card {
-        width: 220px;
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+
+    .package-title {
+        color: #8E793E;
+        font-family: 'Playfair Display', serif;
+        font-size: 2.2rem;
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .package-description {
+        color: #5a5a5a;
+        text-align: center;
+        font-size: 1.1rem;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .status-alert {
+        padding: 1.2rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+        border: 2px solid;
+    }
+
+    .alert-success {
+        background: rgba(46, 204, 113, 0.1);
+        border-color: #2ecc71;
+        color: #27ae60;
+    }
+
+    .alert-warning {
+        background: rgba(241, 196, 15, 0.1);
+        border-color: #f1c40f;
+        color: #c29d0b;
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .summary-card {
+        background: #ffffff;
+        padding: 1.5rem;
+        border-radius: 12px;
+        /* border-left: 4px solid #AD974F; */
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .summary-label {
+        color: #5a5a5a;
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .summary-value {
+        color: #8E793E;
+        font-size: 1.8rem;
+        font-weight: 700;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 2rem 0;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #EAEAEA;
+    }
+
+    .section-title {
+        color: #8E793E;
+        font-size: 1.5rem;
+        margin: 0;
+    }
+
+    .add-item-btn {
+        background: linear-gradient(135deg, #8E793E 0%, #AD974F 100%);
+        color: white;
+        padding: 0.6rem 1.2rem;
+        border-radius: 6px;
+        font-weight: 600;
         transition: all 0.3s ease;
-        margin-right: 15px;
-        margin-bottom: 20px;
-        background: white;
-        display: inline-block;
-        vertical-align: top;
     }
-    
-    .compact-card:hover {
+
+    .add-item-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(142, 121, 62, 0.2);
+    }
+
+    .cards-scroller {
+        display: grid;
+        grid-auto-flow: column;
+        gap: 1.5rem;
+        overflow-x: auto;
+        padding: 1rem 0;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .item-card {
+        width: 280px;
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease;
+        border: 1px solid #EAEAEA;
+    }
+
+    .item-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
     }
-    
+
     .card-image-container {
-        height: 160px;
-        width: 100%;
+        height: 200px;
         position: relative;
         overflow: hidden;
+        background: #faf8f0;
     }
-    
+
     .card-image {
         height: 100%;
         width: 100%;
         object-fit: cover;
         transition: transform 0.5s ease;
     }
-    
-    .compact-card:hover .card-image {
+
+    .item-card:hover .card-image {
         transform: scale(1.05);
     }
-    
+
     .item-badge {
         position: absolute;
-        top: 10px;
-        right: 10px;
-        background: var(--gold);
+        top: 12px;
+        right: 12px;
+        background: #8E793E;
         color: white;
-        padding: 3px 8px;
-        border-radius: 10px;
-        font-size: 0.7rem;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
         font-weight: 600;
-        text-transform: uppercase;
     }
-    
+
     .card-body {
-        padding: 12px;
+        padding: 1.2rem;
     }
-    
+
     .item-title {
-        font-size: 0.9rem;
+        color: #5a5a5a;
+        font-size: 1.1rem;
         font-weight: 600;
-        margin-bottom: 5px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        margin-bottom: 0.5rem;
     }
-    
-    .item-details {
-        font-size: 0.75rem;
-        color: #666;
-        margin-bottom: 5px;
+
+    .item-detail {
         display: flex;
         justify-content: space-between;
+        color: #95a5a6;
+        font-size: 0.9rem;
+        margin-bottom: 0.4rem;
     }
-    
+
     .item-price {
-        color: var(--gold);
+        color: #AD974F;
         font-weight: 700;
-        font-size: 0.9rem;
+        font-size: 1.2rem;
     }
-    
-    .item-meta {
+
+    .item-tags {
         display: flex;
-        justify-content: space-between;
-        font-size: 0.7rem;
-        color: #888;
-        margin-top: 5px;
+        gap: 0.5rem;
+        margin-top: 1rem;
     }
-    
-    .cards-scroller {
-        white-space: nowrap;
-        overflow-x: auto;
-        padding: 10px 0;
-        -webkit-overflow-scrolling: touch;
+
+    .required-badge {
+        background: rgba(231, 76, 60, 0.1);
+        color: #e74c3c;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
     }
-    
-    .cards-scroller::-webkit-scrollbar {
-        height: 5px;
+
+    .no-replace-badge {
+        background: rgba(241, 196, 15, 0.1);
+        color: #f1c40f;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
     }
-    
-    .cards-scroller::-webkit-scrollbar-track {
-        background: #f1f1f1;
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #95a5a6;
     }
-    
-    .cards-scroller::-webkit-scrollbar-thumb {
-        background: var(--gold);
-        border-radius: 10px;
-    }
-    
-    .package-summary {
-        background: white;
-        border-radius: 10px;
-        padding: 15px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-    
-    .summary-item {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 8px;
-    }
-    
-    .summary-label {
-        color: #666;
-        font-size: 0.85rem;
-    }
-    
-    .summary-value {
-        font-weight: 600;
-    }
-    
-    .gold-text {
-        color: var(--gold);
-    }
-    
-    .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+
+    .empty-state i {
+        font-size: 2.5rem;
+        color: #AD974F;
         margin-bottom: 1rem;
     }
-    
-    .empty-state {
-        width: 100%;
-        text-align: center;
-        padding: 2rem 0;
+
+    @media (max-width: 768px) {
+        .package-detail-container {
+            padding: 1rem;
+            margin: 1rem;
+        }
+        
+        .package-title {
+            font-size: 1.8rem;
+        }
+        
+        .cards-scroller {
+            gap: 1rem;
+        }
+        
+        .item-card {
+            width: 260px;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Add this near the top of your template -->
-<div class="alert {% if package_complete %}alert-success{% else %}alert-warning{% endif %} mb-4">
-    {% if package_complete %}
-        <i class="fas fa-check-circle"></i> Package is complete
-    {% else %}
-        <i class="fas fa-exclamation-triangle"></i> Package is missing required items:
-        <ul>
-            {% for type in missing_required %}
-                <li>{{ type }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-</div>
-
-<div class="package-header">
-    <div class="container">
-        <h2 class="text-center mb-1">{{ object.name }}</h2>
-        <p class="text-center text-muted mb-0">{{ object.description }}</p>
+<div class="package-detail-container">
+    <div class="status-alert {% if package_complete %}alert-success{% else %}alert-warning{% endif %}">
+        <i class="fas {% if package_complete %}fa-check-circle{% else %}fa-exclamation-triangle{% endif %}"></i>
+        {% if package_complete %}
+            Package is complete and ready for use
+        {% else %}
+            Package requirements missing:
+            <ul class="mt-2">
+                {% for type in missing_required %}
+                    <li>{{ type }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
     </div>
-</div>
 
-<div class="container">
-    <div class="package-summary">
-        <div class="row">
-            <div class="col-md-4">
-                <div class="summary-item">
-                    <span class="summary-label">Base Price</span>
-                    <span class="summary-value gold-text">₱{{ object.base_price|floatformat:2 }}</span>
-                </div>
-                <small class="text-muted">Per rental period</small>
-            </div>
-            <div class="col-md-4">
-                <div class="summary-item">
-                    <span class="summary-label">Deposit</span>
-                    <span class="summary-value gold-text">₱{{ object.deposit_price|floatformat:2 }}</span>
-                </div>
-                <small class="text-muted">Refundable</small>
-            </div>
-            <div class="col-md-4">
-                <div class="summary-item">
-                    <span class="summary-label">Status</span>
-                    <span class="summary-value">
-                        <span class="badge badge-{% if object.status == 'available' %}success{% else %}secondary{% endif %}">
-                            {{ object.get_status_display }}
-                        </span>
-                    </span>
-                </div>
-                <small class="text-muted">Current availability</small>
+    <div class="package-header">
+        <h1 class="package-title">{{ object.name }}</h1>
+        <p class="package-description">{{ object.description }}</p>
+    </div>
+
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="summary-label">Base Price</div>
+            <div class="summary-value">₱{{ object.base_price|floatformat:2 }}</div>
+            <small class="text-muted">Per rental period</small>
+        </div>
+        
+        <div class="summary-card">
+            <div class="summary-label">Deposit</div>
+            <div class="summary-value">₱{{ object.deposit_price|floatformat:2 }}</div>
+            <small class="text-muted">Refundable</small>
+        </div>
+        
+        <div class="summary-card">
+            <div class="summary-label">Status</div>
+            <div class="summary-value">
+                <span class="status-badge" style="background: {% if object.status == 'available' %}#2ecc71{% else %}#95a5a6{% endif %};">
+                    {{ object.get_status_display }}
+                </span>
             </div>
         </div>
     </div>
 
     <div class="section-header">
-        <h5>Featured Pieces <small class="text-muted">({{ object.package_items.count }} items)</small></h5>
-        <a href="{% url 'saritasapp:add_package_item' object.pk %}" class="btn btn-success btn-sm">
-            <i class="fas fa-plus mr-1"></i> Add Items
+        <h2 class="section-title">Featured Items ({{ object.package_items.count }})</h2>
+        <a href="{% url 'saritasapp:add_package_item' object.pk %}" class="add-item-btn">
+            <i class="fas fa-plus mr-2"></i> Add Items
         </a>
     </div>
     
     <div class="cards-scroller">
         {% for item in object.package_items.all %}
-        <div class="compact-card">
+        <div class="item-card">
             <div class="card-image-container">
                 {% if item.inventory_item.image %}
-                <img src="{{ item.inventory_item.image.url }}" class="card-image" alt="{{ item.display_name }}">
+                    <img src="{{ item.inventory_item.image.url }}" class="card-image" alt="{{ item.display_name }}">
                 {% else %}
-                <div class="card-image" style="background: #eee; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-image fa-2x text-muted"></i>
-                </div>
+                    <div class="card-image-placeholder">
+                        <i class="fas fa-image fa-3x text-muted"></i>
+                    </div>
                 {% endif %}
-                <span class="item-badge">{{ item.inventory_item.get_item_type_display|truncatechars:12 }}</span>
+                <span class="item-badge">{{ item.inventory_item.get_item_type_display }}</span>
             </div>
             <div class="card-body">
-                <h6 class="item-title">{{ item.inventory_item.name }}</h6>
-                <div class="item-details">
-                    <span>Category: {{ item.inventory_item.category.name }}</span>
+                <h3 class="item-title">{{ item.inventory_item.name }}</h3>
+                <div class="item-detail">
+                    <span>Category</span>
+                    <span>{{ item.inventory_item.category.name }}</span>
                 </div>
-                <div class="item-details">
-                    <span>Size: {{ item.inventory_item.size|default:"-" }}</span>
-                    <span>Qty: {{ item.quantity }}</span>
+                <div class="item-detail">
+                    <span>Size</span>
+                    <span>{{ item.inventory_item.size|default:"-" }}</span>
                 </div>
-                <div class="item-details">
-                    <span>Color: {{ item.inventory_item.color|default:"-" }}</span>
+                <div class="item-detail">
+                    <span>Color</span>
+                    <span>{{ item.inventory_item.color|default:"-" }}</span>
                 </div>
-                <div class="item-meta">
-                    <span class="item-price">₱{{ item.inventory_item.rental_price|floatformat:2 }}</span>
-                    <span>
-                        {% if item.is_required %}
-                        <span class="badge badge-danger">Required</span>
-                        {% endif %}
-                        {% if not item.replacement_allowed %}
-                        <span class="badge badge-warning">No Replace</span>
-                        {% endif %}
-                    </span>
+                <div class="item-detail">
+                    <span>Quantity</span>
+                    <span>{{ item.quantity }}</span>
+                </div>
+                <div class="item-tags">
+                    {% if item.is_required %}
+                        <span class="required-badge">Required</span>
+                    {% endif %}
+                    {% if not item.replacement_allowed %}
+                        <span class="no-replace-badge">No Replacement</span>
+                    {% endif %}
                 </div>
             </div>
         </div>
         {% empty %}
         <div class="empty-state">
-            <div class="alert alert-info">
-                <i class="fas fa-box-open mr-2"></i> No items added to this package yet.
-            </div>
+            <i class="fas fa-box-open"></i>
+            <p>No items added to this package yet</p>
         </div>
         {% endfor %}
     </div>
