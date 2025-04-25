@@ -44,17 +44,31 @@
         left: 100%;
         transition: left 0.7s ease-in-out;
     }
-    
+
     /* Add fade-in animation styles */
     .fade-in {
         opacity: 0;
         transform: translateY(20px);
         transition: opacity 0.8s ease, transform 0.8s ease;
     }
-    
+
     .fade-in.visible {
         opacity: 1;
         transform: translateY(0);
+    }
+
+    /* New slideshow styles */
+    .event-slideshow {
+        height: 70vh;
+        min-height: 500px;
+    }
+
+    .event-slideshow .slide {
+        transition: opacity 1.5s ease-in-out;
+    }
+
+    .event-slideshow:hover .slide-content {
+        transform: scale(1.02);
     }
 </style>
 {% endblock %}
@@ -68,16 +82,18 @@
         <img src="{% static 'images/customerbackground.jpg' %}" alt="Fashion rental collection"
             class="absolute inset-0 w-full h-full object-cover blur-sm">
 
-
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
 
         <!-- Content -->
         <div class="relative z-10 h-full flex items-center justify-center text-white">
             <div class="text-center px-4">
-                <h1 class="text-4xl md:text-5xl font-bold mb-4">Elevate Your Special Occasion</h1>
-                <p class="text-xl mb-8">Premium fashion rentals for weddings, debuts, and galas</p>
+                <h1 class="text-4xl md:text-5xl font-bold mb-4 opacity-0 transition-opacity duration-1000 ease-out"
+                    style="transition-delay: 300ms;">Elevate Your Special Occasion</h1>
+                <p class="text-xl mb-8 opacity-0 transition-opacity duration-1000 ease-out"
+                    style="transition-delay: 600ms;">Wedding Gowns, Wedding Entourage, Gowns and Suit for any occasions</p>
                 <a href="{% url 'customerapp:collections' %}"
-                    class="shine-effect bg-[#9E8729] hover:bg-[#AD974F] text-white py-3 px-6 rounded-md inline-block transition relative overflow-hidden">
+                    class="shine-effect bg-[#9E8729] hover:bg-[#AD974F] text-white py-3 px-6 rounded-md inline-block opacity-0 transition-opacity duration-1000 ease-out"
+                    style="transition-delay: 900ms;">
                     Browse Collection
                 </a>
             </div>
@@ -88,13 +104,12 @@
     <section id="featured-categories" class="py-16 px-4">
         <div class="max-w-6xl mx-auto">
             <h2
-                class="text-3xl text-center text-[#5a3e2b] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373]">
+                class="text-3xl text-center text-[#5a3e2b] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373] fade-in">
                 Featured Collections</h2>
             <div class="flex overflow-x-auto gap-6 pb-4 -mx-4 px-4">
                 {% for category in featured_categories %}
                 <a href="{% url 'customerapp:wardrobe' %}?category={{ category.id }}"
                     class="group relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex-shrink-0 w-64 h-[22rem] flex flex-col">
-
 
                     {% if category.featured_item %}
                     <div class="w-full h-full overflow-hidden">
@@ -126,30 +141,64 @@
         </div>
     </section>
 
-
-
-    <!-- Event Decoration Features -->
-    <section class="py-16 px-4 bg-gray-100">
-        <div class="max-w-6xl mx-auto">
+    <!-- Past Events Showcase - Hero-Style Slideshow -->
+    <section class="relative py-16 px-4 event-slideshow">
+        <div class="absolute inset-0 overflow-hidden">
             <h2
-                class="text-3xl text-center text-[#5a3e2b] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373]">
-                Events</h2>
-            <!-- <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {% for category in categories %}
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <img src="{% static 'images/category-'|add:category.name|lower|add:'.jpg' %}"
-                        onerror="this.onerror=null;this.src='/static/images/default-category.jpg'"
-                        class="w-full h-48 object-cover">
-                    <div class="p-4 text-center">
-                        <h3 class="font-bold text-xl mb-4">{{ category.name }}</h3>
-                        <a href=""
-                            class="bg-[#9E8729] hover:bg-[#AD974F] text-white py-2 px-4 rounded-md inline-block transition">
-                            View Collection
-                        </a>
+                class="text-3xl text-center text-[#5a3e2b] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373] fade-in">
+                Past Event Showcase</h2>
+
+            <!-- Slideshow Container -->
+            <div class="h-full w-full relative" id="eventSlideshow">
+                <!-- Slide 1 -->
+                <div class="absolute inset-0 slide transition-opacity duration-1000 ease-in-out opacity-100">
+                    <img src="{% static 'images\FerdKaycee.png' %}" alt="Elegant Wedding"
+                        class="w-full h-full object-cover object-center">
+                    <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+                        <div
+                            class="text-center text-white max-w-2xl px-4 slide-content transform transition-all duration-700 ease-out">
+                            <h3 class="text-3xl md:text-4xl font-bold mb-4">Ferd & Kaycee's Wedding</h3>
+                            <p class="text-xl mb-6">Palacio Del Sur • February 2025</p>
+                        </div>
                     </div>
                 </div>
-                {% endfor %}
-            </div> -->
+
+                <!-- Slide 2 -->
+                <div class="absolute inset-0 slide transition-opacity duration-1000 ease-in-out opacity-0">
+                    <img src="{% static 'images\ChrisGrace.png' %}" alt="18th Debut"
+                        class="w-full h-full object-cover object-center">
+                    <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+                        <div
+                            class="text-center text-white max-w-2xl px-4 slide-content transform transition-all duration-700 ease-out">
+                            <h3 class="text-3xl md:text-4xl font-bold mb-4">Cris & Grace's Wedding</h3>
+                            <p class="text-xl mb-6">Palacio Del Sur • December 2024</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="absolute inset-0 slide transition-opacity duration-1000 ease-in-out opacity-0">
+                    <img src="{% static 'images/ChristianAileen.png' %}" alt="Corporate Gala"
+                        class="w-full h-full object-cover object-center">
+                    <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+                        <div
+                            class="text-center text-white max-w-2xl px-4 slide-content transform transition-all duration-700 ease-out">
+                            <h3 class="text-3xl md:text-4xl font-bold mb-4">Christian & Aileen's Wedding</h3>
+                            <p class="text-xl mb-6">Regency • December 2022</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Dots -->
+        <div class="absolute bottom-8 left-0 right-0 flex justify-center gap-2 z-10">
+            <button class="event-dot w-3 h-3 rounded-full bg-white/80 hover:bg-white transition-colors"
+                data-index="0"></button>
+            <button class="event-dot w-3 h-3 rounded-full bg-white/30 hover:bg-white/50 transition-colors"
+                data-index="1"></button>
+            <button class="event-dot w-3 h-3 rounded-full bg-white/30 hover:bg-white/50 transition-colors"
+                data-index="2"></button>
         </div>
     </section>
 
@@ -157,7 +206,7 @@
     <section class="py-16 px-4">
         <div class="max-w-6xl mx-auto">
             <h2
-                class="text-3xl text-center text-[#5a3e2b] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373]">
+                class="text-3xl text-center text-[#5a3e2b] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373] fade-in">
                 Packages</h2>
             <h1 class="text-center mb-12">--- ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING
                 ---</h1>
@@ -184,36 +233,73 @@
 </main>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Select all h2 tags
-        const headings = document.querySelectorAll('h2');
-        
-        // Add the fade-in class to all h2 tags
-        headings.forEach(heading => {
-            heading.classList.add('fade-in');
-        });
-        
-        // Function to check if an element is in viewport
-        function isInViewport(element) {
-            const rect = element.getBoundingClientRect();
-            return (
-                rect.top <= (window.innerHeight || document.documentElement.clientHeight) * 0.8
-            );
-        }
-        
-        // Function to handle scroll events
+    document.addEventListener('DOMContentLoaded', function () {
+        // Hero section animation
+        const heroTitle = document.querySelector('.hero-banner h1');
+        const heroSubtitle = document.querySelector('.hero-banner p');
+        const heroButton = document.querySelector('.hero-banner a');
+
+        setTimeout(() => { heroTitle.classList.add('opacity-100'); }, 50);
+        setTimeout(() => { heroSubtitle.classList.add('opacity-100'); }, 350);
+        setTimeout(() => { heroButton.classList.add('opacity-100'); }, 650);
+
+        // Scroll-triggered animations
+        const fadeElements = document.querySelectorAll('.fade-in');
+
         function handleScroll() {
-            headings.forEach(heading => {
-                if (isInViewport(heading) && !heading.classList.contains('visible')) {
-                    heading.classList.add('visible');
+            fadeElements.forEach(element => {
+                const rect = element.getBoundingClientRect();
+                if (rect.top <= window.innerHeight * 0.8 && !element.classList.contains('visible')) {
+                    element.classList.add('visible');
                 }
             });
         }
-        
-        // Check on page load
+
+        // Slideshow functionality
+        const slides = document.querySelectorAll('#eventSlideshow > .slide');
+        const dots = document.querySelectorAll('.event-dot');
+        let currentIndex = 0;
+        let interval = 5000; // 5 seconds
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('opacity-100', i === index);
+                slide.classList.toggle('opacity-0', i !== index);
+            });
+
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('bg-white/80', i === index);
+                dot.classList.toggle('bg-white/30', i !== index);
+            });
+
+            currentIndex = index;
+        }
+
+        function nextSlide() {
+            showSlide((currentIndex + 1) % slides.length);
+        }
+
+        // Auto-rotate
+        let slideInterval = setInterval(nextSlide, interval);
+
+        // Pause on hover
+        document.getElementById('eventSlideshow').addEventListener('mouseenter', () => {
+            clearInterval(slideInterval);
+        });
+
+        document.getElementById('eventSlideshow').addEventListener('mouseleave', () => {
+            slideInterval = setInterval(nextSlide, interval);
+        });
+
+        // Dot navigation
+        dots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                showSlide(parseInt(dot.dataset.index));
+            });
+        });
+
+        // Initial check for scroll animations
         handleScroll();
-        
-        // Add scroll event listener
         window.addEventListener('scroll', handleScroll);
     });
 </script>
