@@ -4,14 +4,18 @@
 
 {% block content %}
 <style>
-    /* Main Styles */
+    /* Main Container */
     .main-container {
         max-width: 1200px;
-        margin: 0 auto;
-        padding: 20px;
-        font-family: 'Arial', sans-serif;
+        margin: 20px auto;
+        padding: 25px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        font-family: 'Playfair Display', serif;
     }
 
+    /* Header */
     .page-title {
         color: #8E793E;
         font-size: 28px;
@@ -34,9 +38,10 @@
         flex-wrap: wrap;
         gap: 15px;
         margin-bottom: 25px;
-        background: #EAEAEA;
+        background: #f8f8f8;
         padding: 20px;
         border-radius: 8px;
+        border: 1px solid #e0e0e0;
     }
 
     .search-box {
@@ -52,6 +57,7 @@
         border: 1px solid #AD974F;
         border-radius: 6px;
         font-size: 15px;
+        font-family: Arial, sans-serif;
         transition: all 0.3s;
     }
 
@@ -70,6 +76,7 @@
         border: 1px solid #AD974F;
         border-radius: 6px;
         font-size: 15px;
+        font-family: Arial, sans-serif;
         background-color: white;
         cursor: pointer;
     }
@@ -78,14 +85,14 @@
     .table-responsive {
         overflow-x: auto;
         margin-bottom: 30px;
-        background: white;
         border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e0e0e0;
     }
 
     .custom-table {
         width: 100%;
         border-collapse: collapse;
+        font-family: Arial, sans-serif;
     }
 
     .custom-table th {
@@ -98,7 +105,7 @@
 
     .custom-table td {
         padding: 12px 15px;
-        border-bottom: 1px solid #EAEAEA;
+        border-bottom: 1px solid #e0e0e0;
         vertical-align: middle;
     }
 
@@ -131,18 +138,19 @@
         padding: 8px 15px;
         border-radius: 6px;
         font-size: 14px;
+        font-family: Arial, sans-serif;
         cursor: pointer;
         transition: all 0.3s;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
         gap: 5px;
+        border: none;
     }
 
     .btn-primary {
         background-color: #8E793E;
         color: white;
-        border: none;
     }
 
     .btn-primary:hover {
@@ -172,15 +180,24 @@
     .empty-state p {
         color: #777;
         margin: 0;
+        font-family: Arial, sans-serif;
     }
 
     /* Pagination */
+    .pagination-container {
+        background: #f8f8f8;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+    }
+
     .pagination {
         display: flex;
         justify-content: center;
         list-style: none;
         padding: 0;
         gap: 5px;
+        margin: 0;
     }
 
     .page-item {
@@ -189,15 +206,16 @@
 
     .page-link {
         padding: 8px 12px;
-        border: 1px solid #EAEAEA;
+        border: 1px solid #e0e0e0;
         border-radius: 6px;
         color: #8E793E;
         text-decoration: none;
         transition: all 0.3s;
+        font-family: Arial, sans-serif;
     }
 
     .page-link:hover {
-        background-color: #EAEAEA;
+        background-color: #e0e0e0;
     }
 
     .page-item.active .page-link {
@@ -208,6 +226,10 @@
 
     /* Responsive Design */
     @media (max-width: 768px) {
+        .main-container {
+            padding: 15px;
+        }
+        
         .filter-container {
             flex-direction: column;
         }
@@ -304,39 +326,41 @@
 
     <!-- Pagination -->
     {% if customers.has_other_pages %}
-    <nav aria-label="Page navigation">
-        <ul class="pagination">
-            {% if customers.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page=1&q={{ request.GET.q }}&status={{ request.GET.status }}">First</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ customers.previous_page_number }}&q={{ request.GET.q }}&status={{ request.GET.status }}">Previous</a>
-                </li>
-            {% endif %}
-            
-            {% for num in customers.paginator.page_range %}
-                {% if customers.number == num %}
-                    <li class="page-item active">
-                        <a class="page-link" href="#">{{ num }}</a>
-                    </li>
-                {% elif num > customers.number|add:'-3' and num < customers.number|add:'3' %}
+    <div class="pagination-container">
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                {% if customers.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ num }}&q={{ request.GET.q }}&status={{ request.GET.status }}">{{ num }}</a>
+                        <a class="page-link" href="?page=1&q={{ request.GET.q }}&status={{ request.GET.status }}">First</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ customers.previous_page_number }}&q={{ request.GET.q }}&status={{ request.GET.status }}">Previous</a>
                     </li>
                 {% endif %}
-            {% endfor %}
-            
-            {% if customers.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ customers.next_page_number }}&q={{ request.GET.q }}&status={{ request.GET.status }}">Next</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ customers.paginator.num_pages }}&q={{ request.GET.q }}&status={{ request.GET.status }}">Last</a>
-                </li>
-            {% endif %}
-        </ul>
-    </nav>
+                
+                {% for num in customers.paginator.page_range %}
+                    {% if customers.number == num %}
+                        <li class="page-item active">
+                            <a class="page-link" href="#">{{ num }}</a>
+                        </li>
+                    {% elif num > customers.number|add:'-3' and num < customers.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}&q={{ request.GET.q }}&status={{ request.GET.status }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if customers.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ customers.next_page_number }}&q={{ request.GET.q }}&status={{ request.GET.status }}">Next</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ customers.paginator.num_pages }}&q={{ request.GET.q }}&status={{ request.GET.status }}">Last</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
     {% endif %}
 </div>
 
