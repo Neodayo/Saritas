@@ -52,52 +52,13 @@ from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
 from django.utils.timezone import now
 from .utils.encryption import encrypt_id, decrypt_id
+from core.utils.encryption import (
+    get_decrypted_object_or_404,
+    encrypt_id,
+    decrypt_id
+)
 
-fernet = Fernet(settings.ENCRYPTION_KEY)
 logger = logging.getLogger(__name__)
-try:
-    fernet = Fernet(settings.ENCRYPTION_KEY.encode())
-except Exception as e:
-    logger.error(f"Encryption setup failed: {str(e)}")
-    raise
-
-def encrypt_id(id_value):
-    """Encrypt ID to URL-safe string"""
-    try:
-        encrypted = fernet.encrypt(str(id_value).encode())
-        return base64.urlsafe_b64encode(encrypted).decode().rstrip('=')
-    except Exception as e:
-        logger.error(f"Encryption failed: {str(e)}")
-        raise ValueError("Failed to encrypt ID")
-
-def decrypt_id(encrypted_id):
-    """Decrypt URL-safe ID back to original"""
-    try:
-        # Add padding if needed
-        pad_length = len(encrypted_id) % 4
-        if pad_length:
-            encrypted_id += '=' * (4 - pad_length)
-            
-        decrypted = fernet.decrypt(base64.urlsafe_b64decode(encrypted_id.encode()))
-        return int(decrypted.decode())
-    except InvalidToken:
-        logger.error("Invalid token - possible tampering")
-        raise ValueError("Invalid encrypted ID")
-    except Exception as e:
-        logger.error(f"Decryption failed: {str(e)}")
-        raise ValueError("Failed to decrypt ID")
-
-def get_decrypted_object_or_404(model, encrypted_id):
-    """Safe object retrieval with decryption"""
-    try:
-        obj_id = decrypt_id(encrypted_id)
-        return get_object_or_404(model, pk=obj_id)
-    except ValueError as e:
-        logger.warning(f"Invalid ID decryption: {encrypted_id} - {str(e)}")
-        raise BadRequest("Invalid item identifier")
-    except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}")
-        raise BadRequest("Invalid request")
 
     
 @login_required
@@ -312,56 +273,69 @@ def rental_tracker(request):
 
 
 @staff_member_required
-@login_required
 def rental_approvals(request):
-    pending_rentals = Rental.objects.filter(status='Pending').select_related(
-        'customer__user', 'inventory').order_by('-created_at')
+    try:
+        pending_rentals = Rental.objects.filter(status='Pending').select_related(
+            'customer__user', 'inventory').order_by('-created_at')
+        
+        valid_rentals = []
+        for rental in pending_rentals:
+            if rental.encrypted_id:  # Only include rentals with valid encryption
+                valid_rentals.append(rental)
+            else:
+                logger.error(f"Excluding rental {rental.id} - encryption failed")
 
-    stats = {
-        'pending': pending_rentals.count(),
-        'approved': Rental.objects.filter(status='Approved').count(),
-        'rejected': Rental.objects.filter(status='Rejected').count(),
-    }
+        stats = {
+            'pending': pending_rentals.count(),
+            'approved': Rental.objects.filter(status='Approved').count(),
+            'rejected': Rental.objects.filter(status='Rejected').count(),
+        }
 
-    return render(request, 'saritasapp/rental_approvals.html', {
-        'pending_rentals': pending_rentals,
-        'stats': stats,
-    })
+        return render(request, 'saritasapp/rental_approvals.html', {
+            'pending_rentals': valid_rentals,
+            'stats': stats,
+        })
+    except Exception as e:
+        logger.critical(f"Error in rental_approvals: {str(e)}")
+        messages.error(request, "System error loading approvals")
+        return redirect('admin_dashboard')
 
 @staff_member_required
-@login_required
 def approve_or_reject_rental(request, encrypted_id, action):
-    rental = get_decrypted_object_or_404(Rental, encrypted_id)
-
     try:
-        if action == 'approve':
-            rental.approve(request.user)
-            action_message = 'approved'
-        elif action == 'reject':
-            reason = request.POST.get('rejection_reason', '')
-            rental.reject(request.user, reason)
-            action_message = 'rejected'
-        else:
-            return redirect('saritasapp:rental_approvals')
-    except ValidationError as e:
+        rental = get_decrypted_object_or_404(Rental, encrypted_id)
+        
+        if action not in ('approve', 'reject'):
+            raise BadRequest("Invalid action")
+
+        with transaction.atomic():
+            if action == 'approve':
+                rental.approve(request.user)
+                action_message = 'approved'
+            else:
+                reason = request.POST.get('rejection_reason', 'No reason provided')
+                rental.reject(request.user, reason)
+                action_message = 'rejected'
+
+            # Create notification
+            Notification.objects.create(
+                user=rental.customer.user,
+                notification_type=f'rental_{action_message}',
+                rental=rental,
+                message=f"Your rental for {rental.inventory.name} has been {action_message}!",
+                is_read=False
+            )
+
+        messages.success(request, f"Rental successfully {action_message}!")
+        return redirect('saritasapp:rental_approvals')
+
+    except BadRequest as e:
         messages.error(request, str(e))
         return redirect('saritasapp:rental_approvals')
     except Exception as e:
-        logger.error(f"Error processing rental {action}: {str(e)}")
-        messages.error(request, "An error occurred processing this request")
+        logger.error(f"Error processing {action} for rental: {str(e)}")
+        messages.error(request, "Failed to process request")
         return redirect('saritasapp:rental_approvals')
-
-    Notification.objects.create(
-        user=rental.customer.user,
-        notification_type=f'rental_{action_message}',
-        rental=rental,
-        message=f"Your rental for {rental.inventory.name} has been {action_message}!", 
-        is_read=False
-    )
-
-    messages.success(request, f"Rental successfully {action_message}!")
-    return redirect('saritasapp:rental_approvals')
-
 
 @staff_member_required
 def view_reservations(request):

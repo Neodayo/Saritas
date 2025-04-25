@@ -1,7 +1,11 @@
-from django.urls import path
+from django.urls import path, register_converter
+
+from saritas.core.converters import EncryptedIDConverter
 from . import views
 
 app_name = 'customerapp'
+
+register_converter(EncryptedIDConverter, 'encrypted')
 
 urlpatterns = [
     path('', views.homepage, name='homepage'),

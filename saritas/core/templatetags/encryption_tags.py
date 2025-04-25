@@ -1,12 +1,13 @@
+# encryption_tags.py
 from django import template
-from saritasapp.utils.encryption import encrypt_id
+from core.utils.encryption import encrypt_id
 
 register = template.Library()
 
 @register.filter
 def encrypt(value):
-    """Template filter to encrypt IDs"""
+    """Universal encryption filter for both apps"""
     try:
         return encrypt_id(value)
     except Exception:
-        return str(value)  # Fallback to raw ID
+        return str(value)  # Fallback

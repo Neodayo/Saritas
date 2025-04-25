@@ -1,4 +1,5 @@
 from django.urls import path, register_converter
+from saritas.core.converters import EncryptedIDConverter
 from . import views
 from .views import receipt_detail, update_receipt, generate_receipt_pdf
 from django.contrib.auth import views as auth_views
@@ -6,14 +7,6 @@ from .views import render, made_to_order_view, staff_sign_up
 
 app_name = 'saritasapp'
 
-class EncryptedIDConverter:
-    regex = r'[\w\-]+'
-    
-    def to_python(self, value):
-        return value
-    
-    def to_url(self, value):
-        return value
 
 register_converter(EncryptedIDConverter, 'encrypted')
 

@@ -1,3 +1,4 @@
+import logging
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
@@ -6,6 +7,8 @@ from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
 from django.utils.timezone import now, timedelta
+
+logger = logging.getLogger(__name__)
 
 class CustomerRegistrationForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -57,22 +60,28 @@ class CustomerUpdateForm(forms.ModelForm):
         }
 
 class RentalForm(forms.ModelForm):
+    deposit = forms.DecimalField(
+        disabled=True,
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    )
+
     class Meta:
         model = Rental
-        fields = ['rental_start', 'rental_end', 'notes']
+        fields = ['rental_start', 'rental_end', 'deposit', 'notes']
         widgets = {
             'rental_start': forms.DateInput(
                 attrs={
                     'type': 'date',
                     'class': 'form-control',
-                    'min': now().date().isoformat()
+                    'min': timezone.now().date().isoformat()
                 }
             ),
             'rental_end': forms.DateInput(
                 attrs={
                     'type': 'date',
                     'class': 'form-control',
-                    'min': (now() + timedelta(days=1)).date().isoformat()
+                    'min': (timezone.now() + timedelta(days=1)).date().isoformat()
                 }
             ),
             'notes': forms.Textarea(attrs={
@@ -86,10 +95,23 @@ class RentalForm(forms.ModelForm):
         self.customer = kwargs.pop('customer', None)
         super().__init__(*args, **kwargs)
 
+        if self.inventory:
+            self.fields['deposit'].initial = self.inventory.deposit_price or 0
+            self.instance.inventory = self.inventory  # Critical fix
+
     def clean(self):
         cleaned_data = super().clean()
-        if not self.inventory or self.inventory.quantity <= 0:
-            raise forms.ValidationError("This item is not available for rent")
+        if not self.inventory:
+            raise forms.ValidationError("Inventory item is required")
+        
+        # Ensure inventory is available
+        if self.inventory.quantity <= 0:
+            raise forms.ValidationError("This item is no longer available for rent")
+        
+        # Validate rental dates
+        if cleaned_data.get('rental_end') <= cleaned_data.get('rental_start'):
+            raise forms.ValidationError("Return date must be after the rental start date")
+        
         return cleaned_data
 
     def save(self, commit=True):
@@ -97,6 +119,7 @@ class RentalForm(forms.ModelForm):
         rental.inventory = self.inventory
         rental.customer = self.customer
         rental.deposit = self.inventory.deposit_price or 0
+        rental.status = Rental.PENDING
         
         if commit:
             rental.save()

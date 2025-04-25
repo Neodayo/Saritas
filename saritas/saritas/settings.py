@@ -10,10 +10,10 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR)) 
 # Security
-SECRET_KEY = '@)t3&4*8elj!^&es4z%hr8q1((21r+ur3%t$qd2a)-1d2vk4e^'
 DEBUG = config('DEBUG', default=True, cast=bool)
-FERNET_KEY = config('FERNET_KEY')
-ENCRYPTION_KEY = FERNET_KEY  
+# Remove the hardcoded SECRET_KEY and get it from environment variables
+SECRET_KEY = config('SECRET_KEY')  # Required, no default
+FERNET_KEY = config('FERNET_KEY', default=Fernet.generate_key().decode())  # Generate new key if not set
 # Production settings
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'saritasapp',
     'customerapp',
+    'core',
 ]
 
 # Middleware

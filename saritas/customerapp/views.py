@@ -2,9 +2,9 @@
 import logging
 from datetime import timedelta
 from urllib import request
-from utils.security import encrypt_id, decrypt_id
 
 # Django Core
+from django.db.models import Prefetch
 from django.conf import settings
 from django.utils import timezone
 from django.utils.timezone import now
@@ -38,8 +38,13 @@ from saritasapp.models import (
     CustomizedWardrobePackage, Inventory, Category, Color, PackageRentalItem, Size,
     Rental, Reservation, Notification, User, WardrobePackage, Customer, WardrobePackageRental
 )
+from core.utils.encryption import (
+    encrypt_id, 
+    decrypt_id,
+    get_decrypted_object_or_404
+)
 
-
+logger = logging.getLogger(__name__)
 
 @require_POST  # Optional: Only allow POST requests
 def clear_welcome_message(request):
@@ -47,10 +52,6 @@ def clear_welcome_message(request):
         del request.session['show_welcome_message']
     return JsonResponse({'status': 'ok'})
 
-
-from django.db.models import Prefetch
-
-from django.db.models import Prefetch
 
 def homepage(request):
     """Public homepage (no login required)"""
@@ -164,19 +165,24 @@ def item_detail(request, item_id):
     item = get_object_or_404(Inventory, id=item_id)
     return render(request, 'customerapp/view_item.html', {'item': item})
 
-import logging
-logger = logging.getLogger(__name__)
 
 @login_required
 def rent_item(request, inventory_id):
     inventory = get_object_or_404(Inventory, pk=inventory_id)
     
-    if not hasattr(request.user, 'customer_profile'):
+    try:
+        customer = request.user.customer_profile
+    except Customer.DoesNotExist:
         messages.error(request, "Customer profile not found")
-        return redirect('home')
-    
+        return redirect('customerapp:dashboard')
+
     if request.method == 'POST':
-        form = RentalForm(request.POST, inventory=inventory, customer=request.user.customer_profile)
+        form = RentalForm(
+            request.POST,
+            inventory=inventory,
+            customer=customer
+        )
+        
         if form.is_valid():
             try:
                 with transaction.atomic():
@@ -184,29 +190,35 @@ def rent_item(request, inventory_id):
                     inventory.refresh_from_db()
                     if inventory.quantity <= 0:
                         messages.error(request, "Item is no longer available")
-                        return redirect('inventory_list')
+                        return redirect('customerapp:wardrobe')
                     
                     rental = form.save()
+                    
+                    # Update inventory
                     inventory.quantity -= 1
                     inventory.save()
                     rental.inventory_decremented = True
                     rental.save()
                     
                     messages.success(request, "Rental request submitted successfully!")
-                    return redirect('my_rentals')
+                    return redirect('customerapp:my_rentals')
             
             except Exception as e:
                 messages.error(request, f"Error processing rental: {str(e)}")
     else:
-        initial = {
-            'rental_start': timezone.now().date(),
-            'rental_end': timezone.now().date() + timedelta(days=7)
-        }
-        form = RentalForm(initial=initial, inventory=inventory, customer=request.user.customer_profile)
+        form = RentalForm(
+            initial={
+                'rental_start': timezone.now().date(),
+                'rental_end': timezone.now().date() + timedelta(days=7),
+                'deposit': inventory.deposit_price or 0
+            },
+            inventory=inventory,
+            customer=customer
+        )
     
-    return render(request, 'rent_item.html', {
+    return render(request, 'customerapp/rent_item.html', {
         'form': form,
-        'inventory': inventory
+        'item': inventory
     })
 
 @login_required

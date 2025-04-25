@@ -57,18 +57,28 @@
                     <td>{{ rental.duration_days }}</td>
                     <td>₱{{ rental.total_cost|floatformat:2 }}</td>
                     <td class="action-buttons">
-                        <a href="{% url 'saritasapp:approve_or_reject_rental' rental.id 'approve' %}" 
-                           class="btn btn-approve">
-                            <i class="fas fa-check"></i> Approve
-                        </a>
-                        <a href="{% url 'saritasapp:approve_or_reject_rental' rental.id 'approve' %}" 
-                           class="btn btn-reject">
-                            <i class="fas fa-times"></i> Reject
-                        </a>
-                        <a href="{% url 'saritasapp:rental_detail' rental.id %}" 
-                           class="btn btn-info">
-                            <i class="fas fa-eye"></i> View
-                        </a>
+                        {% with encrypted_id=rental.encrypted_id %}
+                            {% if encrypted_id %}
+                                <a href="{% url 'saritasapp:approve_or_reject_rental' encrypted_id 'approve' %}" 
+                                   class="btn btn-approve"
+                                   onclick="return confirm('Approve this rental?');">
+                                    <i class="fas fa-check"></i> Approve
+                                </a>
+                                <a href="{% url 'saritasapp:approve_or_reject_rental' encrypted_id 'reject' %}" 
+                                   class="btn btn-reject"
+                                   onclick="return confirm('Reject this rental?');">
+                                    <i class="fas fa-times"></i> Reject
+                                </a>
+                                <a href="{% url 'saritasapp:rental_detail' encrypted_id %}" 
+                                   class="btn btn-info">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                            {% else %}
+                                <span class="text-danger" title="System error with this rental">
+                                    <i class="fas fa-exclamation-triangle"></i> Error
+                                </span>
+                            {% endif %}
+                        {% endwith %}
                     </td>
                 </tr>
                 {% empty %}

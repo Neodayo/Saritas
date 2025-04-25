@@ -12,6 +12,10 @@ from django.urls import reverse
 from django.utils import timezone
 from django.conf import settings
 from django.db.models.signals import post_migrate
+import logging
+from core.utils.encryption import encryption_service
+
+logger = logging.getLogger(__name__)
 
 # --- Branch ---
 class Branch(models.Model):
@@ -224,10 +228,13 @@ class Rental(models.Model):
         return f"Rental #{self.id} - {self.customer} - {self.inventory}"
 
     def clean(self):
+        if not hasattr(self, 'inventory') or not self.inventory:
+            raise ValidationError("Inventory item is required")
+        
         if self.rental_end <= self.rental_start:
             raise ValidationError("Return date must be after the rental start date.")
         
-        if not self.deposit and self.inventory:
+        if not self.deposit and hasattr(self, 'inventory') and self.inventory:
             self.deposit = self.inventory.deposit_price or 0
 
     def save(self, *args, **kwargs):
@@ -241,6 +248,24 @@ class Rental(models.Model):
     @property
     def total_cost(self):
         return float(self.inventory.rental_price) + float(self.deposit)
+    
+    @property
+    def encrypted_id(self):
+        """Returns encrypted ID or None if encryption fails"""
+        if not self.pk:
+            return None
+        try:
+            return encrypt_id(self.pk)
+        except Exception as e:
+            logger.error(f"Failed to encrypt rental ID {self.pk}: {str(e)}")
+            return None
+
+    def get_encrypted_id(self):
+        """Returns encrypted ID or raises exception if fails"""
+        encrypted = self.encrypted_id
+        if not encrypted:
+            raise ValueError(f"Encryption failed for rental ID {self.pk}")
+        return encrypted
 
     def approve(self, user):
         if self.status != self.PENDING:
