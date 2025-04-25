@@ -1,90 +1,146 @@
 {% extends "saritasapp/base.html" %}
 {% load static %}
 
-{% block title %}made-to-order{% endblock %}
+{% block title %}Made-to-Order{% endblock %}
 
 {% block extra_css %}
-    <!-- <link rel="stylesheet" href="{% static 'css/add_inventory.css' %}"> -->
-{% endblock %}
-
-
-{% block content %}
+<link rel="stylesheet" href="{% static 'css/inventory.css' %}">
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background-color: #ffffff;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        margin: 0;
-        padding: 20px;
-        box-sizing: border-box;
+    /* Custom Styles for Measurements Form */
+    .measurements-container {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+        padding: 25px;
+        margin: 20px auto;
+        max-width: 800px;
+        border: 1px solid #EAEAEA;
     }
 
-    .main-container {
-        background-color: #dfd9bc; /* Gold background */
-        border: 3px solid whitesmoke; /* Darker gold border */
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-        max-width: 500px;
-        width: 100%;
-        text-align: left;
-    }
-
-    h3 {
+    .measurements-header {
+        color: #8E793E;
+        font-size: 22px;
+        margin-bottom: 20px;
         text-align: center;
-        color: #333;
-        margin-bottom: 15px;
+        font-weight: 600;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #EAEAEA;
     }
 
-    p {
+    .measurements-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .measurement-group {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin: 10px 0;
+        flex-direction: column;
+        margin-bottom: 5px;
     }
 
-    input[type="text"], textarea {
-        width: 60%;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
+    .measurement-group label {
+        color: #5a5a5a;
+        font-weight: 500;
         font-size: 14px;
+        margin-bottom: 5px;
     }
 
-    .remarks {
+    .measurement-input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #AD974F;
+        border-radius: 4px;
+        font-size: 13px;
+        color: #333;
+        transition: all 0.2s;
+    }
+
+    .measurement-input:focus {
+        outline: none;
+        border-color: #8E793E;
+        box-shadow: 0 0 0 2px rgba(142, 121, 62, 0.1);
+    }
+
+    .remarks-section {
+        grid-column: span 2;
         margin-top: 15px;
     }
 
-    textarea {
-        width: 95%;
-        height: 80px;
-        resize: none;
+    .remarks-header {
+        color: #8E793E;
+        font-size: 16px;
+        margin-bottom: 10px;
+        font-weight: 600;
     }
 
-    .buttons {
-        display: block;
-        width: auto; /* Set the width to auto to fit the content */
-        margin: 15px auto; /* Center the button */
-        background-color: #B8860B; /* Dark gold */
+    .remarks-textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #AD974F;
+        border-radius: 4px;
+        min-height: 80px;
+        font-size: 13px;
+        color: #333;
+        transition: all 0.2s;
+        resize: vertical;
+    }
+
+    .remarks-textarea:focus {
+        outline: none;
+        border-color: #8E793E;
+        box-shadow: 0 0 0 2px rgba(142, 121, 62, 0.1);
+    }
+
+    .submit-btn {
+        grid-column: span 2;
+        padding: 10px;
+        background: #8E793E;
         color: white;
         border: none;
-        padding: 8px 16px; /* Smaller padding for a smaller button */
-        font-size: 14px; /* Smaller font size */
-        border-radius: 5px;
+        border-radius: 4px;
+        font-size: 15px;
+        font-weight: 500;
         cursor: pointer;
-        transition: 0.3s;
+        transition: all 0.2s;
+        margin-top: 15px;
+        text-align: center;
     }
 
-    .buttons:hover {
-        background-color: #8B6508;
+    .submit-btn:hover {
+        background: #AD974F;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(142, 121, 62, 0.2);
+    }
+
+    .form-icon {
+        margin-right: 8px;
+        font-size: 16px;
+    }
+
+    @media (max-width: 768px) {
+        .measurements-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .remarks-section {
+            grid-column: span 1;
+        }
+        
+        .submit-btn {
+            grid-column: span 1;
+        }
+        
+        .measurements-container {
+            padding: 15px;
+            margin: 15px auto;
+        }
     }
 </style>
+{% endblock %}
 
-<div class="main-container">
-    <div class="measures">
+{% block content %}
+    <div class="measurements-container">
         {% if receipt and receipt.id %}
             <form action="{% url 'saritasapp:receipt-update' receipt.id %}" method="POST">
         {% else %}
@@ -92,33 +148,88 @@
         {% endif %}
             {% csrf_token %}
             
-            <h3>MEASUREMENTS</h3>
-            <p><strong>Shoulder:</strong> <input type="text" name="shoulder" value="{{ receipt.shoulder }}"></p>
-            <p><strong>Bust:</strong> <input type="text" name="bust" value="{{ receipt.bust }}"></p>
-            <p><strong>Front:</strong> <input type="text" name="front" value="{{ receipt.front }}"></p>
-            <p><strong>Width:</strong> <input type="text" name="width" value="{{ receipt.width }}"></p>
-            <p><strong>Waist:</strong> <input type="text" name="waist" value="{{ receipt.waist }}"></p>
-            <p><strong>Hips:</strong> <input type="text" name="hips" value="{{ receipt.hips }}"></p>
-            <p><strong>Arm Length:</strong> <input type="text" name="arm_length" value="{{ receipt.arm_length }}"></p>
-            <p><strong>Bust Depth:</strong> <input type="text" name="bust_depth" value="{{ receipt.bust_depth }}"></p>
-            <p><strong>Bust Distance:</strong> <input type="text" name="bust_distance" value="{{ receipt.bust_distance }}"></p>
-            <p><strong>Length:</strong> <input type="text" name="length" value="{{ receipt.length }}"></p>
-            <p><strong>Lower Circumference:</strong> <input type="text" name="lower_circumference" value="{{ receipt.lower_circumference }}"></p>
-            <p><strong>Crotch:</strong> <input type="text" name="crotch" value="{{ receipt.crotch }}"></p>
+            <h2 class="measurements-header">
+                <i class="fas fa-ruler-combined form-icon"></i>MEASUREMENTS
+            </h2>
             
-            <div class="remarks">
-                <h3>Remarks</h3>
-                <textarea id="remarks" name="remarks">{{ receipt.remarks }}</textarea>
+            <div class="measurements-grid">
+                <div class="measurement-group">
+                    <label for="shoulder">Shoulder</label>
+                    <input type="text" class="measurement-input" id="shoulder" name="shoulder" value="{{ receipt.shoulder }}">
+                </div>
+                
+                <div class="measurement-group">
+                    <label for="bust">Bust</label>
+                    <input type="text" class="measurement-input" id="bust" name="bust" value="{{ receipt.bust }}">
+                </div>
+                
+                <div class="measurement-group">
+                    <label for="front">Front</label>
+                    <input type="text" class="measurement-input" id="front" name="front" value="{{ receipt.front }}">
+                </div>
+                
+                <div class="measurement-group">
+                    <label for="width">Width</label>
+                    <input type="text" class="measurement-input" id="width" name="width" value="{{ receipt.width }}">
+                </div>
+                
+                <div class="measurement-group">
+                    <label for="waist">Waist</label>
+                    <input type="text" class="measurement-input" id="waist" name="waist" value="{{ receipt.waist }}">
+                </div>
+                
+                <div class="measurement-group">
+                    <label for="hips">Hips</label>
+                    <input type="text" class="measurement-input" id="hips" name="hips" value="{{ receipt.hips }}">
+                </div>
+                
+                <div class="measurement-group">
+                    <label for="arm_length">Arm Length</label>
+                    <input type="text" class="measurement-input" id="arm_length" name="arm_length" value="{{ receipt.arm_length }}">
+                </div>
+                
+                <div class="measurement-group">
+                    <label for="bust_depth">Bust Depth</label>
+                    <input type="text" class="measurement-input" id="bust_depth" name="bust_depth" value="{{ receipt.bust_depth }}">
+                </div>
+                
+                <div class="measurement-group">
+                    <label for="bust_distance">Bust Distance</label>
+                    <input type="text" class="measurement-input" id="bust_distance" name="bust_distance" value="{{ receipt.bust_distance }}">
+                </div>
+                
+                <div class="measurement-group">
+                    <label for="length">Length</label>
+                    <input type="text" class="measurement-input" id="length" name="length" value="{{ receipt.length }}">
+                </div>
+                
+                <div class="measurement-group">
+                    <label for="lower_circumference">Lower Circumference</label>
+                    <input type="text" class="measurement-input" id="lower_circumference" name="lower_circumference" value="{{ receipt.lower_circumference }}">
+                </div>
+                
+                <div class="measurement-group">
+                    <label for="crotch">Crotch</label>
+                    <input type="text" class="measurement-input" id="crotch" name="crotch" value="{{ receipt.crotch }}">
+                </div>
+                
+                <div class="remarks-section">
+                    <h3 class="remarks-header">
+                        <i class="fas fa-comment-alt form-icon"></i>Remarks
+                    </h3>
+                    <textarea class="remarks-textarea" id="remarks" name="remarks">{{ receipt.remarks }}</textarea>
+                </div>
+                
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-save form-icon"></i>Save Measurements
+                </button>
             </div>
-            
-            <button class="buttons" type="submit">Submit</button>
         </form>
     </div>
-</div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const inputs = document.querySelectorAll('input[type="text"], textarea');
+        const inputs = document.querySelectorAll('.measurement-input, .remarks-textarea');
         
         inputs.forEach((input, index) => {
             input.addEventListener('keydown', function (event) {
