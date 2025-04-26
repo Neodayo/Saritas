@@ -13,7 +13,7 @@ from django.utils import timezone
 from django.conf import settings
 from django.db.models.signals import post_migrate
 import logging
-from core.utils.encryption import encryption_service
+from core.utils.encryption import encrypt_id, encryption_service
 
 logger = logging.getLogger(__name__)
 
@@ -216,6 +216,7 @@ class Rental(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     notes = models.TextField(blank=True, null=True)
     inventory_decremented = models.BooleanField(default=False)
+    rejection_reason = models.TextField(blank=True, null=True)
 
     class Meta:
         ordering = ['-created_at']
@@ -289,7 +290,19 @@ class Rental(models.Model):
             self.status = self.APPROVED
             self.staff = user
             self.save()
-
+            
+    def reject(self, user, reason=""):
+        if self.status != self.PENDING:
+            raise ValidationError("Only pending rentals can be rejected")
+        
+        if not reason:
+            raise ValidationError("Rejection reason is required")
+            
+        self.status = self.REJECTED
+        self.staff = user
+        self.rejection_reason = reason
+        self.save()
+        
     def mark_as_rented(self, user):
         if self.status != self.APPROVED:
             raise ValidationError("Only approved rentals can be marked as rented.")

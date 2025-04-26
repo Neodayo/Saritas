@@ -307,34 +307,41 @@ def approve_or_reject_rental(request, encrypted_id, action):
         if action not in ('approve', 'reject'):
             raise BadRequest("Invalid action")
 
-        with transaction.atomic():
-            if action == 'approve':
-                rental.approve(request.user)
-                action_message = 'approved'
-            else:
-                reason = request.POST.get('rejection_reason', 'No reason provided')
-                rental.reject(request.user, reason)
-                action_message = 'rejected'
+        if request.method == 'POST' or action == 'approve':
+            with transaction.atomic():
+                if action == 'approve':
+                    rental.approve(request.user)
+                    action_message = 'approved'
+                else:
+                    reason = request.POST.get('rejection_reason', 'No reason provided')
+                    rental.reject(request.user, reason)
+                    action_message = 'rejected'
 
-            # Create notification
-            Notification.objects.create(
-                user=rental.customer.user,
-                notification_type=f'rental_{action_message}',
-                rental=rental,
-                message=f"Your rental for {rental.inventory.name} has been {action_message}!",
-                is_read=False
-            )
+                # Create notification
+                Notification.objects.create(
+                    user=rental.customer.user,
+                    notification_type=f'rental_{action_message}',
+                    rental=rental,
+                    message=f"Your rental for {rental.inventory.name} has been {action_message}!",
+                    is_read=False
+                )
 
-        messages.success(request, f"Rental successfully {action_message}!")
-        return redirect('saritasapp:rental_approvals')
+            messages.success(request, f"Rental successfully {action_message}!")
+            return redirect('saritasapp:rental_approvals')
+
+        # For GET requests to reject (show confirmation form)
+        if action == 'reject':
+            return render(request, 'saritasapp/confirm_reject.html', {
+                'rental': rental,
+                'encrypted_id': encrypted_id
+            })
 
     except BadRequest as e:
         messages.error(request, str(e))
-        return redirect('saritasapp:rental_approvals')
     except Exception as e:
         logger.error(f"Error processing {action} for rental: {str(e)}")
         messages.error(request, "Failed to process request")
-        return redirect('saritasapp:rental_approvals')
+    return redirect('saritasapp:rental_approvals')
 
 @staff_member_required
 def view_reservations(request):
@@ -546,6 +553,18 @@ def return_rental(request, encrypted_id):
 
 # views.py
 @login_required
+def manage_staff(request):
+    staff_list = User.objects.filter(
+        role='staff'
+    ).select_related('staff_profile').order_by('last_name', 'first_name')
+    
+    context = {
+        'staff_list': staff_list,
+        'user': request.user
+    }
+    return render(request, 'saritasapp/manage_staff.html', context)
+
+@login_required
 def edit_staff(request, staff_id):
     staff = get_object_or_404(User, id=staff_id, role='staff')
     if request.method == 'POST':
@@ -566,18 +585,6 @@ def delete_staff(request, staff_id):
         messages.success(request, 'Staff member deleted successfully.')
         return redirect('saritasapp:manage_staff')
     return render(request, 'saritasapp/confirm_delete_staff.html', {'staff': staff})
-
-@login_required
-def manage_staff(request):
-    staff_list = User.objects.filter(role='staff') \
-                             .select_related('staff_profile') \
-                             .order_by('last_name', 'first_name')
-    context = {
-        'staff_list': staff_list,
-        'user': request.user
-    }
-    return render(request, 'saritasapp/manage_staff.html', context)
-
 #data_analysis
 
 
