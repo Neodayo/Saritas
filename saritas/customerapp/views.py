@@ -185,24 +185,9 @@ def rent_item(request, inventory_id):
         
         if form.is_valid():
             try:
-                with transaction.atomic():
-                    # Refresh inventory to prevent race conditions
-                    inventory.refresh_from_db()
-                    if inventory.quantity <= 0:
-                        messages.error(request, "Item is no longer available")
-                        return redirect('customerapp:wardrobe')
-                    
-                    rental = form.save()
-                    
-                    # Update inventory
-                    inventory.quantity -= 1
-                    inventory.save()
-                    rental.inventory_decremented = True
-                    rental.save()
-                    
-                    messages.success(request, "Rental request submitted successfully!")
-                    return redirect('customerapp:my_rentals')
-            
+                rental = form.save()
+                messages.success(request, "Rental request submitted successfully! Please wait for approval.")
+                return redirect('customerapp:my_rentals')
             except Exception as e:
                 messages.error(request, f"Error processing rental: {str(e)}")
     else:

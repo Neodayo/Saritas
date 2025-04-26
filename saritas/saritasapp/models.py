@@ -236,6 +236,11 @@ class Rental(models.Model):
         
         if not self.deposit and hasattr(self, 'inventory') and self.inventory:
             self.deposit = self.inventory.deposit_price or 0
+        
+        # Additional validation for approved/rented status
+        if self.status in [self.APPROVED, self.RENTED] and not self.inventory_decremented:
+            if self.inventory.quantity <= 0:
+                raise ValidationError("This item is no longer available for rent")
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -272,10 +277,14 @@ class Rental(models.Model):
             raise ValidationError("Only pending rentals can be approved.")
 
         with transaction.atomic():
-            if not self.inventory_decremented:
-                self.inventory.quantity -= 1
-                self.inventory.save()
-                self.inventory_decremented = True
+            # Check inventory availability before approving
+            if self.inventory.quantity <= 0:
+                raise ValidationError("This item is no longer available for rent")
+            
+            # Decrement inventory only when approving
+            self.inventory.quantity -= 1
+            self.inventory.save()
+            self.inventory_decremented = True
             
             self.status = self.APPROVED
             self.staff = user

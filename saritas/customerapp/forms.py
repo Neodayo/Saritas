@@ -120,6 +120,7 @@ class RentalForm(forms.ModelForm):
         rental.customer = self.customer
         rental.deposit = self.inventory.deposit_price or 0
         rental.status = Rental.PENDING
+        rental.inventory_decremented = False  # Set to False initially
         
         if commit:
             rental.save()
