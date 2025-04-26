@@ -10,8 +10,22 @@
         animation: fadeInUp 0.8s ease-out forwards;
     }
     @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
+        from { opacity: 0; transform: translateY(15px); }
         to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Enhanced product card animations */
+    .product-card {
+        opacity: 0;
+        transform: translateY(15px);
+        transition: 
+            opacity 0.8s cubic-bezier(0.33, 1, 0.68, 1),
+            transform 0.8s cubic-bezier(0.32, 0, 0.67, 0);
+        will-change: opacity, transform;
+    }
+    .product-card.visible {
+        opacity: 1;
+        transform: translateY(0);
     }
     .product-card img {
         transition: transform 0.5s ease;
@@ -19,6 +33,12 @@
     .product-card:hover img {
         transform: scale(1.02);
     }
+    
+    /* Reduced spacing between cards */
+    #product-grid {
+        gap: 1rem; 
+    }
+    
     .filter-btn {
         background-color: #8E793E;
         color: white;
@@ -33,7 +53,7 @@
         background-color: #AD974F;
     }
     
-    /* New dropdown styles */
+    /* Dropdown styles */
     select {
         background: transparent;
         border: none;
@@ -64,6 +84,30 @@
     label {
         color: #5a3e2b;
         font-weight: 500;
+    }
+
+    .shine-effect {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .shine-effect::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.3) 50%,
+                rgba(255, 255, 255, 0) 100%);
+        transition: none;
+    }
+
+    .shine-effect:hover::after {
+        left: 100%;
+        transition: left 0.7s ease-in-out;
     }
 </style>
 {% endblock %}
@@ -125,14 +169,14 @@
             </div>
             
             <!-- Clear Filters Button -->
-            <button type="button" onclick="clearFilters()" class="filter-btn">
+            <button type="button" onclick="clearFilters()" class="filter-btn shine-effect">
                 Clear Filters
             </button>
         </div>
     </form>
 
-    <!-- Product Grid -->
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 fade-in-up">
+    <!-- Product Grid with reduced spacing -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4" id="product-grid">
         {% if inventory_items %}
             {% for item in inventory_items %}
             <a href="{% url 'customerapp:item_detail' item.id %}" class="group block bg-white rounded overflow-hidden product-card hover:shadow-lg transition-all">
@@ -145,7 +189,7 @@
                 </div>
                 <div class="p-3 text-center">
                     <h3 class="text-gray-800 font-medium text-base truncate">{{ item.name }}</h3>
-                    <p class="text-gray-700 mt-1"> ₱{{ item.rental_price }}</p>
+                    <p class="text-gray-700 mt-1"> ₱{{ item.rental_price }} </p>
                 </div>
             </a>
             {% endfor %}
@@ -183,5 +227,86 @@
         document.getElementById('sort').value = '';
         filterInventory();
     }
+
+    // Enhanced animation with smoother timing
+    document.addEventListener('DOMContentLoaded', function() {
+        const productGrid = document.getElementById('product-grid');
+        const productCards = document.querySelectorAll('.product-card');
+        const columns = window.innerWidth < 768 ? 2 : window.innerWidth < 1024 ? 3 : 4;
+        
+        function animateCards() {
+            const rows = Math.ceil(productCards.length / columns);
+            
+            // First row with elegant stagger
+            const firstRowCards = Array.from(productCards).slice(0, columns);
+            firstRowCards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.classList.add('visible');
+                }, index * 150); // Smooth 150ms delay between cards
+            });
+
+            if (rows > 1) {
+                const observerOptions = {
+                    root: null,
+                    rootMargin: '50px', // Trigger earlier
+                    threshold: 0.05 // More sensitive
+                };
+                
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const card = entry.target;
+                            const cardIndex = Array.from(productCards).indexOf(card);
+                            const row = Math.floor(cardIndex / columns);
+                            
+                            const rowStart = row * columns;
+                            const rowEnd = rowStart + columns;
+                            const rowCards = Array.from(productCards).slice(rowStart, rowEnd);
+                            
+                            rowCards.forEach((rowCard, index) => {
+                                setTimeout(() => {
+                                    rowCard.classList.add('visible');
+                                }, index * 180); // Slightly slower stagger
+                            });
+                            
+                            rowCards.forEach(rowCard => observer.unobserve(rowCard));
+                        }
+                    });
+                }, observerOptions);
+                
+                for (let row = 1; row < rows; row++) {
+                    const firstCardInRow = productCards[row * columns];
+                    if (firstCardInRow) {
+                        observer.observe(firstCardInRow);
+                    }
+                }
+            }
+        }
+        
+        animateCards();
+        
+        // Reset animations on filter change
+        document.getElementById('filter-form').addEventListener('submit', function() {
+            setTimeout(() => {
+                const newCards = document.querySelectorAll('.product-card');
+                newCards.forEach(card => card.classList.remove('visible'));
+                animateCards();
+            }, 100);
+        });
+        
+        // Handle window resize
+        let resizeTimer;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                const currentColumns = window.innerWidth < 768 ? 2 : window.innerWidth < 1024 ? 3 : 4;
+                if (currentColumns !== columns) {
+                    const allCards = document.querySelectorAll('.product-card');
+                    allCards.forEach(card => card.classList.remove('visible'));
+                    animateCards();
+                }
+            }, 250);
+        });
+    });
 </script>
 {% endblock %}

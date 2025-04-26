@@ -47,7 +47,7 @@
     /* Slower fade-in animation styles */
     .fade-in {
         opacity: 0;
-        transition: opacity 1.5s ease; /* Removed transform for simple fade */
+        transition: opacity 1.5s ease; 
     }
 
     /* Special class for elements that should fade AND move up */
@@ -74,11 +74,12 @@
     #featured-categories .fade-in,
     #featured-categories .fade-up { transition-delay: 0.5s; }
     #featured-categories .cards-container .fade-in { 
-        transition-delay: 0.8s; /* Increased delay for cards */
+        transition-delay: 0.8s; 
     }
 
     /* Slideshow styles */
     .event-slideshow {
+        position: relative;
         height: 70vh;
         min-height: 500px;
     }
@@ -95,6 +96,49 @@
     /* Card container for synchronized animations */
     .cards-container .fade-in {
         transition-delay: 1s;
+    }
+
+    /* Slideshow navigation areas */
+    .slide-nav-area {
+        position: absolute;
+        top: 0;
+        height: 100%;
+        width: 30%;
+        z-index: 5;
+        cursor: pointer;
+    }
+    
+    .slide-nav-left {
+        left: 0;
+    }
+    
+    .slide-nav-right {
+        right: 0;
+    }
+    
+    .slide-nav-area:hover::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        width: 40px;
+        height: 40px;
+        background-color: rgba(255,255,255,0.2);
+        border-radius: 50%;
+        transform: translateY(-50%);
+    }
+    
+    .slide-nav-left:hover::before {
+        left: 20px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='15 18 9 12 15 6'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+    
+    .slide-nav-right:hover::before {
+        right: 20px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='9 18 15 12 9 6'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: center;
     }
 </style>
 {% endblock %}
@@ -131,7 +175,7 @@
             <div class="flex overflow-x-auto gap-6 pb-4 -mx-4 px-4 cards-container">
                 {% for category in featured_categories %}
                 <a href="{% url 'customerapp:wardrobe' %}?category={{ category.id }}"
-                    class="group relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex-shrink-0 w-64 h-[22rem] flex flex-col fade-in">
+                    class="group relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-700 flex-shrink-0 w-64 h-[22rem] flex flex-col fade-in fade-up">
 
                     {% if category.featured_item %}
                     <div class="w-full h-full overflow-hidden">
@@ -168,8 +212,12 @@
                 Past Event Showcase
             </h2>
 
+            <!-- Navigation Areas -->
+            <div class="slide-nav-area slide-nav-left" onclick="prevSlide()"></div>
+            <div class="slide-nav-area slide-nav-right" onclick="nextSlide()"></div>
+
             <!-- Slideshow Container -->
-            <div class="h-full w-full relative" id="eventSlideshow">
+            <div class="h-full w-full relative fade-in fade-up" id="eventSlideshow">
                 <!-- Slide 1 -->
                 <div class="absolute inset-0 slide transition-opacity duration-1000 ease-in-out opacity-100 fade-in">
                     <img src="{% static 'images/FerdKaycee.png' %}" alt="Elegant Wedding"
@@ -270,9 +318,11 @@
         const slides = document.querySelectorAll('#eventSlideshow > .slide');
         const dots = document.querySelectorAll('.event-dot');
         let currentIndex = 0;
-        let interval = 6000; // 6 seconds (slower)
+        let interval = 9000; // 6 seconds (slower)
+        let slideInterval;
 
         function showSlide(index) {
+            currentIndex = index;
             slides.forEach((slide, i) => {
                 slide.classList.toggle('opacity-100', i === index);
                 slide.classList.toggle('opacity-0', i !== index);
@@ -282,32 +332,54 @@
                 dot.classList.toggle('bg-white/80', i === index);
                 dot.classList.toggle('bg-white/30', i !== index);
             });
-
-            currentIndex = index;
         }
 
         function nextSlide() {
-            showSlide((currentIndex + 1) % slides.length);
+            const nextIndex = (currentIndex + 1) % slides.length;
+            showSlide(nextIndex);
         }
 
-        // Auto-rotate
-        let slideInterval = setInterval(nextSlide, interval);
+        function prevSlide() {
+            const prevIndex = (currentIndex - 1 + slides.length) % slides.length;
+            showSlide(prevIndex);
+        }
 
-        // Pause on hover
-        document.getElementById('eventSlideshow').addEventListener('mouseenter', () => {
-            clearInterval(slideInterval);
-        });
-
-        document.getElementById('eventSlideshow').addEventListener('mouseleave', () => {
+        // Initialize slideshow
+        function initSlideshow() {
+            showSlide(0);
             slideInterval = setInterval(nextSlide, interval);
-        });
-
-        // Dot navigation
-        dots.forEach(dot => {
-            dot.addEventListener('click', () => {
-                showSlide(parseInt(dot.dataset.index));
+            
+            // Pause on hover
+            document.getElementById('eventSlideshow').addEventListener('mouseenter', () => {
+                clearInterval(slideInterval);
             });
-        });
+
+            document.getElementById('eventSlideshow').addEventListener('mouseleave', () => {
+                slideInterval = setInterval(nextSlide, interval);
+            });
+
+            // Dot navigation
+            dots.forEach(dot => {
+                dot.addEventListener('click', () => {
+                    showSlide(parseInt(dot.dataset.index));
+                });
+            });
+
+            // Navigation area click handlers
+            document.querySelector('.slide-nav-left').addEventListener('click', prevSlide);
+            document.querySelector('.slide-nav-right').addEventListener('click', nextSlide);
+
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft') {
+                    prevSlide();
+                } else if (e.key === 'ArrowRight') {
+                    nextSlide();
+                }
+            });
+        }
+
+        initSlideshow();
     });
 </script>
 {% endblock %}
