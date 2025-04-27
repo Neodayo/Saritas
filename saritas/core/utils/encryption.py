@@ -1,11 +1,7 @@
 from django.conf import settings
 from cryptography.fernet import Fernet, InvalidToken
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import base64
-import os
 import logging
-from django.core.exceptions import BadRequest
 from django.http import Http404
 
 logger = logging.getLogger(__name__)
@@ -89,28 +85,43 @@ def decrypt_id(encrypted_id):
     """Shortcut for ID decryption"""
     return encryption_service.decrypt_id(encrypted_id)
 
-def get_decrypted_object_or_404(model, identifier):
-    """Safe object retrieval that can handle both encrypted and plain IDs"""
+def get_decrypted_object_or_404(model, encrypted_id, queryset=None):
+    """
+    Get object by decrypted ID or raise 404
+    Args:
+        model: Django model class
+        encrypted_id: Encrypted ID string
+        queryset: Optional custom queryset
+    """
     try:
-        # First try to treat as plain ID
-        try:
-            obj_id = int(identifier)
-            return model.objects.get(pk=obj_id)
-        except (ValueError, TypeError):
-            # If that fails, try to decrypt
-            obj_id = decrypt_id(identifier)
-            return model.objects.get(pk=obj_id)
-    except ValueError as e:
-        logger.warning(f"Invalid ID format: {identifier}")
-        raise BadRequest("Invalid identifier format")
+        obj_id = decrypt_id(encrypted_id)
+        if queryset is not None:
+            return queryset.get(pk=obj_id)
+        return model.objects.get(pk=obj_id)
+    except (ValueError, TypeError) as e:
+        logger.error(f"Invalid ID format: {str(e)}")
+        raise Http404("Invalid object identifier")
     except model.DoesNotExist:
-        logger.warning(f"Object not found for ID: {identifier}")
-        raise Http404(f"{model.__name__} not found")
-    
-# Add this at the bottom of your encryption.py
-def model_to_encrypted_dict(instance):
-    """Convert model instance to dict with encrypted ID"""
+        logger.error(f"Object not found for ID: {obj_id}")
+        raise Http404("Object not found")
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        raise Http404("Error retrieving object")
+
+def model_to_encrypted_dict(instance, fields=None, exclude=None):
+    """
+    Convert model instance to dict with encrypted ID
+    Args:
+        instance: Model instance
+        fields: Optional fields to include
+        exclude: Optional fields to exclude
+    """
     from django.forms.models import model_to_dict
-    data = model_to_dict(instance)
-    data['encrypted_id'] = encrypt_id(instance.pk)
+    
+    data = model_to_dict(instance, fields=fields, exclude=exclude)
+    try:
+        data['encrypted_id'] = encrypt_id(instance.pk)
+    except Exception as e:
+        logger.error(f"Failed to encrypt ID for {instance}: {str(e)}")
+        raise ValueError("Could not encrypt object ID")
     return data

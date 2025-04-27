@@ -5,17 +5,21 @@ from decouple import config
 import os
 from cryptography.fernet import Fernet
 
-
 load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR)) 
-# Security
-DEBUG = config('DEBUG', default=True, cast=bool)
-# Remove the hardcoded SECRET_KEY and get it from environment variables
-SECRET_KEY = config('SECRET_KEY')  # Required, no default
-FERNET_KEY = config('FERNET_KEY', default=Fernet.generate_key().decode())  # Generate new key if not set
+
+DEBUG = True
+# Security settings
+SECRET_KEY = os.getenv('SECRET_KEY')
+FERNET_KEY = os.getenv('FERNET_KEY')
+# Verify keys
+if not all([SECRET_KEY, FERNET_KEY]):
+    raise RuntimeError("Missing required keys in .env")
+
 # Production settings
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']  # Add your production domain here
+
 
 
 # Application Definition
@@ -40,7 +44,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'saritasapp.middleware.CustomerRedirectMiddleware',  # Custom middleware
+    'saritasapp.middleware.CustomerRedirectMiddleware', # Custom middleware
 ]
 
 ROOT_URLCONF = 'saritas.urls'

@@ -517,26 +517,42 @@ def customer_list(request):
 
 @staff_member_required
 def view_customer(request, encrypted_id):
+    """
+    View customer details with rental history
+    """
     try:
         customer = get_decrypted_object_or_404(
-            Customer.objects.select_related('user'), 
-            encrypted_id
+            Customer,
+            encrypted_id,
+            queryset=Customer.objects.select_related('user', 'user__branch')
         )
         
-        today = timezone.now().date()
-        rentals = Rental.objects.filter(customer=customer)
+        today = now().date()
         
-        # Update overdue rentals
-        rentals.filter(status=Rental.RENTED, rental_end__lt=today).update(status=Rental.OVERDUE)
-        
+        rentals = Rental.objects.filter(customer=customer).select_related(
+            'inventory',
+            'inventory__category',
+            'inventory__item_type', 
+            'inventory__color',
+            'inventory__size'
+        ).order_by('-rental_start')
+
+        # Update statuses in bulk
+        Rental.objects.filter(
+            customer=customer,
+            status="Renting",
+            rental_end__lt=today
+        ).update(status="Overdue")
+
         return render(request, 'saritasapp/view_customer.html', {
             'customer': customer,
             'rentals': rentals,
+            'today': today,
         })
-        
+
     except Exception as e:
-        logger.error(f"Error viewing customer {encrypted_id}: {str(e)}")
-        raise Http404("Customer not found")
+        logger.error(f"Error viewing customer {encrypted_id}: {str(e)}", exc_info=True)
+        raise Http404("Error loading customer details")
 
 
 @staff_member_required
@@ -1418,14 +1434,6 @@ class WardrobePackageCreateView(StaffRequiredMixin, CreateView):
         messages.success(self.request, f'Package "{self.object.name}" created successfully!')
         return response
 
-def decrypt_id(encrypted_id):
-    try:
-        from cryptography.fernet import Fernet
-        cipher_suite = Fernet(settings.ENCRYPTION_KEY)
-        decrypted_data = cipher_suite.decrypt(encrypted_id.encode()).decode()
-        return int(decrypted_data)  # Convert decrypted ID back to integer
-    except Exception as e:
-        raise ValueError(f"Decryption failed: {e}")
     
 class WardrobePackageUpdateView(StaffRequiredMixin, UpdateView):
     model = WardrobePackage
@@ -1434,13 +1442,12 @@ class WardrobePackageUpdateView(StaffRequiredMixin, UpdateView):
     success_url = reverse_lazy('saritasapp:wardrobe_package_list')
 
     def get_object(self, queryset=None):
-        """Override to handle encrypted ID decryption"""
-        encrypted_id = self.kwargs.get('encrypted_id')
-        try:
-            package_id = decrypt_id(encrypted_id)  # Decrypt the ID
-            return get_object_or_404(WardrobePackage, pk=package_id)  # Get the object using the decrypted ID
-        except (ValueError, TypeError):
-            raise Http404("Invalid package ID")  # Raise 404 if decryption fails
+        """Get the object using the decrypted ID from URL"""
+        return get_decrypted_object_or_404(
+            WardrobePackage,
+            self.kwargs.get('encrypted_id'),
+            queryset=queryset
+        )
 
     def form_valid(self, form):
         response = super().form_valid(form)

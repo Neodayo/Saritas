@@ -345,7 +345,7 @@
                     {% for rental in rentals %}
                     <tr>
                         <td>{{ forloop.counter }}</td>
-                        <td>{{ rental.inventory.name }}</td>
+                        <td>{{ rental.inventory.name }} ({{ rental.inventory.item_type.get_name_display }})</td>
                         <td>{{ rental.rental_start }}</td>
                         <td>{{ rental.rental_end }}</td>
                         <td>

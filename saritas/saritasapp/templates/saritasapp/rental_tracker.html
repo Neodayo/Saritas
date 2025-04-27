@@ -317,13 +317,17 @@
                                 </span>
                             {% endif %}
                         </td>
-                        <td>
-                            <div class="action-btns">
-                                <a href="{% url 'saritasapp:view_customer' rental.customer.id %}" class="action-btn profile-btn">
-                                    <i class="fas fa-user-circle" style="margin-right: 5px;"></i> Profile
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <div class="flex space-x-2">
+                                <a href="{% url 'saritasapp:view_customer' rental.customer.encrypted_id %}" 
+                                class="flex items-center px-3 py-1.5 bg-amber-100 text-amber-700 rounded-md hover:bg-amber-200 transition-colors">
+                                 <i class="fas fa-user-circle mr-2"></i>
+                                 Profile
                                 </a>
-                                <a href="{% url 'saritasapp:view_inventory' rental.inventory.id %}" class="action-btn details-btn">
-                                    <i class="fas fa-box-open" style="margin-right: 5px;"></i> Details
+                                <a href="{% url 'saritasapp:view_inventory' rental.inventory.encrypted_id %}" 
+                                   class="flex items-center px-3 py-1.5 bg-amber-100 text-amber-700 rounded-md hover:bg-amber-200 transition-colors">
+                                    <i class="fas fa-box-open mr-2"></i>
+                                    Details
                                 </a>
                             </div>
                         </td>

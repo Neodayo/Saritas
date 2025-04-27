@@ -107,6 +107,23 @@ class Customer(models.Model):
     @property
     def email(self):
         return self.user.email
+    
+    @property
+    def encrypted_id(self):
+        """Returns encrypted ID for URLs"""
+        if not self.pk:
+            return None
+        try:
+            return encrypt_id(self.pk)
+        except Exception as e:
+            logger.error(f"Failed to encrypt customer ID {self.pk}: {str(e)}")
+            return None
+
+    def get_absolute_url(self):
+        """Use this in templates instead of building URLs manually"""
+        if not self.encrypted_id:
+            raise ValueError("Cannot generate URL - encryption failed")
+        return reverse('view_customer', kwargs={'encrypted_id': self.encrypted_id})
 
 
 # --- Inventory Support Models ---
@@ -193,6 +210,21 @@ class Inventory(models.Model):
     class Meta:
         verbose_name_plural = "Inventory"
         ordering = ['-created_at']
+    
+    @property
+    def encrypted_id(self):
+        """Get encrypted ID or None if fails"""
+        from core.utils.encryption import encrypt_id
+        try:
+            return encrypt_id(self.pk) if self.pk else None
+        except Exception:
+            return None
+
+    def get_absolute_url(self):
+        """Standard Django URL method with encryption"""
+        if not (enc_id := self.encrypted_id):
+            raise ValueError("Encryption failed - no URL available")
+        return reverse('view_inventory', kwargs={'encrypted_id': enc_id})
 
 
 
