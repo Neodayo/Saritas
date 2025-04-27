@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Privacy Policy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     .text-gold-dark {
@@ -15,51 +16,51 @@
 </head>
 <body class="bg-gray-50 text-gray-800">
 
-  <div class="max-w-4xl mx-auto py-10 px-6">
-    <h1 class="text-3xl font-bold mb-6 text-gold-dark">Privacy Policy</h1>
-    <div class="space-y-6 text-sm">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <h1 class="text-3xl sm:text-4xl font-bold mb-6 text-gold-dark text-center sm:text-left">Privacy Policy</h1>
+
+    <div class="space-y-6 text-base sm:text-sm leading-relaxed">
       <p>Welcome to Sarita's Wedding Creations. Your privacy is important to us. By using our services, you agree to the terms outlined in this privacy policy:</p>
 
-      <h2 class="text-lg font-semibold mt-4">1. Information We Collect</h2>
+      <h2 class="text-lg font-semibold mt-6">1. Information We Collect</h2>
       <p>We collect personal information, such as your name, email address, phone number, and payment details, when you use our services.</p>
 
-      <h2 class="text-lg font-semibold mt-4">2. How We Use Your Information</h2>
+      <h2 class="text-lg font-semibold mt-6">2. How We Use Your Information</h2>
       <p>Your information is used to provide services, process transactions, and communicate with you about your bookings. We do not share your data with third parties unless required by law.</p>
 
-      <h2 class="text-lg font-semibold mt-4">3. Data Security</h2>
+      <h2 class="text-lg font-semibold mt-6">3. Data Security</h2>
       <p>We implement security measures to protect your personal data from unauthorized access, use, or disclosure.</p>
 
-      <h2 class="text-lg font-semibold mt-4">4. Cookies</h2>
+      <h2 class="text-lg font-semibold mt-6">4. Cookies</h2>
       <p>We use cookies to enhance your experience on our website. By continuing to use our site, you consent to the use of cookies.</p>
 
-      <h2 class="text-lg font-semibold mt-4">5. Your Rights</h2>
+      <h2 class="text-lg font-semibold mt-6">5. Your Rights</h2>
       <p>You have the right to access, update, or delete your personal information. To exercise these rights, please contact us directly.</p>
 
-      <h2 class="text-lg font-semibold mt-4">6. Third-Party Links</h2>
+      <h2 class="text-lg font-semibold mt-6">6. Third-Party Links</h2>
       <p>Our website may contain links to third-party sites. We are not responsible for their privacy practices.</p>
 
-      <h2 class="text-lg font-semibold mt-4">7. Changes to This Privacy Policy</h2>
+      <h2 class="text-lg font-semibold mt-6">7. Changes to This Privacy Policy</h2>
       <p>We may update this privacy policy from time to time. Any changes will be posted on this page, and the revised date will be indicated at the top of the page.</p>
 
-      <h2 class="text-lg font-semibold mt-4">8. Contact Us</h2>
+      <h2 class="text-lg font-semibold mt-6">8. Contact Us</h2>
       <p>If you have any questions regarding our privacy practices, please contact us:</p>
-      <p>Sarita's Wedding Creations</p>
-      <p>Sucabon, Zamboanga City, Mindanao, Philippines 7000</p>
-      <p>Phone: 09999999999</p>
-      <p>Email: saritas@gmail.com</p>
-
+      <div class="pl-4">
+        <p>Sarita's Wedding Creations</p>
+        <p>Sucabon, Zamboanga City, Mindanao, Philippines 7000</p>
+        <p>Phone: 09999999999</p>
+        <p>Email: saritas@gmail.com</p>
+      </div>
     </div>
-    <div class="mt-8">
-      <a href="{% url 'customerapp:register' %}" 
-   class="text-white py-2 px-6 rounded-lg transition duration-300 hover:brightness-90" 
-   style="background-color: #d4af37;">
-   Back to Registration
-</a>
 
+    <div class="mt-10 text-center sm:text-left">
+      <a href="{% url 'customerapp:register' %}" 
+         class="inline-block text-white py-2 px-6 rounded-lg transition duration-300 hover:brightness-90"
+         style="background-color: #d4af37;">
+         Back to Registration
+      </a>
     </div>
   </div>
 
 </body>
 </html>
-
-
