@@ -4,8 +4,250 @@
 {% block title %}Notifications | Sarita's{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/notifications.css' %}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+    /* Color Palette */
+    :root {
+        --primary-color: #8E793E;  /* Dark gold */
+        --secondary-color: #AD974F;  /* Medium gold */
+        --accent-color: #EAEAEA;  /* Light gray */
+        --success-color: #4CCD99;  /* Teal */
+        --danger-color: #FF8B8B;  /* Coral */
+        --info-color: #7BD3EA;  /* Sky blue */
+        --text-dark: #2D2727;  /* Dark gray */
+        --text-medium: #555;
+        --text-light: #888;
+        --bg-light: #F9F9F9;  /* Very light gray */
+        --border-color: #E0E0E0;
+    }
+
+    /* Base styles */
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 25px 20px;
+        font-family: 'Poppins', 'Segoe UI', sans-serif;
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(142, 121, 62, 0.08);
+    }
+
+    /* Page header styles */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .page-header h1 {
+        color: var(--primary-color);
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
+
+    /* Button styles */
+    .btn-mark-all {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 2px 8px rgba(142, 121, 62, 0.2);
+    }
+
+    .btn-mark-all:hover {
+        background-color: var(--secondary-color);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(142, 121, 62, 0.3);
+    }
+
+    /* Notification container styles */
+    .notification-container {
+        background-color: white;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    /* Notification item styles */
+    .notification {
+        display: flex;
+        padding: 18px 20px;
+        border-bottom: 1px solid var(--border-color);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .notification:hover {
+        background-color: var(--bg-light);
+        transform: translateX(4px);
+    }
+
+    .notification.unread {
+        background-color: rgba(173, 151, 79, 0.05);
+        border-left: 3px solid var(--secondary-color);
+    }
+
+    .notification-icon {
+        margin-right: 16px;
+        font-size: 22px;
+        min-width: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .text-success {
+        color: var(--success-color);
+    }
+
+    .text-danger {
+        color: var(--danger-color);
+    }
+
+    .text-info {
+        color: var(--info-color);
+    }
+
+    .notification-content {
+        flex: 1;
+    }
+
+    .notification-message {
+        margin: 0;
+        color: var(--text-dark);
+        font-size: 15px;
+        line-height: 1.5;
+        font-weight: 500;
+    }
+
+    .notification-link {
+        color: var(--primary-color);
+        font-weight: 600;
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .notification-link:hover {
+        color: var(--secondary-color);
+        text-decoration: underline;
+    }
+
+    .notification-time {
+        color: var(--text-light);
+        font-size: 13px;
+        display: block;
+        margin-top: 6px;
+        font-weight: 400;
+    }
+
+    .unread-badge {
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 10px;
+        height: 10px;
+        background-color: var(--secondary-color);
+        border-radius: 50%;
+        box-shadow: 0 0 0 2px rgba(173, 151, 79, 0.2);
+    }
+
+    /* Empty state styles */
+    .empty-state {
+        text-align: center;
+        padding: 50px 20px;
+        color: var(--text-medium);
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 20px;
+        color: var(--accent-color);
+        opacity: 0.8;
+    }
+
+    .empty-state h4 {
+        font-size: 20px;
+        margin-bottom: 12px;
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+
+    .empty-state p {
+        font-size: 15px;
+        margin: 0;
+        color: var(--text-medium);
+    }
+
+    /* Rental list link styles */
+    .container > div:last-child {
+        margin-top: 30px;
+        text-align: center;
+    }
+
+    .container > div:last-child a {
+        color: var(--secondary-color);
+        text-decoration: none;
+        font-size: 15px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .container > div:last-child a:hover {
+        color: var(--primary-color);
+        text-decoration: underline;
+        gap: 8px;
+    }
+
+    /* Animation for new notifications */
+    @keyframes pulse {
+        0% { transform: translateY(-50%) scale(1); }
+        50% { transform: translateY(-50%) scale(1.2); }
+        100% { transform: translateY(-50%) scale(1); }
+    }
+
+    .notification.unread .unread-badge {
+        animation: pulse 1.5s infinite;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .container {
+            padding: 20px 15px;
+            border-radius: 0;
+            box-shadow: none;
+        }
+        
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        
+        .notification {
+            padding: 16px 15px;
+        }
+        
+        .empty-state {
+            padding: 40px 15px;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -58,9 +300,6 @@
                 <p>You'll see important updates here</p>
             </div>
         {% endif %}
-    </div>
-    <div>
-        <a href="{% url 'customerapp:rental_list' %}">rental_list</a>
     </div>
 </div>
 
