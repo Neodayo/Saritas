@@ -5,6 +5,13 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
     <style>
+        /* Set base font family */
+        body, .staff-management-container, .staff-title, 
+        .staff-table, .btn-edit, .btn-delete, 
+        .btn-add-staff, .empty-state {
+            font-family: Arial, sans-serif !important;
+        }
+        
         /* Staff Management Styles */
         .staff-management-container {
             background: white;
@@ -211,7 +218,7 @@
 {% block content %}
 <div class="staff-management-container">
     <div class="staff-header">
-        <h2 class="staff-title" style="font-family: 'Playfair Display', serif;">
+        <h2 class="staff-title">
             <i class="fas fa-users-cog"></i> Staff Management
         </h2>
         {% if user.is_superuser %}
