@@ -4,22 +4,172 @@
 {% load static %}
 
 {% block extra_css %}
-<!-- You can keep this block for any custom styles or Tailwind overrides -->
+<style>
+      body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f9f9f7;
+        color: #333;
+    }
+    
+    .gold-underline {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .gold-underline::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        width: 50px;
+        height: 3px;
+        background-color: #AD974F;
+        transition: width 0.3s ease;
+    }
+    
+    .gold-underline:hover::after {
+        width: 70px;
+    }
+    
+    .hover-gold:hover {
+        color: #AD974F;
+        transition: color 0.3s ease;
+    }
+    
+    /* Section Styling */
+    section {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    /* Story Section Enhancements */
+    .story-container {
+        position: relative;
+    }
+    
+    .story-container::before {
+        content: "❝";
+        position: absolute;
+        top: -20px;
+        left: -20px;
+        font-size: 80px;
+        color: rgba(173, 151, 79, 0.1);
+        font-family: serif;
+        line-height: 0;
+    }
+    
+    .story-container::after {
+        content: "❞";
+        position: absolute;
+        bottom: -40px;
+        right: -20px;
+        font-size: 80px;
+        color: rgba(173, 151, 79, 0.1);
+        font-family: serif;
+        line-height: 0;
+    }
+    
+    /* Image Hover Effect */
+    .img-hover-zoom {
+        overflow: hidden;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .img-hover-zoom img {
+        transition: transform 0.5s ease;
+    }
+    
+    .img-hover-zoom:hover img {
+        transform: scale(1.05);
+    }
+    
+    /* Contact Cards */
+    .contact-card {
+        transition: all 0.3s ease;
+        position: relative;
+        border: 1px solid rgba(142, 121, 62, 0.2);
+    }
+    
+    .contact-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .contact-card::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #AD974F, #8E793E);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .contact-card:hover::after {
+        opacity: 1;
+    }
+    
+    /* Social Media Icon */
+    .social-icon {
+        transition: all 0.3s ease;
+    }
+    
+    .social-icon:hover {
+        transform: scale(1.1);
+        filter: drop-shadow(0 2px 4px rgba(173, 151, 79, 0.3));
+    }
+    
+    /* Map Link */
+    .map-link {
+        transition: all 0.3s ease;
+        border-bottom: 1px dashed rgba(142, 121, 62, 0.3);
+    }
+    
+    .map-link:hover {
+        color: #8E793E;
+        border-bottom-color: #AD974F;
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .story-container::before,
+        .story-container::after {
+            display: none;
+        }
+        
+        .contact-card {
+            margin-bottom: 20px;
+        }
+    }
+    
+    /* Elegant Typography */
+    h2, h3 {
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    
+    p {
+        line-height: 1.8;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="max-w-screen-xl mx-auto px-5 py-10">
     <!-- Story Section -->
     <section class="mb-20 relative">
-<h2 class="text-3xl text-center text-[#5a3e2b] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373]">
-    Our Story
-</h2>
-        <div class="flex flex-wrap items-center gap-16 bg-[#eaeaea] p-10 rounded-xl shadow-md">
+        <h2 class="text-3xl text-center text-[#8E793E] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#AD974F]">
+            Our Story
+        </h2>
+        <div class="flex flex-wrap items-center gap-16 bg-[#EAEAEA] p-10 rounded-xl shadow-md">
             <div class="flex-1 min-w-[300px] max-w-[500px] overflow-hidden rounded-lg shadow-lg transition-transform duration-300 hover:transform hover:translate-y-[-5px]">
                 <img class="w-full h-auto block transition-transform duration-500 hover:scale-105" src="{% static 'images/Logo.png' %}" alt="Sarita, Founder of Sarita's Wedding">
             </div>
             <div class="flex-1 min-w-[300px]">
-                <h3 class="text-2xl text-[#5a3e2b] mb-5 relative inline-block after:absolute after:bottom-[-8px] after:left-0 after:w-12 after:h-[2px] after:bg-[#d4a373]">
+                <h3 class="text-2xl text-[#8E793E] mb-5 relative inline-block after:absolute after:bottom-[-8px] after:left-0 after:w-12 after:h-[2px] after:bg-[#AD974F]">
                     Sarita Macansantos Midel
                 </h3>
                 <p class="mb-5 text-[#333] text-lg leading-relaxed">
@@ -35,64 +185,41 @@
         </div>
     </section>
     
-    <!-- Gallery Section -->
-    <!-- <section class="mb-20">
-        <h2 class="text-3xl text-center text-[#5a3e2b] pb-3 relative mb-8 after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373]">
-            Our Work
-        </h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="relative overflow-hidden rounded-xl shadow-lg h-72 transition-all duration-300 hover:transform hover:translate-y-[-5px] hover:shadow-lg">
-                <img class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" src="{% static 'images/gallery1.jpg' %}" alt="Bridal gown">
-            </div>
-            <div class="relative overflow-hidden rounded-xl shadow-lg h-72 transition-all duration-300 hover:transform hover:translate-y-[-5px] hover:shadow-lg">
-                <img class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" src="{% static 'images/gallery2.jpg' %}" alt="Wedding dress">
-            </div>
-            <div class="relative overflow-hidden rounded-xl shadow-lg h-72 transition-all duration-300 hover:transform hover:translate-y-[-5px] hover:shadow-lg">
-                <img class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" src="{% static 'images/gallery3.jpg' %}" alt="Bride">
-            </div>
-            <div class="relative overflow-hidden rounded-xl shadow-lg h-72 transition-all duration-300 hover:transform hover:translate-y-[-5px] hover:shadow-lg">
-                <video class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" controls poster="{% static 'images/video-poster.jpg' %}">
-                    <source src="{% static 'videos/showcase.mp4' %}" type="video/mp4">
-                </video>
-            </div>
-        </div>
-    </section> -->
-
     <!-- Contact Section -->
     <section class="mb-20">
-        <h2 class="text-3xl text-center text-[#5a3e2b] pb-3 relative mb-8 after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373]">
+        <h2 class="text-3xl text-center text-[#8E793E] pb-3 relative mb-8 after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#AD974F]">
             Get In Touch
         </h2>
         <div class="flex flex-wrap gap-10">
             <!-- Contact Info -->
-            <div class="flex-1 min-w-[300px] bg-[#f9f4f1] p-10 rounded-xl shadow-md">
+            <div class="flex-1 min-w-[300px] bg-[#EAEAEA] p-10 rounded-xl shadow-md">
                 <div class="flex items-start gap-5 mb-8 transition-transform duration-300 hover:transform hover:translate-x-2">
-                    <svg class="w-12 h-12 text-[#5a3e2b]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <svg class="w-12 h-12 text-[#8E793E]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                         <path d="M22 16v2h-20v-2h20zm0-4v2h-20v-2h20zm0-4v2h-20v-2h20zm-22-4h24v16h-24v-16z"/>
                     </svg>
                     <div>
-                        <h3 class="text-xl text-[#5a3e2b] mb-2">Email Us</h3>
+                        <h3 class="text-xl text-[#8E793E] mb-2">Email Us</h3>
                         <p class="text-gray-600 text-lg">p.angelene1603@gmail.com</p>
                     </div>
                 </div>
                 
                 <div class="flex items-start gap-5 mb-8 transition-transform duration-300 hover:transform hover:translate-x-2">
-                    <svg class="w-12 h-12 text-[#5a3e2b]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <svg class="w-12 h-12 text-[#8E793E]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                         <path d="M18.48 22.926l-1.193.658c-6.979 3.621-19.082-17.494-12.279-21.484l1.145-.637 3.714 6.467-1.139.632c-2.067 1.245 2.76 9.707 4.879 8.545l1.162-.642 3.711 6.461zm-9.808-22.926l-1.68.975 3.714 6.466 1.681-.975-3.715-6.466zm8.613 14.997l-1.68.975 3.714 6.467 1.681-.975-3.715-6.467z"/>
                     </svg>
                     <div>
-                        <h3 class="text-xl text-[#5a3e2b] mb-2">Call Us</h3>
+                        <h3 class="text-xl text-[#8E793E] mb-2">Call Us</h3>
                         <p class="text-gray-600 text-lg">(+63) 975 643 1190</p>
                     </div>
                 </div>
 
                 <div class="flex items-start gap-5 mb-8">
-                    <a href="https://www.facebook.com/saritasweddingcreationandeventstylist" target="_blank" rel="noopener noreferrer" class="flex items-center text-[#5a3e2b] hover:text-[#d4a373] transition-colors duration-300">
-                        <svg class="w-12 h-12 text-[#5a3e2b]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <a href="https://www.facebook.com/saritasweddingcreationandeventstylist" target="_blank" rel="noopener noreferrer" class="flex items-center text-[#8E793E] hover:text-[#AD974F] transition-colors duration-300">
+                        <svg class="w-12 h-12" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                             <path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/>
                         </svg>
                         <div class="ml-4">
-                            <h3 class="text-xl text-[#5a3e2b] mb-2">Follow Us</h3>
+                            <h3 class="text-xl text-[#8E793E] mb-2">Follow Us</h3>
                             <p class="text-gray-600 text-lg">@SaritasWedding</p>
                         </div>
                     </a>
@@ -100,22 +227,22 @@
             </div>
             
             <!-- Business Hours & Location -->
-            <div class="flex-2 min-w-[300px] bg-[#f9f4f1] p-10 rounded-xl shadow-md">
-                <h3 class="text-xl text-[#5a3e2b] mb-5 relative pb-2 after:absolute after:bottom-0 after:left-0 after:w-10 after:h-[2px] after:bg-[#d4a373]">
+            <div class="flex-2 min-w-[300px] bg-[#EAEAEA] p-10 rounded-xl shadow-md">
+                <h3 class="text-xl text-[#8E793E] mb-5 relative pb-2 after:absolute after:bottom-0 after:left-0 after:w-10 after:h-[2px] after:bg-[#AD974F]">
                     Our Business Hours
                 </h3>
                 <p class="text-gray-600 text-lg mb-3"><strong>Monday:</strong> 9:00 AM - 4:30 PM</p>
                 <p class="text-gray-600 text-lg mb-3"><strong>Tuesday - Friday:</strong> 9:00 AM - 6:00 PM</p>
                 <p class="text-gray-600 text-lg mb-3"><strong>Sunday:</strong> 9:00 AM - 4:00 PM</p>
 
-                <h3 class="text-xl text-[#5a3e2b] mt-10 mb-5 relative pb-2 after:absolute after:bottom-0 after:left-0 after:w-10 after:h-[2px] after:bg-[#d4a373]">
+                <h3 class="text-xl text-[#8E793E] mt-10 mb-5 relative pb-2 after:absolute after:bottom-0 after:left-0 after:w-10 after:h-[2px] after:bg-[#AD974F]">
                     Location
                 </h3>
                 <a href="https://www.google.com/maps/place/saritas+wedding+creation+%26+event+stylist/@6.9084959,122.0742049,277m/data=!3m1!1e3!4m14!1m7!3m6!1s0x325041fce97fb3ab:0xfb452d2e1adf3089!2s55+Mayor+Climaco+Ave,+Zamboanga,+Zamboanga+del+Sur!3b1!8m2!3d6.9079704!4d122.0743751!3m5!1s0x32504170a95a1997:0x55de74dd6f4492cb!8m2!3d6.908776!4d122.0741449!16s%2Fg%2F11y1cxxry5?entry=ttu&g_ep=EgoyMDI1MDQxNi4xIKXMDSoASAFQAw%3D%3D" 
                    target="_blank" 
                    rel="noopener noreferrer"
-                   class="flex items-center text-[#5a3e2b] hover:text-[#d4a373] transition-colors duration-300">
-                    <svg class="w-6 h-6 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                   class="flex items-center text-[#8E793E] hover:text-[#AD974F] transition-colors duration-300">
+                    <svg class="w-6 h-6 mr-4" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                     </svg>
                     <div>
