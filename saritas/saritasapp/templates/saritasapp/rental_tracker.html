@@ -47,7 +47,7 @@
                     <input type="date" name="end_date" value="{{ request.GET.end_date }}" 
                            class="w-full px-4 py-2 border border-amber-300 rounded-lg shadow-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white">
                 </div>
-                <button type="submit" name="status" value="" 
+                <button type="button" onclick="this.form.reset(); this.form.submit();" 
                         class="w-full md:w-auto px-4 py-2 border border-amber-600 text-amber-600 rounded-lg hover:bg-amber-100 transition-colors font-medium">
                     <i class="fas fa-sync-alt mr-2"></i>Clear Filters
                 </button>
@@ -92,22 +92,22 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             {% if rental.display_status == "Overdue" %}
-                                <span class="inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-red-800 text-sm font-medium">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-red-800 text-sm font-medium" title="Overdue: Past due date">
                                     <span class="w-2 h-2 mr-2 bg-red-500 rounded-full"></span>
                                     Overdue
                                 </span>
                             {% elif rental.display_status == "Returned" %}
-                                <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium" title="Returned: Successfully returned">
                                     <span class="w-2 h-2 mr-2 bg-green-500 rounded-full"></span>
                                     Returned
                                 </span>
                             {% elif rental.display_status == "Renting" %}
-                                <span class="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm font-medium">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm font-medium" title="Renting: Currently rented">
                                     <span class="w-2 h-2 mr-2 bg-blue-500 rounded-full"></span>
                                     Renting
                                 </span>
                             {% else %}
-                                <span class="inline-flex items-center px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-sm font-medium">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-sm font-medium" title="Pending: Awaiting approval">
                                     <span class="w-2 h-2 mr-2 bg-yellow-500 rounded-full"></span>
                                     {{ rental.display_status }}
                                 </span>

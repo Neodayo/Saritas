@@ -51,6 +51,23 @@ class User(AbstractUser):
     @property
     def is_staff_user(self):
         return self.role == 'staff' or self.is_staff
+    
+    @property
+    def encrypted_id(self):
+        """Returns encrypted ID for URLs"""
+        if not self.pk:
+            return None
+        try:
+            return encrypt_id(self.pk)
+        except Exception as e:
+            logger.error(f"Failed to encrypt customer ID {self.pk}: {str(e)}")
+            return None
+
+    def get_absolute_url(self):
+        """Use this in templates instead of building URLs manually"""
+        if not self.encrypted_id:
+            raise ValueError("Cannot generate URL - encryption failed")
+        return reverse('view_customer', kwargs={'encrypted_id': self.encrypted_id})
 
     def save(self, *args, **kwargs):
         if self.role == 'staff':

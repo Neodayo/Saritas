@@ -60,7 +60,7 @@ from core.utils.encryption import (
 logger = logging.getLogger(__name__)
 
     
-@login_required
+@staff_member_required
 def add_inventory(request):
     if request.method == 'POST':
         form = InventoryForm(request.POST, request.FILES, user=request.user)
@@ -100,9 +100,9 @@ def add_inventory(request):
         'item_types': ItemType.objects.all().order_by('name'),
         'user': request.user  # Make sure user is passed to template
     }
-    return render(request, 'saritasapp/add_inventory.html', context)
+    return render(request, 'saritasapp/add_item.html', context)
 
-@login_required
+@staff_member_required
 def add_category(request):
     if request.method == 'POST':
         form = CategoryForm(request.POST)
@@ -120,7 +120,7 @@ def add_category(request):
         'next': request.GET.get('next', '')
     })
 
-@login_required
+@staff_member_required
 def add_color(request):
     if request.method == 'POST':
         form = ColorForm(request.POST)
@@ -131,7 +131,7 @@ def add_color(request):
         form = ColorForm()
     return render(request, 'saritasapp/add_color.html', {'form': form})
 
-@login_required
+@staff_member_required
 def add_size(request):
     if request.method == 'POST':
         form = SizeForm(request.POST)
@@ -142,7 +142,7 @@ def add_size(request):
         form = SizeForm()
     return render(request, 'saritasapp/add_size.html', {'form': form})
 
-@login_required
+@staff_member_required
 def view_item(request, encrypted_id):
     try:
         item = get_decrypted_object_or_404(Inventory, encrypted_id)
@@ -152,7 +152,7 @@ def view_item(request, encrypted_id):
     except Http404:
         return HttpResponseNotFound("Item not found")
 
-@login_required
+@staff_member_required
 def edit_inventory(request, encrypted_id):
     item = get_decrypted_object_or_404(Inventory, encrypted_id)
 
@@ -175,7 +175,7 @@ def edit_inventory(request, encrypted_id):
         'item': item
     })
 
-@login_required
+@staff_member_required
 def delete_inventory(request, encrypted_id):
     item = get_decrypted_object_or_404(Inventory, encrypted_id)
     
@@ -185,7 +185,7 @@ def delete_inventory(request, encrypted_id):
 
     return render(request, 'saritasapp/confirm_delete.html', {'item': item})
 
-@login_required
+@staff_member_required
 def inventory_view(request):
     categories = Category.objects.all()
     colors = Color.objects.all()
@@ -228,7 +228,7 @@ def inventory_view(request):
 # Create a logger instance
 
 
-@login_required
+@staff_member_required
 def rental_tracker(request):
     # Extract filter values from GET parameters
     status_filter = request.GET.get('status')
@@ -241,7 +241,7 @@ def rental_tracker(request):
         'inventory',
         'customer',
         'customer__user',
-        'approved_by'
+        'staff'  # Correct the field name here
     ).prefetch_related(
         'inventory__category',
         'inventory__size'
@@ -268,6 +268,7 @@ def rental_tracker(request):
         'rentals': rentals,
         'today': today
     })
+
 
 
 
@@ -455,7 +456,6 @@ def approve_rental(request, rental_id, action):
     return redirect('saritasapp:rental_approvals')
 
 @staff_member_required
-@login_required
 def rental_detail(request, encrypted_id):
     rental = get_decrypted_object_or_404(Rental, encrypted_id)
     
@@ -468,7 +468,7 @@ def rental_detail(request, encrypted_id):
         'last_rental': last_rental
     })
 
-@login_required
+@staff_member_required
 def customer_list(request):
     query = request.GET.get('q', '')
     status_filter = request.GET.get('status', 'all')
@@ -515,20 +515,31 @@ def customer_list(request):
         'status_filter': status_filter
     })
 
-@login_required
+@staff_member_required
 def view_customer(request, encrypted_id):
-    customer = get_decrypted_object_or_404(Customer.objects.select_related('user'), encrypted_id)
-    
-    today = now().date()
-    rentals = Rental.objects.filter(customer=customer)
-    rentals.filter(status="Renting", rental_end__lt=today).update(status="Overdue")
+    try:
+        customer = get_decrypted_object_or_404(
+            Customer.objects.select_related('user'), 
+            encrypted_id
+        )
+        
+        today = timezone.now().date()
+        rentals = Rental.objects.filter(customer=customer)
+        
+        # Update overdue rentals
+        rentals.filter(status=Rental.RENTED, rental_end__lt=today).update(status=Rental.OVERDUE)
+        
+        return render(request, 'saritasapp/view_customer.html', {
+            'customer': customer,
+            'rentals': rentals,
+        })
+        
+    except Exception as e:
+        logger.error(f"Error viewing customer {encrypted_id}: {str(e)}")
+        raise Http404("Customer not found")
 
-    return render(request, 'saritasapp/view_customer.html', {
-        'customer': customer,
-        'rentals': rentals,
-    })
 
-@login_required
+@staff_member_required
 def return_rental(request, encrypted_id):
     rental = get_decrypted_object_or_404(Rental, encrypted_id)
     
@@ -552,7 +563,7 @@ def return_rental(request, encrypted_id):
     })
 
 # views.py
-@login_required
+@staff_member_required
 def manage_staff(request):
     staff_list = User.objects.filter(
         role='staff'
@@ -564,7 +575,7 @@ def manage_staff(request):
     }
     return render(request, 'saritasapp/manage_staff.html', context)
 
-@login_required
+@staff_member_required
 def edit_staff(request, staff_id):
     staff = get_object_or_404(User, id=staff_id, role='staff')
     if request.method == 'POST':
@@ -577,7 +588,7 @@ def edit_staff(request, staff_id):
         form = EditStaffForm(instance=staff)
     return render(request, 'saritasapp/edit_staff.html', {'form': form, 'staff': staff})
 
-@login_required
+@staff_member_required
 def delete_staff(request, staff_id):
     staff = get_object_or_404(User, id=staff_id, role='staff')
     if request.method == 'POST':
@@ -588,7 +599,7 @@ def delete_staff(request, staff_id):
 #data_analysis
 
 
-@login_required
+@staff_member_required
 def data_analysis(request):
     # Total rentals and customers
     total_rentals = Rental.objects.count()
@@ -730,26 +741,26 @@ def data_analysis(request):
 
 
 #calnder
-@login_required
+@staff_member_required
 def calendar_view(request):
     return render(request, "saritasapp/calendar.html")
 
-@login_required
+@staff_member_required
 def ongoing_events(request):
     events = Event.objects.filter(start_date__lte=now().date(), end_date__gte=now().date())
     return render(request, "saritasapp/ongoing_events.html", {"events": events})
 
-@login_required
+@staff_member_required
 def upcoming_events(request):
     events = Event.objects.filter(start_date__gt=now().date())
     return render(request, "saritasapp/upcoming_events.html", {"events": events})
 
-@login_required
+@staff_member_required
 def past_events(request):
     events = Event.objects.filter(end_date__lt=now().date())
     return render(request, "saritasapp/past_events.html", {"events": events})
 
-@login_required
+@staff_member_required
 def create_event(request):
     if request.method == "POST":
         title = request.POST.get("title")
@@ -760,12 +771,12 @@ def create_event(request):
         return redirect("calendar")
     return render(request, "saritasapp/create_event.html")
 
-@login_required
+@staff_member_required
 def view_event(request, encrypted_id):
     event = get_decrypted_object_or_404(Event, encrypted_id)
     return render(request, 'saritasapp/view_event.html', {'event': event})
 
-@login_required
+@staff_member_required
 def get_events(request):
     events = Event.objects.all()
     events_data = [
@@ -781,7 +792,7 @@ def get_events(request):
 
 
 
-@login_required
+@staff_member_required
 def made_to_order(request):
     return render(request, 'saritasapp/made_to_order.html')
 
@@ -864,29 +875,28 @@ def sign_in(request):
     })
 
 # --- Dashboard View ---
-@login_required
+@staff_member_required
 def dashboard(request):
     return render(request, 'saritasapp/dashboard.html')
 
 
 # --- Logout View ---
-@login_required
 def logout_view(request):
     logout(request)
     return redirect('customerapp:homepage')
 
 
-@login_required
+@staff_member_required
 def receipt_view(request):
     return render(request, 'saritasapp/receipt.html')
 
-@login_required
+@staff_member_required
 def receipt_detail(request, encrypted_id):
     receipt = get_decrypted_object_or_404(Receipt, encrypted_id)
     return render(request, 'saritasapp/receipt_detail.html', {'receipt': receipt})
 
 #Receipt
-@login_required
+@staff_member_required
 def update_receipt(request, encrypted_id):
     receipt = get_decrypted_object_or_404(Receipt, encrypted_id)
 
@@ -936,7 +946,7 @@ def update_receipt(request, encrypted_id):
 
     return render(request, "saritasapp/receipt.html", {"receipt": receipt})
 
-@login_required
+@staff_member_required
 def generate_receipt_pdf(request, encrypted_id):
     receipt = get_decrypted_object_or_404(Receipt, encrypted_id)
 
@@ -1016,7 +1026,7 @@ def generate_receipt_pdf(request, encrypted_id):
     return response
 
 
-@login_required
+@staff_member_required
 def wardrobe_package_view(request, encrypted_id):
     package = get_decrypted_object_or_404(WardrobePackage, encrypted_id)
 
@@ -1044,12 +1054,12 @@ def wardrobe_package_view(request, encrypted_id):
     return render(request, 'saritasapp/wardrobe_package.html', context)
 
 
-@login_required
+@staff_member_required
 def wardrobe_package_list(request):
     packages = WardrobePackage.objects.filter(status='active')
     return render(request, 'saritasapp/wardrobe_package_list.html', {'packages': packages})
 
-@login_required
+@staff_member_required
 def wardrobe_package_view(request, encrypted_id):
     package = get_decrypted_object_or_404(WardrobePackage, encrypted_id)
     customers = Customer.objects.all()
@@ -1087,7 +1097,7 @@ def wardrobe_package_view(request, encrypted_id):
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Receipt
 
-@login_required
+@staff_member_required
 def made_to_order_view(request):
     """Handles made-to-order page and saves measurements."""
     
@@ -1116,7 +1126,7 @@ def made_to_order_view(request):
 
     return render(request, "saritasapp/made_to_order.html", {"receipt": receipt})
 
-@login_required
+@staff_member_required
 def receipt_detail(request, encrypted_id):
     """Display receipt details."""
     receipt = get_decrypted_object_or_404(Receipt, encrypted_id)
@@ -1128,17 +1138,17 @@ from django.utils.timezone import now
 from .models import Event
 from django.http import JsonResponse
 
-@login_required
+@staff_member_required
 def calendar_view(request):
     events = Event.objects.all()
     return render(request, "saritasapp/calendar.html", {"events": events})
 
-@login_required
+@staff_member_required
 def view_event(request, encrypted_id):
     event = get_decrypted_object_or_404(Event, encrypted_id)
     return render(request, "saritasapp/view_event.html", {"event": event})
 
-@login_required
+@staff_member_required
 def create_event(request):
     if request.method == "POST":
         title = request.POST.get("title")
@@ -1164,22 +1174,22 @@ def create_event(request):
 
     return render(request, "saritasapp/create_event.html")
 
-@login_required
+@staff_member_required
 def ongoing_events(request):
     events = Event.objects.filter(start_date__lte=now().date(), end_date__gte=now().date())
     return render(request, "saritasapp/ongoing_events.html", {"events": events})
 
-@login_required
+@staff_member_required
 def upcoming_events(request):
     events = Event.objects.filter(start_date__gt=now().date()) 
     return render(request, "saritasapp/upcoming_events.html", {"events": events})
 
-@login_required
+@staff_member_required
 def past_events(request):
     events = Event.objects.filter(end_date__lt=now().date())  
     return render(request, "saritasapp/past_events.html", {"events": events})
 
-@login_required
+@staff_member_required
 def get_events(request):
     events = Event.objects.all()
     events_data = [
@@ -1198,7 +1208,7 @@ def get_events(request):
 #profile
 
 
-@login_required
+@staff_member_required
 def staff_profile_view(request):
     """Handles profile updates"""
     user = request.user  # Get the logged-in user
@@ -1214,7 +1224,7 @@ def staff_profile_view(request):
     else:
         form = EditProfileForm(instance=user)
 
-@login_required
+@staff_member_required
 def sign_out(request):
     """Logs out the user and redirects to logout page"""
     if request.method == "POST" or request.method == "GET":  # ✅ Allow both GET & POST
@@ -1223,9 +1233,8 @@ def sign_out(request):
     
     return redirect("saritasapp:profile")  # If another method is used
 
-@login_required
 
-@login_required
+@staff_member_required
 def edit_event(request, encrypted_id):
     event = get_decrypted_object_or_404(Event, encrypted_id)
 
@@ -1242,7 +1251,7 @@ def edit_event(request, encrypted_id):
 
     return render(request, 'saritasapp/edit_event.html', {'form': form, 'event': event})
 
-@login_required
+@staff_member_required
 def delete_event(request, encrypted_id):
     event = get_decrypted_object_or_404(Event, encrypted_id)
 
@@ -1260,7 +1269,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from .models import Venue  # Make sure Venue model is imported
 
-@login_required
+@staff_member_required
 def wedding_packages(request):
     if request.method == 'POST':
         custom_venues = {v.venue_id: v.base_price for v in Venue.objects.filter(is_custom=True, created_by=request.user)}
@@ -1302,7 +1311,7 @@ def wedding_packages(request):
     return render(request, 'saritasapp/wedding_packages.html')
 
 
-@login_required
+@staff_member_required
 def wedding_confirmation(request):
     customization = request.session.get('wedding_customization', {})
     return render(request, 'saritasapp/wedding_confirmation.html', {
@@ -1310,7 +1319,7 @@ def wedding_confirmation(request):
     })
 
 
-@login_required
+@staff_member_required
 def add_custom_venue(request):
     if request.method == 'POST':
         name = request.POST.get('name')
@@ -1336,6 +1345,7 @@ def add_custom_venue(request):
 from django.shortcuts import render, redirect
 
 # Debut Packages View
+@staff_member_required
 def debut_packages(request):
     if request.method == 'POST':
         # Process debut customization
@@ -1352,7 +1362,7 @@ def debut_packages(request):
     return render(request, 'saritasapp/debut_packages.html')
 
 # Additional Services View
-@login_required
+@staff_member_required
 def additional_services(request):
     if request.method == 'POST':
         request.session['additional_services'] = {
@@ -1364,6 +1374,7 @@ def additional_services(request):
     return render(request, 'saritasapp/additional_services.html')
 
 # Debut Confirmation View
+@staff_member_required
 def debut_confirmation(request):
     customization = request.session.get('debut_customization', {})
     # Add price calculation logic if needed
@@ -1372,7 +1383,7 @@ def debut_confirmation(request):
     })
 
 # Additional Services Confirmation View
-@login_required
+@staff_member_required
 def additional_confirmation(request):
     services = request.session.get('additional_services', {})
     return render(request, 'saritasapp/additional_confirmation.html', {
@@ -1384,10 +1395,6 @@ class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     def test_func(self):
         return self.request.user.is_staff
 
-
-def encrypt_id(id):
-    f = Fernet(settings.FERNET_KEY)
-    return f.encrypt(str(id).encode()).decode()
 
 class WardrobePackageListView(StaffRequiredMixin, ListView):
     model = WardrobePackage
@@ -1728,6 +1735,10 @@ def package_rental_approvals(request):
     if status_filter != 'all':
         rentals = rentals.filter(status=status_filter)
 
+    # Add encrypted IDs to each rental
+    for rental in rentals:
+        rental.encrypted_id = encrypt_id(rental.id)
+
     stats = {
         'pending': WardrobePackageRental.objects.filter(status='pending').count(),
         'approved': WardrobePackageRental.objects.filter(status='approved').count(),
@@ -1744,56 +1755,28 @@ def package_rental_approvals(request):
 
 @staff_member_required
 def update_package_rental_status(request, encrypted_id, action):
-    rental = get_decrypted_object_or_404(WardrobePackageRental, encrypted_id)
-    
     try:
+        rental = get_decrypted_object_or_404(WardrobePackageRental, encrypted_id)
+        
         with transaction.atomic():
             if action == 'approve':
                 rental.approve(request.user)
-                action_message = 'approved'
             elif action == 'reject':
                 reason = request.POST.get('notes', '')
                 rental.reject(request.user, reason)
-                action_message = 'rejected'
             elif action == 'complete':
                 rental.mark_as_completed(request.user)
-                action_message = 'completed'
             elif action == 'return':
                 return_date = request.POST.get('actual_return_date')
-                notes = request.POST.get('notes', '')
-                
-                if return_date:
-                    return_date = timezone.datetime.strptime(return_date, '%Y-%m-%d').date()
-                
-                rental.mark_as_returned(
-                    request.user,
-                    actual_return_date=return_date
-                )
-                if notes:
-                    rental.notes = notes
-                    rental.save()
-                action_message = 'returned'
-            else:
-                messages.error(request, "Invalid action")
-                return redirect('saritasapp:package_rental_approvals')
-
-            Notification.objects.create(
-                user=rental.customer.user,
-                notification_type=f'package_rental_{action_message}',
-                message=f"Your package rental for {rental.package.name} has been {action_message}!",
-                is_read=False
-            )
-
-            messages.success(request, f"Package rental successfully {action_message}!")
-    except ValidationError as e:
-        messages.error(request, str(e))
+                rental.mark_as_returned(request.user, return_date)
+            
+            messages.success(request, f"Package rental successfully {action}ed!")
     except Exception as e:
-        logger.error(f"Error updating package rental status: {str(e)}")
-        messages.error(request, "An error occurred while updating the rental status")
-
+        messages.error(request, f"Error processing request: {str(e)}")
+    
     return redirect('saritasapp:package_rental_approvals')
 
-@login_required
+@staff_member_required
 def package_rental_detail(request, encrypted_id):
     try:
         rental = get_decrypted_object_or_404(
@@ -1805,6 +1788,15 @@ def package_rental_detail(request, encrypted_id):
         raise PermissionDenied("You don't have a customer profile")
     
     return render(request, 'customerapp/package_rental_detail.html', {
+        'rental': rental,
+        'rental_items': rental.package.package_items.all()
+    })
+
+@staff_member_required
+def staff_package_rental_detail(request, encrypted_id):
+    rental = get_decrypted_object_or_404(WardrobePackageRental, encrypted_id)
+
+    return render(request, 'saritasapp/staff_package_rental_detail.html', {
         'rental': rental,
         'rental_items': rental.package.package_items.all()
     })
