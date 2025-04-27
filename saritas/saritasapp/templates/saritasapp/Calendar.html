@@ -11,6 +11,7 @@
         background-color: #f8f9fa;
         min-height: calc(100vh - 70px);
         padding: 20px;
+        font-family: Arial, sans-serif;
     }
 
     /* White Container */
@@ -23,6 +24,7 @@
         max-width: 1200px;
         position: relative;
         border: 1px solid rgba(142, 121, 62, 0.15);
+        font-family: Arial, sans-serif;
     }
 
     .white-container::before {
@@ -32,8 +34,6 @@
         left: 0;
         right: 0;
         height: 4px;
-        /* background: linear-gradient(90deg, #8E793E, #AD974F);
-        border-radius: 12px 12px 0 0; */
     }
 
     /* Header */
@@ -44,6 +44,7 @@
         margin-bottom: 25px;
         padding-bottom: 15px;
         border-bottom: 1px solid #eaeaea;
+        font-family: Arial, sans-serif;
     }
 
     .calendar-header h1 {
@@ -53,6 +54,9 @@
         display: flex;
         align-items: center;
         gap: 10px;
+        font-family: Arial, sans-serif;
+        font-size: 1.5rem;
+        font-weight: 600;
     }
 
     .add-event-btn {
@@ -66,6 +70,7 @@
         gap: 8px;
         font-weight: 600;
         transition: all 0.3s;
+        font-family: Arial, sans-serif;
     }
 
     .add-event-btn:hover {
@@ -77,12 +82,14 @@
     /* Filter/Tabs Row */
     .filter-row {
         margin-bottom: 25px;
+        font-family: Arial, sans-serif;
     }
 
     .view-tabs {
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
+        font-family: Arial, sans-serif;
     }
 
     .view-tab {
@@ -97,6 +104,7 @@
         align-items: center;
         gap: 8px;
         transition: all 0.3s;
+        font-family: Arial, sans-serif;
     }
 
     .view-tab.active, .view-tab:hover {
@@ -109,12 +117,14 @@
         background: white;
         border-radius: 8px;
         padding: 15px;
+        font-family: Arial, sans-serif;
     }
 
     .fc .fc-toolbar-title {
         color: #8E793E;
         font-size: 20px;
         font-weight: 600;
+        font-family: Arial, sans-serif;
     }
 
     .fc .fc-button {
@@ -123,6 +133,7 @@
         color: #231F20;
         border-radius: 6px;
         transition: all 0.3s;
+        font-family: Arial, sans-serif;
     }
 
     .fc .fc-button:hover {
@@ -139,11 +150,13 @@
         background: #8E793E;
         border-color: #AD974F;
         font-size: 13px;
+        font-family: Arial, sans-serif;
     }
 
     .fc-daygrid-day-number {
         color: #231F20;
         font-weight: 500;
+        font-family: Arial, sans-serif;
     }
 
     .fc-daygrid-day.fc-day-today {
@@ -181,8 +194,8 @@
 {% block content %}
     <div class="white-container">
         <div class="calendar-header">
-            <h1 style="font-family: 'Playfair Display', serif;"><i class="fas fa-calendar-alt"></i> Event Calendar</h1>
-            <a href="{% url 'saritasapp:create_event' %}" class="add-event-btn" >
+            <h1><i class="fas fa-calendar-alt"></i> Event Calendar</h1>
+            <a href="{% url 'saritasapp:create_event' %}" class="add-event-btn">
                 <i class="fas fa-plus"></i> Create Event
             </a>
         </div>
@@ -206,7 +219,6 @@
 
         <div id="calendar"></div>
     </div>
-
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.js"></script>
 <script>
