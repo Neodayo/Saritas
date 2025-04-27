@@ -5,8 +5,8 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-8 max-w-6xl">
-    <a href="{% url 'customerapp:wardrobe' %}" class="inline-flex items-center text-gray-600 hover:text-gray-900 mb-6">
-        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <a href="{% url 'customerapp:wardrobe' %}" class="text-[#8E793E] hover:text-[#AD974F] transition-colors flex items-center mb-6">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
         </svg>
         Back
@@ -59,13 +59,13 @@
                 {% if item.available %}
                 <div class="flex flex-wrap gap-4 mt-8">
                     <a href="{% url 'customerapp:rent_item' inventory_id=item.id %}" 
-                       class="relative overflow-hidden px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg text-center transition duration-300">
+                       class="relative overflow-hidden px-6 py-3 bg-[#8E793E] hover:bg-[#766535] text-white font-medium rounded-lg text-center transition duration-300">
                         <span class="relative z-10">Rent Now</span>
                         <span class="shine-effect"></span>
                     </a>
                     
                     <a href="{% url 'customerapp:reservation' item_id=item.id %}" 
-                       class="px-6 py-3 border border-amber-600 text-amber-600 hover:bg-amber-50 font-medium rounded-lg transition duration-300">
+                       class="px-6 py-3 border border-[#8E793E] text-[#8E793E] hover:bg-[#F8F4EA] font-medium rounded-lg transition duration-300">
                         Reserve
                     </a>
                 </div>

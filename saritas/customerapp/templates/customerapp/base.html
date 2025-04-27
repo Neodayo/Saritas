@@ -112,7 +112,7 @@
     {% endblock %}
 </head>
 
-<body class="bg-custom min-h-screen pt-20">
+<body class="bg-custom min-h-screen pt-20 flex flex-col"> 
     <!-- Mobile Sidebar -->
     <div id="mobile-sidebar"
         class="fixed lg:hidden top-0 left-0 h-full w-64 bg-[#EAEAEA] shadow-lg sidebar-transition transform -translate-x-full z-50 overflow-y-auto">
@@ -313,7 +313,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="">
+    <main class="flex-grow">
         {% block content %}
         <!-- Content will be inserted here -->
         {% endblock %}
@@ -368,8 +368,8 @@
             </div>
         </div>
     </div>
-
-    <footer class="bg-[#EAEAEA] text-gray-800 border-t border-gray-300 mt-16 text-sm">
+    <!-- footer -->
+    <footer class="bg-[#EAEAEA] text-gray-800 border-t border-gray-300 text-sm mt-auto">
         <div class="max-w-7xl mx-auto px-4 py-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Contact Information -->
