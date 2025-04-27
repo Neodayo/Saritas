@@ -1,35 +1,247 @@
 {% extends "saritasapp/base.html" %}
 {% load static %}
-{% block title %}Rental Tracker{% endblock %}
-{% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/rental_tracker.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
-{% endblock %}
+
+{% block title %}Rental Tracker | Sarita's{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-amber-50 p-4 md:p-8">
-    <div class="max-w-7xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden border border-amber-100">
-        <!-- Header Section -->
-        <div class="px-6 py-4">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
-                <h1 class="gold-heading text-2xl font-bold text-[#FFD700] mb-2 md:mb-0" style="font-family: 'Playfair Display', serif;">
-                    <i class="fas fa-concierge-bell mr-2"></i>Rental Management
-                </h1>
-                <div class="flex items-center space-x-2 bg-[#FFD700] px-3 py-1 rounded-lg">
-                    <span class="text-sm text-amber-700">Total Rentals:</span>
-                    <span class="text-lg font-semibold text-amber-700">{{ rentals|length }}</span>
-                </div>
+    <style>
+        /* Main Container */
+        .rental-tracker-container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            font-family: 'Arial', sans-serif;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .page-title {
+            color: #8E793E;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .total-rentals {
+            background-color: #ad974f;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        /* Filter Section */
+        .filter-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+        
+        .filter-form {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .filter-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .filter-input, .filter-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .filter-input:focus, .filter-select:focus {
+            outline: none;
+            border-color: #8E793E;
+            box-shadow: 0 0 0 2px rgba(142, 121, 62, 0.2);
+        }
+        
+        .clear-btn {
+            background-color: transparent;
+            color: #8E793E;
+            border: 1px solid #8E793E;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            align-self: flex-end;
+        }
+        
+        .clear-btn:hover {
+            background-color: rgba(142, 121, 62, 0.1);
+        }
+        
+        /* Table Styles */
+        .rentals-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .rentals-table th {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .rentals-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+        
+        .rentals-table tr:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .rentals-table tr.overdue {
+            background-color: #fff5f5;
+        }
+        
+        /* Status Badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-approved {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-renting {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+        
+        .status-returned {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .status-overdue {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        /* Action Buttons */
+        .action-btns {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .profile-btn {
+            background-color: #e9ecef;
+            color: #495057;
+        }
+        
+        .profile-btn:hover {
+            background-color: #dee2e6;
+        }
+        
+        .details-btn {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .details-btn:hover {
+            background-color: #d6d8db;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 0;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 40px;
+            margin-bottom: 15px;
+            color: #adb5bd;
+        }
+        
+        @media (max-width: 768px) {
+            .filter-form {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .filter-group {
+                min-width: 100%;
+            }
+            
+            .action-btns {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+    </style>
+
+    <div class="rental-tracker-container">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-concierge-bell"></i> Rental Management
+            </h1>
+            <div class="total-rentals">
+                Total Rentals: {{ rentals|length }}
             </div>
         </div>
 
         <!-- Filter Section -->
-        <div class="px-6 py-4 bg-amber-50">
-            <form method="GET" class="flex flex-col md:flex-row gap-4 items-start md:items-center">
-                <div class="flex-1 w-full md:w-auto">
-                    <label class="block text-sm font-medium text-amber-700 mb-1">Filter by Status:</label>
-                    <select name="status" id="statusFilter" onchange="this.form.submit()" 
-                            class="w-full px-4 py-2 border border-amber-300 rounded-lg shadow-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white">
+        <div class="filter-section">
+            <form method="GET" class="filter-form">
+                <div class="filter-group">
+                    <label class="filter-label">Filter by Status:</label>
+                    <select name="status" id="statusFilter" onchange="this.form.submit()" class="filter-select">
                         <option value="">All Status</option>
                         <option value="Approved" {% if request.GET.status == "Approved" %}selected{% endif %}>Approved</option>
                         <option value="Renting" {% if request.GET.status == "Renting" %}selected{% endif %}>Renting</option>
@@ -37,105 +249,91 @@
                         <option value="Overdue" {% if request.GET.status == "Overdue" %}selected{% endif %}>Overdue</option>
                     </select>
                 </div>
-                <div class="flex-1 w-full md:w-auto">
-                    <label class="block text-sm font-medium text-amber-700 mb-1">Start Date:</label>
-                    <input type="date" name="start_date" value="{{ request.GET.start_date }}" 
-                           class="w-full px-4 py-2 border border-amber-300 rounded-lg shadow-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white">
+                
+                <div class="filter-group">
+                    <label class="filter-label">Start Date:</label>
+                    <input type="date" name="start_date" value="{{ request.GET.start_date }}" class="filter-input">
                 </div>
-                <div class="flex-1 w-full md:w-auto">
-                    <label class="block text-sm font-medium text-amber-700 mb-1">End Date:</label>
-                    <input type="date" name="end_date" value="{{ request.GET.end_date }}" 
-                           class="w-full px-4 py-2 border border-amber-300 rounded-lg shadow-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white">
+                
+                <div class="filter-group">
+                    <label class="filter-label">End Date:</label>
+                    <input type="date" name="end_date" value="{{ request.GET.end_date }}" class="filter-input">
                 </div>
-                <button type="button" onclick="this.form.reset(); this.form.submit();" 
-                        class="w-full md:w-auto px-4 py-2 border border-amber-600 text-amber-600 rounded-lg hover:bg-amber-100 transition-colors font-medium">
-                    <i class="fas fa-sync-alt mr-2"></i>Clear Filters
+                
+                <button type="button" onclick="this.form.reset(); this.form.submit();" class="clear-btn">
+                    <i class="fas fa-sync-alt"></i> Clear Filters
                 </button>
             </form>
         </div>
 
         <!-- Table Section -->
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-50">
+        <div class="table-responsive">
+            <table class="rentals-table">
+                <thead>
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th>ID</th>
+                        <th>Customer</th>
+                        <th>Item</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody>
                     {% for rental in rentals %}
-                    <tr class="hover:bg-gray-50 transition-colors {% if rental.display_status == 'Overdue' %}bg-red-50{% endif %}">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-600">#{{ rental.id }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ rental.customer.user.get_full_name }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <tr class="{% if rental.display_status == 'Overdue' %}overdue{% endif %}">
+                        <td>#{{ rental.id }}</td>
+                        <td>{{ rental.customer.user.get_full_name }}</td>
+                        <td>
                             {{ rental.inventory.name }}
-                            <div class="text-xs text-gray-500">
+                            <div class="text-muted" style="font-size: 12px; color: #6c757d;">
                                 {{ rental.inventory.category.name }} | {{ rental.inventory.size.name }}
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ rental.rental_start|date:"M d, Y" }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td>{{ rental.rental_start|date:"M d, Y" }}</td>
+                        <td>
                             {{ rental.rental_end|date:"M d, Y" }}
-                            <div class="text-xs text-gray-500">
+                            <div class="text-muted" style="font-size: 12px; color: #6c757d;">
                                 {{ rental.duration }} day{{ rental.duration|pluralize }}
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td>
                             {% if rental.display_status == "Overdue" %}
-                                <span class="inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-red-800 text-sm font-medium" title="Overdue: Past due date">
-                                    <span class="w-2 h-2 mr-2 bg-red-500 rounded-full"></span>
-                                    Overdue
+                                <span class="status-badge status-overdue">
+                                    <i class="fas fa-exclamation-circle" style="margin-right: 5px;"></i> Overdue
                                 </span>
                             {% elif rental.display_status == "Returned" %}
-                                <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium" title="Returned: Successfully returned">
-                                    <span class="w-2 h-2 mr-2 bg-green-500 rounded-full"></span>
-                                    Returned
+                                <span class="status-badge status-returned">
+                                    <i class="fas fa-check-circle" style="margin-right: 5px;"></i> Returned
                                 </span>
                             {% elif rental.display_status == "Renting" %}
-                                <span class="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm font-medium" title="Renting: Currently rented">
-                                    <span class="w-2 h-2 mr-2 bg-blue-500 rounded-full"></span>
-                                    Renting
+                                <span class="status-badge status-renting">
+                                    <i class="fas fa-shopping-bag" style="margin-right: 5px;"></i> Renting
                                 </span>
                             {% else %}
-                                <span class="inline-flex items-center px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-sm font-medium" title="Pending: Awaiting approval">
-                                    <span class="w-2 h-2 mr-2 bg-yellow-500 rounded-full"></span>
-                                    {{ rental.display_status }}
+                                <span class="status-badge status-pending">
+                                    <i class="fas fa-clock" style="margin-right: 5px;"></i> {{ rental.display_status }}
                                 </span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <div class="flex space-x-2">
-                                <a href="{% url 'saritasapp:view_customer' rental.customer.id %}" 
-                                   class="flex items-center px-3 py-1.5 bg-amber-100 text-amber-700 rounded-md hover:bg-amber-200 transition-colors">
-                                    <i class="fas fa-user-circle mr-2"></i>
-                                    Profile
+                        <td>
+                            <div class="action-btns">
+                                <a href="{% url 'saritasapp:view_customer' rental.customer.id %}" class="action-btn profile-btn">
+                                    <i class="fas fa-user-circle" style="margin-right: 5px;"></i> Profile
                                 </a>
-                                <a href="{% url 'saritasapp:view_inventory' rental.inventory.id %}" 
-                                   class="flex items-center px-3 py-1.5 bg-amber-100 text-amber-700 rounded-md hover:bg-amber-200 transition-colors">
-                                    <i class="fas fa-box-open mr-2"></i>
-                                    Details
+                                <a href="{% url 'saritasapp:view_inventory' rental.inventory.id %}" class="action-btn details-btn">
+                                    <i class="fas fa-box-open" style="margin-right: 5px;"></i> Details
                                 </a>
                             </div>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" class="px-6 py-8 text-center">
-                            <div class="flex flex-col items-center justify-center text-amber-400">
-                                <i class="fas fa-clipboard-list text-4xl mb-4"></i>
-                                <p class="text-lg font-medium">No rentals found</p>
-                                <p class="text-sm mt-1">Try adjusting your filters</p>
-                            </div>
+                        <td colspan="7" class="empty-state">
+                            <i class="fas fa-clipboard-list"></i>
+                            <p>No rentals found</p>
+                            <p>Try adjusting your filters</p>
                         </td>
                     </tr>
                     {% endfor %}
@@ -143,5 +341,4 @@
             </table>
         </div>
     </div>
-</div>
 {% endblock %}
