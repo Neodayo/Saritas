@@ -1,144 +1,276 @@
 {% extends "saritasapp/base.html" %}
 {% load static %}
 
-{% block title %}Edit Inventory Item{% endblock %}
-
-{% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/edit_inventory.css' %}">
-{% endblock %}
+{% block title %}Edit Inventory Item | Sarita's{% endblock %}
 
 {% block content %}
-<div class="edit-container">
-    <h1 class="title">Edit Inventory Item</h1>
-
-    <form method="POST" action="{% url 'saritasapp:edit_inventory' item.id %}" enctype="multipart/form-data" class="edit-form">
-        {% csrf_token %}
-
-        <div class="form-group">
-            <label for="name">Item Name</label>
-            <input type="text" id="name" name="name" value="{{ item.name }}" required>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label for="category">Category</label>
-                <select id="category" name="category" required>
-                    {% for category in categories %}
-                        <option value="{{ category.id }}" {% if item.category and item.category.id == category.id %}selected{% endif %}>
-                            {{ category.name }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="branch">Branch</label>
-                <select id="branch" name="branch" required>
-                    {% for branch in branches %}
-                        <option value="{{ branch.id }}" {% if item.branch and item.branch.id == branch.id %}selected{% endif %}>
-                            {{ branch.branch_name }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label for="color">Color</label>
-                <select id="color" name="color">
-                    <option value="">Select a Color</option>
-                    {% for color in colors %}
-                        <option value="{{ color.id }}" {% if item.color and item.color.id == color.id %}selected{% endif %}>
-                            {{ color.name }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="size">Size</label>
-                <select id="size" name="size">
-                    <option value="">Select a Size</option>
-                    {% for size in sizes %}
-                        <option value="{{ size.id }}" {% if item.size and item.size.id == size.id %}selected{% endif %}>
-                            {{ size.name }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label for="quantity">Quantity</label>
-            <input type="number" id="quantity" name="quantity" value="{{ item.quantity }}" min="0" required>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label for="rental_price">Rental Price (₱)</label>
-                <input type="number" id="rental_price" name="rental_price" step="0.01" value="{{ item.rental_price }}" required>
-            </div>
-
-            <div class="form-group">
-                <label for="reservation_price">Reservation Price (₱)</label>
-                <input type="number" id="reservation_price" name="reservation_price" step="0.01" value="{{ item.reservation_price|default_if_none:'' }}">
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label for="deposit_price">Deposit Price (₱)</label>
-                <input type="number" id="deposit_price" name="deposit_price" step="0.01" value="{{ item.deposit_price|default_if_none:'' }}">
-            </div>
-
-            <div class="form-group">
-                <label for="purchase_price">Purchase Price (₱)</label>
-                <input type="number" id="purchase_price" name="purchase_price" step="0.01" value="{{ item.purchase_price|default_if_none:'' }}">
-            </div>
-        </div>
-
-        <div class="form-group checkbox-group">
-            <input type="checkbox" id="available" name="available" {% if item.available %}checked{% endif %}>
-            <label for="available">Available for Rental</label>
-        </div>
-
-        <div class="form-group">
-            <label for="image">Upload Image</label>
-            <input type="file" id="image" name="image" accept="image/*" onchange="previewImage(event)">
-            <small class="form-text">Current image will be replaced</small>
-        </div>
-
-        <div class="image-preview">
-            {% if item.image %}
-                <img id="preview" src="{{ item.image.url }}" alt="Item Image">
-            {% else %}
-                <img id="preview" style="display: none;">
-            {% endif %}
-        </div>
-
-        <div class="form-actions">
-            <button type="submit" class="submit-btn">Update Item</button>
-            <a href="{% url 'saritasapp:inventory_list' %}" class="cancel-btn">Cancel</a>
-        </div>
-    </form>
-</div>
-
-<script>
-    function previewImage(event) {
-        const preview = document.getElementById("preview");
-        const file = event.target.files[0];
-
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                preview.src = e.target.result;
-                preview.style.display = "block";
-            };
-            reader.readAsDataURL(file);
-        } else {
-            preview.style.display = "none";
+    <style>
+        /* Main Container */
+        .edit-container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            font-family: 'Arial', sans-serif;
         }
-    }
-</script>
+        
+        .title {
+            color: #8E793E;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0 0 25px 0;
+            text-align: left;
+        }
+        
+        .edit-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .form-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        select,
+        input[type="file"] {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #8E793E;
+            box-shadow: 0 0 0 2px rgba(142, 121, 62, 0.2);
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .checkbox-group input {
+            width: auto;
+        }
+        
+        .image-preview {
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        .image-preview img {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .submit-btn {
+            background-color: #8E793E;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .submit-btn:hover {
+            background-color: #AD974F;
+        }
+        
+        .cancel-btn {
+            background-color: #f8f9fa;
+            color: #333;
+            padding: 10px 20px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-weight: 600;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .cancel-btn:hover {
+            background-color: #e9ecef;
+            border-color: #ccc;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+
+    <div class="edit-container">
+        <h1 class="title">Edit Inventory Item</h1>
+
+        <form method="POST" action="{% url 'saritasapp:edit_inventory' item.id %}" enctype="multipart/form-data" class="edit-form">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="name">Item Name</label>
+                <input type="text" id="name" name="name" value="{{ item.name }}" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select id="category" name="category" required>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}" {% if item.category and item.category.id == category.id %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="branch">Branch</label>
+                    <select id="branch" name="branch" required>
+                        {% for branch in branches %}
+                            <option value="{{ branch.id }}" {% if item.branch and item.branch.id == branch.id %}selected{% endif %}>
+                                {{ branch.branch_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="color">Color</label>
+                    <select id="color" name="color">
+                        <option value="">Select a Color</option>
+                        {% for color in colors %}
+                            <option value="{{ color.id }}" {% if item.color and item.color.id == color.id %}selected{% endif %}>
+                                {{ color.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="size">Size</label>
+                    <select id="size" name="size">
+                        <option value="">Select a Size</option>
+                        {% for size in sizes %}
+                            <option value="{{ size.id }}" {% if item.size and item.size.id == size.id %}selected{% endif %}>
+                                {{ size.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="quantity">Quantity</label>
+                <input type="number" id="quantity" name="quantity" value="{{ item.quantity }}" min="0" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="rental_price">Rental Price (₱)</label>
+                    <input type="number" id="rental_price" name="rental_price" step="0.01" value="{{ item.rental_price }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="reservation_price">Reservation Price (₱)</label>
+                    <input type="number" id="reservation_price" name="reservation_price" step="0.01" value="{{ item.reservation_price|default_if_none:'' }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="deposit_price">Deposit Price (₱)</label>
+                    <input type="number" id="deposit_price" name="deposit_price" step="0.01" value="{{ item.deposit_price|default_if_none:'' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="purchase_price">Purchase Price (₱)</label>
+                    <input type="number" id="purchase_price" name="purchase_price" step="0.01" value="{{ item.purchase_price|default_if_none:'' }}">
+                </div>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="available" name="available" {% if item.available %}checked{% endif %}>
+                <label for="available">Available for Rental</label>
+            </div>
+
+            <div class="form-group">
+                <label for="image">Upload Image</label>
+                <input type="file" id="image" name="image" accept="image/*" onchange="previewImage(event)">
+                <small class="form-text">Current image will be replaced</small>
+            </div>
+
+            <div class="image-preview">
+                {% if item.image %}
+                    <img id="preview" src="{{ item.image.url }}" alt="Item Image">
+                {% else %}
+                    <img id="preview" style="display: none;">
+                {% endif %}
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="submit-btn">Update Item</button>
+                <a href="{% url 'saritasapp:inventory_list' %}" class="cancel-btn">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function previewImage(event) {
+            const preview = document.getElementById("preview");
+            const file = event.target.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = "block";
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.style.display = "none";
+            }
+        }
+    </script>
 {% endblock %}
