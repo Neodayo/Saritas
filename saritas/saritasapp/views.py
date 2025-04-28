@@ -230,43 +230,59 @@ def inventory_view(request):
 
 @staff_member_required
 def rental_tracker(request):
-    # Extract filter values from GET parameters
     status_filter = request.GET.get('status')
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
     today = timezone.now().date()
 
-    # Apply filters to rental query
     rentals = Rental.objects.select_related(
         'inventory',
         'customer',
         'customer__user',
-        'staff'  # Correct the field name here
+        'staff'
     ).prefetch_related(
         'inventory__category',
         'inventory__size'
-    )
+    ).order_by('-created_at')
 
-    if status_filter:
+    # Special handling for display status filters
+    if status_filter == 'Renting':
+        rentals = rentals.filter(
+            status=Rental.APPROVED,
+            rental_start__lte=today,
+            rental_end__gte=today
+        )
+    elif status_filter == 'Overdue':
+        rentals = rentals.filter(
+            status=Rental.APPROVED,
+            rental_end__lt=today
+        )
+    elif status_filter == 'Returned':
+        rentals = rentals.filter(status=Rental.RETURNED)
+    elif status_filter:
         rentals = rentals.filter(status=status_filter)
 
-    if start_date:
-        rentals = rentals.filter(rental_start__gte=start_date)
-    if end_date:
-        rentals = rentals.filter(rental_end__lte=end_date)
-
-    # Calculate display status without saving to DB
+    # Calculate display status for each rental
     for rental in rentals:
-        if rental.status == 'Approved' and rental.rental_start <= today <= rental.rental_end:
-            rental.display_status = 'Renting'
-        elif rental.status == 'Approved' and today > rental.rental_end:
-            rental.display_status = 'Overdue'
+        if rental.status == Rental.APPROVED:
+            if rental.rental_start <= today <= rental.rental_end:
+                rental.display_status = 'Renting'
+            elif today > rental.rental_end:
+                rental.display_status = 'Overdue'
+            else:
+                rental.display_status = 'Approved'
         else:
             rental.display_status = rental.status
 
+    # Only show these statuses in the filter dropdown
+    TRACKER_STATUS_CHOICES = [
+        ('Renting', 'Renting'),
+        ('Overdue', 'Overdue'),
+        ('Returned', 'Returned')
+    ]
+
     return render(request, 'saritasapp/rental_tracker.html', {
         'rentals': rentals,
-        'today': today
+        'today': today,
+        'status_choices': TRACKER_STATUS_CHOICES
     })
 
 

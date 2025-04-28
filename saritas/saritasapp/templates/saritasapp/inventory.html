@@ -1,595 +1,317 @@
 {% extends "saritasapp/base.html" %}
-{% load encryption_tags %}
 {% load static %}
 
-{% block title %}Inventory{% endblock %}
+{% block title %}Inventory List | Sarita's{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/inventory.css' %}">
+<style>
+    .fade-in-up {
+        opacity: 0;
+        animation: fadeInUp 0.8s ease-out forwards;
+    }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .product-card {
+        opacity: 0;
+        transform: translateY(15px);
+        transition: 
+            opacity 0.8s cubic-bezier(0.33, 1, 0.68, 1),
+            transform 0.8s cubic-bezier(0.32, 0, 0.67, 0);
+        will-change: opacity, transform;
+    }
+    .product-card.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    .product-card img {
+        transition: transform 0.5s ease;
+    }
+    .product-card:hover img {
+        transform: scale(1.02);
+    }
+    
+    #product-grid {
+        gap: 1rem; 
+    }
+    
+    .filter-btn {
+        background-color: #8E793E;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        font-size: 0.875rem;
+    }
+    .filter-btn:hover {
+        background-color: #AD974F;
+    }
+    
+    select {
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid transparent;
+        padding: 0.25rem 0;
+        margin-right: 1rem;
+        outline: none;
+        transition: border-color 0.3s ease;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        cursor: pointer;
+        position: relative;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235a3e2b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right center;
+        padding-right: 1.5rem;
+    }
+    
+    select:hover {
+        border-bottom-color: #5a3e2b;
+    }
+    
+    select:focus {
+        border-bottom-color: #8E793E;
+    }
+    
+    label {
+        color: #5a3e2b;
+        font-weight: 500;
+    }
+
+    .shine-effect {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .shine-effect::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.3) 50%,
+                rgba(255, 255, 255, 0) 100%);
+        transition: none;
+    }
+
+    .shine-effect:hover::after {
+        left: 100%;
+        transition: left 0.7s ease-in-out;
+    }
+
+    @media (max-width: 768px) {
+        #filter-form {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        #filter-form > div {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        #filter-form select {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+
+        #filter-form label {
+            flex-shrink: 0;
+            width: 80px;
+        }
+
+        #product-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.75rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        #product-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
+<div class="max-w-7xl mx-auto px-4 py-10">
+    <h2 class="fade-in-up text-3xl text-center text-[#5a3e2b] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373] fade-up">
+       INVENTORY LIST
+    </h2>
 
-<style>
-:root {
-    --primary-dark: #8E793E;
-    --primary: #AD974F;
-    --light-bg: #EAEAEA;
-    --white: #FFFFFF;
-    --text-dark: #333333;
-    --text-light: #777777;
-    --success-color: #4CAF50;
-    --danger-color: #F44336;
-}
-
-/* Base Styles */
-body {
-    background-color: var(--light-bg);
-    font-family: 'Arial', sans-serif;
-    color: var(--text-dark);
-    font-size: 1rem; /* Base font size */
-    line-height: 1.5;
-}
-
-.bg-white {
-    background-color: var(--white);
-    padding: 1.5rem;
-    border-radius: 0.75rem;
-    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
-    transition: all 0.4s ease;
-    margin: 1rem;
-}
-
-.bg-white:hover {
-    box-shadow: 0 0.75rem 1.75rem rgba(0, 0, 0, 0.12);
-}
-
-/* Header Styles */
-.inventory-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 0.125rem solid var(--primary);
-    background: linear-gradient(90deg, rgba(142,121,62,0.1) 0%, rgba(173,151,79,0.05) 100%);
-    padding: 1rem;
-    border-radius: 0.5rem;
-}
-
-.inventory-header h1 {
-    font-family: 'Arial', sans-serif;
-    color: var(--primary-dark);
-    margin: 0;
-    text-shadow: 0.0625rem 0.0625rem 0.125rem rgba(0,0,0,0.05);
-    letter-spacing: 0.03125rem;
-    font-size: 1.5rem;
-    font-weight: 600;
-}
-
-.inventory-header h1 i {
-    color: var(--primary);
-    margin-right: 0.75rem;
-    transition: transform 0.3s ease;
-}
-
-.inventory-header:hover h1 i {
-    transform: rotate(15deg);
-}
-
-.add-item-btn {
-    background-color: var(--primary);
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.375rem;
-    text-decoration: none;
-    font-weight: 600;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    display: inline-flex;
-    align-items: center;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.1);
-    border: 0.125rem solid transparent;
-    font-size: 0.95rem;
-}
-
-.add-item-btn:hover {
-    background-color: var(--primary-dark);
-    transform: translateY(-0.1875rem);
-    box-shadow: 0 0.375rem 0.75rem rgba(142, 121, 62, 0.2);
-    border-color: rgba(255, 255, 255, 0.3);
-}
-
-.add-item-btn:active {
-    transform: translateY(0);
-}
-
-.add-item-btn i {
-    margin-right: 0.625rem;
-    transition: margin-right 0.3s ease;
-}
-
-.add-item-btn:hover i {
-    margin-right: 0.9375rem;
-}
-
-/* Filter Row Styles */
-.filter-row {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-.filter-box select {
-    padding: 0.75rem;
-    border: 0.125rem solid var(--primary);
-    border-radius: 0.375rem;
-    background-color: var(--white);
-    color: var(--text-dark);
-    min-width: 12.5rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 0.95rem;
-    appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23AD974F'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    background-size: 1.25rem;
-}
-
-.filter-box select:focus {
-    outline: none;
-    border-color: var(--primary-dark);
-    box-shadow: 0 0 0 0.1875rem rgba(173, 151, 79, 0.3);
-    transform: translateY(-0.0625rem);
-}
-
-.clear-btn {
-    background-color: var(--light-bg);
-    color: var(--primary-dark);
-    border: 0.125rem solid var(--primary);
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    display: inline-flex;
-    align-items: center;
-    font-weight: 600;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
-    font-size: 0.95rem;
-}
-
-.clear-btn:hover {
-    background-color: var(--primary);
-    color: white;
-    transform: translateY(-0.125rem);
-    box-shadow: 0 0.25rem 0.5rem rgba(142, 121, 62, 0.2);
-}
-
-.clear-btn i {
-    margin-right: 0.625rem;
-    transition: transform 0.3s ease;
-}
-
-.clear-btn:hover i {
-    transform: rotate(90deg);
-}
-
-/* Inventory Items Grid */
-.inventory-items {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
-    gap: 1.5rem;
-}
-
-.item-card {
-    background-color: var(--white);
-    border-radius: 0.625rem;
-    overflow: hidden;
-    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.08);
-    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-    position: relative;
-    border: 0.0625rem solid rgba(142, 121, 62, 0.1);
-}
-
-.item-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 0.25rem;
-    background: linear-gradient(90deg, var(--primary-dark), var(--primary));
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.item-card:hover {
-    transform: translateY(-0.5rem);
-    box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.15);
-}
-
-.item-card:hover::before {
-    opacity: 1;
-}
-
-.item-status {
-    position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    padding: 0.25rem 0.75rem;
-    border-radius: 1.25rem;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: white;
-    z-index: 1;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-}
-
-.item-card:hover .item-status {
-    transform: scale(1.05);
-}
-
-.in-stock {
-    background-color: var(--success-color);
-}
-
-.out-stock {
-    background-color: var(--danger-color);
-}
-
-.item-image {
-    height: 14rem;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #f9f9f9;
-    position: relative;
-}
-
-.item-image::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(to bottom, rgba(142, 121, 62, 0.1), transparent);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.item-card:hover .item-image::after {
-    opacity: 1;
-}
-
-.item-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-
-.item-card:hover .item-image img {
-    transform: scale(1.1);
-}
-
-.item-info {
-    padding: 1rem;
-}
-
-.item-info h3 {
-    margin: 0 0 0.75rem 0;
-    color: var(--primary-dark);
-    font-size: 1.2rem;
-    font-weight: 600;
-    transition: color 0.3s ease;
-}
-
-.item-card:hover .item-info h3 {
-    color: var(--primary);
-}
-
-.item-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-    font-size: 0.95rem;
-    color: var(--text-light);
-}
-
-.item-meta span {
-    display: inline-flex;
-    align-items: center;
-    background-color: rgba(173, 151, 79, 0.1);
-    padding: 0.25rem 0.5rem;
-    border-radius: 1.25rem;
-    transition: all 0.3s ease;
-}
-
-.item-card:hover .item-meta span {
-    background-color: rgba(173, 151, 79, 0.2);
-    color: var(--text-dark);
-}
-
-.item-meta i {
-    margin-right: 0.375rem;
-    color: var(--primary);
-}
-
-.item-quantity {
-    display: flex;
-    align-items: center;
-    color: var(--text-dark);
-    font-weight: 500;
-    margin-bottom: 1rem;
-    font-size: 1rem;
-}
-
-.item-quantity i {
-    margin-right: 0.625rem;
-    color: var(--primary);
-}
-
-.view-btn {
-    display: block;
-    text-align: center;
-    padding: 0.75rem;
-    background-color: var(--primary);
-    color: white;
-    text-decoration: none;
-    font-weight: 600;
-    border-radius: 0 0 0.5rem 0.5rem;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    letter-spacing: 0.03125rem;
-    font-size: 0.95rem;
-}
-
-.view-btn:hover {
-    background-color: var(--primary-dark);
-    letter-spacing: 0.0625rem;
-}
-
-.view-btn i {
-    margin-right: 0.625rem;
-    transition: margin-right 0.3s ease, transform 0.3s ease;
-}
-
-.view-btn:hover i {
-    margin-right: 0.9375rem;
-    transform: rotate(-10deg);
-}
-
-/* No Items State */
-.no-items {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 2.5rem 1.5rem;
-    color: var(--text-light);
-    background-color: rgba(173, 151, 79, 0.05);
-    border-radius: 0.625rem;
-    margin: 0.75rem 0;
-    transition: all 0.3s ease;
-}
-
-.no-items:hover {
-    background-color: rgba(173, 151, 79, 0.1);
-    transform: translateY(-0.1875rem);
-}
-
-.no-items i {
-    font-size: 2.5rem;
-    color: var(--primary);
-    margin-bottom: 1rem;
-    transition: transform 0.6s ease;
-}
-
-.no-items:hover i {
-    transform: scale(1.1) rotate(15deg);
-}
-
-.no-items p {
-    font-size: 1.2rem;
-    margin-bottom: 1.5rem;
-    color: var(--primary-dark);
-}
-
-.no-items button {
-    background-color: var(--primary);
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.1);
-    font-size: 0.95rem;
-}
-
-.no-items button:hover {
-    background-color: var(--primary-dark);
-    transform: translateY(-0.1875rem);
-    box-shadow: 0 0.375rem 0.75rem rgba(142, 121, 62, 0.2);
-}
-
-.no-items button:active {
-    transform: translateY(0);
-}
-
-/* Responsive Adjustments */
-@media (max-width: 48rem) {
-    .inventory-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-        padding: 1rem;
-    }
+    <form id="filter-form" method="get" class="flex flex-wrap items-center justify-between gap-4 mb-8 fade-in-up">
+        <div class="flex gap-6 flex-wrap items-center">
+            <!-- Categories -->
+            <div class="flex items-center">
+                <label for="category" class="mr-2">Categories:</label>
+                <select name="category" id="category" onchange="this.form.submit()">
+                    <option value="">All</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
     
-    .filter-row {
-        flex-direction: column;
-        gap: 0.75rem;
-    }
+            <!-- Size -->
+            <div class="flex items-center">
+                <label for="size" class="mr-2">Size:</label>
+                <select name="size" id="size" onchange="this.form.submit()">
+                    <option value="">All</option>
+                    {% for size in sizes %}
+                        <option value="{{ size.id }}" {% if request.GET.size == size.id|stringformat:"s" %}selected{% endif %}>{{ size.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
     
-    .filter-box select {
-        width: 100%;
-        min-width: auto;
-    }
+            <!-- Color -->
+            <div class="flex items-center">
+                <label for="color" class="mr-2">Color:</label>
+                <select name="color" id="color" onchange="this.form.submit()">
+                    <option value="">All</option>
+                    {% for color in colors %}
+                        <option value="{{ color.id }}" {% if request.GET.color == color.id|stringformat:"s" %}selected{% endif %}>{{ color.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
     
-    .inventory-items {
-        grid-template-columns: 1fr;
-    }
-    
-    .add-item-btn, .clear-btn {
-        width: 100%;
-        justify-content: center;
-    }
-}
-
-/* Animation */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(0.625rem); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.item-card {
-    animation: fadeIn 0.5s ease forwards;
-    opacity: 0;
-}
-
-.item-card:nth-child(1) { animation-delay: 0.1s; }
-.item-card:nth-child(2) { animation-delay: 0.2s; }
-.item-card:nth-child(3) { animation-delay: 0.3s; }
-.item-card:nth-child(4) { animation-delay: 0.4s; }
-.item-card:nth-child(5) { animation-delay: 0.5s; }
-.item-card:nth-child(6) { animation-delay: 0.6s; }
-.item-card:nth-child(7) { animation-delay: 0.7s; }
-.item-card:nth-child(8) { animation-delay: 0.8s; }
-</style>
-
-<div class="bg-white p-6 rounded-xl shadow-md">
-    <div class="inventory-header">
-        <h1><i class="fas fa-boxes"></i> Inventory Management</h1>
-        <a href="{% url 'saritasapp:add_inventory' %}" class="add-item-btn">
-            <i class="fas fa-plus"></i> Add New Item
-        </a>
-    </div>
-
-    <div class="filter-row">
-        <div class="filter-box">
-            <select id="category" name="category" onchange="filterInventory()">
-                <option value="">All Categories</option>
-                {% for category in categories %}
-                    <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
-                        {{ category.name }}
-                    </option>
-                {% endfor %}
-            </select>
+        <div class="flex items-center gap-4">
+            <!-- Sort -->
+            <div class="flex items-center">
+                <label for="sort" class="mr-2">Sort by:</label>
+                <select name="sort" id="sort" onchange="this.form.submit()">
+                    <option value="">Default</option>
+                    <option value="name_asc" {% if request.GET.sort == 'name_asc' %}selected{% endif %}>Name (A-Z)</option>
+                    <option value="name_desc" {% if request.GET.sort == 'name_desc' %}selected{% endif %}>Name (Z-A)</option>
+                    <option value="price_asc" {% if request.GET.sort == 'price_asc' %}selected{% endif %}>Price (Low to High)</option>
+                    <option value="price_desc" {% if request.GET.sort == 'price_desc' %}selected{% endif %}>Price (High to Low)</option>
+                </select>
+            </div>
+            
+            <!-- Clear Filters Button -->
+            <button type="button" onclick="clearFilters()" class="filter-btn shine-effect">
+                Clear Filters
+            </button>
         </div>
+    </form>
 
-        <div class="filter-box">
-            <select id="color" name="color" onchange="filterInventory()">
-                <option value="">All Colors</option>
-                {% for color in colors %}
-                    <option value="{{ color.id }}" {% if selected_color == color.id|stringformat:"s" %}selected{% endif %}>
-                        {{ color.name }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="filter-box">
-            <select id="size" name="size" onchange="filterInventory()">
-                <option value="">All Sizes</option>
-                {% for size in sizes %}
-                    <option value="{{ size.id }}" {% if selected_size == size.id|stringformat:"s" %}selected{% endif %}>
-                        {{ size.name }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="filter-box">
-            <select id="sort" name="sort" onchange="filterInventory()">
-                <option value="">Default Sorting</option>
-                <option value="name_asc">Name (A-Z)</option>
-                <option value="name_desc">Name (Z-A)</option>
-                <option value="price_asc">Price (Low to High)</option>
-                <option value="price_desc">Price (High to Low)</option>
-            </select>
-        </div>
-
-        <button type="button" onclick="clearFilters()" class="clear-btn">
-            <i class="fas fa-times"></i> Clear Filters
-        </button>
-    </div>
-
-    <div class="inventory-items">
+    <!-- Product Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4" id="product-grid">
         {% if inventory_items %}
             {% for item in inventory_items %}
-            <div class="item-card">
-                <div class="item-status {% if item.available %}in-stock{% else %}out-stock{% endif %}">
-                    {{ item.available|yesno:"In Stock,Out of Stock" }}
-                </div>
-                <div class="item-image">
+            <a href="{% url 'saritasapp:view_inventory' item.encrypted_id %}" class="group block bg-white rounded overflow-hidden product-card hover:shadow-lg transition-all">
+                <div class="h-[380px] w-full overflow-hidden">
                     {% if item.image %}
-                        <img src="{{ item.image.url }}" alt="{{ item.name }}">
+                        <img src="{{ item.image.url }}" alt="{{ item.name }}" class="w-full h-full object-cover">
                     {% else %}
-                        <img src="{% static 'image/default-placeholder.png' %}" alt="No image">
+                        <img src="{% static 'image/default-placeholder.png' %}" alt="No image" class="w-full h-full object-cover">
                     {% endif %}
                 </div>
-                <div class="item-info">
-                    <h3>{{ item.name }}</h3>
-                    <div class="item-meta">
-                        <span><i class="fas fa-tag"></i> {{ item.category.name }}</span>
-                        <span><i class="fas fa-palette"></i> {{ item.color.name|default:"N/A" }}</span>
-                        <span><i class="fas fa-ruler"></i> {{ item.size.name|default:"N/A" }}</span>
-                    </div>
-                    <div class="item-quantity">
-                        <i class="fas fa-box-open"></i> {{ item.quantity }} available
-                    </div>
+                <div class="p-3 text-center">
+                    <h3 class="text-gray-800 font-medium text-base truncate">{{ item.name }}</h3>
+                    <p class="text-gray-700 mt-1">₱{{ item.rental_price }}</p>
+                    <p class="text-sm text-gray-500 mt-1">Qty: {{ item.quantity }}</p>
                 </div>
-                <a href="{% url 'saritasapp:view_inventory' item.id|encrypt %}" class="view-btn">
-                    <i class="fas fa-eye"></i> View Details
-                </a>
-            </div>
+            </a>
             {% endfor %}
         {% else %}
-            <div class="no-items">
-                <i class="fas fa-search"></i>
-                <p>No items match your filters</p>
-                <button onclick="clearFilters()">Clear Filters</button>
-            </div>
+        <div class="col-span-full text-center py-20 bg-white rounded-lg shadow border">
+            <i class="fas fa-search text-4xl text-[#8E793E] mb-4"></i>
+            <p class="text-gray-600 mb-4">No items match your filters</p>
+            <button onclick="clearFilters()" class="filter-btn">Clear Filters</button>
+        </div>
         {% endif %}
     </div>
 </div>
 
 <script>
-    function filterInventory() {
-        const category = document.getElementById('category').value;
-        const color = document.getElementById('color').value;
-        const size = document.getElementById('size').value;
-        const sort = document.getElementById('sort').value;
-        
-        let url = "{% url 'saritasapp:inventory_list' %}?";
-        if (category) url += `category=${category}&`;
-        if (color) url += `color=${color}&`;
-        if (size) url += `size=${size}&`;
-        if (sort) url += `sort=${sort}`;
-        
-        window.location.href = url;
-    }
-
     function clearFilters() {
+        // Reset all filter selects
         document.getElementById('category').value = '';
         document.getElementById('color').value = '';
         document.getElementById('size').value = '';
         document.getElementById('sort').value = '';
-        filterInventory();
+        
+        // Submit the form to reload with cleared filters
+        document.getElementById('filter-form').submit();
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const productCards = document.querySelectorAll('.product-card');
+        const columns = window.innerWidth < 768 ? 2 : window.innerWidth < 1024 ? 3 : 4;
+        
+        function animateCards() {
+            const rows = Math.ceil(productCards.length / columns);
+            
+            // First row with stagger
+            const firstRowCards = Array.from(productCards).slice(0, columns);
+            firstRowCards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.classList.add('visible');
+                }, index * 150);
+            });
+
+            if (rows > 1) {
+                const observerOptions = {
+                    root: null,
+                    rootMargin: '50px',
+                    threshold: 0.05
+                };
+                
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const card = entry.target;
+                            const cardIndex = Array.from(productCards).indexOf(card);
+                            const row = Math.floor(cardIndex / columns);
+                            
+                            const rowStart = row * columns;
+                            const rowEnd = rowStart + columns;
+                            const rowCards = Array.from(productCards).slice(rowStart, rowEnd);
+                            
+                            rowCards.forEach((rowCard, index) => {
+                                setTimeout(() => {
+                                    rowCard.classList.add('visible');
+                                }, index * 180);
+                            });
+                            
+                            rowCards.forEach(rowCard => observer.unobserve(rowCard));
+                        }
+                    });
+                }, observerOptions);
+                
+                for (let row = 1; row < rows; row++) {
+                    const firstCardInRow = productCards[row * columns];
+                    if (firstCardInRow) {
+                        observer.observe(firstCardInRow);
+                    }
+                }
+            }
+        }
+        
+        animateCards();
+        
+        // Handle window resize
+        let resizeTimer;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                const currentColumns = window.innerWidth < 768 ? 2 : window.innerWidth < 1024 ? 3 : 4;
+                if (currentColumns !== columns) {
+                    const allCards = document.querySelectorAll('.product-card');
+                    allCards.forEach(card => card.classList.remove('visible'));
+                    animateCards();
+                }
+            }, 250);
+        });
+    });
 </script>
 {% endblock %}

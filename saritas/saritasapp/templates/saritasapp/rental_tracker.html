@@ -66,7 +66,7 @@
             color: #555;
         }
         
-        .filter-input, .filter-select {
+        .filter-select {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #ddd;
@@ -74,7 +74,7 @@
             font-size: 14px;
         }
         
-        .filter-input:focus, .filter-select:focus {
+        .filter-select:focus {
             outline: none;
             border-color: #8E793E;
             box-shadow: 0 0 0 2px rgba(142, 121, 62, 0.2);
@@ -161,6 +161,16 @@
             color: #721c24;
         }
         
+        .status-cancelled {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .status-rejected {
+            background-color: #f1e5e5;
+            color: #721c24;
+        }
+        
         /* Action Buttons */
         .action-btns {
             display: flex;
@@ -238,30 +248,19 @@
 
         <!-- Filter Section -->
         <div class="filter-section">
-            <form method="GET" class="filter-form">
+            <form method="GET" class="filter-form" id="rentalFilterForm">
                 <div class="filter-group">
                     <label class="filter-label">Filter by Status:</label>
-                    <select name="status" id="statusFilter" onchange="this.form.submit()" class="filter-select">
-                        <option value="">All Status</option>
-                        <option value="Approved" {% if request.GET.status == "Approved" %}selected{% endif %}>Approved</option>
-                        <option value="Renting" {% if request.GET.status == "Renting" %}selected{% endif %}>Renting</option>
-                        <option value="Returned" {% if request.GET.status == "Returned" %}selected{% endif %}>Returned</option>
-                        <option value="Overdue" {% if request.GET.status == "Overdue" %}selected{% endif %}>Overdue</option>
+                    <select name="status" id="statusFilter" class="filter-select">
+                        <option value="">All Active Rentals</option>
+                        {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 
-                <div class="filter-group">
-                    <label class="filter-label">Start Date:</label>
-                    <input type="date" name="start_date" value="{{ request.GET.start_date }}" class="filter-input">
-                </div>
-                
-                <div class="filter-group">
-                    <label class="filter-label">End Date:</label>
-                    <input type="date" name="end_date" value="{{ request.GET.end_date }}" class="filter-input">
-                </div>
-                
-                <button type="button" onclick="this.form.reset(); this.form.submit();" class="clear-btn">
-                    <i class="fas fa-sync-alt"></i> Clear Filters
+                <button type="button" onclick="clearFilters()" class="clear-btn">
+                    <i class="fas fa-sync-alt"></i> Clear Filter
                 </button>
             </form>
         </div>
@@ -295,7 +294,7 @@
                         <td>
                             {{ rental.rental_end|date:"M d, Y" }}
                             <div class="text-muted" style="font-size: 12px; color: #6c757d;">
-                                {{ rental.duration }} day{{ rental.duration|pluralize }}
+                                {{ rental.duration_days }} day{{ rental.duration_days|pluralize }}
                             </div>
                         </td>
                         <td>
@@ -311,9 +310,21 @@
                                 <span class="status-badge status-renting">
                                     <i class="fas fa-shopping-bag" style="margin-right: 5px;"></i> Renting
                                 </span>
-                            {% else %}
+                            {% elif rental.display_status == "Approved" %}
+                                <span class="status-badge status-approved">
+                                    <i class="fas fa-thumbs-up" style="margin-right: 5px;"></i> Approved
+                                </span>
+                            {% elif rental.display_status == "Pending" %}
                                 <span class="status-badge status-pending">
-                                    <i class="fas fa-clock" style="margin-right: 5px;"></i> {{ rental.display_status }}
+                                    <i class="fas fa-clock" style="margin-right: 5px;"></i> Pending
+                                </span>
+                            {% elif rental.display_status == "Cancelled" %}
+                                <span class="status-badge status-cancelled">
+                                    <i class="fas fa-times-circle" style="margin-right: 5px;"></i> Cancelled
+                                </span>
+                            {% elif rental.display_status == "Rejected" %}
+                                <span class="status-badge status-rejected">
+                                    <i class="fas fa-ban" style="margin-right: 5px;"></i> Rejected
                                 </span>
                             {% endif %}
                         </td>
@@ -337,7 +348,7 @@
                         <td colspan="7" class="empty-state">
                             <i class="fas fa-clipboard-list"></i>
                             <p>No rentals found</p>
-                            <p>Try adjusting your filters</p>
+                            <p>Try adjusting your filter</p>
                         </td>
                     </tr>
                     {% endfor %}
@@ -345,4 +356,15 @@
             </table>
         </div>
     </div>
+{& block extra_js %}
+<script>
+    function clearFilters() {
+        // Reset the form
+        document.getElementById('rentalFilterForm').reset();
+        // Remove the status parameter from URL and reload
+        const url = new URL(window.location.href);
+        url.searchParams.delete('status');
+        window.location.href = url.toString();
+    }
+    </script>
 {% endblock %}
