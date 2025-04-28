@@ -43,6 +43,8 @@ from core.utils.encryption import (
     decrypt_id,
     get_decrypted_object_or_404
 )
+from .models import HeroSection, EventSlide
+from .forms import EventSlideForm
 
 logger = logging.getLogger(__name__)
 
@@ -73,11 +75,15 @@ def homepage(request):
     
     categories = Category.objects.all()
 
+    event_slides = EventSlide.objects.filter(is_active=True).order_by('order')
+
     return render(request, 'customerapp/homepage.html', {
         'hero_section': hero_section,
         'featured_categories': featured_categories,
         'categories': categories,
+        'event_slides': event_slides,  
     })
+
 
 
 def register(request):
@@ -674,3 +680,30 @@ def update_hero(request):
         'message': 'Invalid form data',
         'errors': form.errors
     }, status=400)
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def manage_event_slides(request):
+    if request.method == 'POST':
+        form = EventSlideForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'success': True})
+        return JsonResponse({'success': False, 'errors': form.errors})
+    
+    slides = EventSlide.objects.all().order_by('order')
+    return render(request, 'customerapp/manage_event_slides.html', {
+        'slides': slides,
+        'form': EventSlideForm()
+    })
+
+@require_POST
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def delete_event_slide(request, slide_id):
+    try:
+        slide = EventSlide.objects.get(id=slide_id)
+        slide.delete()
+        return JsonResponse({'success': True})
+    except EventSlide.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Slide not found'}, status=404)

@@ -8,6 +8,7 @@ from django.utils import timezone
 from datetime import timedelta
 from django.utils.timezone import now, timedelta
 from .models import HeroSection
+from .models import EventSlide
 
 logger = logging.getLogger(__name__)
 
@@ -244,4 +245,12 @@ class HeroSectionForm(forms.ModelForm):
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'subtitle': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+class EventSlideForm(forms.ModelForm):
+    class Meta:
+        model = EventSlide
+        fields = ['title', 'subtitle', 'image', 'order']
+        widgets = {
+            'order': forms.NumberInput(attrs={'min': 0})
         }

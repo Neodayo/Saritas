@@ -20,3 +20,17 @@ class HeroSection(models.Model):
     class Meta:
         verbose_name = "Hero Section"
         verbose_name_plural = "Hero Sections"
+
+class EventSlide(models.Model):
+    title = models.CharField(max_length=200)
+    subtitle = models.CharField(max_length=200)
+    image = models.ImageField(upload_to='event_slides/')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+        return self.title
