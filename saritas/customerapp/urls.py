@@ -37,6 +37,10 @@ urlpatterns = [
     path('my-package-rentals/', views.my_package_rentals, name='my_package_rentals'),
     path('packages/<int:package_id>/rent/', views.rent_package, name='rent_package'),
     path('collections/', views.collections_view, name='collections'),
-      
+    path('edit-hero/', views.edit_hero, name='edit_hero'),
+    path('api/hero/', views.get_hero_data, name='get_hero_data'),
+    path('api/hero/update/', views.update_hero, name='update_hero'),
+    path('manage-event-slides/', views.manage_event_slides, name='manage_event_slides'),
+    path('delete-event-slide/<int:slide_id>/', views.delete_event_slide, name='delete_event_slide'),
     ]
 

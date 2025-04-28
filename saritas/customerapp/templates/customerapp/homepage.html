@@ -47,7 +47,7 @@
     /* Slower fade-in animation styles */
     .fade-in {
         opacity: 0;
-        transition: opacity 1.5s ease; 
+        transition: opacity 1.5s ease;
     }
 
     /* Special class for elements that should fade AND move up */
@@ -65,16 +65,27 @@
 
     /* Section-specific animation delays */
     .hero-banner .fade-in,
-    .hero-banner .fade-up { transition-delay: 0.3s; }
+    .hero-banner .fade-up {
+        transition-delay: 0.3s;
+    }
+
     .hero-banner .fade-in.delay-1,
-    .hero-banner .fade-up.delay-1 { transition-delay: 0.6s; }
+    .hero-banner .fade-up.delay-1 {
+        transition-delay: 0.6s;
+    }
+
     .hero-banner .fade-in.delay-2,
-    .hero-banner .fade-up.delay-2 { transition-delay: 0.9s; }
+    .hero-banner .fade-up.delay-2 {
+        transition-delay: 0.9s;
+    }
 
     #featured-categories .fade-in,
-    #featured-categories .fade-up { transition-delay: 0.5s; }
-    #featured-categories .cards-container .fade-in { 
-        transition-delay: 0.8s; 
+    #featured-categories .fade-up {
+        transition-delay: 0.5s;
+    }
+
+    #featured-categories .cards-container .fade-in {
+        transition-delay: 0.8s;
     }
 
     /* Slideshow styles */
@@ -107,61 +118,189 @@
         z-index: 5;
         cursor: pointer;
     }
-    
+
     .slide-nav-left {
         left: 0;
     }
-    
+
     .slide-nav-right {
         right: 0;
     }
-    
+
     .slide-nav-area:hover::before {
         content: '';
         position: absolute;
         top: 50%;
         width: 40px;
         height: 40px;
-        background-color: rgba(255,255,255,0.2);
+        background-color: rgba(255, 255, 255, 0.2);
         border-radius: 50%;
         transform: translateY(-50%);
     }
-    
+
     .slide-nav-left:hover::before {
         left: 20px;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='15 18 9 12 15 6'%3E%3C/polyline%3E%3C/svg%3E");
         background-repeat: no-repeat;
         background-position: center;
     }
-    
+
     .slide-nav-right:hover::before {
         right: 20px;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='9 18 15 12 9 6'%3E%3C/polyline%3E%3C/svg%3E");
         background-repeat: no-repeat;
         background-position: center;
     }
+
+    /* Modal styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 110;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        width: 90%;
+        max-width: 600px;
+        animation: modalFadeIn 0.3s ease-out;
+    }
+
+    .modal-open {
+        overflow: hidden;
+    }
+
+    @keyframes modalFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .close-modal {
+        color: #aaa;
+        float: right;
+        font-size: 1.5rem;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .close-modal:hover {
+        color: #333;
+    }
+
+    /* Form field styling */
+    .modal-form input[type="text"],
+    .modal-form input[type="url"],
+    .modal-form textarea {
+        width: 100%;
+        padding: 0.5rem 1rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        outline: none;
+        transition: all 0.2s;
+    }
+
+    .modal-form input[type="text"]:focus,
+    .modal-form input[type="url"]:focus,
+    .modal-form textarea:focus {
+        border-color: transparent;
+        box-shadow: 0 0 0 2px rgba(158, 135, 41, 0.5);
+    }
+
+    /* File input styling */
+    .modal-form input[type="file"] {
+        width: 100%;
+        padding: 0.5rem 0;
+    }
+
+    /* Button styling */
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #eee;
+    }
+
+    /* Add smooth transitions for image previews */
+    .current-image-preview,
+    #default-image-preview {
+        transition: all 0.3s ease;
+    }
+
+    /* Style for the restore button */
+    button[onclick="restoreHeroDefaults()"] {
+        transition: all 0.2s ease;
+    }
+
+    button[onclick="restoreHeroDefaults()"]:hover {
+        background-color: rgba(239, 68, 68, 0.1);
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <main class="relative z-10">
+
     <!-- Hero Banner -->
     <section class="hero-banner relative overflow-hidden">
         <!-- Background image -->
+        {% if hero_section and hero_section.background_image %}
+        <img src="{{ hero_section.background_image.url }}" alt="{{ hero_section.title }}"
+            class="absolute inset-0 w-full h-full object-cover blur-sm">
+        {% else %}
         <img src="{% static 'images/customerbackground.jpg' %}" alt="Fashion rental collection"
             class="absolute inset-0 w-full h-full object-cover blur-sm">
+        {% endif %}
 
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+
 
         <!-- Content -->
         <div class="relative z-10 h-full flex items-center justify-center text-white">
             <div class="text-center px-4">
-                <h1 class="text-4xl md:text-5xl font-bold mb-4 fade-up">Elevate Your Special Occasion</h1>
-                <p class="text-xl mb-8 fade-up delay-1">Wedding Gowns, Wedding Entourage, Gowns and Suit for any occasions</p>
+                <h1 class="text-4xl md:text-5xl font-bold mb-4 fade-up">
+                    {% if hero_section %}{{ hero_section.title }}{% else %}Elevate Your Special Occasion{% endif %}
+                </h1>
+                <p class="text-xl mb-8 fade-up delay-1">
+                    {% if hero_section %}{{ hero_section.subtitle }}{% else %}Wedding Gowns, Wedding Entourage, Gowns
+                    and Suit for any occasions{% endif %}
+                </p>
                 <a href="{% url 'customerapp:collections' %}"
                     class="shine-effect bg-[#9E8729] hover:bg-[#AD974F] text-white py-3 px-6 rounded-md inline-block fade-up delay-2">
                     Browse Collection
                 </a>
+
+                <!-- Edit Button (only for admin) -->
+                {% if request.user.is_staff %}
+                <div class="absolute top-4 right-4 z-50">
+                    <button onclick="openEditModal()"
+                        class="flex items-center gap-2 px-4 py-3 bg-white/90 hover:bg-white text-[#5a3e2b] rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path
+                                d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                        </svg>
+                        Edit Hero
+                    </button>
+                </div>
+                {% endif %}
             </div>
         </div>
     </section>
@@ -169,7 +308,8 @@
     <!-- Featured Categories Section -->
     <section id="featured-categories" class="py-16 px-4">
         <div class="max-w-6xl mx-auto">
-            <h2 class="text-3xl text-center text-[#5a3e2b] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373] fade-up">
+            <h2
+                class="text-3xl text-center text-[#5a3e2b] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373] fade-up">
                 Featured Collections
             </h2>
             <div class="flex overflow-x-auto gap-6 pb-4 -mx-4 px-4 cards-container">
@@ -189,12 +329,14 @@
                     {% endif %}
 
                     <!-- Category Name Overlay -->
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4 pointer-events-none">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4 pointer-events-none">
                         <h3 class="text-white text-xl font-bold">{{ category.name }}</h3>
                     </div>
 
                     <!-- View Collection Button -->
-                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/30 pointer-events-none">
+                    <div
+                        class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/30 pointer-events-none">
                         <span class="bg-[#AD974F] text-white px-4 py-2 rounded-md font-medium">
                             View Collection
                         </span>
@@ -205,20 +347,34 @@
         </div>
     </section>
 
-    <!-- Past Events Showcase - Hero-Style Slideshow -->
+    <!-- Past Events Showcase -->
     <section class="relative py-16 px-4 event-slideshow">
         <div class="absolute inset-0 overflow-hidden">
-            <h2 class="text-3xl text-center text-[#5a3e2b] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373] fade-up">
-                Past Event Showcase
-            </h2>
-
+            <div class="relative mb-8">
+                <h2 class="text-3xl text-center text-[#5a3e2b] pb-3 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373] fade-up">
+                    Past Event Showcase
+                </h2>
+            </div>
+    
             <!-- Navigation Areas -->
             <div class="slide-nav-area slide-nav-left" onclick="prevSlide()"></div>
             <div class="slide-nav-area slide-nav-right" onclick="nextSlide()"></div>
-
+    
             <!-- Slideshow Container -->
             <div class="h-full w-full relative fade-in fade-up" id="eventSlideshow">
-                <!-- Slide 1 -->
+                {% for slide in event_slides %}
+                <div class="absolute inset-0 slide transition-opacity duration-1000 ease-in-out {% if forloop.first %}opacity-100{% else %}opacity-0{% endif %} fade-in">
+                    <img src="{{ slide.image.url }}" alt="{{ slide.title }}"
+                        class="w-full h-full object-cover object-center">
+                    <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+                        <div class="text-center text-white max-w-2xl px-4 slide-content">
+                            <h3 class="text-3xl md:text-4xl font-bold mb-4 fade-up">{{ slide.title }}</h3>
+                            <p class="text-xl mb-6 fade-up">{{ slide.subtitle }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <!-- Default slides if none exist -->
                 <div class="absolute inset-0 slide transition-opacity duration-1000 ease-in-out opacity-100 fade-in">
                     <img src="{% static 'images/FerdKaycee.png' %}" alt="Elegant Wedding"
                         class="w-full h-full object-cover object-center">
@@ -229,10 +385,8 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Slide 2 -->
-                <div class="absolute inset-0 slide transition-opacity duration-1000 ease-in-out opacity-0 fade-in">
-                    <img src="{% static 'images/ChrisGrace.png' %}" alt="18th Debut"
+                <div class="absolute inset-0 slide transition-opacity duration-1000 ease-in-out opacity-100 fade-in">
+                    <img src="{% static 'images/ChrisGrace.png' %}" alt="Event"
                         class="w-full h-full object-cover object-center">
                     <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
                         <div class="text-center text-white max-w-2xl px-4 slide-content">
@@ -241,10 +395,8 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Slide 3 -->
-                <div class="absolute inset-0 slide transition-opacity duration-1000 ease-in-out opacity-0 fade-in">
-                    <img src="{% static 'images/ChristianAileen.png' %}" alt="Corporate Gala"
+                <div class="absolute inset-0 slide transition-opacity duration-1000 ease-in-out opacity-100 fade-in">
+                    <img src="{% static 'images/ChristianAileen.png' %}" alt="Event"
                         class="w-full h-full object-cover object-center">
                     <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
                         <div class="text-center text-white max-w-2xl px-4 slide-content">
@@ -253,27 +405,43 @@
                         </div>
                     </div>
                 </div>
+                {% endfor %}
             </div>
+            
+            <!-- Edit Button (only for admin)  -->
+            {% if request.user.is_staff %}
+            <div class="absolute top-4 right-4 z-50">
+                <button onclick="openSlideManager()"
+                    class="flex items-center gap-2 px-4 py-3 bg-white/90 hover:bg-white text-[#5a3e2b] rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                    </svg>
+                    Manage Slides
+                </button>
+            </div>
+            {% endif %}
         </div>
-
+    
         <!-- Navigation Dots -->
         <div class="absolute bottom-8 left-0 right-0 flex justify-center gap-2 z-10">
-            <button class="event-dot w-3 h-3 rounded-full bg-white/80 hover:bg-white transition-colors fade-in"
-                data-index="0"></button>
-            <button class="event-dot w-3 h-3 rounded-full bg-white/30 hover:bg-white/50 transition-colors fade-in"
-                data-index="1"></button>
-            <button class="event-dot w-3 h-3 rounded-full bg-white/30 hover:bg-white/50 transition-colors fade-in"
-                data-index="2"></button>
+            {% for slide in event_slides %}
+            <button class="event-dot w-3 h-3 rounded-full {% if forloop.first %}bg-white/80{% else %}bg-white/30{% endif %} hover:bg-white transition-colors fade-in"
+                data-index="{{ forloop.counter0 }}"></button>
+            {% endfor %}
         </div>
     </section>
+
+    
 
     <!-- Wardrobe Packages Section -->
     <section class="py-16 px-4">
         <div class="max-w-6xl mx-auto">
-            <h2 class="text-3xl text-center text-[#5a3e2b] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373] fade-up">
+            <h2
+                class="text-3xl text-center text-[#5a3e2b] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373] fade-up">
                 Packages
             </h2>
-            <h1 class="text-center mb-12 fade-in">--- ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ---</h1>
+            <h1 class="text-center mb-12 fade-in">--- ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING
+                ONGOING ---</h1>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 cards-container">
                 {% for package in wardrobe_packages %}
                 <div class="bg-white rounded-lg shadow-md overflow-hidden p-6 fade-in">
@@ -294,13 +462,142 @@
             </div>
         </div>
     </section>
+
+    <!-- Hero Modal -->
+    <div id="editHeroModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeEditModal()">&times;</span>
+            <h2 class="text-2xl font-bold mb-6 text-[#5a3e2b]">Edit Hero Section</h2>
+
+            <form id="heroEditForm" method="post" enctype="multipart/form-data" class="modal-form">
+                {% csrf_token %}
+
+                <div class="space-y-4">
+                    <div>
+                        <label for="id_title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <input type="text" name="title" id="id_title"
+                            value="{{ hero_section.title|default:'Elevate Your Special Occasion' }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+
+                    <div>
+                        <label for="id_subtitle" class="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
+                        <input type="text" name="subtitle" id="id_subtitle"
+                            value="{{ hero_section.subtitle|default:'Wedding Gowns, Wedding Entourage, Gowns and Suit for any occasions' }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label for="id_background_image" class="block text-sm font-medium text-gray-700 mb-1">Background
+                            Image</label>
+                        <input type="file" name="background_image" id="id_background_image"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+
+                        <!-- Default Image Preview -->
+                        <div id="default-image-preview"
+                            class="mt-2 {% if hero_section and hero_section.background_image %}hidden{% endif %}">
+                            <p class="text-sm text-gray-500">Default image:</p>
+                            <img src="{% static 'images/customerbackground.jpg' %}" alt="Default background"
+                                class="mt-1 h-20 object-cover rounded">
+                        </div>
+
+                        <!-- Current Image Preview -->
+                        {% if hero_section and hero_section.background_image %}
+                        <div class="current-image-preview mt-2">
+                            <p class="text-sm text-gray-500">Current image:</p>
+                            <img src="{{ hero_section.background_image.url }}" alt="Current background"
+                                class="mt-1 h-20 object-cover rounded">
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" onclick="closeEditModal()"
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+
+                    <button type="button" onclick="restoreHeroDefaults()"
+                        class="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors">
+                        Restore Defaults
+                    </button>
+
+                    <button type="submit" class="px-4 py-2 bg-[#9E8729] text-white rounded-lg hover:bg-[#AD974F]">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Event Modal -->
+    <div id="slideManagerModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close-modal" onclick="closeSlideManager()">&times;</span>
+            <h2 class="text-2xl font-bold mb-6 text-[#5a3e2b]">Manage Event Slides</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Add New Slide Form -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-4">Add New Slide</h3>
+                    <form id="addSlideForm" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                                <input type="text" name="title" class="w-full px-3 py-2 border border-gray-300 rounded-lg" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
+                                <input type="text" name="subtitle" class="w-full px-3 py-2 border border-gray-300 rounded-lg" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Image</label>
+                                <input type="file" name="image" class="w-full px-3 py-2 border border-gray-300 rounded-lg" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Order</label>
+                                <input type="number" name="order" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg" required>
+                            </div>
+                            <button type="submit" class="w-full px-4 py-2 bg-[#9E8729] text-white rounded-lg hover:bg-[#AD974F]">
+                                Add Slide
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Existing Slides List -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Current Slides</h3>
+                    <div class="space-y-4 max-h-96 overflow-y-auto">
+                        {% for slide in event_slides %}
+                        <div class="border rounded-lg p-4 flex items-start gap-4">
+                            <img src="{{ slide.image.url }}" alt="{{ slide.title }}" class="w-20 h-20 object-cover rounded">
+                            <div class="flex-1">
+                                <h4 class="font-medium">{{ slide.title }}</h4>
+                                <p class="text-sm text-gray-600">{{ slide.subtitle }}</p>
+                                <p class="text-xs text-gray-500">Order: {{ slide.order }}</p>
+                            </div>
+                            <button onclick="deleteSlide({{ slide.id }})" class="text-red-500 hover:text-red-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                        {% empty %}
+                        <p class="text-gray-500">No slides added yet</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </main>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Scroll-triggered animations
+        // --- Scroll animations ---
         const fadeElements = document.querySelectorAll('.fade-in, .fade-up');
-
         function handleScroll() {
             fadeElements.forEach(element => {
                 const rect = element.getBoundingClientRect();
@@ -309,77 +606,205 @@
                 }
             });
         }
-
-        // Initial check for scroll animations
         handleScroll();
         window.addEventListener('scroll', handleScroll);
-
-        // Slideshow functionality
+    
+        // --- Slideshow ---
         const slides = document.querySelectorAll('#eventSlideshow > .slide');
         const dots = document.querySelectorAll('.event-dot');
         let currentIndex = 0;
-        let interval = 9000; // 6 seconds (slower)
+        let interval = 9000;
         let slideInterval;
-
+    
         function showSlide(index) {
             currentIndex = index;
             slides.forEach((slide, i) => {
                 slide.classList.toggle('opacity-100', i === index);
                 slide.classList.toggle('opacity-0', i !== index);
             });
-
             dots.forEach((dot, i) => {
                 dot.classList.toggle('bg-white/80', i === index);
                 dot.classList.toggle('bg-white/30', i !== index);
             });
         }
-
+    
         function nextSlide() {
             const nextIndex = (currentIndex + 1) % slides.length;
             showSlide(nextIndex);
         }
-
+    
         function prevSlide() {
             const prevIndex = (currentIndex - 1 + slides.length) % slides.length;
             showSlide(prevIndex);
         }
-
-        // Initialize slideshow
+    
         function initSlideshow() {
             showSlide(0);
             slideInterval = setInterval(nextSlide, interval);
-            
-            // Pause on hover
-            document.getElementById('eventSlideshow').addEventListener('mouseenter', () => {
-                clearInterval(slideInterval);
-            });
-
-            document.getElementById('eventSlideshow').addEventListener('mouseleave', () => {
-                slideInterval = setInterval(nextSlide, interval);
-            });
-
-            // Dot navigation
+    
+            const slideshow = document.getElementById('eventSlideshow');
+            slideshow.addEventListener('mouseenter', () => clearInterval(slideInterval));
+            slideshow.addEventListener('mouseleave', () => slideInterval = setInterval(nextSlide, interval));
+    
             dots.forEach(dot => {
                 dot.addEventListener('click', () => {
                     showSlide(parseInt(dot.dataset.index));
                 });
             });
-
-            // Navigation area click handlers
+    
             document.querySelector('.slide-nav-left').addEventListener('click', prevSlide);
             document.querySelector('.slide-nav-right').addEventListener('click', nextSlide);
-
-            // Keyboard navigation
+    
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'ArrowLeft') {
-                    prevSlide();
-                } else if (e.key === 'ArrowRight') {
-                    nextSlide();
+                if (e.key === 'ArrowLeft') prevSlide();
+                else if (e.key === 'ArrowRight') nextSlide();
+            });
+        }
+    
+        initSlideshow();
+    
+        // --- Slide Management: Add Slide Form ---
+        const addSlideForm = document.getElementById('addSlideForm');
+        if (addSlideForm) {
+            addSlideForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                try {
+                    const response = await fetch('{% url "customerapp:manage_event_slides" %}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        const errorData = await response.json();
+                        alert(errorData.errors || 'Error adding slide');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Network error - please try again');
                 }
             });
         }
-
-        initSlideshow();
+    
+        // --- Hero Edit Modal handlers (already existing) ---
+        const editModal = document.getElementById('editHeroModal');
+        document.addEventListener('click', function (event) {
+            if (event.target === editModal) {
+                closeEditModal();
+            }
+        });
+    
+        const heroEditForm = document.getElementById('heroEditForm');
+        if (heroEditForm) {
+            heroEditForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                try {
+                    const formData = new FormData(this);
+                    const response = await fetch('{% url "customerapp:update_hero" %}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        const errorData = await response.json();
+                        alert(errorData.message || 'Error saving changes');
+                    }
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    alert('Network error - please try again');
+                }
+            });
+        }
     });
-</script>
-{% endblock %}
+    
+    // --- Modal open/close global functions ---
+    function openSlideManager() {
+        document.getElementById('slideManagerModal').style.display = 'block';
+        document.body.classList.add('modal-open');
+    }
+    
+    function closeSlideManager() {
+        document.getElementById('slideManagerModal').style.display = 'none';
+        document.body.classList.remove('modal-open');
+    }
+    
+    function openEditModal() {
+        const otherModals = document.querySelectorAll('.modal:not(#editHeroModal)');
+        otherModals.forEach(modal => modal.style.display = 'none');
+        document.getElementById('editHeroModal').style.display = 'block';
+        document.body.classList.add('modal-open');
+    }
+    
+    function closeEditModal() {
+        document.getElementById('editHeroModal').style.display = 'none';
+        document.body.classList.remove('modal-open');
+    }
+    
+    // --- Delete Slide function ---
+    function deleteSlide(slideId) {
+        if (confirm('Are you sure you want to delete this slide?')) {
+            fetch(`/delete-event-slide/${slideId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert('Error deleting slide');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Network error - please try again');
+            });
+        }
+    }
+    
+    // --- Restore hero defaults function ---
+    function restoreHeroDefaults() {
+        if (confirm('Are you sure you want to restore all values to default, including the background image?')) {
+            fetch('{% url "customerapp:update_hero" %}', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'restore_defaults=true'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('id_title').value = 'Elevate Your Special Occasion';
+                    document.getElementById('id_subtitle').value = 'Wedding Gowns, Wedding Entourage, Gowns and Suit for any occasions';
+                    document.getElementById('id_background_image').value = '';
+    
+                    const previewContainer = document.querySelector('.current-image-preview');
+                    if (previewContainer) previewContainer.style.display = 'none';
+    
+                    const defaultPreview = document.getElementById('default-image-preview');
+                    if (defaultPreview) defaultPreview.style.display = 'block';
+    
+                    alert('Default values restored. Click "Save Changes" to apply permanently.');
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to restore defaults'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Network error - please try again');
+            });
+        }
+    }
+    </script>
+    {% endblock %}
+    
