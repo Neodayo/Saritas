@@ -424,7 +424,17 @@ class Reservation(models.Model):
     def __str__(self):
         return f"Reservation #{self.pk} by {self.customer.user.username} for '{self.item.name}'"
 
-    
+    @property
+    def encrypted_id(self):
+        """Returns encrypted ID for URLs"""
+        if not self.pk:
+            return None
+        try:
+            return encrypt_id(self.pk)
+        except Exception as e:
+            logger.error(f"Failed to encrypt reservation ID {self.pk}: {str(e)}")
+            return None
+        
     # --- Fitting Schedule System ---
 class FittingAppointment(models.Model):
     STATUS_CHOICES = [

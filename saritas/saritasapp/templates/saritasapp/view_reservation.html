@@ -441,20 +441,20 @@
                     <td>
                         <div class="action-buttons">
                             {% if reservation.status == 'pending' %}
-                            <form method="post" action="{% url 'saritasapp:update_reservation' reservation.id 'approve' %}">
+                            <form method="post" action="{% url 'saritasapp:update_reservation' reservation.encrypted_id 'approve' %}">
                                 {% csrf_token %}
                                 <button type="submit" class="action-btn btn-approve">
                                     <i class="fas fa-check"></i> Approve
                                 </button>
                             </form>
-                            <form method="post" action="{% url 'saritasapp:update_reservation' reservation.id 'reject' %}">
+                            <form method="post" action="{% url 'saritasapp:update_reservation' reservation.encrypted_id 'reject' %}">
                                 {% csrf_token %}
                                 <button type="submit" class="action-btn btn-reject">
                                     <i class="fas fa-times"></i> Reject
                                 </button>
                             </form>
                             {% elif reservation.status == 'approved' %}
-                            <form method="post" action="{% url 'saritasapp:update_reservation' reservation.id 'complete' %}">
+                            <form method="post" action="{% url 'saritasapp:update_reservation' reservation.encrypted_id 'complete' %}">
                                 {% csrf_token %}
                                 <button type="submit" class="action-btn btn-complete">
                                     <i class="fas fa-check-double"></i> Complete
