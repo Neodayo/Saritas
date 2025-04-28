@@ -45,6 +45,7 @@ from core.utils.encryption import (
 )
 from .models import HeroSection, EventSlide
 from .forms import EventSlideForm
+from .models import FeaturedCollectionsSection
 
 logger = logging.getLogger(__name__)
 
@@ -62,28 +63,26 @@ def homepage(request):
     except HeroSection.DoesNotExist:
         hero_section = None
 
-    # Featured Categories
-    featured_categories = Category.objects.filter(
-        name__in=['Wedding Gown', 'Dress', 'Suit', 'Tuxedo']
-    )[:4]
-    
-    for category in featured_categories:
+    # Get or create featured collections section
+    featured_section, created = FeaturedCollectionsSection.objects.get_or_create(is_active=True)
+    if created:
+        featured_section.restore_defaults()
+
+    # Add featured item to each category
+    for category in featured_section.categories.all():
         category.featured_item = category.items.filter(
             available=True, 
             image__isnull=False
         ).order_by('?').first()
-    
-    categories = Category.objects.all()
 
     event_slides = EventSlide.objects.filter(is_active=True).order_by('order')
 
     return render(request, 'customerapp/homepage.html', {
         'hero_section': hero_section,
-        'featured_categories': featured_categories,
-        'categories': categories,
-        'event_slides': event_slides,  
+        'featured_section': featured_section,
+        'all_categories': Category.objects.all(),
+        'event_slides': event_slides,
     })
-
 
 
 def register(request):
@@ -561,7 +560,7 @@ from .models import HeroSection
 from .forms import HeroSectionForm
 
 def is_admin(user):
-    return user.is_authenticated and user.is_staff
+    return user.is_authenticated and user.is_superuser
 
 @login_required
 @user_passes_test(is_admin)
@@ -592,7 +591,7 @@ from django.contrib.auth.decorators import user_passes_test
 
 @require_GET
 @login_required
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: u.is_superuser)
 def get_hero_data(request):
     """API endpoint to get current hero data (for modal)"""
     try:
@@ -615,7 +614,7 @@ def get_hero_data(request):
 
 @require_POST
 @login_required
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: u.is_superuser)
 def update_hero(request):
     try:
         current_hero = HeroSection.objects.filter(is_active=True).latest('updated_at')
@@ -682,7 +681,7 @@ def update_hero(request):
     }, status=400)
 
 @login_required
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: u.is_superuser)
 def manage_event_slides(request):
     if request.method == 'POST':
         form = EventSlideForm(request.POST, request.FILES)
@@ -696,10 +695,9 @@ def manage_event_slides(request):
         'slides': slides,
         'form': EventSlideForm()
     })
-
 @require_POST
 @login_required
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: u.is_superuser)
 def delete_event_slide(request, slide_id):
     try:
         slide = EventSlide.objects.get(id=slide_id)
@@ -707,3 +705,22 @@ def delete_event_slide(request, slide_id):
         return JsonResponse({'success': True})
     except EventSlide.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Slide not found'}, status=404)
+    
+
+@require_POST
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def update_featured_collections(request):
+    try:
+        featured_section = FeaturedCollectionsSection.objects.filter(is_active=True).first()
+        
+        if request.POST.get('restore_defaults'):
+            featured_section.restore_defaults()
+        else:
+            category_ids = request.POST.getlist('categories')
+            featured_section.categories.set(Category.objects.filter(id__in=category_ids))
+            featured_section.save()
+        
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

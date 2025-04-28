@@ -42,5 +42,6 @@ urlpatterns = [
     path('api/hero/update/', views.update_hero, name='update_hero'),
     path('manage-event-slides/', views.manage_event_slides, name='manage_event_slides'),
     path('delete-event-slide/<int:slide_id>/', views.delete_event_slide, name='delete_event_slide'),
+    path('update-featured-collections/', views.update_featured_collections, name='update_featured_collections'),
     ]
 

@@ -289,7 +289,7 @@
                 </a>
 
                 <!-- Edit Button (only for admin) -->
-                {% if request.user.is_staff %}
+                {% if request.user.is_superuser %}
                 <div class="absolute top-4 right-4 z-50">
                     <button onclick="openEditModal()"
                         class="flex items-center gap-2 px-4 py-3 bg-white/90 hover:bg-white text-[#5a3e2b] rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
@@ -305,48 +305,72 @@
         </div>
     </section>
 
-    <!-- Featured Categories Section -->
-    <section id="featured-categories" class="py-16 px-4">
-        <div class="max-w-6xl mx-auto">
-            <h2
-                class="text-3xl text-center text-[#5a3e2b] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373] fade-up">
-                Featured Collections
-            </h2>
-            <div class="flex overflow-x-auto gap-6 pb-4 -mx-4 px-4 cards-container">
-                {% for category in featured_categories %}
-                <a href="{% url 'customerapp:wardrobe' %}?category={{ category.id }}"
-                    class="group relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-700 flex-shrink-0 w-64 h-[22rem] flex flex-col fade-in fade-up">
-
-                    {% if category.featured_item %}
-                    <div class="w-full h-full overflow-hidden">
-                        <img src="{{ category.featured_item.image.url }}" alt="{{ category.name }}"
-                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out">
-                    </div>
-                    {% else %}
-                    <div class="w-full h-full bg-gray-100 flex items-center justify-center">
-                        <span class="text-gray-500">No items available</span>
-                    </div>
-                    {% endif %}
-
-                    <!-- Category Name Overlay -->
-                    <div
-                        class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4 pointer-events-none">
-                        <h3 class="text-white text-xl font-bold">{{ category.name }}</h3>
-                    </div>
-
-                    <!-- View Collection Button -->
-                    <div
-                        class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/30 pointer-events-none">
-                        <span class="bg-[#AD974F] text-white px-4 py-2 rounded-md font-medium">
-                            View Collection
-                        </span>
-                    </div>
-                </a>
-                {% endfor %}
+<!-- Featured Categories Section -->
+<section id="featured-categories" class="py-16 px-4 relative">
+    <div class="max-w-6xl mx-auto">
+        <h2 class="text-3xl text-center text-[#5a3e2b] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373] fade-up">
+            Featured Collections
+        </h2>
+    </div>
+    
+    <!-- Edit Button (only for admin) -->
+    {% if request.user.is_superuser %}
+    <div class="absolute top-4 right-4 z-50">
+        <button onclick="openFeaturedCollectionsModal()"
+            class="flex items-center gap-2 px-4 py-3 bg-white/90 hover:bg-white text-[#5a3e2b] rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+            </svg>
+            Manage Featured
+        </button>
+    </div>
+    {% endif %}
+    
+    <!-- Centered categories container -->
+    <div class="max-w-6xl mx-auto">
+        <div class="flex overflow-x-auto gap-6 pb-4 px-4 -mx-4 cards-container">
+            {% for category in featured_section.categories.all %}
+            <a href="{% url 'customerapp:wardrobe' %}?category={{ category.id }}"
+                class="group relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-700 flex-shrink-0 w-64 h-[22rem] flex flex-col fade-in fade-up">
+                
+                <!-- Image section with multiple fallback checks -->
+                {% with first_item=category.items.first %}
+                {% if first_item and first_item.image %}
+                <div class="w-full h-full overflow-hidden">
+                    <img src="{{ first_item.image.url }}" alt="{{ category.name }}"
+                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out">
+                </div>
+                {% else %}
+                <div class="w-full h-full bg-gray-100 flex flex-col items-center justify-center p-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span class="text-gray-500 text-center">No image available</span>
+                    <span class="text-gray-400 text-sm mt-1">{{ category.name }}</span>
+                </div>
+                {% endif %}
+                {% endwith %}
+                
+                <!-- Category Name Overlay -->
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4 pointer-events-none">
+                    <h3 class="text-white text-xl font-bold">{{ category.name }}</h3>
+                </div>
+                
+                <!-- View Collection Button -->
+                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/30 pointer-events-none">
+                    <span class="bg-[#AD974F] text-white px-4 py-2 rounded-md font-medium">
+                        View Collection
+                    </span>
+                </div>
+            </a>
+            {% empty %}
+            <div class="w-full text-center py-8">
+                <p class="text-gray-500">No featured collections available</p>
             </div>
+            {% endfor %}
         </div>
-    </section>
-
+    </div>
+</section>
     <!-- Past Events Showcase -->
     <section class="relative py-16 px-4 event-slideshow">
         <div class="absolute inset-0 overflow-hidden">
@@ -409,7 +433,7 @@
             </div>
             
             <!-- Edit Button (only for admin)  -->
-            {% if request.user.is_staff %}
+            {% if request.user.is_superuser %}
             <div class="absolute top-4 right-4 z-50">
                 <button onclick="openSlideManager()"
                     class="flex items-center gap-2 px-4 py-3 bg-white/90 hover:bg-white text-[#5a3e2b] rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
@@ -529,6 +553,63 @@
             </form>
         </div>
     </div>
+
+<!-- Featured Collections Modal -->
+<div id="featuredCollectionsModal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+        <span class="close-modal" onclick="closeFeaturedCollectionsModal()">&times;</span>
+        <h2 class="text-2xl font-bold mb-6 text-[#5a3e2b]">Manage Featured Collections</h2>
+        
+        <form id="featuredCollectionsForm">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Select Categories to Feature</label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto p-2">
+                    {% for category in all_categories %}
+                    <div class="flex items-center">
+                        <input type="checkbox" name="categories" value="{{ category.id }}" id="cat_{{ category.id }}"
+                            class="mr-2 h-4 w-4 text-[#9E8729] focus:ring-[#9E8729] border-gray-300 rounded"
+                            {% if category in featured_section.categories.all %}checked{% endif %}>
+                        <label for="cat_{{ category.id }}" class="text-gray-700">
+                            {{ category.name }}
+                            {% if category.items.exists %}
+                            <span class="text-xs text-gray-500">({{ category.items.count }} items)</span>
+                            {% endif %}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" onclick="closeFeaturedCollectionsModal()"
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="button" onclick="restoreFeaturedDefaults()"
+                    class="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors">
+                    Restore Defaults
+                </button>
+                <button type="submit" class="px-4 py-2 bg-[#9E8729] text-white rounded-lg hover:bg-[#AD974F]">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+            <div class="modal-actions">
+                <button type="button" onclick="closeFeaturedCollectionsModal()"
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-[#9E8729] text-white rounded-lg hover:bg-[#AD974F]">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
     <!-- Event Modal -->
     <div id="slideManagerModal" class="modal">
         <div class="modal-content" style="max-width: 800px;">
@@ -805,6 +886,72 @@
             });
         }
     }
+    function openFeaturedCollectionsModal() {
+    document.getElementById('featuredCollectionsModal').style.display = 'block';
+    document.body.classList.add('modal-open');
+}
+
+function closeFeaturedCollectionsModal() {
+    document.getElementById('featuredCollectionsModal').style.display = 'none';
+    document.body.classList.remove('modal-open');
+}
+
+function restoreFeaturedDefaults() {
+    if (confirm('Are you sure you want to restore the default featured collections?')) {
+        const form = document.getElementById('featuredCollectionsForm');
+        const formData = new FormData();
+        formData.append('restore_defaults', 'true');
+        formData.append('csrfmiddlewaretoken', form.querySelector('[name=csrfmiddlewaretoken]').value);
+        
+        fetch('{% url "customerapp:update_featured_collections" %}', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert('Error restoring defaults');
+            }
+        });
+    }
+}
+
+// Regular form submission
+const featuredCollectionsForm = document.getElementById('featuredCollectionsForm');
+if (featuredCollectionsForm) {
+    featuredCollectionsForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const selectedCategories = Array.from(document.querySelectorAll('input[name="categories"]:checked'))
+            .map(checkbox => checkbox.value);
+        
+        selectedCategories.forEach(catId => {
+            formData.append('categories', catId);
+        });
+        
+        try {
+            const response = await fetch('{% url "customerapp:update_featured_collections" %}', {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                const errorData = await response.json();
+                alert(errorData.error || 'Error saving featured collections');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Network error - please try again');
+        }
+    });
+}
     </script>
     {% endblock %}
     
