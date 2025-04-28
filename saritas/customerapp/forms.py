@@ -7,6 +7,7 @@ from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
 from django.utils.timezone import now, timedelta
+from .models import HeroSection
 
 logger = logging.getLogger(__name__)
 
@@ -234,4 +235,13 @@ class PackageItemReturnForm(forms.ModelForm):
         widgets = {
             'condition': forms.Select(attrs={'class': 'form-control'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+class HeroSectionForm(forms.ModelForm):
+    class Meta:
+        model = HeroSection
+        fields = ['title', 'subtitle', 'background_image']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'subtitle': forms.TextInput(attrs={'class': 'form-control'}),
         }

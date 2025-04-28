@@ -55,26 +55,30 @@ def clear_welcome_message(request):
 
 def homepage(request):
     """Public homepage (no login required)"""
-    # First get the 4 categories we want to feature
+    try:
+        hero_section = HeroSection.objects.filter(is_active=True).latest('updated_at')
+    except HeroSection.DoesNotExist:
+        hero_section = None
+
+    # Featured Categories
     featured_categories = Category.objects.filter(
         name__in=['Wedding Gown', 'Dress', 'Suit', 'Tuxedo']
     )[:4]
     
-    # Now get the first available item for each category
     for category in featured_categories:
         category.featured_item = category.items.filter(
             available=True, 
             image__isnull=False
-        ).order_by('?').first()  # Get random item
+        ).order_by('?').first()
     
     categories = Category.objects.all()
-    new_arrivals = Inventory.objects.filter(available=True).order_by('-id')[:6]
-    
+
     return render(request, 'customerapp/homepage.html', {
+        'hero_section': hero_section,
         'featured_categories': featured_categories,
         'categories': categories,
-        'new_arrivals': new_arrivals,
     })
+
 
 def register(request):
     if request.method == 'POST':
@@ -544,3 +548,129 @@ def terms(request):
 
 def privacy(request):
     return render(request, 'customerapp/privacy.html')
+
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.shortcuts import render, redirect
+from .models import HeroSection
+from .forms import HeroSectionForm
+
+def is_admin(user):
+    return user.is_authenticated and user.is_staff
+
+@login_required
+@user_passes_test(is_admin)
+def edit_hero(request):
+    try:
+        hero = HeroSection.objects.filter(is_active=True).latest('updated_at')
+    except HeroSection.DoesNotExist:
+        hero = None
+    
+    if request.method == 'POST':
+        form = HeroSectionForm(request.POST, request.FILES, instance=hero)
+        if form.is_valid():
+            new_hero = form.save(commit=False)
+            new_hero.updated_by = request.user
+            if hero:  # Deactivate previous hero
+                hero.is_active = False
+                hero.save()
+            new_hero.save()
+            return redirect('customerapp:homepage')
+    else:
+        form = HeroSectionForm(instance=hero)
+    
+    return render(request, 'customerapp/edit_hero.html', {'form': form})
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST, require_GET
+from django.contrib.auth.decorators import user_passes_test
+
+@require_GET
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def get_hero_data(request):
+    """API endpoint to get current hero data (for modal)"""
+    try:
+        hero = HeroSection.objects.filter(is_active=True).latest('updated_at')
+        data = {
+            'title': hero.title,
+            'subtitle': hero.subtitle,
+            'background_image_url': hero.background_image.url if hero.background_image else None,
+        }
+        return JsonResponse({'success': True, 'data': data})
+    except HeroSection.DoesNotExist:
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'title': 'Elevate Your Special Occasion',
+                'subtitle': 'Wedding Gowns, Wedding Entourage, Gowns and Suit for any occasions',
+                'background_image_url': None,
+            }
+        })
+
+@require_POST
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def update_hero(request):
+    try:
+        current_hero = HeroSection.objects.filter(is_active=True).latest('updated_at')
+    except HeroSection.DoesNotExist:
+        current_hero = None
+    
+    if request.POST.get('restore_defaults') == 'true':
+        try:
+            with transaction.atomic():
+                # Deactivate current hero if exists
+                if current_hero:
+                    current_hero.is_active = False
+                    current_hero.save()
+                
+                # Create new default hero (without any image)
+                default_hero = HeroSection(
+                    title="Elevate Your Special Occasion",
+                    subtitle="Wedding Gowns, Wedding Entourage, Gowns and Suit for any occasions",
+                    is_active=True,
+                    updated_by=request.user
+                )
+                default_hero.save()
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Hero section restored to defaults!',
+                    'is_default': True
+                })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error restoring defaults: {str(e)}'
+            }, status=500)
+    
+    # Normal form processing
+    form = HeroSectionForm(request.POST, request.FILES, instance=current_hero)
+    
+    if form.is_valid():
+        try:
+            with transaction.atomic():
+                if current_hero:
+                    current_hero.is_active = False
+                    current_hero.save()
+                
+                new_hero = form.save(commit=False)
+                new_hero.updated_by = request.user
+                new_hero.is_active = True
+                new_hero.save()
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Hero section updated successfully!'
+                })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error saving hero section: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({
+        'success': False,
+        'message': 'Invalid form data',
+        'errors': form.errors
+    }, status=400)

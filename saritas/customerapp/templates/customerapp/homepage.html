@@ -47,7 +47,7 @@
     /* Slower fade-in animation styles */
     .fade-in {
         opacity: 0;
-        transition: opacity 1.5s ease; 
+        transition: opacity 1.5s ease;
     }
 
     /* Special class for elements that should fade AND move up */
@@ -65,16 +65,27 @@
 
     /* Section-specific animation delays */
     .hero-banner .fade-in,
-    .hero-banner .fade-up { transition-delay: 0.3s; }
+    .hero-banner .fade-up {
+        transition-delay: 0.3s;
+    }
+
     .hero-banner .fade-in.delay-1,
-    .hero-banner .fade-up.delay-1 { transition-delay: 0.6s; }
+    .hero-banner .fade-up.delay-1 {
+        transition-delay: 0.6s;
+    }
+
     .hero-banner .fade-in.delay-2,
-    .hero-banner .fade-up.delay-2 { transition-delay: 0.9s; }
+    .hero-banner .fade-up.delay-2 {
+        transition-delay: 0.9s;
+    }
 
     #featured-categories .fade-in,
-    #featured-categories .fade-up { transition-delay: 0.5s; }
-    #featured-categories .cards-container .fade-in { 
-        transition-delay: 0.8s; 
+    #featured-categories .fade-up {
+        transition-delay: 0.5s;
+    }
+
+    #featured-categories .cards-container .fade-in {
+        transition-delay: 0.8s;
     }
 
     /* Slideshow styles */
@@ -107,38 +118,140 @@
         z-index: 5;
         cursor: pointer;
     }
-    
+
     .slide-nav-left {
         left: 0;
     }
-    
+
     .slide-nav-right {
         right: 0;
     }
-    
+
     .slide-nav-area:hover::before {
         content: '';
         position: absolute;
         top: 50%;
         width: 40px;
         height: 40px;
-        background-color: rgba(255,255,255,0.2);
+        background-color: rgba(255, 255, 255, 0.2);
         border-radius: 50%;
         transform: translateY(-50%);
     }
-    
+
     .slide-nav-left:hover::before {
         left: 20px;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='15 18 9 12 15 6'%3E%3C/polyline%3E%3C/svg%3E");
         background-repeat: no-repeat;
         background-position: center;
     }
-    
+
     .slide-nav-right:hover::before {
         right: 20px;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='9 18 15 12 9 6'%3E%3C/polyline%3E%3C/svg%3E");
         background-repeat: no-repeat;
         background-position: center;
+    }
+
+    /* Modal styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 110;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        width: 90%;
+        max-width: 600px;
+        animation: modalFadeIn 0.3s ease-out;
+    }
+
+    .modal-open {
+        overflow: hidden;
+    }
+
+    @keyframes modalFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .close-modal {
+        color: #aaa;
+        float: right;
+        font-size: 1.5rem;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .close-modal:hover {
+        color: #333;
+    }
+
+    /* Form field styling */
+    .modal-form input[type="text"],
+    .modal-form input[type="url"],
+    .modal-form textarea {
+        width: 100%;
+        padding: 0.5rem 1rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        outline: none;
+        transition: all 0.2s;
+    }
+
+    .modal-form input[type="text"]:focus,
+    .modal-form input[type="url"]:focus,
+    .modal-form textarea:focus {
+        border-color: transparent;
+        box-shadow: 0 0 0 2px rgba(158, 135, 41, 0.5);
+    }
+
+    /* File input styling */
+    .modal-form input[type="file"] {
+        width: 100%;
+        padding: 0.5rem 0;
+    }
+
+    /* Button styling */
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #eee;
+    }
+
+    /* Add smooth transitions for image previews */
+    .current-image-preview,
+    #default-image-preview {
+        transition: all 0.3s ease;
+    }
+
+    /* Style for the restore button */
+    button[onclick="restoreHeroDefaults()"] {
+        transition: all 0.2s ease;
+    }
+
+    button[onclick="restoreHeroDefaults()"]:hover {
+        background-color: rgba(239, 68, 68, 0.1);
     }
 </style>
 {% endblock %}
@@ -146,22 +259,48 @@
 {% block content %}
 <main class="relative z-10">
     <!-- Hero Banner -->
+    <!-- Hero Banner -->
     <section class="hero-banner relative overflow-hidden">
         <!-- Background image -->
+        {% if hero_section and hero_section.background_image %}
+        <img src="{{ hero_section.background_image.url }}" alt="{{ hero_section.title }}"
+            class="absolute inset-0 w-full h-full object-cover blur-sm">
+        {% else %}
         <img src="{% static 'images/customerbackground.jpg' %}" alt="Fashion rental collection"
             class="absolute inset-0 w-full h-full object-cover blur-sm">
+        {% endif %}
 
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+
 
         <!-- Content -->
         <div class="relative z-10 h-full flex items-center justify-center text-white">
             <div class="text-center px-4">
-                <h1 class="text-4xl md:text-5xl font-bold mb-4 fade-up">Elevate Your Special Occasion</h1>
-                <p class="text-xl mb-8 fade-up delay-1">Wedding Gowns, Wedding Entourage, Gowns and Suit for any occasions</p>
+                <h1 class="text-4xl md:text-5xl font-bold mb-4 fade-up">
+                    {% if hero_section %}{{ hero_section.title }}{% else %}Elevate Your Special Occasion{% endif %}
+                </h1>
+                <p class="text-xl mb-8 fade-up delay-1">
+                    {% if hero_section %}{{ hero_section.subtitle }}{% else %}Wedding Gowns, Wedding Entourage, Gowns
+                    and Suit for any occasions{% endif %}
+                </p>
                 <a href="{% url 'customerapp:collections' %}"
                     class="shine-effect bg-[#9E8729] hover:bg-[#AD974F] text-white py-3 px-6 rounded-md inline-block fade-up delay-2">
                     Browse Collection
                 </a>
+
+                <!-- Edit Button (only for admin) -->
+                {% if request.user.is_staff %}
+                <div class="absolute top-4 right-4 z-50">
+                    <button onclick="openEditModal()"
+                        class="flex items-center gap-2 px-4 py-3 bg-white/90 hover:bg-white text-[#5a3e2b] rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path
+                                d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                        </svg>
+                        Edit Hero
+                    </button>
+                </div>
+                {% endif %}
             </div>
         </div>
     </section>
@@ -169,7 +308,8 @@
     <!-- Featured Categories Section -->
     <section id="featured-categories" class="py-16 px-4">
         <div class="max-w-6xl mx-auto">
-            <h2 class="text-3xl text-center text-[#5a3e2b] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373] fade-up">
+            <h2
+                class="text-3xl text-center text-[#5a3e2b] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373] fade-up">
                 Featured Collections
             </h2>
             <div class="flex overflow-x-auto gap-6 pb-4 -mx-4 px-4 cards-container">
@@ -189,12 +329,14 @@
                     {% endif %}
 
                     <!-- Category Name Overlay -->
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4 pointer-events-none">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4 pointer-events-none">
                         <h3 class="text-white text-xl font-bold">{{ category.name }}</h3>
                     </div>
 
                     <!-- View Collection Button -->
-                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/30 pointer-events-none">
+                    <div
+                        class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/30 pointer-events-none">
                         <span class="bg-[#AD974F] text-white px-4 py-2 rounded-md font-medium">
                             View Collection
                         </span>
@@ -208,7 +350,8 @@
     <!-- Past Events Showcase - Hero-Style Slideshow -->
     <section class="relative py-16 px-4 event-slideshow">
         <div class="absolute inset-0 overflow-hidden">
-            <h2 class="text-3xl text-center text-[#5a3e2b] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373] fade-up">
+            <h2
+                class="text-3xl text-center text-[#5a3e2b] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373] fade-up">
                 Past Event Showcase
             </h2>
 
@@ -270,10 +413,12 @@
     <!-- Wardrobe Packages Section -->
     <section class="py-16 px-4">
         <div class="max-w-6xl mx-auto">
-            <h2 class="text-3xl text-center text-[#5a3e2b] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373] fade-up">
+            <h2
+                class="text-3xl text-center text-[#5a3e2b] pb-3 mb-8 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373] fade-up">
                 Packages
             </h2>
-            <h1 class="text-center mb-12 fade-in">--- ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ---</h1>
+            <h1 class="text-center mb-12 fade-in">--- ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING ONGOING
+                ONGOING ---</h1>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 cards-container">
                 {% for package in wardrobe_packages %}
                 <div class="bg-white rounded-lg shadow-md overflow-hidden p-6 fade-in">
@@ -294,6 +439,73 @@
             </div>
         </div>
     </section>
+
+    <!-- Modal -->
+    <div id="editHeroModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeEditModal()">&times;</span>
+            <h2 class="text-2xl font-bold mb-6 text-[#5a3e2b]">Edit Hero Section</h2>
+
+            <form id="heroEditForm" method="post" enctype="multipart/form-data" class="modal-form">
+                {% csrf_token %}
+
+                <div class="space-y-4">
+                    <div>
+                        <label for="id_title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <input type="text" name="title" id="id_title"
+                            value="{{ hero_section.title|default:'Elevate Your Special Occasion' }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+
+                    <div>
+                        <label for="id_subtitle" class="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
+                        <input type="text" name="subtitle" id="id_subtitle"
+                            value="{{ hero_section.subtitle|default:'Wedding Gowns, Wedding Entourage, Gowns and Suit for any occasions' }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label for="id_background_image" class="block text-sm font-medium text-gray-700 mb-1">Background
+                            Image</label>
+                        <input type="file" name="background_image" id="id_background_image"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+
+                        <!-- Default Image Preview -->
+                        <div id="default-image-preview"
+                            class="mt-2 {% if hero_section and hero_section.background_image %}hidden{% endif %}">
+                            <p class="text-sm text-gray-500">Default image:</p>
+                            <img src="{% static 'images/customerbackground.jpg' %}" alt="Default background"
+                                class="mt-1 h-20 object-cover rounded">
+                        </div>
+
+                        <!-- Current Image Preview -->
+                        {% if hero_section and hero_section.background_image %}
+                        <div class="current-image-preview mt-2">
+                            <p class="text-sm text-gray-500">Current image:</p>
+                            <img src="{{ hero_section.background_image.url }}" alt="Current background"
+                                class="mt-1 h-20 object-cover rounded">
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" onclick="closeEditModal()"
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+
+                    <button type="button" onclick="restoreHeroDefaults()"
+                        class="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors">
+                        Restore Defaults
+                    </button>
+
+                    <button type="submit" class="px-4 py-2 bg-[#9E8729] text-white rounded-lg hover:bg-[#AD974F]">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </main>
 
 <script>
@@ -348,7 +560,7 @@
         function initSlideshow() {
             showSlide(0);
             slideInterval = setInterval(nextSlide, interval);
-            
+
             // Pause on hover
             document.getElementById('eventSlideshow').addEventListener('mouseenter', () => {
                 clearInterval(slideInterval);
@@ -381,5 +593,107 @@
 
         initSlideshow();
     });
+
+    // Modal functions with better conflict prevention
+    function openEditModal() {
+        // Close any other open modals first
+        const otherModals = document.querySelectorAll('.modal:not(#editHeroModal)');
+        otherModals.forEach(modal => modal.style.display = 'none');
+
+        // Open this modal
+        document.getElementById('editHeroModal').style.display = 'block';
+        document.body.classList.add('modal-open');
+    }
+
+    function closeEditModal() {
+        document.getElementById('editHeroModal').style.display = 'none';
+        document.body.classList.remove('modal-open');
+    }
+
+    // Enhanced click handler that works with multiple modals
+    document.addEventListener('click', function (event) {
+        // Handle edit modal
+        const editModal = document.getElementById('editHeroModal');
+        if (event.target === editModal) {
+            closeEditModal();
+        }
+
+        // Add similar handling for other modals if needed
+        // const loginModal = document.getElementById('loginModal');
+        // if (event.target === loginModal) {
+        //     closeLoginModal();
+        // }
+    });
+
+    // Form submission with better error handling
+    document.getElementById('heroEditForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        try {
+            const formData = new FormData(this);
+            const response = await fetch('{% url "customerapp:update_hero" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            });
+
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                const errorData = await response.json();
+                alert(errorData.message || 'Error saving changes');
+            }
+        } catch (error) {
+            console.error('Fetch error:', error);
+            alert('Network error - please try again');
+        }
+    });
+
+    function restoreHeroDefaults() {
+        if (confirm('Are you sure you want to restore all values to default, including the background image?')) {
+            fetch('{% url "customerapp:update_hero" %}', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'restore_defaults=true'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update form fields
+                        document.getElementById('id_title').value = 'Elevate Your Special Occasion';
+                        document.getElementById('id_subtitle').value = 'Wedding Gowns, Wedding Entourage, Gowns and Suit for any occasions';
+
+                        // Clear file input and hide preview
+                        const fileInput = document.getElementById('id_background_image');
+                        fileInput.value = '';
+
+                        const previewContainer = document.querySelector('.current-image-preview');
+                        if (previewContainer) {
+                            previewContainer.style.display = 'none';
+                        }
+
+                        // Show the default image preview
+                        const defaultPreview = document.getElementById('default-image-preview');
+                        if (defaultPreview) {
+                            defaultPreview.style.display = 'block';
+                        }
+
+                        alert('Default values restored. Click "Save Changes" to apply permanently.');
+                    } else {
+                        alert('Error: ' + (data.message || 'Failed to restore defaults'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Network error - please try again');
+                });
+        }
+    }
 </script>
 {% endblock %}
