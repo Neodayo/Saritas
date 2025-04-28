@@ -11,7 +11,7 @@
     <h1>Confirm Deletion</h1>
     <p>Are you sure you want to delete the item <span class="item-name">"{{ item.name }}"</span>?</p>
     
-    <form method="POST" action="{% url 'saritasapp:delete_inventory' item.id %}">
+    <form method="POST" action="{% url 'saritasapp:delete_inventory' item.encrypted_id %}">
         {% csrf_token %}
         <div class="btn-container">
             <a href="{% url 'saritasapp:inventory_list' %}" class="btn btn-cancel">Cancel</a>

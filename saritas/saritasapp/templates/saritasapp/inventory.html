@@ -138,6 +138,15 @@
             grid-template-columns: 1fr;
         }
     }
+    .flex.items-center.gap-2 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    }
+
+    .fas.fa-plus {
+        font-size: 0.875rem;
+    }
 </style>
 {% endblock %}
 
@@ -200,6 +209,11 @@
             <button type="button" onclick="clearFilters()" class="filter-btn shine-effect">
                 Clear Filters
             </button>
+            <a href="{% url 'saritasapp:add_inventory' %}" 
+            class="filter-btn shine-effect flex items-center gap-2">
+            <i class="fas fa-plus"></i>
+            Add Item
+        </a>
         </div>
     </form>
 
