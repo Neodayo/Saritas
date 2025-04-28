@@ -5,7 +5,7 @@
 <div class="container">
     <h2>Add Items to {{ package.name }}</h2>
     
-    <form id="bulk-add-form" method="post" action="{% url 'saritasapp:submit_bulk_package_items' package.pk %}">
+    <form action="{% url 'saritasapp:submit_bulk_package_items' encrypted_id=package.encrypted_id %}" method="POST">
         {% csrf_token %}
         <input type="hidden" name="selected_items" id="selected-items-input">
         
@@ -93,7 +93,7 @@
                         <button type="submit" class="btn btn-primary" id="bulk-add-btn" disabled>
                             <i class="fas fa-save"></i> Add Selected Items
                         </button>
-                        <a href="{% url 'saritasapp:wardrobe_package_detail' pk=package.pk %}" 
+                        <a href="{% url 'saritasapp:wardrobe_package_detail' encrypted_id=package.encrypted_id %}" 
                            class="btn btn-secondary">
                             <i class="fas fa-times"></i> Cancel
                         </a>

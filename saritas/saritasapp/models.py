@@ -611,6 +611,19 @@ class WardrobePackage(models.Model):
         ordering = ['tier', 'base_price']
         verbose_name_plural = "Wardrobe Packages"
 
+    @property
+    def encrypted_id(self):
+        """Returns encrypted ID for URLs"""
+        if not self.pk:
+            logger.error(f"No PK found for package {self}")
+            return None
+        try:
+            from core.utils.encryption import encrypt_id
+            return encrypt_id(self.pk)
+        except Exception as e:
+            logger.error(f"Failed to encrypt package ID {self.pk}: {str(e)}")
+            return None
+
     def clean(self):
         if self.tier and self.tier != 'custom' and self.status == 'customizable':
             raise ValidationError("Predefined packages (A, B, C) must be fixed composition")
@@ -663,6 +676,16 @@ class WardrobePackageItem(models.Model):
     class Meta:
         unique_together = ('package', 'inventory_item')
         ordering = ['package', '-is_required']
+
+    @property
+    def encrypted_id(self):
+        if not self.pk:
+            return None
+        try:
+            return encrypt_id(self.pk)
+        except Exception as e:
+            logger.error(f"Failed to encrypt package item ID {self.pk}: {str(e)}")
+            return None
 
     def clean(self):
         if self.quantity > self.inventory_item.quantity:
@@ -1008,7 +1031,7 @@ class WardrobePackageRental(models.Model):
     ]
 
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    package = models.ForeignKey(WardrobePackage, on_delete=models.PROTECT)
+    package = models.ForeignKey(WardrobePackage, on_delete=models.CASCADE)  
     event_date = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)

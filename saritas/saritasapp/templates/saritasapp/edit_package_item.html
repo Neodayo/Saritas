@@ -1,0 +1,113 @@
+{% extends 'saritasapp/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>
+                        Edit Package Item
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Inventory Item</label>
+                                {{ form.inventory_item }}
+                                {% if form.inventory_item.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.inventory_item.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Quantity</label>
+                                {{ form.quantity }}
+                                {% if form.quantity.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.quantity.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Available</label>
+                                <input type="text" class="form-control" 
+                                       value="{{ form.instance.inventory_item.quantity }}" 
+                                       disabled>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Custom Label</label>
+                            {{ form.label }}
+                            <small class="text-muted">Optional display name for this item in the package</small>
+                            {% if form.label.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.label.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    {{ form.replacement_allowed }}
+                                    <label class="form-check-label" for="{{ form.replacement_allowed.id_for_label }}">
+                                        Replacement Allowed
+                                    </label>
+                                    <small class="text-muted d-block">Can this item be replaced in customizations?</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    {{ form.is_required }}
+                                    <label class="form-check-label" for="{{ form.is_required.id_for_label }}">
+                                        Required Item
+                                    </label>
+                                    <small class="text-muted d-block">Is this item mandatory for the package?</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'saritasapp:wardrobe_package_detail' encrypted_id=encrypt_id(form.instance.package.pk) %}" 
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Back to Package
+                            </a>
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i> Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Enable/disable required checkbox based on replacement allowed
+    const replacementAllowed = document.getElementById('{{ form.replacement_allowed.id_for_label }}');
+    const isRequired = document.getElementById('{{ form.is_required.id_for_label }}');
+    
+    replacementAllowed.addEventListener('change', function() {
+        isRequired.disabled = !this.checked;
+        if(!this.checked) {
+            isRequired.checked = true;
+        }
+    });
+    
+    // Initialize the state
+    isRequired.disabled = !replacementAllowed.checked;
+});
+</script>
+{% endblock %}

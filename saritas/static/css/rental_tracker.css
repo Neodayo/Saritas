@@ -1,0 +1,229 @@
+        /* Main Container */
+        .rental-tracker-container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            font-family: 'Arial', sans-serif;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .page-title {
+            color: #8E793E;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .total-rentals {
+            background-color: #ad974f;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        /* Filter Section */
+        .filter-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+        
+        .filter-form {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .filter-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .filter-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .filter-select:focus {
+            outline: none;
+            border-color: #8E793E;
+            box-shadow: 0 0 0 2px rgba(142, 121, 62, 0.2);
+        }
+        
+        .clear-btn {
+            background-color: transparent;
+            color: #8E793E;
+            border: 1px solid #8E793E;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            align-self: flex-end;
+        }
+        
+        .clear-btn:hover {
+            background-color: rgba(142, 121, 62, 0.1);
+        }
+        
+        /* Table Styles */
+        .rentals-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .rentals-table th {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .rentals-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+        
+        .rentals-table tr:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .rentals-table tr.overdue {
+            background-color: #fff5f5;
+        }
+        
+        /* Status Badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-approved {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-renting {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+        
+        .status-returned {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .status-overdue {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-cancelled {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .status-rejected {
+            background-color: #f1e5e5;
+            color: #721c24;
+        }
+        
+        /* Action Buttons */
+        .action-btns {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .profile-btn {
+            background-color: #e9ecef;
+            color: #495057;
+        }
+        
+        .profile-btn:hover {
+            background-color: #dee2e6;
+        }
+        
+        .details-btn {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .details-btn:hover {
+            background-color: #d6d8db;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 0;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 40px;
+            margin-bottom: 15px;
+            color: #adb5bd;
+        }
+        
+        @media (max-width: 768px) {
+            .filter-form {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .filter-group {
+                min-width: 100%;
+            }
+            
+            .action-btns {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }

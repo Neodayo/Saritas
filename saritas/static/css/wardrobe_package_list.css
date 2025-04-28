@@ -1,0 +1,164 @@
+.package-list-container {
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    border: 1px solid #EAEAEA;
+}
+
+.package-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #EAEAEA;
+}
+
+.package-title {
+    color: #8E793E;
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    margin: 0;
+}
+
+.create-btn {
+    background: linear-gradient(135deg, #8E793E 0%, #AD974F 100%);
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.create-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(142, 121, 62, 0.2);
+}
+
+.package-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+.package-card {
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    border: 1px solid #EAEAEA;
+}
+
+.package-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    background: #faf8f0;
+    padding: 1.5rem;
+    border-bottom: 3px solid #8E793E;
+}
+
+.package-name {
+    color: #8E793E;
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.package-tier {
+    color: #95a5a6;
+    font-size: 0.9rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.package-price {
+    color: #AD974F;
+    font-weight: 700;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.deposit-price {
+    color: #95a5a6;
+    font-size: 0.9rem;
+}
+
+.package-description {
+    color: #5a5a5a;
+    margin: 1rem 0;
+    line-height: 1.5;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.8rem;
+    margin-top: 1.5rem;
+}
+
+.view-btn {
+    flex: 1;
+    background: #EAEAEA;
+    color: #5a5a5a;
+    padding: 0.6rem;
+    border-radius: 6px;
+    text-align: center;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.view-btn:hover {
+    background: #d5d5d5;
+}
+
+.edit-btn {
+    flex: 1;
+    background: rgba(52, 152, 219, 0.1);
+    color: #3498db;
+    padding: 0.6rem;
+    border-radius: 6px;
+    text-align: center;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.edit-btn:hover {
+    background: rgba(52, 152, 219, 0.2);
+}
+
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+    color: #95a5a6;
+}
+
+.empty-state i {
+    font-size: 2.5rem;
+    color: #AD974F;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .package-list-container {
+        padding: 1rem;
+        margin: 1rem;
+    }
+    
+    .package-title {
+        font-size: 1.8rem;
+    }
+    
+    .package-grid {
+        grid-template-columns: 1fr;
+    }
+}

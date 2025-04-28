@@ -82,8 +82,9 @@ urlpatterns = [
     path('wardrobe-packages/create/', views.WardrobePackageCreateView.as_view(), name='wardrobe_package_create'),
     path('wardrobe-packages/<str:encrypted_id>/', views.WardrobePackageDetailView.as_view(), name='wardrobe_package_detail'),
     path('wardrobe-packages/<str:encrypted_id>/update/', views.WardrobePackageUpdateView.as_view(), name='wardrobe_package_update'),
-
-    path('wardrobe-packages/<str:encrypted_id>/add-item/', views.AddPackageItemView.as_view(), name='add_package_item'),
+    path('wardrobe-packages/<str:encrypted_id>/delete/', views.WardrobePackageDeleteView.as_view(),name='delete_package'),
+    path('wardrobe-packages/<str:package_id>/items/<str:item_id>/edit/', views.EditPackageItemView.as_view(), name='edit_package_item'),
+    path('wardrobe-packages/<str:encrypted_id>/add-item/', views.AddPackageItemView.as_view(),name='add_package_item'),
     path('wardrobe-packages/<str:package_id>/items/<str:item_id>/edit/', views.EditPackageItemView.as_view(), name='edit_package_item'),
     path('wardrobe-packages/<str:encrypted_id>/add-item/submit/', views.AddPackageItemSubmitView.as_view(), name='submit_package_item'),
     path('wardrobe-packages/<str:encrypted_id>/add-items/bulk/', views.SubmitBulkPackageItemsView.as_view(), name='submit_bulk_package_items'),

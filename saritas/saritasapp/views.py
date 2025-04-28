@@ -1435,9 +1435,16 @@ class WardrobePackageListView(StaffRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        valid_packages = []
+        
         for package in context['packages']:
-            package.encrypted_id = encrypt_id(package.id)
-        return context 
+            if package.encrypted_id:  # Only include packages with valid encryption
+                valid_packages.append(package)
+            else:
+                logger.error(f"Skipping package {package.id} - encryption failed")
+        
+        context['packages'] = valid_packages
+        return context
 
 class WardrobePackageCreateView(StaffRequiredMixin, CreateView):
     model = WardrobePackage
@@ -1579,51 +1586,62 @@ class AddPackageItemView(StaffRequiredMixin, TemplateView):
 
 class SubmitBulkPackageItemsView(StaffRequiredMixin, View):
     def post(self, request, *args, **kwargs):
-        encrypted_id = kwargs['encrypted_id']
-        package = get_decrypted_object_or_404(WardrobePackage, encrypted_id)
-        selected_items = request.POST.get('selected_items', '').split(',')
-        
-        if not selected_items or selected_items[0] == '':
-            messages.error(request, "No items selected")
-            return redirect('saritasapp:add_package_item', encrypted_id=encrypt_id(package.pk))
-        
         try:
+            # Get the encrypted package ID from URL kwargs
+            encrypted_package_id = kwargs.get('encrypted_id')  # Changed from package_id to encrypted_id
+            
+            if not encrypted_package_id:
+                raise Http404("Package ID not found in URL")
+            
+            # Decrypt the package ID
+            try:
+                package_id = decrypt_id(encrypted_package_id)
+                package = WardrobePackage.objects.get(pk=package_id)
+            except Exception as e:
+                logger.error(f"Failed to decrypt package ID {encrypted_package_id}: {str(e)}")
+                raise Http404("Invalid package ID")
+            
+            # Process the bulk items from the form
+            selected_items = request.POST.getlist('selected_items')
+            
+            if not selected_items:
+                messages.error(request, "No items selected")
+                return redirect('saritasapp:add_package_item', encrypted_id=encrypted_package_id)
+
             with transaction.atomic():
                 selected_types = set()
                 for item_id in selected_items:
-                    item = Inventory.objects.get(id=item_id)
-                    if item.item_type in selected_types:
-                        messages.error(request, f"Can only select one {item.item_type.get_name_display()} per package")
-                        return redirect('saritasapp:add_package_item', encrypted_id=encrypt_id(package.pk))
-                    selected_types.add(item.item_type)
-                
-                for item_id in selected_items:
-                    quantity = int(request.POST.get(f'quantity_{item_id}', 1))
-                    label = request.POST.get(f'label_{item_id}', '')
-                    
-                    item = Inventory.objects.get(
-                        id=item_id,
-                        available=True,
-                        quantity__gte=quantity
-                    )
-                    
-                    WardrobePackageItem.objects.create(
-                        package=package,
-                        inventory_item=item,
-                        quantity=quantity,
-                        label=label,
-                        is_required=True
-                    )
+                    try:
+                        item = Inventory.objects.get(id=item_id)
+                        if item.item_type in selected_types:
+                            messages.error(request, f"Can only select one {item.item_type.get_name_display()} per package")
+                            return redirect('saritasapp:add_package_item', encrypted_id=encrypted_package_id)
+                        selected_types.add(item.item_type)
+                        
+                        quantity = int(request.POST.get(f'quantity_{item_id}', 1))
+                        label = request.POST.get(f'label_{item_id}', '')
+                        
+                        WardrobePackageItem.objects.create(
+                            package=package,
+                            inventory_item=item,
+                            quantity=quantity,
+                            label=label,
+                            is_required=True
+                        )
+                    except Inventory.DoesNotExist:
+                        messages.error(request, f"Item {item_id} no longer available")
+                        return redirect('saritasapp:add_package_item', encrypted_id=encrypted_package_id)
                 
                 messages.success(request, f"Added {len(selected_items)} items to package")
-                return redirect('saritasapp:wardrobe_package_detail', encrypted_id=encrypt_id(package.pk))
+                return redirect('saritasapp:wardrobe_package_detail', encrypted_id=encrypted_package_id)
                 
-        except Inventory.DoesNotExist:
-            messages.error(request, "One or more items are no longer available")
+        except WardrobePackage.DoesNotExist:
+            messages.error(request, "The package is no longer available")
         except Exception as e:
-            messages.error(request, f"Error adding items: {str(e)}")
+            logger.error(f"Error adding items: {str(e)}")
+            messages.error(request, "Error processing your request")
         
-        return redirect('saritasapp:add_package_item', encrypted_id=encrypt_id(package.pk))
+        return redirect('saritasapp:wardrobe_package_list')
 
 class AddPackageItemSubmitView(StaffRequiredMixin, View):
     def post(self, request, *args, **kwargs):
@@ -1653,18 +1671,27 @@ class AddPackageItemSubmitView(StaffRequiredMixin, View):
         
         return redirect('saritasapp:add_package_item', encrypted_id=encrypt_id(package.pk))
 
-class EditPackageItemView(StaffRequiredMixin, UpdateView):
+class EditPackageItemView(StaffRequiredMixin, UserPassesTestMixin, UpdateView):
     model = WardrobePackageItem
     form_class = WardrobePackageItemForm
     template_name = 'saritasapp/edit_package_item.html'
-    
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
     def get_object(self, queryset=None):
-        encrypted_id = self.kwargs.get('encrypted_id')
-        return get_decrypted_object_or_404(WardrobePackageItem, encrypted_id)
-    
+        package_id = decrypt_id(self.kwargs.get('package_id'))
+        item_id = decrypt_id(self.kwargs.get('item_id'))
+        
+        return get_object_or_404(
+            WardrobePackageItem,
+            pk=item_id,
+            package_id=package_id
+        )
+
     def get_success_url(self):
         return reverse('saritasapp:wardrobe_package_detail', 
-                      kwargs={'encrypted_id': encrypt_id(self.object.package.pk)})
+                     kwargs={'encrypted_id': self.kwargs.get('package_id')})
 
 class FilterInventoryItemsView(StaffRequiredMixin, View):
     def get(self, request, *args, **kwargs):
@@ -1692,6 +1719,40 @@ class FilterInventoryItemsView(StaffRequiredMixin, View):
                 'text': f"{item.name} ({item.size}) - ₱{item.rental_price}"
             } for item in items]
         })
+
+class WardrobePackageDeleteView(StaffRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = WardrobePackage
+    template_name = 'saritasapp/confirm_delete_package.html'
+    pk_url_kwarg = 'encrypted_id'
+    success_url = reverse_lazy('saritasapp:wardrobe_package_list')
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get_object(self, queryset=None):
+        encrypted_id = self.kwargs.get('encrypted_id')
+        return get_decrypted_object_or_404(WardrobePackage, encrypted_id)
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                self.object = self.get_object()
+                
+                # First delete all related package items
+                self.object.package_items.all().delete()
+                
+                # Then delete any related rentals
+                WardrobePackageRental.objects.filter(package=self.object).delete()
+                
+                # Finally delete the package
+                response = super().delete(request, *args, **kwargs)
+                
+                messages.success(request, f"Package '{self.object.name}' deleted successfully!")
+                return response
+                
+        except Exception as e:
+            messages.error(request, f"Error deleting package: {str(e)}")
+            return redirect('saritasapp:wardrobe_package_detail', encrypted_id=self.kwargs['encrypted_id'])
 
 # Rental Approval Views
 @login_required
