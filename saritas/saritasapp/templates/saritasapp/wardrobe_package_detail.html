@@ -63,17 +63,15 @@
                     {{ object.get_status_display }}
                 </span>
             </div>
-        </div>
+        </div>  
     </div>
 
     <!-- Items Section -->
     <div class="section-header">
         <h2 class="section-title">Featured Items <small class="text-muted">({{ object.package_items.count }})</small></h2>
-        {% if request.user.is_superuser %}
         <a href="{% url 'saritasapp:add_package_item' object.encrypted_id %}" class="add-item-btn">
             <i class="fas fa-plus mr-2"></i> Add Items
         </a>
-        {% endif %}
     </div>
     
     <div class="cards-container">

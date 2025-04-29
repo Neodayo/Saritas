@@ -45,9 +45,9 @@ urlpatterns = [
     # Made-to-order & Receipts
     path("made_to_order/", made_to_order_view, name="made_to_order"),
     path('receipt/', views.receipt_view, name='receipt'),
-    path('receipt/<str:encrypted_id>/', views.receipt_detail, name='receipt-detail'),
-    path('receipt/<str:encrypted_id>/update/', views.update_receipt, name='receipt-update'),
-    path('receipt/<str:encrypted_id>/pdf/', views.generate_receipt_pdf, name='receipt-pdf'),
+    path('receipt/<str:id>/', views.receipt_detail, name='receipt-detail'),
+    path('receipt/<str:id>/update/', views.update_receipt, name='receipt-update'),
+    path('receipt/<str:id>/pdf/', views.generate_receipt_pdf, name='receipt-pdf'),
 
     # Login and Signup
     path("signup/", views.staff_sign_up, name="signup"),

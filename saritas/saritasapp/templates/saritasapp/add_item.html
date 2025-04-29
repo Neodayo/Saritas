@@ -29,7 +29,7 @@
                     <!-- Left Column -->
                     <div class="col-md-6">
                         <div class="form-group">
-                            {{ form.name.label_tag }}
+                            <label for="{{ form.name.id_for_label }}" class="font-weight-bold">{{ form.name.label }}</label>
                             {{ form.name }}
                             {% if form.name.errors %}
                                 <div class="invalid-feedback d-block">
@@ -40,28 +40,49 @@
                         
                         <div class="form-row">
                             <div class="form-group col-md-6">
-                                {{ form.category.label_tag }}
-                                {{ form.category }}
+                                <label for="{{ form.category.id_for_label }}" class="font-weight-bold">{{ form.category.label }}</label>
+                                <div class="input-group">
+                                    {{ form.category }}
+                                    <div class="input-group-append">
+                                        <a href="{% url 'saritasapp:add_category' %}" >
+                                          add category
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
                             <div class="form-group col-md-6">
-                                {{ form.item_type.label_tag }}
+                                <label for="{{ form.item_type.id_for_label }}" class="font-weight-bold">{{ form.item_type.label }}</label>
                                 {{ form.item_type }}
                             </div>
                         </div>
                         
                         <div class="form-row">
                             <div class="form-group col-md-6">
-                                {{ form.color.label_tag }}
-                                {{ form.color }}
+                                <label for="{{ form.color.id_for_label }}" class="font-weight-bold">{{ form.color.label }}</label>
+                                <div class="input-group">
+                                    {{ form.color }}
+                                    <div class="input-group-append">
+                                        <a href="{% url 'saritasapp:add_color' %}">
+                                            add color
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
                             <div class="form-group col-md-6">
-                                {{ form.size.label_tag }}
-                                {{ form.size }}
+                                <label for="{{ form.size.id_for_label }}" class="font-weight-bold">{{ form.size.label }}</label>
+                                <div class="input-group">
+                                    {{ form.size }}
+                                    <div class="input-group-append">
+                                        <a href="{% url 'saritasapp:add_size' %}">
+                                            add size
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
                         <div class="form-group">
-                            {{ form.quantity.label_tag }}
+                            <label for="{{ form.quantity.id_for_label }}" class="font-weight-bold">{{ form.quantity.label }}</label>
                             {{ form.quantity }}
                             <small class="form-text text-muted">Current stock level</small>
                         </div>
@@ -71,19 +92,19 @@
                     <div class="col-md-6">
                         <div class="form-row">
                             <div class="form-group col-md-6">
-                                {{ form.rental_price.label_tag }}
+                                <label for="{{ form.rental_price.id_for_label }}" class="font-weight-bold">{{ form.rental_price.label }}</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
-                                        <span class="input-group-text">Php</span>
+                                        <span class="input-group-text">₱</span>
                                     </div>
                                     {{ form.rental_price }}
                                 </div>
                             </div>
                             <div class="form-group col-md-6">
-                                {{ form.reservation_price.label_tag }}
+                                <label for="{{ form.reservation_price.id_for_label }}" class="font-weight-bold">{{ form.reservation_price.label }}</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
-                                        <span class="input-group-text">Php</span>
+                                        <span class="input-group-text">₱</span>
                                     </div>
                                     {{ form.reservation_price }}
                                 </div>
@@ -92,19 +113,19 @@
                         
                         <div class="form-row">
                             <div class="form-group col-md-6">
-                                {{ form.deposit_price.label_tag }}
+                                <label for="{{ form.deposit_price.id_for_label }}" class="font-weight-bold">{{ form.deposit_price.label }}</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
-                                        <span class="input-group-text">Php</span>
+                                        <span class="input-group-text">₱</span>
                                     </div>
                                     {{ form.deposit_price }}
                                 </div>
                             </div>
                             <div class="form-group col-md-6">
-                                {{ form.purchase_price.label_tag }}
+                                <label for="{{ form.purchase_price.id_for_label }}" class="font-weight-bold">{{ form.purchase_price.label }}</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
-                                        <span class="input-group-text">Php</span>
+                                        <span class="input-group-text">₱</span>
                                     </div>
                                     {{ form.purchase_price }}
                                 </div>
@@ -112,8 +133,11 @@
                         </div>
                         
                         <div class="form-group">
-                            {{ form.image.label_tag }}
-                            {{ form.image }}
+                            <label for="{{ form.image.id_for_label }}" class="font-weight-bold">{{ form.image.label }}</label>
+                            <div class="custom-file">
+                                {{ form.image }}
+                                <label class="custom-file-label" for="{{ form.image.id_for_label }}">Choose file</label>
+                            </div>
                             {% if form.image.errors %}
                                 <div class="invalid-feedback d-block">
                                     {{ form.image.errors }}
@@ -123,7 +147,7 @@
                     </div>
                 </div>
                 
-                <div class="form-group mt-4">
+                <div class="form-group mt-4 text-right">
                     <button type="submit" class="btn btn-primary mr-2">
                         <i class="fas fa-save"></i> Save Item
                     </button>

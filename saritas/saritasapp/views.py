@@ -920,7 +920,12 @@ def logout_view(request):
 
 @staff_member_required
 def receipt_view(request):
-    return render(request, 'saritasapp/receipt.html')
+        try:
+            receipt = Receipt.objects.latest('id')
+            return redirect('saritasapp:receipt-update', encrypted_id=receipt.encrypted_id)
+        except Receipt.DoesNotExist:
+        # Handle case where no receipts exist
+            return render(request, 'saritasapp/receipt.html', {'error': 'No receipts found'})
 
 @staff_member_required
 def receipt_detail(request, encrypted_id):
@@ -1508,10 +1513,13 @@ class WardrobePackageDetailView(StaffRequiredMixin, DetailView):
     def validate_package_completeness(self, package):
         """Check if package has all required item types based on its tier"""
         tier_requirements = {
-            'A': ['bridal_gown', 'groom_tuxedo'],
-            'B': ['bridal_gown', 'groom_tuxedo', 'maid_honor', 'bestman'],
-            'C': ['bridal_gown', 'groom_tuxedo', 'maid_honor', 'bestman',
-                 'mother_gown', 'father_attire'],
+            'A': ['bridal_gown', 'groom_tuxedo', 'maid_of_honor', 'bestman',
+                'bridesmaid', 'groomsmen', 'flowergirl', 'bearer'],
+            'B': ['bridal_gown', 'groom_tuxedo', 'maid_of_honor', 'bestman',
+                'bridesmaid', 'groomsmen', 'flowergirl', 'bearer'],
+            'C': ['bridal_gown', 'groom_tuxedo', 'maid_of_honor', 'bestman',
+                'bridesmaid', 'groomsmen', 'flowergirl', 'bearer',
+                'mother_gown', 'father_attire'],
             'custom': []
         }
 
@@ -1587,13 +1595,10 @@ class AddPackageItemView(StaffRequiredMixin, TemplateView):
 class SubmitBulkPackageItemsView(StaffRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         try:
-            # Get the encrypted package ID from URL kwargs
-            encrypted_package_id = kwargs.get('encrypted_id')  # Changed from package_id to encrypted_id
-            
+            encrypted_package_id = kwargs.get('encrypted_id')
             if not encrypted_package_id:
                 raise Http404("Package ID not found in URL")
             
-            # Decrypt the package ID
             try:
                 package_id = decrypt_id(encrypted_package_id)
                 package = WardrobePackage.objects.get(pk=package_id)
@@ -1601,8 +1606,23 @@ class SubmitBulkPackageItemsView(StaffRequiredMixin, View):
                 logger.error(f"Failed to decrypt package ID {encrypted_package_id}: {str(e)}")
                 raise Http404("Invalid package ID")
             
-            # Process the bulk items from the form
-            selected_items = request.POST.getlist('selected_items')
+            # Get all items from POST data
+            post_data = request.POST
+            selected_items = []
+            
+            # Collect all item data from the form
+            for key in post_data:
+                if key.startswith('item_') and key.endswith('_quantity'):
+                    item_id = key.split('_')[1]
+                    quantity = post_data.get(key)
+                    label = post_data.get(f'item_{item_id}_label', '')
+                    
+                    if item_id and quantity:
+                        selected_items.append({
+                            'id': item_id,
+                            'quantity': quantity,
+                            'label': label
+                        })
             
             if not selected_items:
                 messages.error(request, "No items selected")
@@ -1610,38 +1630,45 @@ class SubmitBulkPackageItemsView(StaffRequiredMixin, View):
 
             with transaction.atomic():
                 selected_types = set()
-                for item_id in selected_items:
+                for item_data in selected_items:
                     try:
-                        item = Inventory.objects.get(id=item_id)
+                        item = Inventory.objects.get(id=item_data['id'])
+                        
+                        # Check for duplicate types
                         if item.item_type in selected_types:
-                            messages.error(request, f"Can only select one {item.item_type.get_name_display()} per package")
-                            return redirect('saritasapp:add_package_item', encrypted_id=encrypted_package_id)
+                            messages.error(request, 
+                                f"Can only select one {item.item_type.get_name_display()} per package")
+                            return redirect('saritasapp:add_package_item', 
+                                         encrypted_id=encrypted_package_id)
+                        
                         selected_types.add(item.item_type)
                         
-                        quantity = int(request.POST.get(f'quantity_{item_id}', 1))
-                        label = request.POST.get(f'label_{item_id}', '')
-                        
+                        # Create package item
                         WardrobePackageItem.objects.create(
                             package=package,
                             inventory_item=item,
-                            quantity=quantity,
-                            label=label,
+                            quantity=int(item_data['quantity']),
+                            label=item_data['label'],
                             is_required=True
                         )
+                        
                     except Inventory.DoesNotExist:
-                        messages.error(request, f"Item {item_id} no longer available")
-                        return redirect('saritasapp:add_package_item', encrypted_id=encrypted_package_id)
+                        messages.error(request, f"Item {item_data['id']} no longer available")
+                        return redirect('saritasapp:add_package_item', 
+                                     encrypted_id=encrypted_package_id)
+                    except ValueError as e:
+                        messages.error(request, f"Invalid quantity for item {item.id}")
+                        return redirect('saritasapp:add_package_item', 
+                                     encrypted_id=encrypted_package_id)
                 
                 messages.success(request, f"Added {len(selected_items)} items to package")
-                return redirect('saritasapp:wardrobe_package_detail', encrypted_id=encrypted_package_id)
+                return redirect('saritasapp:wardrobe_package_detail', 
+                             encrypted_id=encrypted_package_id)
                 
-        except WardrobePackage.DoesNotExist:
-            messages.error(request, "The package is no longer available")
         except Exception as e:
-            logger.error(f"Error adding items: {str(e)}")
+            logger.error(f"Error in SubmitBulkPackageItemsView: {str(e)}", exc_info=True)
             messages.error(request, "Error processing your request")
-        
-        return redirect('saritasapp:wardrobe_package_list')
+            return redirect('saritasapp:wardrobe_package_list')
 
 class AddPackageItemSubmitView(StaffRequiredMixin, View):
     def post(self, request, *args, **kwargs):

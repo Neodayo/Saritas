@@ -78,7 +78,6 @@
             </a>
             
             <!-- Staff-only Approvals Dropdown (Mobile) -->
-            {% if user.is_staff %}
             <div class="dropdown relative">
                 <button class="w-full px-4 py-2 text-left text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors flex justify-between items-center">
                     <i class="fas fa-clipboard-check w-6 text-center mr-2"></i>
@@ -94,20 +93,15 @@
                     </a>
                 </div>
             </div>
-            {% else %}
             <a href="{% url 'saritasapp:rental_approvals' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
                 <i class="fas fa-clipboard-check w-6 text-center mr-2"></i>
                 <span>Rental Approvals</span>
             </a>
-            {% endif %}
             
             <a href="{% url 'saritasapp:view_reservations' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
                 <i class="fas fa-calendar-check w-6 text-center mr-2"></i>
                 <span>View Reservations</span>
             </a>
-            <a href="" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
-                <i class="fas fa-receipt w-6 text-center mr-2"></i>
-                <span>Receipt</span>
             </a>
             <a href="{% url 'saritasapp:data_analysis' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
                 <i class="fas fa-chart-bar w-6 text-center mr-2"></i>
@@ -189,7 +183,6 @@
             </a>
             
             <!-- Staff-only Approvals Dropdown (Desktop) -->
-            {% if user.is_staff %}
             <div class="dropdown relative">
                 <button class="w-full px-4 py-2 text-left text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors flex justify-between items-center">
                     <i class="fas fa-clipboard-check w-6 text-center mr-2"></i>
@@ -205,20 +198,15 @@
                     </a>
                 </div>
             </div>
-            {% else %}
             <a href="{% url 'saritasapp:rental_approvals' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
                 <i class="fas fa-clipboard-check w-6 text-center mr-2"></i>
                 <span>Rental Approvals</span>
             </a>
-            {% endif %}
             
             <a href="{% url 'saritasapp:view_reservations' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
                 <i class="fas fa-calendar-check w-6 text-center mr-2"></i>
                 <span>View Reservations</span>
             </a>
-            <a href="" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
-                <i class="fas fa-receipt w-6 text-center mr-2"></i>
-                <span>Receipt</span>
             </a>
             <a href="{% url 'saritasapp:data_analysis' %}" class="flex items-center px-4 py-2 text-gray-800 hover:bg-[#AD974F] rounded-lg transition-colors">
                 <i class="fas fa-chart-bar w-6 text-center mr-2"></i>

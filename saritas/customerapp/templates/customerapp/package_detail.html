@@ -24,6 +24,51 @@
                             <span class="badge bg-primary">{{ package.get_tier_display }}</span>
                         </div>
                     </div>
+                    <div class="package-includes">
+                        <h4>This Package Includes:</h4>
+                        <ul class="list-group">
+                            {% for type_name, items in items_by_type.items %}
+                            <li class="list-group-item">
+                                <strong>{{ type_name|title }}</strong>:
+                                {% for item in items %}
+                                    {{ item.inventory_item.name }} ({{ item.quantity }})
+                                    {% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </li>
+                            {% endfor %}
+                            {% if package.includes_accessories %}
+                            <li class="list-group-item list-group-item-success">
+                                <strong>Accessories</strong>: Free use of wedding accessories
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    
+                    <div class="pricing-section mt-4">
+                        <h4>Pricing</h4>
+                        <div class="card">
+                            <div class="card-body">
+                                <table class="table">
+                                    <tr>
+                                        <td>Package Price:</td>
+                                        <td class="text-right">₱{{ package.base_price|floatformat:2 }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Refundable Deposit:</td>
+                                        <td class="text-right">₱{{ package.deposit_price|floatformat:2 }}</td>
+                                    </tr>
+                                    <tr class="table-active">
+                                        <td><strong>Total:</strong></td>
+                                        <td class="text-right"><strong>₱{{ total_price|floatformat:2 }}</strong></td>
+                                    </tr>
+                                </table>
+                                <a href="{% url 'customerapp:rent_package' package.id %}" 
+                                   class="btn btn-primary btn-block">
+                                    Rent This Package
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                     
                     <div class="d-grid gap-2">
                         <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#rentModal">

@@ -467,13 +467,30 @@ class CreateRentalView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         try:
             with transaction.atomic():
+                # Check inventory availability first
+                for item in self.package.package_items.all():
+                    if item.inventory_item.quantity < item.quantity:
+                        raise ValidationError(
+                            f"Not enough stock for {item.inventory_item.name}. "
+                            f"Available: {item.inventory_item.quantity}, Needed: {item.quantity}"
+                        )
+
                 rental = form.save(commit=False)
                 rental.customer = self.request.user.customer_profile
                 rental.package = self.package
                 rental.status = 'pending'
+                
+                # Calculate dates
+                rental.pickup_date = rental.event_date - timedelta(days=1)
+                rental.return_date = rental.event_date + timedelta(days=1)
                 rental.save()
                 
-                # Send notification (if you have this functionality)
+                # Decrement inventory
+                for item in self.package.package_items.all():
+                    item.inventory_item.quantity -= item.quantity
+                    item.inventory_item.save()
+                
+                # Send notification
                 notify_staff_about_rental_request.delay(rental.id)
                 
                 messages.success(

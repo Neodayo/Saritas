@@ -4,12 +4,13 @@
 
 {% block content %}
 <div class="receipt-container">
-    <form method="POST" action="{% url 'saritasapp:receipt-update' receipt.id %}">
+    {% if receipt %}
+    <form method="POST" action="{% url 'saritasapp:receipt-update' receipt.encrypted_id %}">
         {% csrf_token %}
         <div class="payment-details">
             <span class="success">✔ Receipt Success!</span>
             <h2>₱ <input type="text" id="input-amount" name="amount" value="{{ receipt.amount }}"></h2>
-            <button class="buttons" type="button" onclick="window.location.href='{% url 'saritasapp:receipt-pdf' receipt.id %}'">
+            <button class="buttons" type="button" onclick="window.location.href='{% url 'saritasapp:receipt-pdf' receipt.encrypted_id %}'">
                 Download PDF Receipt
             </button>
 

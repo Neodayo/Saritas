@@ -42,6 +42,12 @@ User = get_user_model()
 class FeaturedCollectionsSection(models.Model):
     DEFAULT_CATEGORIES = ['Wedding Gown', 'Dress', 'Suit', 'Tuxedo']
     
+    title = models.CharField(
+        max_length=200,
+        default="Featured Collections",
+        help_text="Title for this featured collection section"
+    )
+    
     categories = models.ManyToManyField(
         'saritasapp.Category',
         blank=True
@@ -60,7 +66,7 @@ class FeaturedCollectionsSection(models.Model):
         verbose_name_plural = "Featured Collections Sections"
     
     def __str__(self):
-        return "Featured Collections"
+        return self.title
     
     def restore_defaults(self):
         default_cats = Category.objects.filter(name__in=self.DEFAULT_CATEGORIES)
