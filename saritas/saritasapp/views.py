@@ -627,14 +627,14 @@ def delete_staff(request, staff_id):
         staff.delete()
         messages.success(request, 'Staff member deleted successfully.')
         return redirect('saritasapp:manage_staff')
-    return render(request, 'saritasapp/confirm_delete_staff.html', {'staff': staff})
+    return render(request, 'saritasapp/confirm_staff_delete.html', {'staff': staff})
 #data_analysis
 
 
 @staff_member_required
 def data_analysis(request):
     # Total rentals and customers
-    total_rentals = Rental.objects.count()
+    Total_Rentals = Rental.objects.count()
     total_customers = Customer.objects.count()
 
     # Most rented items
@@ -1948,3 +1948,128 @@ def rental_events_api(request):
             "inventory_id": rental.inventory.encrypted_id  # ← this must match extendedProps.inventory_id
         })
     return JsonResponse(data, safe=False)
+
+from django.db.models import Count, Sum
+from django.utils import timezone
+from datetime import timedelta
+import json
+
+@staff_member_required
+def data_analysis(request):
+    # Calculate totals
+    total_rentals = Rental.objects.count()
+    total_customers = int(Customer.objects.count())
+    active_reservations = int(Reservation.objects.exclude(status__in=['completed', 'cancelled', 'rejected']).count())  # Fixed the parenthesis
+    
+    # Calculate total income
+    rental_income = float(Rental.objects.filter(status='Returned').aggregate(
+        total=Sum('inventory__rental_price')
+    )['total'] or 0)
+    
+    reservation_income = float(Reservation.objects.filter(status='completed').aggregate(
+        total=Sum('total_price')
+    )['total'] or 0)
+    
+    total_income = rental_income + reservation_income
+    
+    # Prepare chart data
+    now = timezone.now()
+    
+    # Weekly data (last 8 weeks)
+    weekly_labels = []
+    weekly_rentals = []
+    
+    for i in range(8, -1, -1):
+        week_start = now - timedelta(weeks=i)
+        week_end = week_start + timedelta(weeks=1)
+        week_label = week_start.strftime('%b %d')
+        
+        rentals = int(Rental.objects.filter(
+            rental_start__gte=week_start,
+            rental_start__lt=week_end,
+            status='Returned'
+        ).count())
+        
+        weekly_labels.append(week_label)
+        weekly_rentals.append(max(0, rentals))
+    
+    # Monthly data (last 12 months)
+    monthly_labels = []
+    monthly_rentals = []
+    
+    for i in range(12, -1, -1):
+        month_start = now - timedelta(days=30*i)
+        month_end = month_start + timedelta(days=30)
+        month_label = month_start.strftime('%b %Y')
+        
+        rentals = int(Rental.objects.filter(
+            rental_start__gte=month_start,
+            rental_start__lt=month_end,
+            status='Returned'
+        ).count())
+        
+        monthly_labels.append(month_label)
+        monthly_rentals.append(max(0, rentals))
+    
+    # Yearly data (all years)
+    yearly_labels = []
+    yearly_rentals = []
+    
+    years = Rental.objects.dates('rental_start', 'year')
+    
+    for year in years:
+        year_start = year
+        year_end = year_start.replace(year=year_start.year + 1)
+        year_label = year_start.strftime('%Y')
+        
+        rentals = int(Rental.objects.filter(
+            rental_start__gte=year_start,
+            rental_start__lt=year_end,
+            status='Returned'
+        ).count())
+        
+        yearly_labels.append(year_label)
+        yearly_rentals.append(max(0, rentals))
+    
+    chart_data = {
+        'weekly': {
+            'labels': weekly_labels,
+            'rentals': weekly_rentals,
+            'stats': {
+                'total_rentals': sum(weekly_rentals),
+                'total_customers': total_customers,
+                'active_reservations': active_reservations,
+                'total_income': sum([r * 1000 for r in weekly_rentals])
+            }
+        },
+        'monthly': {
+            'labels': monthly_labels,
+            'rentals': monthly_rentals,
+            'stats': {
+                'total_rentals': sum(monthly_rentals),
+                'total_customers': total_customers,
+                'active_reservations': active_reservations,
+                'total_income': sum([r * 1000 for r in monthly_rentals])
+            }
+        },
+        'yearly': {
+            'labels': yearly_labels,
+            'rentals': yearly_rentals,
+            'stats': {
+                'total_rentals': sum(yearly_rentals),
+                'total_customers': total_customers,
+                'active_reservations': active_reservations,
+                'total_income': sum([r * 1000 for r in yearly_rentals])
+            }
+        }
+    }
+    
+    context = {
+        'total_rentals': total_rentals,
+        'total_customers': total_customers,
+        'active_reservations': active_reservations,
+        'total_income': total_income,
+        'chart_data_json': json.dumps(chart_data)
+    }
+    
+    return render(request, 'saritasapp/data_analysis.html', context)

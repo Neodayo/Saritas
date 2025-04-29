@@ -1,193 +1,538 @@
 {% extends "saritasapp/base.html" %}
 {% load static %}
 
-{% block title %}Data Analysis{% endblock %}
+{% block title %}Data Analysis Dashboard{% endblock %}
 
 {% block content %}
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        background-color: #f2f2f2;
-    }
-
-    .container {
-        max-width: 1200px;
-        margin: auto;
-        padding: 30px;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-    }
-
-    h1 {
-        color: #AD974F;
-        text-align: center;
-        font-family: Arial, san-serif;
-        font-size: 3em;
-        margin-bottom: 30px;
-    }
-
-    h2 {
-        color: #231F20;
-        margin-top: 40px;
-        border-bottom: 2px solid #AD974F;
-        padding-bottom: 5px;
-        font-weight: 600;
-    }
-
-    .stats {
-        display: flex;
-        justify-content: space-between;
-        background: linear-gradient(to right, #FDF6E3, #FFF9E6);
-        padding: 20px 30px;
-        border-radius: 10px;
-        border: 1px solid #EADCA6;
-        margin-bottom: 30px;
-        box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
-        font-size: 1.2em;
-    }
-
-    .stats p {
-        margin: 0;
-        font-weight: bold;
-        color: #231F20;
-    }
-
-    ul {
-        background: #FAF8F0;
-        padding: 20px;
-        border-radius: 10px;
-        border: 1px solid #E0D6B3;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-        list-style-type: disc;
-        margin-top: 10px;
-    }
-
-    ul li {
-        margin-bottom: 8px;
-        color: #333;
-    }
-
-    label {
-        font-weight: bold;
-        color: #AD974F;
-    }
-
-    select {
-        padding: 10px 15px;
-        border-radius: 8px;
-        border: 1px solid #AD974F;
-        background-color: #fffdf5;
-        color: #231F20;
-        font-weight: 500;
-        margin-bottom: 20px;
-        transition: 0.3s ease;
-    }
-
-    select:focus {
-        outline: none;
-        box-shadow: 0 0 5px rgba(173, 151, 79, 0.6);
-    }
-
-    .gold-button {
-        background-color: #8E793E;
-        color: #fff;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 5px;
-        cursor: pointer;
-        font-weight: bold;
-        transition: background 0.3s ease;
-    }
-
-    .gold-button:hover {
-        background-color: #AD974F;
-    }
-
-    .charts-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Center horizontally */
-    gap: 30px;
-    margin-top: 20px;
-}
-
-.chart-box {
-    width: 80%; /* Make chart boxes bigger and centered */
-    background: #fffef8;
-    padding: 30px;
-    border-radius: 16px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-    border: 1px solid #f0e6c5;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.chart-box:hover {
-    transform: scale(1.02);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
-}
-
-@media (max-width: 768px) {
-    .chart-box {
-        width: 100%;
-        padding: 20px;
-    }
-
-    .stats {
-        flex-direction: column;
-        gap: 10px;
-    }
-}
-
-</style>
-
-<div class="container">
-    <h1 style="color: #d4af37; text-align: center;">Data Analysis</h1>
-
-    <div class="stats">
-        <p><strong>Total Rentals:</strong> {{ total_rentals }}</p>
-        <p><strong>Total Customers:</strong> {{ total_customers }}</p>
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <div class="header-content">
+            <h1><i class="fas fa-chart-line"></i> Rental Analytics Dashboard</h1>
+            <p>Track and analyze your rental business performance</p>
+        </div>
+        <div class="header-actions">
+            <div class="filter-group">
+                <label for="time-period"><i class="fas fa-calendar-alt"></i> Time Period:</label>
+                <select id="time-period" class="form-control">
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly" selected>Monthly</option>
+                    <option value="yearly">Yearly</option>
+                </select>
+            </div>
+        </div>
     </div>
-
-    <h2>Most Rented Items</h2>
-    <ul>
-        {% for item in most_rented_items %}
-            <li>{{ item.name }} - Rented {{ item.rental_count }} times</li>
-        {% endfor %}
-    </ul>
-
-    <h2>Rental & Income Statistics</h2>
-    <label for="time-period">Select Period:</label>
-    <select id="time-period">
-        <option value="weekly" selected>Weekly (Last 5 Weeks)</option>
-        <option value="monthly">Monthly (12 Months)</option>
-        <option value="yearly">Yearly (All Years)</option>
-    </select>
-
-    <div class="charts-container">
-        <div class="chart-box" id="weekly-income-chart">{{ weekly_income_chart|safe }}</div>
-        <div class="chart-box" id="weekly-rental-chart">{{ weekly_rental_chart|safe }}</div>
-        <div class="chart-box" id="monthly-income-chart" style="display:none;">{{ monthly_income_chart|safe }}</div>
-        <div class="chart-box" id="monthly-rental-chart" style="display:none;">{{ monthly_rental_chart|safe }}</div>
-        <div class="chart-box" id="yearly-income-chart" style="display:none;">{{ yearly_income_chart|safe }}</div>
-        <div class="chart-box" id="yearly-rental-chart" style="display:none;">{{ yearly_rental_chart|safe }}</div>
+    
+    <div class="stats-grid">
+        <div class="stat-card bg-primary">
+            <div class="stat-icon">
+                <i class="fas fa-shopping-bag"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Total Rentals</h3>
+                <p id="total-rentals">{{ total_rentals }}</p>
+                <p class="stat-subtext">Completed rentals</p>
+            </div>
+        </div>
+        
+        <div class="stat-card bg-success">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Total Customers</h3>
+                <p id="total-customers">{{ total_customers }}</p>
+                <p class="stat-subtext">Registered customers</p>
+            </div>
+        </div>
+        
+        <div class="stat-card bg-warning">
+            <div class="stat-icon">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Active Reservations</h3>
+                <p id="active-reservations">{{ active_reservations }}</p>
+                <p class="stat-subtext">Pending or approved</p>
+            </div>
+        </div>
+        
+        <div class="stat-card bg-danger">
+            <div class="stat-icon">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Total Income</h3>
+                <p id="total-income">₱{{ total_income|floatformat:2 }}</p>
+                <p class="stat-subtext">From rentals & reservations</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-chart-container">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3><i class="fas fa-chart-bar"></i> Rental Activity</h3>
+                <div class="chart-period-info">
+                    <span id="current-period-display">Monthly</span> Overview
+                    <span class="chart-total">Total: <span id="period-total">{{ total_rentals }}</span></span>
+                </div>
+            </div>
+            <div id="rental-activity-chart" class="chart-container"></div>
+            <div class="chart-footer">
+                <div class="chart-legend">
+                    <span class="legend-item"><span class="legend-color" style="background-color: #5b8c5a;"></span> Completed Rentals</span>
+                </div>
+                <div class="chart-summary">
+                    <span class="summary-item">Max: <span id="max-rentals">0</span></span>
+                    <span class="summary-item">Avg: <span id="avg-rentals">0</span></span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
 <script>
-    $(document).ready(function() {
-        $("#time-period").change(function() {
-            var selectedPeriod = $(this).val();
-            $(".chart-box").hide();
-            if (selectedPeriod === "weekly") {
-                $("#weekly-income-chart, #weekly-rental-chart").show();
-            } else if (selectedPeriod === "monthly") {
-                $("#monthly-income-chart, #monthly-rental-chart").show();
-            } else {
-                $("#yearly-income-chart, #yearly-rental-chart").show();
-            }
-        });
+// Parse the chart data from Django template
+const chartData = JSON.parse('{{ chart_data_json|escapejs }}');
+
+// Initialize chart
+let rentalActivityChart;
+let currentPeriod = 'monthly';
+
+$(document).ready(function() {
+    renderRentalActivityChart(currentPeriod);
+    
+    // Time period selector
+    $('#time-period').change(function() {
+        currentPeriod = $(this).val();
+        updateChartInfo(currentPeriod);
+        renderRentalActivityChart(currentPeriod);
     });
+});
+
+function updateChartInfo(period) {
+    const periodText = period === 'weekly' ? 'Weekly' : 
+                     period === 'monthly' ? 'Monthly' : 'Yearly';
+    $('#current-period-display').text(periodText);
+    
+    const data = chartData[period];
+    const rentals = data.rentals;
+    const total = rentals.reduce((a, b) => a + b, 0);
+    const max = Math.max(...rentals);
+    const avg = (total / rentals.length).toFixed(1);
+    
+    $('#period-total').text(total);
+    $('#max-rentals').text(max);
+    $('#avg-rentals').text(avg);
+}
+
+function renderRentalActivityChart(period) {
+    const data = chartData[period];
+    const labels = data.labels;
+    const rentals = data.rentals.map(num => Math.max(0, Math.round(num)));
+    
+    updateChartInfo(period);
+    
+    const trace = {
+        x: labels,
+        y: rentals,
+        type: 'bar',
+        name: 'Completed Rentals',
+        marker: { 
+            color: '#5b8c5a',
+            line: {
+                color: '#3a6a39',
+                width: 1
+            },
+            opacity: 0.9
+        },
+        hovertemplate: '<b>%{x}</b><br>Rentals: %{y}<extra></extra>'
+    };
+    
+    const layout = {
+        title: false,
+        xaxis: { 
+            title: false,
+            tickangle: period === 'monthly' ? -45 : 0,
+            gridcolor: '#f5f5f5',
+            linecolor: '#e0e0e0',
+            tickfont: {
+                size: 12,
+                color: '#666'
+            }
+        },
+        yaxis: { 
+            title: 'Number of Rentals',
+            rangemode: 'tozero',
+            tickmode: 'linear',
+            dtick: 1,
+            gridcolor: '#f5f5f5',
+            linecolor: '#e0e0e0',
+            tickfont: {
+                size: 12,
+                color: '#666'
+            },
+            range: [0, Math.max(...rentals) * 1.2]
+        },
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        margin: { t: 10, b: 80, l: 60, r: 40 },
+        hoverlabel: {
+            bgcolor: '#fff',
+            bordercolor: '#ddd',
+            font: {
+                color: '#333'
+            }
+        },
+        bargap: 0.3,
+        bargroupgap: 0.1
+    };
+    
+    const config = {
+        responsive: true,
+        displayModeBar: true,
+        displaylogo: false,
+        modeBarButtonsToRemove: ['toImage', 'sendDataToCloud']
+    };
+    
+    if (!rentalActivityChart) {
+        rentalActivityChart = Plotly.newPlot('rental-activity-chart', [trace], layout, config);
+    } else {
+        Plotly.react('rental-activity-chart', [trace], layout, config);
+    }
+}
+
+// Make chart responsive
+window.addEventListener('resize', function() {
+    if (rentalActivityChart) Plotly.Plots.resize('rental-activity-chart');
+});
 </script>
+
+<style>
+:root {
+    --primary-color: #8E793E;
+    --primary-light: #EADCA6;
+    --secondary-color: #AD974F;
+    --dark-color: #231F20;
+    --light-color: #FAF8F0;
+    --gray-color: #e0e0e0;
+    --rental-color: #5b8c5a;
+    --rental-dark: #3a6a39;
+}
+
+.dashboard-container {
+    max-width: 1400px;
+    margin: 1.5rem auto;
+    padding: 1.5rem;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.header-content h1 {
+    color: var(--dark-color);
+    font-weight: 700;
+    font-size: 1.8rem;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.header-content h1 i {
+    color: var(--secondary-color);
+}
+
+.header-content p {
+    color: #666;
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.filter-group label {
+    font-weight: 600;
+    color: var(--dark-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+select {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--gray-color);
+    background-color: white;
+    color: var(--dark-color);
+    font-weight: 500;
+    min-width: 150px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+select:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 3px rgba(173, 151, 79, 0.1);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.stat-content h3 {
+    color: #555;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.stat-content p {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--dark-color);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.stat-subtext {
+    font-size: 0.85rem;
+    color: #777;
+    margin-top: 0.25rem;
+}
+
+.bg-primary {
+    background-color: #f0f7ff;
+    border-left: 4px solid #3a86ff;
+}
+
+.bg-primary .stat-icon {
+    background-color: #3a86ff;
+}
+
+.bg-success {
+    background-color: #f0fff4;
+    border-left: 4px solid #48bb78;
+}
+
+.bg-success .stat-icon {
+    background-color: #48bb78;
+}
+
+.bg-warning {
+    background-color: #fffaf0;
+    border-left: 4px solid #ed8936;
+}
+
+.bg-warning .stat-icon {
+    background-color: #ed8936;
+}
+
+.bg-danger {
+    background-color: #fff5f5;
+    border-left: 4px solid #f56565;
+}
+
+.bg-danger .stat-icon {
+    background-color: #f56565;
+}
+
+.main-chart-container {
+    margin-top: 2rem;
+}
+
+.chart-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.chart-header h3 {
+    font-weight: 600;
+    color: var(--dark-color);
+    margin: 0;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.chart-period-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.chart-total {
+    background: #f0f7f0;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    color: var(--rental-dark);
+    font-weight: 600;
+}
+
+.chart-container {
+    width: 100%;
+    height: 400px;
+}
+
+.chart-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.chart-legend {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.legend-color {
+    width: 15px;
+    height: 15px;
+    border-radius: 3px;
+    display: inline-block;
+    background-color: var(--rental-color);
+}
+
+.chart-summary {
+    display: flex;
+    gap: 1rem;
+}
+
+.summary-item {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.summary-item span {
+    font-weight: 600;
+    color: var(--rental-dark);
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 1rem;
+    }
+    
+    .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .header-actions {
+        width: 100%;
+    }
+    
+    .filter-group {
+        width: 100%;
+    }
+    
+    select {
+        width: 100%;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .chart-footer {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-container {
+        height: 300px;
+    }
+}
+</style>
 {% endblock %}
