@@ -41,6 +41,8 @@ urlpatterns = [
     path("api/events/", views.get_events, name="api_events"),
     path('event/<str:encrypted_id>/edit/', views.edit_event, name='edit_event'),
     path('event/<str:encrypted_id>/delete/', views.delete_event, name='delete_event'),
+    path('api/rentals/', views.rental_events_api, name='api_rentals'),
+
 
     # Made-to-order & Receipts
     path("made_to_order/", made_to_order_view, name="made_to_order"),

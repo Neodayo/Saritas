@@ -192,59 +192,78 @@
 {% endblock %}
 
 {% block content %}
-    <div class="white-container">
-        <div class="calendar-header">
-            <h1><i class="fas fa-calendar-alt"></i> Event Calendar</h1>
-            <a href="{% url 'saritasapp:create_event' %}" class="add-event-btn">
-                <i class="fas fa-plus"></i> Create Event
-            </a>
-        </div>
-
-        <div class="filter-row">
-            <div class="view-tabs">
-                <button class="view-tab active" onclick="window.location.href='{% url 'saritasapp:calendar' %}'">
-                    <i class="fas fa-calendar"></i> Calendar View
-                </button>
-                <button class="view-tab" onclick="window.location.href='{% url 'saritasapp:ongoing_events' %}'">
-                    <i class="fas fa-spinner"></i> Ongoing
-                </button>
-                <button class="view-tab" onclick="window.location.href='{% url 'saritasapp:upcoming_events' %}'">
-                    <i class="fas fa-clock"></i> Upcoming
-                </button>
-                <button class="view-tab" onclick="window.location.href='{% url 'saritasapp:past_events' %}'">
-                    <i class="fas fa-history"></i> Past
-                </button>
-            </div>
-        </div>
-
-        <div id="calendar"></div>
+<div class="white-container">
+    <div class="calendar-header">
+        <h1><i class="fas fa-calendar-alt"></i> Event Calendar</h1>
+        <a href="{% url 'saritasapp:create_event' %}" class="add-event-btn">
+            <i class="fas fa-plus"></i> Create Event
+        </a>
     </div>
+
+    <div class="filter-row">
+        <div class="view-tabs">
+            <button class="view-tab active" onclick="window.location.href='{% url 'saritasapp:calendar' %}'">
+                <i class="fas fa-calendar"></i> Calendar View
+            </button>
+            <button class="view-tab" onclick="window.location.href='{% url 'saritasapp:ongoing_events' %}'">
+                <i class="fas fa-spinner"></i> Ongoing
+            </button>
+            <button class="view-tab" onclick="window.location.href='{% url 'saritasapp:upcoming_events' %}'">
+                <i class="fas fa-clock"></i> Upcoming
+            </button>
+            <button class="view-tab" onclick="window.location.href='{% url 'saritasapp:past_events' %}'">
+                <i class="fas fa-history"></i> Past
+            </button>
+        </div>
+    </div>
+
+    <div id="calendar"></div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    var calendarEl = document.getElementById("calendar");
-    var calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: "dayGridMonth",
-        headerToolbar: {
-            left: "prev,next today",
-            center: "title",
-            right: ""
-        },
-        events: "{% url 'saritasapp:api_events' %}",
-        eventBackgroundColor: "#8E793E",
-        eventBorderColor: "#AD974F",
-        dateClick: function(info) {
-            window.location.href = "/create-event/?date=" + info.dateStr;
-        },
-        eventClick: function(info) {
-            window.location.href = "/view-event/" + info.event.id;
-        },
-        dayCellContent: function(info) {
-            return { html: info.date.getDate().toString() };
-        }
+    document.addEventListener("DOMContentLoaded", function() {
+        var calendarEl = document.getElementById("calendar");
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: "dayGridMonth",
+            headerToolbar: {
+                left: "prev,next today",
+                center: "title",
+                right: ""
+            },
+            eventSources: [
+                {
+                    url: "{% url 'saritasapp:api_events' %}",
+                    color: "#8E793E",
+                    textColor: "#fff"
+                },
+                {
+                    url: "{% url 'saritasapp:api_rentals' %}",
+                    color: "#AD5D5D",
+                    textColor: "#fff"
+                }
+            ],
+            dateClick: function(info) {
+                window.location.href = "/create-event/?date=" + info.dateStr;
+            },
+            eventClick: function(info) {
+                if (info.event.extendedProps.isRental) {
+                    // Redirect to the customer profile page using the encrypted ID
+                    const encryptedId = info.event.extendedProps.inventory_id; // Assuming this holds the encrypted ID
+                    const baseUrl = "{% url 'saritasapp:view_customer' 'encrypted_id_placeholder' %}";
+                    const targetUrl = baseUrl.replace('encrypted_id_placeholder', encryptedId);
+                    window.location.href = targetUrl;
+                } else {
+                    window.location.href = "/view-event/" + info.event.id;
+                }
+            },
+            dayCellContent: function(info) {
+                return { html: info.date.getDate().toString() };
+            }
+        });
+        calendar.render();
     });
-    calendar.render();
-});
-</script>
+    </script>
+    
+    
 {% endblock %}

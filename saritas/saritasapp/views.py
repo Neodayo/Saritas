@@ -1911,3 +1911,40 @@ def staff_package_rental_detail(request, encrypted_id):
         'rental': rental,
         'rental_items': rental.package.package_items.all()
     })
+
+
+    from django.http import JsonResponse
+from .models import Rental
+from django.urls import reverse
+
+def rental_events(request):
+    rentals = Rental.objects.all()
+    events = []
+
+    for rental in rentals:
+        # Add the rental period as a single event from start to end
+        events.append({
+            "id": rental.id,
+            "title": f"Rental #{rental.id} - {rental.customer.user.get_full_name()}",
+            "start": rental.rental_start.isoformat(),
+            "end": (rental.rental_end + timedelta(days=1)).isoformat(),  # FullCalendar is exclusive of the end date
+            "url": reverse('saritasapp:rental_detail', args=[rental.id]),
+            "backgroundColor": "#4F6F52",  # optional styling
+            "borderColor": "#9DB2BF",
+        })
+
+    return JsonResponse(events, safe=False)
+
+def rental_events_api(request):
+    rentals = Rental.objects.all()
+    data = []
+    for rental in rentals:
+        data.append({
+            "id": rental.id,
+            "title": f"Rental: {rental.inventory.name}",
+            "start": rental.rental_start.isoformat(),
+            "end": (rental.rental_end + timedelta(days=1)).isoformat(),
+            "isRental": True,
+            "inventory_id": rental.inventory.encrypted_id  # ← this must match extendedProps.inventory_id
+        })
+    return JsonResponse(data, safe=False)
