@@ -76,7 +76,7 @@ label {
 }
 
 .btn-primary {
-    background-color: #6d4c41;
+    background-color: #9E8729;
     color: white;
     border: none;
     padding: 0.75rem 1.5rem;
@@ -89,7 +89,7 @@ label {
 }
 
 .btn-primary:hover {
-    background-color: #5d4037;
+    background-color: #AD974F;
 }
 
 .btn-secondary {
@@ -105,7 +105,7 @@ label {
 }
 
 .btn-secondary:hover {
-    background-color: #e0e0e0;
+    background-color: #ca5a5a;
 }
 
 .errorlist {

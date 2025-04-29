@@ -65,7 +65,7 @@
                         class="btn btn-reject">
                          <i class="fas fa-times"></i> Reject
                      </a>
-                        <a href="{% url 'saritasapp:rental_detail' rental.id %}" 
+                        <a href="{% url 'saritasapp:rental_detail' encrypted_id=rental.encrypted_id%}" 
                            class="btn btn-info">
                             <i class="fas fa-eye"></i> View
                         </a>

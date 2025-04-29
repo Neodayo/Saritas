@@ -17,8 +17,8 @@
     <!-- Rental List -->
     <div class="space-y-4">
       {% for rental in rentals %}
-      <a href="{% url 'customerapp:rental_detail' rental_id=rental.id %}" 
-         class="block group transition-all duration-200 hover:shadow-lg">
+      <a href="{% url 'customerapp:rental_detail' rental.encrypted_id %}" 
+      class="block group transition-all duration-200 hover:shadow-lg">
         <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:border-amber-200">
           <div class="p-6">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -60,7 +60,7 @@
         </div>
         <h3 class="text-lg font-medium text-gray-700">No rentals yet</h3>
         <p class="mt-2 text-gray-500">You haven't made any rental reservations yet.</p>
-        <a href="{% url 'customerapp:inventory_list' %}" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
+        <a href="{% url 'customerapp:wardrobe' %}" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
           Browse Inventory
         </a>
       </div>

@@ -277,8 +277,8 @@
         {% if notifications %}
             {% for notification in notifications %}
             <div class="notification {% if not notification.is_read %}unread{% endif %}" 
-                 data-notification-id="{{ notification.id }}"
-                 data-notification-url="{% url 'customerapp:rental_list' %}">
+            data-notification-id="{{ notification.id }}"
+            {% if notification.url %}data-notification-url="{{ notification.url }}"{% endif %}>
                 <div class="notification-icon">
                     {% if notification.notification_type == 'rental_approved' %}
                         <i class="fas fa-check-circle text-success"></i>

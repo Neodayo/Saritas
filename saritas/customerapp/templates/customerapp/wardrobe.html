@@ -40,7 +40,7 @@
     }
     
     .filter-btn {
-        background-color: #8E793E;
+        background-color: #9E8729;
         color: white;
         border: none;
         padding: 0.5rem 1rem;
@@ -219,7 +219,7 @@
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4" id="product-grid">
         {% if inventory_items %}
             {% for item in inventory_items %}
-            <a href="{% url 'customerapp:item_detail' item.id %}" class="group block bg-white rounded overflow-hidden product-card hover:shadow-lg transition-all">
+            <a href="{% url 'customerapp:item_detail' item.encrypted_id %}" class="group block bg-white rounded overflow-hidden product-card hover:shadow-lg transition-all">
                 <div class="h-[380px] w-full overflow-hidden">
                     {% if item.image %}
                         <img src="{{ item.image.url }}" alt="{{ item.name }}" class="w-full h-full object-cover">

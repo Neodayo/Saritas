@@ -133,27 +133,32 @@ def edit_customer_profile(request):
         'user_form': user_form,
         'customer_form': customer_form,
     })
-
+    
 @login_required
 def notifications(request):
     user_notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
-    unread_count = user_notifications.filter(is_read=False).count()
+    
+    # Add proper URLs to notifications
+    for notification in user_notifications:
+        if notification.rental:
+            notification.url = reverse('customerapp:rental_detail', args=[encrypt_id(notification.rental.id)])
+        elif notification.reservation:
+            notification.url = reverse('customerapp:reservation_detail', args=[encrypt_id(notification.reservation.id)])
+        # Add other notification types as needed
     
     return render(request, 'customerapp/notifications.html', {
-        'notifications': user_notifications,
-        'unread_count': unread_count
+        'notifications': user_notifications
     })
 
 @login_required
-def mark_notification_as_read(request, notification_id):
-    notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+def mark_notification_as_read(request, encrypted_id):
+    notification = get_decrypted_object_or_404(
+        Notification, 
+        encrypted_id,
+        queryset=Notification.objects.filter(user=request.user)
+    )
     notification.is_read = True
     notification.save()
-    
-    # Invalidate cache
-    cache_key = f'unread_count_{request.user.id}'
-    cache.delete(cache_key)
-    
     return JsonResponse({'status': 'success'})
 
 @login_required
@@ -170,15 +175,14 @@ def mark_all_notifications_as_read(request):
 def customer_dashboard(request):
     return render(request, 'customerapp/dashboard.html')
 
-def item_detail(request, item_id):
-    item = get_object_or_404(Inventory, id=item_id)
+def item_detail(request, encrypted_id):
+    item = get_decrypted_object_or_404(Inventory, encrypted_id)
     return render(request, 'customerapp/view_item.html', {'item': item})
 
 
 @login_required
-def rent_item(request, inventory_id):
-    inventory = get_object_or_404(Inventory, pk=inventory_id)
-    
+def rent_item(request, encrypted_id):
+    inventory = get_decrypted_object_or_404(Inventory, encrypted_id)
     try:
         customer = request.user.customer_profile
     except Customer.DoesNotExist:
@@ -228,11 +232,11 @@ def my_rentals(request):
     return render(request, 'customerapp/my_rentals.html', {'rentals': rentals})
 
 @login_required
-def rental_detail(request, rental_id):
-    rental = get_object_or_404(
+def rental_detail(request, encrypted_id):
+    rental = get_decrypted_object_or_404(
         Rental, 
-        id=rental_id, 
-        customer=request.user.customer_profile
+        encrypted_id,
+        queryset=Rental.objects.filter(customer=request.user.customer_profile)
     )
     return render(request, 'customerapp/rental_detail.html', {'rental': rental})
 
@@ -240,8 +244,8 @@ logger = logging.getLogger(__name__)
 
 @login_required
 @transaction.atomic
-def reserve_item(request, item_id):
-    item = get_object_or_404(Inventory, id=item_id)
+def reserve_item(request, encrypted_id):
+    item = get_decrypted_object_or_404(Inventory, encrypted_id)
 
     if not item.available or item.quantity <= 0:
         messages.error(request, "This item is currently not available for reservation.")
@@ -343,11 +347,9 @@ def logout_view(request):
     return redirect('saritasapp:sign_in')
 
 @login_required
-def product_detail(request, pk):
+def product_detail(request, encrypted_id):
     """Detailed view for a single inventory item"""
-    item = get_object_or_404(Inventory, id=pk)
-    
-    # Check if item is available for rental
+    item = get_decrypted_object_or_404(Inventory, encrypted_id)
     can_rent = item.available and item.quantity > 0
     
     context = {
@@ -371,9 +373,9 @@ def category_view(request, pk):
     }
     return render(request, 'customerapp/category.html', context)
 
-def package_detail(request, pk):
+def package_detail(request, encrypted_id):
     """Detailed view for a wardrobe package"""
-    package = get_object_or_404(WardrobePackage, id=pk)
+    package = get_decrypted_object_or_404(WardrobePackage, encrypted_id)
     package_items = package.package_items.all()
     
     context = {
@@ -381,6 +383,7 @@ def package_detail(request, pk):
         'package_items': package_items,
     }
     return render(request, 'customerapp/package_detail.html', context)
+
 
 def about_us(request):
     return render(request, 'customerapp/about_us.html')
@@ -418,6 +421,13 @@ class CustomerPackageDetailView(DetailView):
     template_name = 'customerapp/package_detail.html'
     context_object_name = 'package'
     
+    def get_object(self, queryset=None):
+        return get_decrypted_object_or_404(
+            WardrobePackage, 
+            self.kwargs['encrypted_id'],
+            queryset=self.get_queryset()
+        )
+    
     def get_queryset(self):
         return WardrobePackage.objects.filter(
             status='fixed'
@@ -445,10 +455,10 @@ class CustomerPackageDetailView(DetailView):
 class CreateRentalView(LoginRequiredMixin, CreateView):
     model = WardrobePackageRental
     form_class = WardrobePackageRentalForm
-    template_name = 'customerapp/rent_package.html'  # Consistent with your other views
+    template_name = 'customerapp/rent_package.html'
 
     def dispatch(self, request, *args, **kwargs):
-        self.package = get_object_or_404(WardrobePackage, pk=kwargs['pk'])
+        self.package = get_decrypted_object_or_404(WardrobePackage, pk=kwargs['encrypted_id'])
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
@@ -505,7 +515,7 @@ class CreateRentalView(LoginRequiredMixin, CreateView):
     
 @login_required
 def rent_package(request, package_id):
-    package = get_object_or_404(WardrobePackage, pk=package_id)
+    package = get_decrypted_object_or_404(WardrobePackage, package_id)
     
     if request.method == 'POST':
         form = WardrobePackageRentalForm(request.POST)
@@ -540,17 +550,17 @@ def rent_package(request, package_id):
 
 @login_required
 def package_rental_detail(request, rental_id):
-    rental = get_object_or_404(
+    rental = get_decrypted_object_or_404(
         WardrobePackageRental, 
-        pk=rental_id,
-        customer=request.user.customer_profile
+        rental_id,
+        queryset=WardrobePackageRental.objects.filter(customer=request.user.customer_profile)
     )
     rental_items = rental.package.package_items.select_related(
         'inventory_item',
         'inventory_item__item_type',
         'inventory_item__color',
         'inventory_item__size'
-    ).all()
+    ).all() 
     
     return render(request, 'customerapp/package_rental_detail.html', {
         'rental': rental,

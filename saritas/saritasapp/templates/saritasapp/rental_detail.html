@@ -1,81 +1,340 @@
-{% extends 'saritasapp/base.html' %}
+{% extends "saritasapp/base.html" %}
+{% load static %}
+
+{% block title %}Rental Details | Sarita's{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/rental_detail.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+    /* Main Container */
+    .rental-detail-container {
+        max-width: 1400px;
+        margin: 30px auto;
+        padding: 30px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        font-family: 'Arial', sans-serif;
+    }
+
+    /* Header */
+    .rental-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .rental-header h1 {
+        color: #8E793E;
+        font-size: 28px;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .back-btn {
+        background-color: #EAEAEA;
+        color: #8E793E;
+        padding: 10px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+        border: 1px solid #8E793E;
+    }
+
+    .back-btn:hover {
+        background-color: #e0d9c5;
+    }
+
+    /* Card Styling */
+    .detail-card {
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+
+    .card-header {
+        background-color: #8E793E;
+        color: white;
+        padding: 15px 20px;
+    }
+
+    .card-header h5 {
+        margin: 0;
+        font-weight: 500;
+    }
+
+    .card-body {
+        padding: 25px;
+    }
+
+    /* Section Styling */
+    .section-title {
+        color: #8E793E;
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e6d6b8;
+    }
+
+    .detail-row {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+    .detail-col {
+        flex: 1;
+        min-width: 300px;
+        padding: 0 15px;
+        margin-bottom: 20px;
+    }
+
+    .detail-item {
+        margin-bottom: 12px;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: #5a3e2b;
+        display: inline-block;
+        min-width: 120px;
+    }
+
+    /* Status Badge */
+    .status-badge {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .status-pending {
+        background-color: #FFF3CD;
+        color: #856404;
+    }
+
+    .status-approved {
+        background-color: #D4EDDA;
+        color: #155724;
+    }
+
+    .status-rejected {
+        background-color: #F8D7DA;
+        color: #721C24;
+    }
+
+    .status-rented {
+        background-color: #CCE5FF;
+        color: #004085;
+    }
+
+    /* Notes Section */
+    .notes-section {
+        background-color: #f9f8f5;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 20px;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-approve {
+        background-color: #28A745;
+        color: white;
+        border: none;
+    }
+
+    .btn-approve:hover {
+        background-color: #218838;
+        transform: translateY(-2px);
+    }
+
+    .btn-reject {
+        background-color: #DC3545;
+        color: white;
+        border: none;
+    }
+
+    .btn-reject:hover {
+        background-color: #C82333;
+        transform: translateY(-2px);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .rental-detail-container {
+            padding: 20px;
+            margin: 15px;
+        }
+        
+        .detail-col {
+            min-width: 100%;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <!-- Notification Display (from your context processor) -->
-    {% if notifications %}
-    <div class="mb-4">
-        {% for notification in notifications %}
-        <div class="alert alert-{{ notification.type }}">
-            {{ notification.message }}
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <!-- Rental Details Content -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold">Rental Details #{{ rental.id }}</h2>
-        <a href="{% url 'saritasapp:rental_approvals' %}" class="btn btn-outline-secondary">
-            ← Back to Approvals
+<div class="rental-detail-container">
+    <!-- Header -->
+    <div class="rental-header">
+        <h1>Rental Details #{{ rental.id }}</h1>
+        <a href="{% url 'saritasapp:rental_approvals' %}" class="back-btn">
+            <i class="fas fa-arrow-left"></i> Back to Approvals
         </a>
     </div>
 
-    <div class="card shadow rounded-4">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Rental Information</h5>
+    <!-- Main Card -->
+    <div class="detail-card shadow">
+        <div class="card-header">
+            <h5>Rental Information</h5>
         </div>
         <div class="card-body">
-            <div class="row">
+            <!-- Customer and Rental Info -->
+            <div class="detail-row">
                 <!-- Customer Column -->
-                <div class="col-md-6">
-                    <h5 class="border-bottom pb-2">Customer Details</h5>
-                    <p><strong>Name:</strong> {{ rental.customer.user.get_full_name }}</p>
-                    <p><strong>Email:</strong> {{ rental.customer.user.email }}</p>
-                    <p><strong>Phone:</strong> {{ rental.customer.phone }}</p>
+                <div class="detail-col">
+                    <h5 class="section-title">Customer Details</h5>
+                    <div class="detail-item">
+                        <span class="detail-label">Name:</span>
+                        {{ rental.customer.user.get_full_name }}
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Email:</span>
+                        {{ rental.customer.user.email }}
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Phone:</span>
+                        {{ rental.customer.phone }}
+                    </div>
                     {% if rental.customer.address %}
-                        <p><strong>Address:</strong><br>{{ rental.customer.address }}</p>
+                    <div class="detail-item">
+                        <span class="detail-label">Address:</span>
+                        {{ rental.customer.address }}
+                    </div>
                     {% endif %}
                 </div>
 
                 <!-- Rental Column -->
-                <div class="col-md-6">
-                    <h5 class="border-bottom pb-2">Rental Details</h5>
-                    <p><strong>Item:</strong> {{ rental.inventory.name }}</p>
-                    <p><strong>Status:</strong> 
-                        <span class="badge bg-{% if rental.status == 'Approved' %}info{% elif rental.status == 'Rented' %}success{% else %}warning{% endif %}">
+                <div class="detail-col">
+                    <h5 class="section-title">Rental Details</h5>
+                    <div class="detail-item">
+                        <span class="detail-label">Item:</span>
+                        {{ rental.inventory.name }}
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Status:</span>
+                        <span class="status-badge status-{{ rental.status|lower }}">
                             {{ rental.status }}
                         </span>
-                    </p>
-                    <p><strong>Start Date:</strong> {{ rental.rental_start|date:"M d, Y" }}</p>
-                    <p><strong>End Date:</strong> {{ rental.rental_end|date:"M d, Y" }}</p>
-                    <p><strong>Duration:</strong> {{ rental.duration_days }} days</p>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Start Date:</span>
+                        {{ rental.rental_start|date:"M d, Y" }}
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">End Date:</span>
+                        {{ rental.rental_end|date:"M d, Y" }}
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Duration:</span>
+                        {{ rental.duration_days }} days
+                    </div>
                 </div>
             </div>
 
-            <!-- Pricing Section -->
-            <div class="row mt-4">
-                <div class="col-md-6">
-                    <h5 class="border-bottom pb-2">Pricing</h5>
-                    <p><strong>Rental Price:</strong> ${{ rental.inventory.rental_price }}</p>
-                    <p><strong>Total Cost:</strong> ${{ rental.total_cost }}</p>
-                    <p><strong>Deposit:</strong> ${{ rental.inventory.deposit_price }}</p>
+            <!-- Pricing and Timestamps -->
+            <div class="detail-row">
+                <!-- Pricing Column -->
+                <div class="detail-col">
+                    <h5 class="section-title">Pricing</h5>
+                    <div class="detail-item">
+                        <span class="detail-label">Rental Price:</span>
+                        ₱{{ rental.inventory.rental_price|floatformat:2 }}
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Total Cost:</span>
+                        ₱{{ rental.total_cost|floatformat:2 }}
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Deposit:</span>
+                        ₱{{ rental.inventory.deposit_price|floatformat:2 }}
+                    </div>
                 </div>
 
-                <div class="col-md-6">
-                    <h5 class="border-bottom pb-2">Timestamps</h5>
-                    <p><strong>Requested:</strong> {{ rental.created_at|date:"M d, Y h:i A" }}</p>
+                <!-- Timestamps Column -->
+                <div class="detail-col">
+                    <h5 class="section-title">Timestamps</h5>
+                    <div class="detail-item">
+                        <span class="detail-label">Requested:</span>
+                        {{ rental.created_at|date:"M d, Y h:i A" }}
+                    </div>
                     {% if rental.approved_at %}
-                        <p><strong>Approved:</strong> {{ rental.approved_at|date:"M d, Y h:i A" }}</p>
+                    <div class="detail-item">
+                        <span class="detail-label">Approved:</span>
+                        {{ rental.approved_at|date:"M d, Y h:i A" }}
+                    </div>
                     {% endif %}
                 </div>
             </div>
 
+            <!-- Notes Section -->
             {% if rental.notes %}
-                <div class="mt-4">
-                    <h5 class="border-bottom pb-2">Notes</h5>
-                    <p>{{ rental.notes }}</p>
-                </div>
+            <div class="notes-section">
+                <h5 class="section-title">Notes</h5>
+                <p>{{ rental.notes }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Action Buttons (if pending) -->
+            {% if rental.status == 'Pending' %}
+            <div class="action-buttons">
+                <a href="{% url 'saritasapp:approve_or_reject_rental' rental.get_encrypted_id 'approve' %}" 
+                   class="btn btn-approve">
+                    <i class="fas fa-check"></i> Approve Rental
+                </a>
+                <a href="{% url 'saritasapp:approve_or_reject_rental' rental.get_encrypted_id 'reject' %}" 
+                   class="btn btn-reject">
+                    <i class="fas fa-times"></i> Reject Rental
+                </a>
+            </div>
             {% endif %}
         </div>
     </div>

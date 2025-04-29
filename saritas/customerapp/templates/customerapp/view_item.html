@@ -58,13 +58,15 @@
                 
                 {% if item.available %}
                 <div class="flex flex-wrap gap-4 mt-8">
-                    <a href="{% url 'customerapp:rent_item' inventory_id=item.id %}" 
+                    <!-- Updated Rent Now link with encrypted_id -->
+                    <a href="{% url 'customerapp:rent_item' encrypted_id=item.encrypted_id %}" 
                        class="relative overflow-hidden px-6 py-3 bg-[#8E793E] hover:bg-[#766535] text-white font-medium rounded-lg text-center transition duration-300">
                         <span class="relative z-10">Rent Now</span>
                         <span class="shine-effect"></span>
                     </a>
                     
-                    <a href="{% url 'customerapp:reservation' item_id=item.id %}" 
+                    <!-- Updated Reserve link with encrypted_id -->
+                    <a href="{% url 'customerapp:reservation' encrypted_id=item.encrypted_id %}" 
                        class="px-6 py-3 border border-[#8E793E] text-[#8E793E] hover:bg-[#F8F4EA] font-medium rounded-lg transition duration-300">
                         Reserve
                     </a>

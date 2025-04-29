@@ -1,56 +1,179 @@
 {% extends 'customerapp/base.html' %}
 {% load static %}
-{% block title %}My Rentals{% endblock %}
-{% block stylesheets %}
-<link rel="stylesheet" href="{% static 'css/rental_list.css' %}">
-{% endblock %}
+
+{% block title %}My Rentals | Sarita's{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <h2 class="mb-4">My Rental Requests</h2>
+<style>
+    /* Main Container */
+    .rentals-container {
+        max-width: 1400px;
+        margin: 30px auto;
+        padding: 30px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        font-family: 'Arial', sans-serif;
+    }
     
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .page-title {
+        color: #8E793E;
+        font-size: 1.8rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    /* Status Badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    
+    .status-pending {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-approved {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .status-rejected {
+        background-color: #f1e5e5;
+        color: #721c24;
+    }
+    
+    /* Table Styles */
+    .rentals-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    
+    .rentals-table th {
+        background-color: #f8f9fa;
+        padding: 12px 15px;
+        text-align: left;
+        font-weight: 600;
+        color: #555;
+        border-bottom: 2px solid #eee;
+    }
+    
+    .rentals-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #eee;
+        vertical-align: middle;
+    }
+    
+    .rentals-table tr:hover {
+        background-color: #f9f9f9;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 40px 0;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 40px;
+        margin-bottom: 15px;
+        color: #adb5bd;
+    }
+    
+    .alert-link {
+        color: #8E793E;
+        font-weight: 600;
+        text-decoration: underline;
+    }
+    
+    .alert-link:hover {
+        color: #ad974f;
+    }
+    
+    @media (max-width: 768px) {
+        .rentals-container {
+            padding: 20px;
+        }
+        
+        .rentals-table {
+            display: block;
+            overflow-x: auto;
+        }
+    }
+</style>
+
+<div class="rentals-container">
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-concierge-bell"></i> My Rental Requests
+        </h1>
+    </div>
+
     {% if rentals %}
     <div class="table-responsive">
-        <table class="table">
+        <table class="rentals-table">
             <thead>
                 <tr>
                     <th>Item</th>
                     <th>Dates</th>
                     <th>Status</th>
                     <th>Total</th>
-                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for rental in rentals %}
                 <tr>
-                    <td>{{ rental.inventory.name }}</td>
                     <td>
-                        {{ rental.rental_start|date:"M d" }} - {{ rental.rental_end|date:"M d, Y" }}
-                        <br><small>{{ rental.duration_days }} days</small>
+                        <div class="font-medium">{{ rental.inventory.name }}</div>
+                        <div class="text-sm text-gray-500">{{ rental.inventory.category.name }}</div>
                     </td>
                     <td>
-                        <span class="badge bg-{% if rental.status == 'Approved' %}success{% elif rental.status == 'Pending' %}warning{% elif rental.status == 'Rejected' %}danger{% else %}secondary{% endif %}">
+                        <div>{{ rental.rental_start|date:"M d" }} - {{ rental.rental_end|date:"M d, Y" }}</div>
+                        <div class="text-sm text-gray-500">{{ rental.duration_days }} day{{ rental.duration_days|pluralize }}</div>
+                    </td>
+                    <td>
+                        <span class="status-badge status-{{ rental.status|lower }}">
+                            {% if rental.status == 'Approved' %}
+                                <i class="fas fa-thumbs-up mr-1"></i>
+                            {% elif rental.status == 'Pending' %}
+                                <i class="fas fa-clock mr-1"></i>
+                            {% elif rental.status == 'Rejected' %}
+                                <i class="fas fa-ban mr-1"></i>
+                            {% endif %}
                             {{ rental.get_status_display }}
                         </span>
                     </td>
-                    <td>₱{{ rental.total_cost|floatformat:2 }}</td>
-                    <td>
-                        <a href="{% url 'customerapp:rental_detail' rental_id=rental.id %}" class="btn btn-sm btn-outline-primary">
-                            Details
-                        </a>
-                    </td>
+                    <td class="font-medium">₱{{ rental.total_cost|floatformat:2 }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
     {% else %}
-    <div class="alert alert-info">
-        You haven't made any rental requests yet.
-        <a href="{% url 'customerapp:wardrobe' %}" class="alert-link">
-            Browse our wardrobe
-        </a>
+    <div class="empty-state">
+        <i class="fas fa-clipboard-list"></i>
+        <p class="text-lg">You haven't made any rental requests yet.</p>
+        <p class="mt-2">
+            <a href="{% url 'customerapp:wardrobe' %}" class="alert-link">
+                Browse our wardrobe
+            </a>
+        </p>
     </div>
     {% endif %}
 </div>
