@@ -39,11 +39,16 @@
         <button type="submit" class="btn save-btn">Save Changes</button>
     </form>
 
-    <form method="post" action="{% url 'saritasapp:logout' %}">
-        {% csrf_token %}
-        <button type="submit" class="btn signout-btn">Sign Out</button>
-    </form>
-    
+    <div class="action-buttons">
+        <a href="{% url 'saritasapp:rental_list' %}" class="btn rental-list-btn">
+            <i class="fas fa-list"></i> Rental List
+        </a>
+        
+        <form method="post" action="{% url 'saritasapp:logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn signout-btn">Sign Out</button>
+        </form>
+    </div>
 </div>
 
 <link rel="stylesheet" href="{% static 'css/profile.css' %}">

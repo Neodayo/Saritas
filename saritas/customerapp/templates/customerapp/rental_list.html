@@ -1,27 +1,98 @@
 {% extends 'customerapp/base.html' %}
-{%load static%}
-{% block title %}My Rentals{% endblock %}
-{% block stylesheets %}
-<link rel="stylesheet" href="{% static 'css/rental_list.css' %}">
-{% endblock %}
+{% load static %}
+
+{% block title %}My Rentals - Sarita's{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-    <h2>My Rentals</h2>
-    <div class="list-group">
-        {% for rental in rentals %}
-        <a href="{% url 'customerapp:rental_detail' rental_id=rental.id %}" class="list-group-item list-group-item-action">
-            <div class="d-flex w-100 justify-content-between">
-                <h5 class="mb-1">{{ rental.inventory.name }}</h5>
-                <span class="badge bg-{% if rental.status == 'Approved' %}success{% elif rental.status == 'Pending' %}warning{% else %}secondary{% endif %}">
-                    {{ rental.get_status_display }}
-                </span>
-            </div>
-            <p class="mb-1">Dates: {{ rental.rental_start }} to {{ rental.rental_end }}</p>
-            <small>Total: ₱{{ rental.total_cost|floatformat:2 }}</small>
-        </a>
-        {% empty %}
-        <div class="alert alert-info">You have no rental history</div>
-        {% endfor %}
+<div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="relative mb-8">
+        <h2 class="text-3xl text-center text-[#5a3e2b] pb-3 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373] fade-up">
+            Rental List
+        </h2>
     </div>
+
+
+    <!-- Rental List -->
+    <div class="space-y-4">
+      {% for rental in rentals %}
+      <a href="{% url 'customerapp:rental_detail' rental_id=rental.id %}" 
+         class="block group transition-all duration-200 hover:shadow-lg">
+        <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:border-amber-200">
+          <div class="p-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+              <div class="flex-1">
+                <h3 class="text-lg font-semibold text-gray-800 group-hover:text-amber-700">
+                  {{ rental.inventory.name }}
+                </h3>
+                <div class="mt-2 flex flex-wrap items-center gap-3 text-sm">
+                  <span class="flex items-center text-gray-600">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    {{ rental.rental_start|date:"M d" }} - {{ rental.rental_end|date:"M d, Y" }}
+                  </span>
+                  <span class="flex items-center text-gray-600"> 
+                    ₱{{ rental.total_cost|floatformat:2 }}
+                  </span>
+                </div>
+              </div>
+              <div class="mt-3 sm:mt-0">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+                  {% if rental.status == 'Approved' %}bg-green-100 text-green-800
+                  {% elif rental.status == 'Pending' %}bg-yellow-100 text-yellow-800
+                  {% elif rental.status == 'Cancelled' %}bg-red-100 text-red-800
+                  {% else %}bg-gray-100 text-gray-800{% endif %}">
+                  {{ rental.get_status_display }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </a>
+      {% empty %}
+      <div class="text-center py-12">
+        <div class="mx-auto w-24 h-24 text-gray-400 mb-4">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-700">No rentals yet</h3>
+        <p class="mt-2 text-gray-500">You haven't made any rental reservations yet.</p>
+        <a href="{% url 'customerapp:inventory_list' %}" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
+          Browse Inventory
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination (if needed) -->
+    {% if is_paginated %}
+    <div class="mt-10 flex justify-center">
+      <nav class="flex items-center space-x-2">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-50">
+          &laquo;
+        </a>
+        {% endif %}
+        
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+          <span class="px-3 py-1 rounded bg-amber-600 text-white">{{ num }}</span>
+          {% else %}
+          <a href="?page={{ num }}" class="px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-50">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+        
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-50">
+          &raquo;
+        </a>
+        {% endif %}
+      </nav>
+    </div>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}

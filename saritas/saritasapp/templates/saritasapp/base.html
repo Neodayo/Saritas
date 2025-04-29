@@ -27,6 +27,26 @@
             transform: rotate(180deg);
             transition: transform 0.3s ease;
         }
+            /* Animation for message appearance */
+    @keyframes pop-in {
+        0% {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .animate-pop-in {
+        animation: pop-in 0.3s ease-out forwards;
+    }
+    
+    /* Transition for smooth dismissal */
+    .alert-transition {
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Rouge+Script&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -265,6 +285,30 @@
             {% endif %}
         </div>
     </header>
+  <!-- Universal Message Catcher -->
+    {% if messages %}
+<div class="fixed inset-x-0 top-16 flex justify-center z-[60]">
+    {% for message in messages %}
+    <div class="{% if message.tags == 'success' %}bg-green-100 border-green-400 text-green-700
+                {% elif message.tags == 'error' %}bg-red-100 border-red-400 text-red-700
+                {% elif message.tags == 'warning' %}bg-yellow-100 border-yellow-400 text-yellow-700
+                {% else %}bg-blue-100 border-blue-400 text-blue-700{% endif %} 
+                border px-4 py-3 rounded relative max-w-md shadow-lg pr-10 transform transition-all duration-300
+                opacity-0 translate-y-2 animate-pop-in" role="alert">
+        <span class="block sm:inline mr-6">{{ message }}</span>
+        <button class="absolute top-1/2 right-2 transform -translate-y-1/2 p-1 rounded-full hover:bg-opacity-20 
+                       {% if message.tags == 'success' %}hover:bg-green-600
+                       {% elif message.tags == 'error' %}hover:bg-red-600
+                       {% elif message.tags == 'warning' %}hover:bg-yellow-600
+                       {% else %}hover:bg-blue-600{% endif %} close-message">
+            <svg class="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                <path d="M14.348 5.652a.5.5 0 0 1 0 .707L10.707 10l3.641 3.641a.5.5 0 1 1-.707.707L10 10.707l-3.641 3.641a.5.5 0 1 1-.707-.707L9.293 10 5.652 6.359a.5.5 0 0 1 .707-.707L10 9.293l3.641-3.641a.5.5 0 0 1 .707 0z"/>
+            </svg>
+        </button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
 
     <!-- Main Content -->
     <main class="pt-20 lg:pl-64 px-4 min-h-screen">
@@ -322,6 +366,43 @@
                 mobileSidebar.classList.add('-translate-x-full');
             }
         });
+
+            // Enhanced MESSAGE SCRIPT
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize messages with proper classes
+        document.querySelectorAll('[role="alert"]').forEach(function(message) {
+            // Add transition class
+            message.classList.add('alert-transition');
+            
+            // Mark as visible after animation completes
+            setTimeout(() => {
+                message.classList.remove('opacity-0', 'translate-y-2');
+            }, 10);
+        });
+
+        // Close buttons functionality
+        document.querySelectorAll('.close-message').forEach(function(button) {
+            button.addEventListener('click', function() {
+                const message = this.closest('[role="alert"]');
+                message.style.opacity = '0';
+                message.style.transform = 'translateY(-8px)';
+                setTimeout(() => {
+                    message.remove();
+                }, 300);
+            });
+        });
+        
+        // Auto-dismiss after 5 seconds (with animation)
+        document.querySelectorAll('[role="alert"]').forEach(function(message) {
+            setTimeout(function() {
+                message.style.opacity = '0';
+                message.style.transform = 'translateY(-8px)';
+                setTimeout(function() {
+                    message.remove();
+                }, 300);
+            }, 5000);
+        });
+    });
     </script>
 </body>
 </html>

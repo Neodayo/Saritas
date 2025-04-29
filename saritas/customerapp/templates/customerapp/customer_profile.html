@@ -114,7 +114,7 @@
         transition: all 0.3s;
         text-decoration: none;
         display: inline-block;
-        margin-top: 10px;
+        margin: 10px 5px;
     }
     
     .edit-profile-btn:hover {
@@ -124,9 +124,34 @@
         box-shadow: 0 4px 8px rgba(142, 121, 62, 0.2);
     }
     
+    .rental-list-btn {
+        background-color: #5D6D7E;
+        color: white;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-block;
+        margin: 10px 5px;
+    }
+    
+    .rental-list-btn:hover {
+        background-color: #7F8C8D;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(93, 109, 126, 0.2);
+    }
+    
     .empty-field {
         color: #999;
         font-style: italic;
+    }
+
+    .profile-actions {
+        text-align: center;
+        margin-top: 20px;
     }
 
     /* Responsive adjustments */
@@ -146,8 +171,25 @@
             padding: 10px 8px;
             font-size: 14px;
         }
+        
+        .edit-profile-btn,
+        .rental-list-btn {
+            padding: 8px 15px;
+            font-size: 14px;
+            margin: 5px 3px;
+        }
     }
 </style>
+<!-- <div class="message-container">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    {% endfor %}
+</div> -->
 
 <div class="profile-container">
     <div class="profile-card">
@@ -186,11 +228,42 @@
             </tr>
         </table>
         
-        <div class="text-center">
+        <div class="profile-actions">
             <a href="{% url 'customerapp:edit_profile' %}" class="edit-profile-btn">
                 Edit Profile
+            </a>
+            <a href="{% url 'customerapp:rental_list' %}" class="rental-list-btn">
+                My Rentals
             </a>
         </div>
     </div>
 </div>
+
+<script>
+    // MESSAGE SCRIPT
+    // Handle close button clicks
+    document.addEventListener('DOMContentLoaded', function() {
+        // Close buttons functionality
+        document.querySelectorAll('.close-message').forEach(function(button) {
+            button.addEventListener('click', function() {
+                this.parentElement.style.opacity = '0';
+                setTimeout(() => {
+                    this.parentElement.remove();
+                }, 300); // Match this with the transition time
+            });
+        });
+        
+        // Auto-dismiss after 5 seconds
+        let messages = document.querySelectorAll('.alert');
+        messages.forEach(function(message) {
+            setTimeout(function() {
+                message.style.transition = 'opacity 0.3s';
+                message.style.opacity = '0';
+                setTimeout(function() {
+                    message.remove();
+                }, 300);
+            }, 5000);
+        });
+    });
+</script>
 {% endblock %}

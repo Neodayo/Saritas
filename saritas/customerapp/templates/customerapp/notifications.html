@@ -252,23 +252,33 @@
 
 {% block content %}
 <div class="container">
-    <div class="page-header">
-        <h1>Notifications</h1>
-        <div class="header-actions">
+    <div class="relative mb-8">
+        <h2 class="text-3xl text-center text-[#5a3e2b] pb-3 relative after:absolute after:bottom-0 after:left-1/2 after:transform after:-translate-x-1/2 after:w-20 after:h-[3px] after:bg-[#d4a373] fade-up">
+            Notifications
+        </h2>
+    </div>
+    <div class="page-header flex flex-col items-center sm:flex-row sm:justify-between">
+
+        
+        {% if notifications|length > 0 %}
+            {% with unread_count=notifications|length %}
             {% if unread_count > 0 %}
-            <a href="{% url 'customerapp:mark_all_notifications_as_read' %}" class="btn btn-mark-all">
+            <a href="{% url 'customerapp:mark_all_notifications_as_read' %}" 
+               class="btn-mark-all mt-2 sm:mt-0">
                 <i class="fas fa-check-double"></i> Mark all as read
             </a>
             {% endif %}
-        </div>
+            {% endwith %}
+        {% endif %}
     </div>
+
 
     <div class="notification-container">
         {% if notifications %}
             {% for notification in notifications %}
             <div class="notification {% if not notification.is_read %}unread{% endif %}" 
                  data-notification-id="{{ notification.id }}"
-                 data-notification-url="{{ notification.url|default:'' }}">
+                 data-notification-url="{% url 'customerapp:rental_list' %}">
                 <div class="notification-icon">
                     {% if notification.notification_type == 'rental_approved' %}
                         <i class="fas fa-check-circle text-success"></i>
