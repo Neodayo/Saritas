@@ -237,7 +237,7 @@
                     color: "#8E793E",
                     textColor: "#fff"
                 },
-                {
+                {   
                     url: "{% url 'saritasapp:api_rentals' %}",
                     color: "#AD5D5D",
                     textColor: "#fff"
@@ -246,17 +246,17 @@
             dateClick: function(info) {
                 window.location.href = "/create-event/?date=" + info.dateStr;
             },
-            eventClick: function(info) {
-                if (info.event.extendedProps.isRental) {
-                    // Redirect to the customer profile page using the encrypted ID
-                    const encryptedId = info.event.extendedProps.inventory_id; // Assuming this holds the encrypted ID
-                    const baseUrl = "{% url 'saritasapp:view_customer' 'encrypted_id_placeholder' %}";
-                    const targetUrl = baseUrl.replace('encrypted_id_placeholder', encryptedId);
-                    window.location.href = targetUrl;
-                } else {
-                    window.location.href = "/view-event/" + info.event.id;
-                }
-            },
+            // eventClick: function(info) {
+            //     if (info.event.extendedProps.isRental) {
+            //         // Redirect to the customer profile page using the encrypted ID
+            //         const encryptedId = info.event.extendedProps.inventory_id; // Assuming this holds the encrypted ID
+            //         const baseUrl = "{% url 'saritasapp:view_customer' 'encrypted_id_placeholder' %}";
+            //         const targetUrl = baseUrl.replace('encrypted_id_placeholder', encryptedId);
+            //         window.location.href = targetUrl;
+            //     } else {
+            //         window.location.href = "/view-event/" + info.event.id;
+            //     }
+            // },
             dayCellContent: function(info) {
                 return { html: info.date.getDate().toString() };
             }
