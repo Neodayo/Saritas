@@ -1,0 +1,67 @@
+{% extends 'saritasapp/base.html' %}
+{% load static %}
+{% block title %}Add Branch{% endblock %}
+{% block extra_css %}
+    <style>
+        .branch-form-container {
+            background: white;
+            padding: 30px;
+            max-width: 600px;
+            margin: 30px auto;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.05);
+            font-family: Arial, sans-serif;
+        }
+
+        .branch-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #8E793E;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .branch-form label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: block;
+            color: #333;
+        }
+
+        .branch-form input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+        }
+
+        .btn-submit {
+            background-color: #8E793E;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .btn-submit:hover {
+            background-color: #AD974F;
+            transform: translateY(-2px);
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="branch-form-container">
+    <h2 class="branch-title"><i class="fas fa-code-branch"></i> Add New Branch</h2>
+    <form method="POST" class="branch-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn-submit"><i class="fas fa-plus-circle"></i> Add Branch</button>
+    </form>
+</div>
+{% endblock %}

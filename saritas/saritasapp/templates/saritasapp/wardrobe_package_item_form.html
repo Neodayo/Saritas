@@ -1,0 +1,89 @@
+{% extends 'saritasapp/base.html' %}
+
+{% block page_title %}
+    {% if object %}Edit Package Item{% else %}Add Package Item{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h3 class="card-title mb-0">
+                    {% if object %}Edit Item{% else %}Add Item to Package{% endif %}
+                </h3>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-2">
+                            <label for="{{ form.quantity.id_for_label }}" class="form-label">Quantity</label>
+                            {{ form.quantity }}
+                            {% if form.quantity.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.quantity.errors.as_text }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-5">
+                            <label for="{{ form.label.id_for_label }}" class="form-label">Label</label>
+                            {{ form.label }}
+                            {% if form.label.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.label.errors.as_text }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-check mt-4 pt-2">
+                                {{ form.is_required }}
+                                <label class="form-check-label" for="{{ form.is_required.id_for_label }}">Required</label>
+                            </div>
+                            {% if form.is_required.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.is_required.errors.as_text }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-check mt-4 pt-2">
+                                {{ form.replacement_allowed }}
+                                <label class="form-check-label" for="{{ form.replacement_allowed.id_for_label }}">Replaceable</label>
+                            </div>
+                            {% if form.replacement_allowed.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.replacement_allowed.errors.as_text }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group row justify-content-center mt-4">
+                        <div class="col-md-6">
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fas fa-save"></i> Save
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{% url 'saritasapp:wardrobe_package_detail' encrypted_id=package.encrypted_id %}" 
+                               class="btn btn-secondary btn-block">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

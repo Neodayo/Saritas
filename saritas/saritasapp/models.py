@@ -854,40 +854,79 @@ class OrderWardrobePackage(models.Model):
     def __str__(self):
         return f"{self.get_package_name()} for Order #{self.order.id}"
     
+from django.db import models, transaction
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from django.urls import reverse
+from datetime import timedelta
+from saritasapp.models import Notification
+
 class WardrobePackageRental(models.Model):
+    PENDING = 'pending'
+    APPROVED = 'approved'
+    REJECTED = 'rejected'
+    COMPLETED = 'completed'
+    RETURNED = 'returned'
+    OVERDUE = 'overdue'
+    CANCELLED = 'cancelled'
+
     STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected'),
-        ('completed', 'Completed'),
-        ('returned', 'Returned'),  # Added returned status
+        (PENDING, 'Pending'),
+        (APPROVED, 'Approved'),
+        (REJECTED, 'Rejected'),
+        (COMPLETED, 'Completed'),
+        (RETURNED, 'Returned'),
+        (OVERDUE, 'Overdue'),
+        (CANCELLED, 'Cancelled'),
     ]
 
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    package = models.ForeignKey(WardrobePackage, on_delete=models.CASCADE)  
+    customer = models.ForeignKey('Customer', on_delete=models.CASCADE)
+    package = models.ForeignKey('WardrobePackage', on_delete=models.CASCADE)  
     event_date = models.DateField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
     
     # Date fields
     pickup_date = models.DateField(null=True, blank=True)
     return_date = models.DateField(null=True, blank=True)
-    actual_return_date = models.DateField(null=True, blank=True)  # Added this field
+    actual_return_date = models.DateField(null=True, blank=True)
     
     # Staff fields
     staff = models.ForeignKey(
-        User,
+        'User',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='handled_rentals'
     )
     notes = models.TextField(blank=True, null=True)
-    
-    def approve(self, staff_user):
-        """Approve the package rental and handle inventory"""
-        if self.status != 'pending':
-            raise ValidationError("Only pending rentals can be approved")
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Wardrobe Package Rental'
+        verbose_name_plural = 'Wardrobe Package Rentals'
+
+    def __str__(self):
+        return f"Package Rental #{self.id} - {self.get_status_display()}"
+
+    @property
+    def encrypted_id(self):
+        """Returns encrypted ID for URLs"""
+        if not self.pk:
+            return None
+        try:
+            from core.utils.encryption import encrypt_id
+            return encrypt_id(self.pk)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to encrypt rental ID {self.pk}: {str(e)}")
+            return None
+
+    def approve(self, user):
+        """Approve the package rental"""
+        if self.status != self.PENDING:
+            raise ValidationError("Only pending rentals can be approved.")
         
         with transaction.atomic():
             # Check inventory for all items in the package
@@ -905,32 +944,51 @@ class WardrobePackageRental(models.Model):
                 item.quantity -= package_item.quantity
                 item.save()
 
-            self.status = 'approved'
-            self.staff = staff_user
+            self.status = self.APPROVED
+            self.staff = user
             self.save()
+            
+            # Send notification
+            Notification.objects.create(
+                user=self.customer.user,
+                notification_type='rental_approved',
+                message=f"Your rental request for package '{self.package.name}' has been approved!",
+                url=reverse('customerapp:package_rental_detail', args=[self.encrypted_id])
+            )
 
-    def reject(self, staff_user, reason=""):
-        """Reject the package rental with optional reason"""
-        if self.status != 'pending':
+    def reject(self, user, reason=""):
+        """Reject the package rental"""
+        if self.status != self.PENDING:
             raise ValidationError("Only pending rentals can be rejected")
             
-        self.status = 'rejected'
-        self.staff = staff_user
-        self.notes = reason or "Rental rejected by staff"
+        if not reason:
+            raise ValidationError("Rejection reason is required")
+            
+        self.status = self.REJECTED
+        self.staff = user
+        self.rejection_reason = reason
         self.save()
+        
+        # Send notification
+        Notification.objects.create(
+            user=self.customer.user,
+            notification_type='rental_rejected',
+            message=f"Your rental request for package '{self.package.name}' was rejected. Reason: {reason}",
+            url=reverse('customerapp:package_rental_detail', args=[self.encrypted_id])
+        )
 
-    def mark_as_completed(self, staff_user):
+    def mark_as_completed(self, user):
         """Mark rental as completed after event"""
-        if self.status != 'approved':
+        if self.status != self.APPROVED:
             raise ValidationError("Only approved rentals can be completed")
             
-        self.status = 'completed'
-        self.staff = staff_user
+        self.status = self.COMPLETED
+        self.staff = user
         self.save()
 
-    def mark_as_returned(self, staff_user, actual_return_date=None):
+    def mark_as_returned(self, user, actual_return_date=None):
         """Mark items as returned and update inventory"""
-        if self.status not in ['approved', 'completed']:
+        if self.status not in [self.APPROVED, self.COMPLETED]:
             raise ValidationError("Only approved/completed rentals can be returned")
         
         with transaction.atomic():
@@ -940,26 +998,35 @@ class WardrobePackageRental(models.Model):
                 item.quantity += package_item.quantity
                 item.save()
 
-            self.status = 'returned'
-            self.staff = staff_user
+            self.status = self.RETURNED
+            self.staff = user
             self.actual_return_date = actual_return_date or timezone.now().date()
             self.save()
 
     @property
+    def duration_days(self):
+        """Calculate the rental period in days"""
+        if self.pickup_date and self.return_date:
+            return (self.return_date - self.pickup_date).days
+        return 0
+
+    @property
     def is_overdue(self):
         """Check if the package is overdue for return"""
-        if self.status in ['returned', 'rejected']:
+        if self.status in [self.RETURNED, self.REJECTED, self.CANCELLED]:
             return False
         return self.return_date and self.return_date < timezone.now().date()
 
     def get_status_badge(self):
         """Return Bootstrap badge class for current status"""
         status_classes = {
-            'pending': 'bg-warning',
-            'approved': 'bg-success',
-            'rejected': 'bg-danger',
-            'completed': 'bg-info',
-            'returned': 'bg-secondary',
+            self.PENDING: 'bg-warning',
+            self.APPROVED: 'bg-success',
+            self.REJECTED: 'bg-danger',
+            self.COMPLETED: 'bg-info',
+            self.RETURNED: 'bg-secondary',
+            self.OVERDUE: 'bg-danger',
+            self.CANCELLED: 'bg-dark',
         }
         return status_classes.get(self.status, 'bg-secondary')
 

@@ -1,0 +1,80 @@
+{% extends 'saritasapp/base.html' %}
+
+{% block title %}Package Rentals{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Package Rentals</h5>
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <div class="btn-group" role="group">
+                <a href="?status=pending" class="btn btn-sm {% if status_filter == 'pending' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                    Pending
+                </a>
+                <a href="?status=approved" class="btn btn-sm {% if status_filter == 'approved' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                    Approved
+                </a>
+                <a href="?status=completed" class="btn btn-sm {% if status_filter == 'completed' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                    Completed
+                </a>
+                <a href="?status=returned" class="btn btn-sm {% if status_filter == 'returned' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                    Returned
+                </a>
+                <a href="?status=all" class="btn btn-sm {% if status_filter == 'all' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                    All Rentals
+                </a>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Customer</th>
+                        <th>Package</th>
+                        <th>Event Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rental in rentals %}
+                    <tr>
+                        <td>#{{ rental.id }}</td>
+                        <td>{{ rental.customer.user.get_full_name }}</td>
+                        <td>{{ rental.package.name }}</td>
+                        <td>{{ rental.event_date }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if rental.status == 'pending' %}bg-warning
+                                {% elif rental.status == 'approved' %}bg-success
+                                {% elif rental.status == 'completed' %}bg-info
+                                {% elif rental.status == 'returned' %}bg-secondary
+                                {% else %}bg-danger{% endif %}">
+                                {{ rental.get_status_display }}
+                            </span>
+                            {% if rental.is_overdue %}
+                            <span class="badge bg-danger">Overdue</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'saritasapp:package_rental_detail' encrypted_id=rental.encrypted_id %}" 
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No rentals found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

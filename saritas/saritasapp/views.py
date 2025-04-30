@@ -1846,9 +1846,8 @@ def package_rental_approvals(request):
     if status_filter != 'all':
         rentals = rentals.filter(status=status_filter)
 
-    # Add encrypted IDs to each rental
-    for rental in rentals:
-        rental.encrypted_id = encrypt_id(rental.id)
+    # Create a list of tuples containing rental and its encrypted_id
+    rental_list = [(rental, rental.encrypted_id) for rental in rentals]
 
     stats = {
         'pending': WardrobePackageRental.objects.filter(status='pending').count(),
@@ -1859,7 +1858,7 @@ def package_rental_approvals(request):
     }
 
     return render(request, 'saritasapp/package_rental_approvals.html', {
-        'rentals': rentals,
+        'rental_list': rental_list,  # Pass the list of tuples instead
         'stats': stats,
         'status_filter': status_filter,
     })
@@ -1872,14 +1871,27 @@ def update_package_rental_status(request, encrypted_id, action):
         with transaction.atomic():
             if action == 'approve':
                 rental.approve(request.user)
+                # Send approval notification
+                from saritasapp.utils import notify_customer_about_approval
+                notify_customer_about_approval(rental)
+                
             elif action == 'reject':
                 reason = request.POST.get('notes', '')
                 rental.reject(request.user, reason)
+                # Send rejection notification
+                from saritasapp.utils import notify_customer_about_rejection
+                notify_customer_about_rejection(rental)
+                
             elif action == 'complete':
                 rental.mark_as_completed(request.user)
+                # Send completion notification
+                from saritasapp.utils import notify_customer_about_completion
+                notify_customer_about_completion(rental)
+                
             elif action == 'return':
                 return_date = request.POST.get('actual_return_date')
                 rental.mark_as_returned(request.user, return_date)
+                # Optionally send return notification if needed
             
             messages.success(request, f"Package rental successfully {action}ed!")
     except Exception as e:
@@ -1887,20 +1899,17 @@ def update_package_rental_status(request, encrypted_id, action):
     
     return redirect('saritasapp:package_rental_approvals')
 
-@staff_member_required
 def package_rental_detail(request, encrypted_id):
     try:
-        rental = get_decrypted_object_or_404(
-            WardrobePackageRental, 
-            encrypted_id,
-            customer=request.user.customer_profile
-        )
-    except PermissionDenied:
-        raise PermissionDenied("You don't have a customer profile")
+        rental_id = decrypt_id(encrypted_id)
+        rental = get_object_or_404(WardrobePackageRental, pk=rental_id)
+    except Exception as e:
+        logger.error(f"Failed to decrypt rental ID {encrypted_id}: {str(e)}")
+        raise Http404("Invalid rental ID")
     
     return render(request, 'customerapp/package_rental_detail.html', {
         'rental': rental,
-        'rental_items': rental.package.package_items.all()
+        'encrypted_id': encrypted_id  # Pass the encrypted ID to template
     })
 
 @staff_member_required
@@ -1913,7 +1922,7 @@ def staff_package_rental_detail(request, encrypted_id):
     })
 
 
-    from django.http import JsonResponse
+from django.http import JsonResponse
 from .models import Rental
 from django.urls import reverse
 

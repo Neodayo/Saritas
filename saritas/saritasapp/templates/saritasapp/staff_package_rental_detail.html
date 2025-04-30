@@ -1,0 +1,289 @@
+{% extends 'saritasapp/base.html' %}
+
+{% block title %}Rental #{{ rental.id }} Details{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 class="mb-0">Rental Details</h2>
+        <span class="badge bg-{% if rental.status == 'pending' %}warning
+                              {% elif rental.status == 'approved' %}success
+                              {% elif rental.status == 'rejected' %}danger
+                              {% elif rental.status == 'completed' %}info
+                              {% else %}secondary{% endif %}">
+            {{ rental.get_status_display }}
+        </span>
+    </div>
+    
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h4>Customer Information</h4>
+                <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Name:</span>
+                        <span>{{ rental.customer.get_full_name }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Contact:</span>
+                        <span>{{ rental.customer.phone_number }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Email:</span>
+                        <span>{{ rental.customer.user.email }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Address:</span>
+                        <span>{{ rental.customer.address|default:"Not provided" }}</span>
+                    </li>
+                </ul>
+                
+                <h4>Rental Dates</h4>
+                <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Event Date:</span>
+                        <span>{{ rental.event_date|date:"M d, Y" }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Pickup Date:</span>
+                        <span>{{ rental.pickup_date|date:"M d, Y" }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Return Date:</span>
+                        <span>{{ rental.return_date|date:"M d, Y" }}</span>
+                    </li>
+                    {% if rental.actual_return_date %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Actual Return:</span>
+                        <span>{{ rental.actual_return_date|date:"M d, Y" }}</span>
+                    </li>
+                    {% endif %}
+                </ul>
+                
+                {% if rental.is_overdue %}
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle-fill"></i> This rental is overdue!
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="col-md-6">
+                <h4>Package Information</h4>
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ rental.package }}</h5>
+                        <p class="card-text">{{ rental.package.description }}</p>
+                        
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Base Price:</span>
+                                <span>₱{{ rental.package.base_price|floatformat:2 }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Deposit:</span>
+                                <span>₱{{ rental.package.deposit_price|floatformat:2 }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Discount:</span>
+                                <span>₱{{ rental.package.discount|floatformat:2 }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Includes Accessories:</span>
+                                <span>{% if rental.package.includes_accessories %}Yes{% else %}No{% endif %}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <h4>Staff Information</h4>
+                <ul class="list-group list-group-flush">
+                    {% if rental.staff %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Handled By:</span>
+                        <span>{{ rental.staff.get_full_name }}</span>
+                    </li>
+                    {% endif %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Requested On:</span>
+                        <span>{{ rental.created_at|date:"M d, Y H:i" }}</span>
+                    </li>
+                    {% if rental.status != 'pending' %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Last Updated:</span>
+                        <span>{{ rental.updated_at|date:"M d, Y H:i" }}</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+        
+        {% if rental.notes %}
+        <div class="mt-4">
+            <h4>Notes</h4>
+            <div class="card bg-light">
+                <div class="card-body">
+                    {{ rental.notes|linebreaks }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="mb-0">Package Items</h3>
+    </div>
+    
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Type</th>
+                        <th>Quantity</th>
+                        <th>Required</th>
+                        <th>Replaceable</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in rental_items %}
+                    <tr>
+                        <td>{{ item.label|default:item.inventory_item.name }}</td>
+                        <td>{{ item.inventory_item.item_type.get_name_display }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>
+                            {% if item.is_required %}
+                            <span class="badge bg-success">Yes</span>
+                            {% else %}
+                            <span class="badge bg-secondary">No</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.replacement_allowed %}
+                            <span class="badge bg-success">Yes</span>
+                            {% else %}
+                            <span class="badge bg-secondary">No</span>
+                            {% endif %}
+                        </td>
+                        <td>₱{{ item.inventory_item.price|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="table-active">
+                        <td colspan="5" class="text-end fw-bold">Total Package Price:</td>
+                        <td class="fw-bold">₱{{ rental.package.base_price|floatformat:2 }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{% url 'saritasapp:package_rental_approvals' %}" class="btn btn-outline-secondary">
+                Back to Rentals
+            </a>
+            
+            <div class="btn-group">
+                {% if rental.status == 'pending' %}
+                <form method="post" action="{% url 'saritasapp:update_rental_status' encrypted_id=rental.encrypted_id action='approve' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">Approve</button>
+                </form>
+                
+                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                    Reject
+                </button>
+                
+                <!-- Reject Modal -->
+                <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="rejectModalLabel">Reject Rental</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form method="post" action="{% url 'saritasapp:update_rental_status' encrypted_id=rental.encrypted_id action='reject' %}">
+                                {% csrf_token %}
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label for="rejectNotes" class="form-label">Reason for rejection</label>
+                                        <textarea class="form-control" id="rejectNotes" name="notes" rows="3" required></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-danger">Confirm Reject</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if rental.status == 'approved' %}
+                <form method="post" action="{% url 'saritasapp:update_rental_status' encrypted_id=rental.encrypted_id action='complete' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-info">Mark as Completed</button>
+                </form>
+                {% endif %}
+                
+                {% if rental.status == 'completed' %}
+                <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#returnModal">
+                    Mark as Returned
+                </button>
+                
+                <!-- Return Modal -->
+                <div class="modal fade" id="returnModal" tabindex="-1" aria-labelledby="returnModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="returnModalLabel">Mark as Returned</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form method="post" action="{% url 'saritasapp:update_rental_status' encrypted_id=rental.encrypted_id action='return' %}">
+                                {% csrf_token %}
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label for="returnDate" class="form-label">Actual Return Date</label>
+                                        <input type="date" class="form-control" id="returnDate" 
+                                               name="actual_return_date" value="{% now 'Y-m-d' %}">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="returnNotes" class="form-label">Notes (optional)</label>
+                                        <textarea class="form-control" id="returnNotes" name="notes" rows="3"></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Confirm Return</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set today's date as default for return date
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('returnDate').value = today;
+    
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}
+                   

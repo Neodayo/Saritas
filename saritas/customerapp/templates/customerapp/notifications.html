@@ -273,6 +273,11 @@
     </div>
 
 
+    <div class="notification {% if not notification.is_read %}unread{% endif %}" 
+     data-notification-id="{{ notification.id }}"
+     data-notification-url="{% if notification.rental %}{% url 'customerapp:package_rental_detail' encrypted_id=notification.rental.encrypted_id %}{% else %}{% url 'customerapp:rental_list' %}{% endif %}">
+    <!-- ... rest of the notification template ... -->
+
     <div class="notification-container">
         {% if notifications %}
             {% for notification in notifications %}

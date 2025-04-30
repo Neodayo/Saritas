@@ -92,6 +92,6 @@ urlpatterns = [
     path('wardrobe-packages/<str:encrypted_id>/add-items/bulk/', views.SubmitBulkPackageItemsView.as_view(), name='submit_bulk_package_items'),
     path('package-approvals/', views.package_rental_approvals, name='package_rental_approvals'),
     path('package-approvals/<str:encrypted_id>/<str:action>/', views.update_package_rental_status, name='update_package_rental_status'),
-    path('package-rentals/<str:encrypted_id>/', views.package_rental_detail, name='package_rental_detail'),
+    path('package-rentals/<str:id>/', views.package_rental_detail, name='package_rental_detail'),
     path('filter-inventory-items/', views.FilterInventoryItemsView.as_view(), name='filter_inventory_items'),
 ]

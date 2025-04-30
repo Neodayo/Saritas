@@ -1,0 +1,191 @@
+{% extends 'saritasapp/base.html' %}
+
+{% block title %}Rental #{{ rental.id }}{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Rental #{{ rental.id }} - {{ rental.get_status_display }}</h5>
+        <a href="{% url 'saritasapp:package_rental_list' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Rentals
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <h6>Customer Information</h6>
+                    <div class="p-3 bg-light rounded">
+                        <p><strong>Name:</strong> {{ rental.customer.user.get_full_name }}</p>
+                        <p><strong>Email:</strong> {{ rental.customer.user.email }}</p>
+                        <p><strong>Phone:</strong> {{ rental.customer.phone_number|default:"Not provided" }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <h6>Rental Details</h6>
+                    <div class="p-3 bg-light rounded">
+                        <p><strong>Package:</strong> {{ rental.package.name }}</p>
+                        <p><strong>Event Date:</strong> {{ rental.event_date }}</p>
+                        <p><strong>Pickup Date:</strong> {{ rental.pickup_date|default:"Not set" }}</p>
+                        <p><strong>Return Date:</strong> {{ rental.return_date|default:"Not set" }}</p>
+                        <p><strong>Rental Period:</strong> {{ rental.calculate_rental_period }} days</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <h6>Pricing Information</h6>
+            <div class="p-3 bg-light rounded">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Base Price:</strong> ₱{{ rental.package.final_price|floatformat:2 }}</p>
+                        <p><strong>Deposit:</strong> ₱{{ rental.package.deposit_price|floatformat:2 }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Customization Fee:</strong> ₱{{ rental.customization_fee|floatformat:2 }}</p>
+                        <p><strong>Total Cost:</strong> ₱{{ rental.total_price|floatformat:2 }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if rental.status == 'pending' %}
+        <div class="mb-4">
+            <h6>Approve Rental</h6>
+            <form method="post" action="{% url 'saritasapp:process_rental_approval' encrypted_id=rental.encrypted_id %}">
+                {% csrf_token %}
+                {{ approval_form|crispy }}
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <button type="submit" name="status" value="rejected" class="btn btn-danger">
+                        <i class="bi bi-x-circle"></i> Reject
+                    </button>
+                    <button type="submit" name="status" value="approved" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Approve
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+
+        {% if rental.status == 'approved' and not rental.actual_return_date %}
+        <div class="mb-4">
+            <h6>Mark as Completed</h6>
+            <p>Use this after the event when the customer returns the items.</p>
+            <form method="post" action="{% url 'saritasapp:process_rental_return' encrypted_id=rental.encrypted_id %}">
+                {% csrf_token %}
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Mark as Completed
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+
+        {% if rental.status == 'completed' and not rental.actual_return_date %}
+        <div class="mb-4">
+            <h6>Process Return</h6>
+            <form method="post" action="{% url 'saritasapp:process_rental_return' encrypted_id=rental.encrypted_id %}">
+                {% csrf_token %}
+                {{ return_form|crispy }}
+                <div class="d-flex justify-content-end mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Mark as Returned
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+
+        <h6 class="mb-3">Rented Items</h6>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Quantity</th>
+                        <th>Rental Price</th>
+                        <th>Status</th>
+                        {% if rental.status in ['approved', 'completed'] %}
+                        <th>Return Details</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in rental.package.package_items.all %}
+                    <tr>
+                        <td>{{ item.display_name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>₱{{ item.inventory_item.rental_price|floatformat:2 }}</td>
+                        <td>
+                            {% if item.is_in_stock %}
+                                <span class="badge bg-success">In Stock</span>
+                            {% else %}
+                                <span class="badge bg-danger">Out of Stock</span>
+                            {% endif %}
+                        </td>
+                        {% if rental.status in ['approved', 'completed'] %}
+                        <td>
+                            {% if rental.status == 'returned' %}
+                                <span class="badge bg-secondary">Returned</span>
+                                {% if item.condition %}
+                                    <span class="badge bg-{% if item.condition == 'excellent' %}success{% elif item.condition == 'good' %}info{% elif item.condition == 'fair' %}warning{% else %}danger{% endif %}">
+                                        {{ item.get_condition_display }}
+                                    </span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge bg-warning">Pending Return</span>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="{% if rental.status in ['approved', 'completed'] %}5{% else %}4{% endif %}" class="text-center">No items in this rental</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if rental.customizations.exists %}
+        <div class="mt-4">
+            <h6>Customizations</h6>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Action</th>
+                            <th>Details</th>
+                            <th>Price Adjustment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customization in rental.customizations.all %}
+                        <tr>
+                            <td>{{ customization.get_action_display }}</td>
+                            <td>
+                                {% if customization.original_item %}
+                                    Original: {{ customization.original_item.display_name }}<br>
+                                {% endif %}
+                                {% if customization.inventory_item %}
+                                    New: {{ customization.inventory_item.name }}
+                                {% endif %}
+                                {% if customization.new_quantity %}
+                                    (New Qty: {{ customization.new_quantity }})
+                                {% endif %}
+                            </td>
+                            <td>₱{{ customization.price_adjustment|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
