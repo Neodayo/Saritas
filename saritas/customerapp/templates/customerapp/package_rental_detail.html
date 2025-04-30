@@ -1,18 +1,11 @@
 {% extends 'customerapp/base.html' %}
-{% load static %}
-
-{% block title %}Package Rental Details{% endblock %}
-
-{% block stylesheets %}
-<link rel="stylesheet" href="{% static 'css/rental_list.css' %}">
-{% endblock %}
 
 {% block content %}
 <div class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Package Rental Details</h2>
         <a href="{% url 'customerapp:my_package_rentals' %}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left"></i> Back to My Packages
+            <i class="fas fa-arrow-left"></i> Back to My Rentals
         </a>
     </div>
 
@@ -24,18 +17,30 @@
             <div class="row">
                 <div class="col-md-6">
                     <p><strong>Status:</strong> 
-                        <span class="badge bg-{% if rental.status == 'approved' %}success{% elif rental.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                        <span class="badge bg-{% if rental.status == 'approved' %}success{% elif rental.status == 'pending' %}warning{% elif rental.status == 'rejected' %}danger{% else %}secondary{% endif %}">
                             {{ rental.get_status_display }}
                         </span>
+                        {% if rental.is_overdue %}<span class="badge bg-danger ms-2">Overdue</span>{% endif %}
                     </p>
                     <p><strong>Event Date:</strong> {{ rental.event_date|date:"F j, Y" }}</p>
                     <p><strong>Pickup Date:</strong> {{ rental.pickup_date|date:"F j, Y" }}</p>
                     <p><strong>Return Date:</strong> {{ rental.return_date|date:"F j, Y" }}</p>
+                    {% if rental.status == 'rejected' and rental.notes %}
+                    <div class="alert alert-danger mt-3">
+                        <strong>Rejection Reason:</strong> {{ rental.notes }}
+                    </div>
+                    {% endif %}
                 </div>
                 <div class="col-md-6">
                     <p><strong>Package Price:</strong> ₱{{ rental.package.base_price|floatformat:2 }}</p>
                     <p><strong>Deposit:</strong> ₱{{ rental.package.deposit_price|floatformat:2 }}</p>
                     <p><strong>Total Cost:</strong> ₱{{ rental.package.get_total_price|floatformat:2 }}</p>
+                    {% if rental.status == 'approved' %}
+                    <div class="alert alert-success mt-3">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Your rental has been approved! Please contact us to arrange pickup.
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -46,27 +51,30 @@
             <h4 class="mb-0">Items Included</h4>
         </div>
         <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Item</th>
-                            <th>Type</th>
-                            <th>Color</th>
-                            <th>Size</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in rental_items %}
-                        <tr>
-                            <td>{{ item.inventory_item.name }}</td>
-                            <td>{{ item.inventory_item.item_type }}</td>
-                            <td>{{ item.inventory_item.color }}</td>
-                            <td>{{ item.inventory_item.size }}</td>
-                        </tr>
+            <div class="row">
+                {% for type_name, items in items_by_type.items %}
+                <div class="col-md-6 mb-4">
+                    <h5>{{ type_name }}</h5>
+                    <ul class="list-group">
+                        {% for item in items %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ item.inventory_item.name }}</strong>
+                                    {% if item.inventory_item.color %}
+                                    <br><small>Color: {{ item.inventory_item.color }}</small>
+                                    {% endif %}
+                                    {% if item.inventory_item.size %}
+                                    <br><small>Size: {{ item.inventory_item.size }}</small>
+                                    {% endif %}
+                                </div>
+                                <span class="badge bg-primary">Qty: {{ item.quantity }}</span>
+                            </div>
+                        </li>
                         {% endfor %}
-                    </tbody>
-                </table>
+                    </ul>
+                </div>
+                {% endfor %}
             </div>
         </div>
     </div>

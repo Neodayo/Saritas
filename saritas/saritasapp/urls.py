@@ -11,6 +11,7 @@ app_name = 'saritasapp'
 register_converter(EncryptedIDConverter, 'encrypted')
 
 urlpatterns = [
+    path('branches/add/',views.add_branch, name='add_branch'),
     path('add-inventory/', views.add_inventory, name='add_inventory'),
     path('inventory/', views.inventory_view, name='inventory_list'),
     path('add-category/', views.add_category, name='add_category'),
@@ -91,7 +92,9 @@ urlpatterns = [
     path('wardrobe-packages/<str:encrypted_id>/add-item/submit/', views.AddPackageItemSubmitView.as_view(), name='submit_package_item'),
     path('wardrobe-packages/<str:encrypted_id>/add-items/bulk/', views.SubmitBulkPackageItemsView.as_view(), name='submit_bulk_package_items'),
     path('package-approvals/', views.package_rental_approvals, name='package_rental_approvals'),
-    path('package-approvals/<str:encrypted_id>/<str:action>/', views.update_package_rental_status, name='update_package_rental_status'),
-    path('package-rentals/<str:id>/', views.package_rental_detail, name='package_rental_detail'),
+    path('package-approvals/<str:encrypted_id>/<str:action>/', 
+         views.update_package_rental_status, 
+         name='update_package_rental_status'),
+    path('package-rentals/<str:encrypted_id>/', views.package_rental_detail, name='package_rental_detail'),
     path('filter-inventory-items/', views.FilterInventoryItemsView.as_view(), name='filter_inventory_items'),
 ]

@@ -70,11 +70,6 @@
                         </div>
                     </div>
                     
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#rentModal">
-                            <i class="fas fa-calendar-check me-2"></i> Rent This Package
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
@@ -115,46 +110,4 @@
     </div>
 </div>
 
-<!-- Rent Modal -->
-<div class="modal fade" id="rentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Rent {{ package.name }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="post" action="{% url 'customerapp:create_rental' package.pk %}">
-                {% csrf_token %}
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Rental Period</label>
-                        <select class="form-select" name="rental_days" required>
-                            <option value="">Select duration</option>
-                            <option value="1">1 day</option>
-                            <option value="3">3 days</option>
-                            <option value="7">1 week</option>
-                            <option value="14">2 weeks</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Event Date</label>
-                        <input type="date" class="form-control" name="event_date" required>
-                    </div>
-                    <div class="alert alert-info">
-                        <h6>Pricing Summary</h6>
-                        <ul class="mb-0">
-                            <li>Package: ₱{{ package.base_price|floatformat:2 }}</li>
-                            <li>Deposit: ₱{{ package.deposit_price|floatformat:2 }}</li>
-                            <li class="fw-bold">Total: ₱{{ total_price|floatformat:2 }}</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Confirm Rental</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 {% endblock %}

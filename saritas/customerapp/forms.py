@@ -213,7 +213,7 @@ class ReservationForm(forms.ModelForm):
 class WardrobePackageRentalForm(forms.ModelForm):
     class Meta:
         model = WardrobePackageRental
-        fields = ['event_date']  # Only ask for event date
+        fields = ['event_date']  # Only event_date should be user-provided
         
         widgets = {
             'event_date': forms.DateInput(attrs={

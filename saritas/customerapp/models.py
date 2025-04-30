@@ -72,3 +72,5 @@ class FeaturedCollectionsSection(models.Model):
         default_cats = Category.objects.filter(name__in=self.DEFAULT_CATEGORIES)
         self.categories.set(default_cats)
         self.save()
+
+        

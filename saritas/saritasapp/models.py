@@ -912,16 +912,10 @@ class WardrobePackageRental(models.Model):
     @property
     def encrypted_id(self):
         """Returns encrypted ID for URLs"""
-        if not self.pk:
-            return None
-        try:
-            from core.utils.encryption import encrypt_id
-            return encrypt_id(self.pk)
-        except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Failed to encrypt rental ID {self.pk}: {str(e)}")
-            return None
+        return encrypt_id(self.pk)
+
+    def get_absolute_url(self):
+        return reverse('customerapp:package_rental_detail', args=[self.encrypted_id])
 
     def approve(self, user):
         """Approve the package rental"""
@@ -1032,18 +1026,14 @@ class WardrobePackageRental(models.Model):
 
     def clean(self):
         """Validate the rental dates"""
-        if self.event_date and self.event_date < timezone.now().date():
-            raise ValidationError("Event date cannot be in the past")
-            
+        # Remove date validation since it's handled in the form
         if self.return_date and self.pickup_date and self.return_date <= self.pickup_date:
             raise ValidationError("Return date must be after pickup date")
         
         super().clean()
 
     def save(self, *args, **kwargs):
-        """Override save to include validation and auto-set dates"""
-        self.full_clean()
-        
+        """Override save to auto-set dates"""
         # Auto-set pickup and return dates if not set
         if self.event_date and not self.pickup_date:
             self.pickup_date = self.event_date - timedelta(days=1)

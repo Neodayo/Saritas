@@ -59,6 +59,21 @@ from core.utils.encryption import (
 
 logger = logging.getLogger(__name__)
 
+
+from django.shortcuts import render, redirect
+from .forms import BranchForm
+
+@user_passes_test(lambda u: u.is_superuser)
+def add_branch(request):    
+    if request.method == 'POST':
+        form = BranchForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('add_branch')  # Redirect to same page after adding
+    else:
+        form = BranchForm()
+    return render(request, 'saritasapp/add_branch.html', {'form': form})
+
     
 @staff_member_required
 def add_inventory(request):
@@ -1785,7 +1800,15 @@ class WardrobePackageDeleteView(StaffRequiredMixin, UserPassesTestMixin, DeleteV
 @login_required
 @user_passes_test(lambda u: u.is_staff)
 def staff_rental_requests(request):
-    pending_rentals = WardrobePackageRental.objects.filter(status='pending').order_by('event_date')
+    logger.info(f"Staff user {request.user} accessing rental requests")
+    pending_rentals = WardrobePackageRental.objects.filter(
+        status=WardrobePackageRental.PENDING
+    ).select_related(
+        'customer__user', 'package'
+    ).order_by('event_date')
+    
+    logger.info(f"Found {pending_rentals.count()} pending rentals")
+    
     return render(request, 'staff/rental_requests.html', {
         'pending_rentals': pending_rentals
     })
@@ -1812,21 +1835,21 @@ def staff_manage_rental(request, encrypted_id):
         'form': form
     })
 
-@login_required
-@user_passes_test(lambda u: u.is_staff)
+@staff_member_required
 def process_return(request, encrypted_id):
     rental = get_decrypted_object_or_404(WardrobePackageRental, encrypted_id)
     
     if request.method == 'POST':
         form = PackageReturnForm(request.POST, instance=rental)
         if form.is_valid():
-            rental = form.save(commit=False)
-            rental.status = 'returned'
-            rental.staff = request.user
-            rental.save()
-            
-            messages.success(request, f"Package marked as returned!")
-            return redirect('saritasapp:staff_dashboard')
+            try:
+                rental = form.save(commit=False)
+                rental.mark_as_returned(request.user)  # Use model method
+                messages.success(request, "Package marked as returned!")
+                return redirect('saritasapp:staff_dashboard')
+            except ValidationError as e:
+                messages.error(request, str(e))
+    
     else:
         form = PackageReturnForm(instance=rental)
     
@@ -1837,30 +1860,31 @@ def process_return(request, encrypted_id):
 
 @staff_member_required
 def package_rental_approvals(request):
-    status_filter = request.GET.get('status', 'pending')
+    """View for listing package rentals needing approval."""
+    status_filter = request.GET.get('status', 'pending').lower()
     
-    rentals = WardrobePackageRental.objects.select_related(
+    valid_statuses = [s[0] for s in WardrobePackageRental.STATUS_CHOICES]
+    if status_filter not in valid_statuses:
+        status_filter = 'pending'
+    
+    rentals = WardrobePackageRental.objects.filter(
+        status=status_filter
+    ).select_related(
         'customer__user', 'package'
-    ).order_by('-created_at')
-
-    if status_filter != 'all':
-        rentals = rentals.filter(status=status_filter)
-
-    # Create a list of tuples containing rental and its encrypted_id
-    rental_list = [(rental, rental.encrypted_id) for rental in rentals]
-
-    stats = {
-        'pending': WardrobePackageRental.objects.filter(status='pending').count(),
-        'approved': WardrobePackageRental.objects.filter(status='approved').count(),
-        'rejected': WardrobePackageRental.objects.filter(status='rejected').count(),
-        'completed': WardrobePackageRental.objects.filter(status='completed').count(),
-        'returned': WardrobePackageRental.objects.filter(status='returned').count(),
-    }
-
+    ).order_by('event_date')
+    
+    rental_list = []
+    for rental in rentals:
+        try:
+            encrypted_id = encrypt_id(rental.id)
+            rental_list.append((rental, encrypted_id))
+        except Exception as e:
+            logger.error(f"Error encrypting rental ID {rental.id}: {e}")
+            continue
+    
     return render(request, 'saritasapp/package_rental_approvals.html', {
-        'rental_list': rental_list,  # Pass the list of tuples instead
-        'stats': stats,
-        'status_filter': status_filter,
+        'rental_list': rental_list,
+        'current_status': status_filter
     })
 
 @staff_member_required
@@ -1868,45 +1892,34 @@ def update_package_rental_status(request, encrypted_id, action):
     try:
         rental = get_decrypted_object_or_404(WardrobePackageRental, encrypted_id)
         
-        with transaction.atomic():
-            if action == 'approve':
-                rental.approve(request.user)
-                # Send approval notification
-                from saritasapp.utils import notify_customer_about_approval
-                notify_customer_about_approval(rental)
-                
-            elif action == 'reject':
-                reason = request.POST.get('notes', '')
-                rental.reject(request.user, reason)
-                # Send rejection notification
-                from saritasapp.utils import notify_customer_about_rejection
-                notify_customer_about_rejection(rental)
-                
-            elif action == 'complete':
-                rental.mark_as_completed(request.user)
-                # Send completion notification
-                from saritasapp.utils import notify_customer_about_completion
-                notify_customer_about_completion(rental)
-                
-            elif action == 'return':
-                return_date = request.POST.get('actual_return_date')
-                rental.mark_as_returned(request.user, return_date)
-                # Optionally send return notification if needed
+        if action == 'approve':
+            rental.approve(request.user)  # Use model method
+            messages.success(request, "Rental approved successfully!")
             
-            messages.success(request, f"Package rental successfully {action}ed!")
+        elif action == 'reject':
+            if request.method == 'POST':
+                reason = request.POST.get('notes', '')
+                rental.reject(request.user, reason)  # Use model method
+                messages.success(request, "Rental rejected successfully!")
+            else:
+                raise PermissionDenied
+                
+        elif action == 'complete':
+            rental.mark_as_completed(request.user)  # Use model method
+            messages.success(request, "Rental marked as completed!")
+            
+        return redirect('saritasapp:package_rental_approvals')
+        
     except Exception as e:
         messages.error(request, f"Error processing request: {str(e)}")
-    
-    return redirect('saritasapp:package_rental_approvals')
+        return redirect('saritasapp:package_rental_approvals')
 
 def package_rental_detail(request, encrypted_id):
-    try:
-        rental_id = decrypt_id(encrypted_id)
-        rental = get_object_or_404(WardrobePackageRental, pk=rental_id)
-    except Exception as e:
-        logger.error(f"Failed to decrypt rental ID {encrypted_id}: {str(e)}")
-        raise Http404("Invalid rental ID")
-    
+    rental = get_decrypted_object_or_404(
+        WardrobePackageRental, 
+        encrypted_id,
+        queryset=WardrobePackageRental.objects.select_related('customer__user', 'package')
+    )
     return render(request, 'customerapp/package_rental_detail.html', {
         'rental': rental,
         'encrypted_id': encrypted_id  # Pass the encrypted ID to template
@@ -1915,7 +1928,6 @@ def package_rental_detail(request, encrypted_id):
 @staff_member_required
 def staff_package_rental_detail(request, encrypted_id):
     rental = get_decrypted_object_or_404(WardrobePackageRental, encrypted_id)
-
     return render(request, 'saritasapp/staff_package_rental_detail.html', {
         'rental': rental,
         'rental_items': rental.package.package_items.all()

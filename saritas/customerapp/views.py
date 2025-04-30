@@ -404,7 +404,6 @@ def collections_view(request):
 
     return render(request, 'customerapp/collections.html', {'categories': categories})
 
-#wardrobe packages
 class CustomerPackageListView(ListView):
     model = WardrobePackage
     template_name = 'customerapp/package_list.html'
@@ -422,100 +421,63 @@ class CustomerPackageDetailView(DetailView):
     context_object_name = 'package'
     
     def get_object(self, queryset=None):
-        return get_decrypted_object_or_404(
-            WardrobePackage, 
-            self.kwargs['encrypted_id'],
-            queryset=self.get_queryset()
-        )
-    
-    def get_queryset(self):
-        return WardrobePackage.objects.filter(
+        return get_object_or_404(
+            WardrobePackage,
+            pk=self.kwargs['id'],
             status='fixed'
-        ).prefetch_related(
-            'package_items__inventory_item',
-            'package_items__inventory_item__item_type'
         )
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         package = self.object
-        
-        # Group items by type for display
+
+        # Group items by type
         items_by_type = {}
         for item in package.package_items.all():
             type_name = item.inventory_item.item_type.get_name_display()
-            if type_name not in items_by_type:
-                items_by_type[type_name] = []
-            items_by_type[type_name].append(item)
-        
+            items_by_type.setdefault(type_name, []).append(item)
+
         context['items_by_type'] = items_by_type
         context['total_price'] = package.base_price + package.deposit_price
         return context
 
 class CreateRentalView(LoginRequiredMixin, CreateView):
     model = WardrobePackageRental
-    form_class = WardrobePackageRentalForm
+    form_class = WardrobePackageRentalForm  # Now only asks for event_date
     template_name = 'customerapp/rent_package.html'
 
     def dispatch(self, request, *args, **kwargs):
-        self.package = get_decrypted_object_or_404(WardrobePackage, pk=kwargs['encrypted_id'])
+        self.package = get_object_or_404(WardrobePackage, pk=kwargs['id'])
         return super().dispatch(request, *args, **kwargs)
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['initial'] = {
-            'event_date': timezone.now().date() + timedelta(days=7)
-        }
-        return kwargs
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['package'] = self.package
-        context['min_date'] = (timezone.now() + timedelta(days=1)).strftime('%Y-%m-%d')
-        return context
 
     def form_valid(self, form):
         try:
             with transaction.atomic():
-                # Check inventory availability first
-                for item in self.package.package_items.all():
-                    if item.inventory_item.quantity < item.quantity:
-                        raise ValidationError(
-                            f"Not enough stock for {item.inventory_item.name}. "
-                            f"Available: {item.inventory_item.quantity}, Needed: {item.quantity}"
-                        )
-
                 rental = form.save(commit=False)
                 rental.customer = self.request.user.customer_profile
                 rental.package = self.package
-                rental.status = 'pending'
-                
-                # Calculate dates
-                rental.pickup_date = rental.event_date - timedelta(days=1)
-                rental.return_date = rental.event_date + timedelta(days=1)
+                rental.status = WardrobePackageRental.PENDING
                 rental.save()
                 
-                # Decrement inventory
-                for item in self.package.package_items.all():
-                    item.inventory_item.quantity -= item.quantity
-                    item.inventory_item.save()
+                # Create rental items for each package item
+                for package_item in self.package.package_items.all():
+                    PackageRentalItem.objects.create(
+                        package_rental=rental,
+                        inventory_item=package_item.inventory_item,
+                        quantity=package_item.quantity,
+                        rental_price=package_item.inventory_item.rental_price
+                    )
                 
-                # Send notification
-                notify_staff_about_rental_request.delay(rental.id)
-                
-                messages.success(
-                    self.request, 
-                    f"Your {self.package.name} package has been reserved for {rental.event_date}!"
-                )
-                return redirect('customerapp:package_rental_detail', rental_id=rental.pk)
+                messages.success(self.request, f"Your {self.package.name} package has been reserved!")
+                return redirect('customerapp:package_rental_detail', rental_id=rental.encrypted_id)
                 
         except Exception as e:
             messages.error(self.request, f"Error: {str(e)}")
             return self.form_invalid(form)
-    
+
 @login_required
 def rent_package(request, package_id):
-    package = get_decrypted_object_or_404(WardrobePackage, package_id)
+    package = get_object_or_404(WardrobePackage, pk=package_id)
     
     if request.method == 'POST':
         form = WardrobePackageRentalForm(request.POST)
@@ -526,55 +488,53 @@ def rent_package(request, package_id):
                     rental.customer = request.user.customer_profile
                     rental.package = package
                     rental.status = 'pending'
-                    
-                    # Save will automatically calculate dates and price
                     rental.save()
                     
                     messages.success(request, 
                         f"Your {package.name} package has been reserved for {rental.event_date}!"
                     )
-                    return redirect('customerapp:my_package_rentals')
+                    return redirect('customerapp:package_rental_detail', rental_id=rental.encrypted_id)
                     
             except Exception as e:
                 messages.error(request, f"Error: {str(e)}")
+                return redirect('customerapp:package_detail', id=package.id)
     else:
-        form = WardrobePackageRentalForm(initial={
-            'event_date': timezone.now().date() + timedelta(days=7)  # Default: 1 week from today
-        })
-    
-    return render(request, 'customerapp/rent_package.html', {
-        'form': form,
-        'package': package,
-        'min_date': (timezone.now() + timedelta(days=1)).strftime('%Y-%m-%d')
-    })
+        return redirect('customerapp:package_detail', id=package.id)
 
 @login_required
 def package_rental_detail(request, rental_id):
-    rental = get_decrypted_object_or_404(
-        WardrobePackageRental, 
-        rental_id,
-        queryset=WardrobePackageRental.objects.filter(customer=request.user.customer_profile)
-    )
-    rental_items = rental.package.package_items.select_related(
-        'inventory_item',
-        'inventory_item__item_type',
-        'inventory_item__color',
-        'inventory_item__size'
-    ).all() 
+    try:
+        decrypted_id = decrypt_id(rental_id)
+        rental = get_object_or_404(
+            WardrobePackageRental.objects.select_related('package', 'customer'),
+            id=decrypted_id,
+            customer=request.user.customer_profile
+        )
+        
+        # Group items by type
+        items_by_type = {}
+        for item in rental.package.package_items.all():
+            type_name = item.inventory_item.item_type.get_name_display()
+            items_by_type.setdefault(type_name, []).append(item)
+            
+        return render(request, 'customerapp/package_rental_detail.html', {
+            'rental': rental,
+            'items_by_type': items_by_type
+        })
+            
+    except (ValueError, TypeError):
+        raise Http404("Invalid rental ID")
     
-    return render(request, 'customerapp/package_rental_detail.html', {
-        'rental': rental,
-        'rental_items': rental_items
-    })
-
 @login_required
 def my_package_rentals(request):
     rentals = WardrobePackageRental.objects.filter(
         customer=request.user.customer_profile
     ).order_by('-created_at')
-    return render(request, 'customerapp/my_package_rentals.html', {
+    return render(request, 'customerapp/customer_profile.html', {
         'rentals': rentals
     })
+
+
 def terms(request):
     return render(request, 'customerapp/terms.html')
 
@@ -751,3 +711,27 @@ def update_featured_collections(request):
         return JsonResponse({'success': True})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    
+
+    # views.py
+from django.shortcuts import get_object_or_404
+from django.http import Http404
+from core.utils.encryption import decrypt_id
+
+def package_detail(request, package_id):
+    try:
+        # Try to decrypt if it's an encrypted ID
+        try:
+            decrypted_id = decrypt_id(package_id)
+            package = get_object_or_404(WardrobePackage, pk=decrypted_id)
+        except (ValueError, ValidationError):
+            # Fall back to numeric ID if decryption fails
+            if package_id.isdigit():
+                package = get_object_or_404(WardrobePackage, pk=int(package_id))
+            else:
+                raise Http404("Invalid package ID format")
+                
+    except Exception as e:
+        raise Http404("Package not found")
+    
+    return render(request, 'saritasapp/package_detail.html', {'package': package})

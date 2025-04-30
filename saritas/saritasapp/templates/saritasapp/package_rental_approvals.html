@@ -3,157 +3,153 @@
 
 {% block title %}Package Rental Approvals | Sarita's{% endblock %}
 
-{% block content %}
-    <style>
-        /* Main Container */
-        .approvals-container {
-            max-width: 1400px;
-            margin: 30px auto;
-            padding: 30px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-            font-family: 'Arial', sans-serif;
-        }
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .page-header h1 {
-            color: #8E793E;
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin: 0;
-        }
-        .status-filters {
-            display: flex;
-            gap: 20px;
-        }
-        .status-filter {
-            color: #007bff;
-            text-decoration: none;
-        }
-        .status-filter.active {
-            font-weight: bold;
-            color: #0056b3;
-        }
-        .approvals-table {
-            width: 100%;
-            margin-top: 20px;
-            border-collapse: collapse;
-        }
-        .approvals-table th, .approvals-table td {
-            padding: 12px;
-            text-align: left;
-        }
-        .approvals-table th {
-            background-color: #f8f9fa;
-        }
-        .approvals-table td {
-            border-bottom: 1px solid #f1f1f1;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        .action-btn {
-            padding: 8px 12px;
-            font-size: 14px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .btn-approve {
-            background-color: #28a745;
-            color: white;
-        }
-        .btn-reject {
-            background-color: #dc3545;
-            color: white;
-        }
-        .btn-complete {
-            background-color: #17a2b8;
-            color: white;
-        }
-        .btn-view {
-            background-color: #007bff;
-            color: white;
-        }
-        .status-badge {
-            padding: 5px 10px;
-            border-radius: 12px;
-            font-weight: bold;
-        }
-        .status-pending {
-            background-color: #ffc107;
-            color: #fff;
-        }
-        .status-approved {
-            background-color: #28a745;
-            color: #fff;
-        }
-        .status-completed {
-            background-color: #17a2b8;
-            color: #fff;
-        }
-        .highlight-row {
-            background-color: #f8d7da;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-content {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            width: 400px;
-        }
-        .modal-footer {
-            display: flex;
-            justify-content: flex-end;
-        }
-        .modal-btn {
-            padding: 10px 15px;
-            margin-left: 10px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .modal-btn-cancel {
-            background-color: #f8f9fa;
-        }
-        .modal-btn-confirm {
-            background-color: #dc3545;
-            color: white;
-        }
-    </style>
+{% block extra_css %}
+<style>
+    /* Status Badges */
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .status-pending { background-color: #FFC107; color: #000; }
+    .status-approved { background-color: #28A745; color: #fff; }
+    .status-rejected { background-color: #DC3545; color: #fff; }
+    .status-completed { background-color: #17A2B8; color: #fff; }
+    .status-returned { background-color: #6C757D; color: #fff; }
+    .status-overdue { background-color: #DC3545; color: #fff; }
+    .status-cancelled { background-color: #343A40; color: #fff; }
+    
+    /* Action Buttons */
+    .action-btn {
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .action-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .btn-approve { background-color: #28A745; color: white; }
+    .btn-decline { background-color: #DC3545; color: white; }
+    .btn-complete { background-color: #17A2B8; color: white; }
+    .btn-view { background-color: #007BFF; color: white; }
+    
+    /* Overdue Highlighting */
+    .highlight-row {
+        background-color: #d1b149 !important;
+        border-left: 4px solid #DC3545;
+    }
+    .highlight-row td {
+        position: relative;
+    }
+    
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 1050;
+        justify-content: center;
+        align-items: center;
+    }
+    .modal-content {
+        background-color: white;
+        padding: 25px;
+        border-radius: 8px;
+        width: 100%;
+        max-width: 500px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .modal-title {
+        font-size: 1.25rem;
+        margin-bottom: 20px;
+        color: #333;
+        font-weight: 600;
+    }
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    .modal-btn {
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .modal-btn-cancel {
+        background-color: #F8F9FA;
+        border: 1px solid #DEE2E6;
+    }
+    .modal-btn-confirm {
+        background-color: #DC3545;
+        color: white;
+        border: none;
+    }
+    
+    /* Table Styles */
+    .approvals-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    .approvals-table th {
+        background-color: #F8F9FA;
+        color: #495057;
+        font-weight: 600;
+        padding: 12px 15px;
+        position: sticky;
+        top: 0;
+    }
+    .approvals-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #E9ECEF;
+        vertical-align: middle;
+    }
+    .approvals-table tr:last-child td {
+        border-bottom: none;
+    }
+</style>
+{% endblock %}
 
-    <div class="approvals-container">
-        <div class="page-header">
-            <h1>Package Rental Approvals</h1>
-            <div class="status-filters">
-                <a href="?status=pending" class="status-filter {% if status_filter == 'pending' %}active{% endif %}">
-                    Pending ({{ stats.pending }})
-                </a>
-                <a href="?status=approved" class="status-filter {% if status_filter == 'approved' %}active{% endif %}">
-                    Approved ({{ stats.approved }})
-                </a>
-                <a href="?status=all" class="status-filter {% if status_filter == 'all' %}active{% endif %}">
-                    View All
-                </a>
+{% block content %}
+<div class="min-h-screen bg-amber-50 p-4 md:p-8">
+    <div class="max-w-7xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden border border-amber-100">
+        <div class="px-6 py-4 border-b border-amber-100">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-amber-800" style="font-family: 'Playfair Display', serif;">
+                    <i class="fas fa-concierge-bell mr-2"></i>Package Rental Approvals
+                </h1>
+                <div class="flex gap-4">
+                    <a href="?status=pending" class="px-3 py-1 rounded-full text-sm font-medium {% if request.GET.status == 'pending' or not request.GET.status %}bg-amber-100 text-amber-800{% else %}text-gray-600 hover:text-amber-800{% endif %}">
+                        Pending
+                    </a>
+                    <a href="?status=approved" class="px-3 py-1 rounded-full text-sm font-medium {% if request.GET.status == 'approved' %}bg-green-100 text-green-800{% else %}text-gray-600 hover:text-green-800{% endif %}">
+                        Approved
+                    </a>
+                    <a href="?status=overdue" class="px-3 py-1 rounded-full text-sm font-medium {% if request.GET.status == 'overdue' %}bg-red-100 text-red-800{% else %}text-gray-600 hover:text-red-800{% endif %}">
+                        Overdue
+                    </a>
+                </div>
             </div>
         </div>
 
-        <div class="table-container">
-            <table class="approvals-table" id="approvalsTable">
+        <div class="overflow-x-auto">
+            <table class="approvals-table">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -165,14 +161,14 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for rental in rentals %}
+                    {% for rental, encrypted_id in rental_list %}
                     <tr class="{% if rental.is_overdue %}highlight-row{% endif %}">
-                        <td>#{{ rental.id }}</td>
+                        <td class="font-mono">#{{ rental.id }}</td>
                         <td>{{ rental.customer.user.get_full_name }}</td>
                         <td>
-                            <a href="{% url 'customerapp:package_rental_detail' rental.id %}" class="text-link">
+                            <a href="{% url 'saritasapp:package_rental_detail' encrypted_id %}" class="text-amber-700 hover:text-amber-900 font-medium">
                                 {{ rental.package.name }}
-                            </a>                            
+                            </a>
                         </td>
                         <td>{{ rental.event_date|date:"M d, Y" }}</td>
                         <td>
@@ -182,36 +178,29 @@
                             </span>
                         </td>
                         <td>
-                            <div class="action-buttons">
-                                {% if rental.status == 'pending' %}
-                                <form method="post" action="{% url 'saritasapp:update_package_rental_status' rental.encrypted_id 'approve' %}">
-                                    {% csrf_token %}
-                                    <button type="submit" class="action-btn btn-approve">
-                                        <i class="fas fa-check-circle"></i> Approve
+                            <div class="flex gap-2">
+                                {% if rental.status == rental.PENDING %}
+                                    <a href="{% url 'saritasapp:update_package_rental_status' encrypted_id 'approve' %}" class="action-btn btn-approve">
+                                        <i class="fas fa-check"></i> Approve
+                                    </a>
+                                    <button onclick="openModal('rejectModal{{ rental.id }}')" class="action-btn btn-decline">
+                                        <i class="fas fa-times"></i> Decline
                                     </button>
-                                </form>
-                                <button onclick="openModal('rejectModal{{ rental.id }}')" class="action-btn btn-reject">
-                                    <i class="fas fa-times-circle"></i> Reject
-                                </button>
-                                {% endif %}
-                                
-                                {% if rental.status == 'approved' %}
-                                <form method="post" action="{% url 'saritasapp:update_package_rental_status' rental.encrypted_id 'complete' %}">
-                                    {% csrf_token %}
-                                    <button type="submit" class="action-btn btn-complete">
+                                {% elif rental.status == rental.APPROVED %}
+                                    <a href="{% url 'saritasapp:update_package_rental_status' encrypted_id 'complete' %}" class="action-btn btn-complete">
                                         <i class="fas fa-check-double"></i> Complete
-                                    </button>
-                                </form>
+                                    </a>
                                 {% endif %}
+                                <a href="{% url 'saritasapp:package_rental_detail' encrypted_id %}" class="action-btn btn-view">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
                             </div>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="empty-state">
-                            <i class="fas fa-box-open"></i>
-                            <p>No package rentals found</p>
-                            <p>There are currently no package rentals matching your criteria</p>
+                        <td colspan="6" class="text-center py-8 text-gray-500">
+                            <i class="fas fa-inbox mr-2"></i> No package rentals found
                         </td>
                     </tr>
                     {% endfor %}
@@ -219,59 +208,67 @@
             </table>
         </div>
     </div>
+</div>
 
-    <!-- Modals -->
-    {% for rental in rentals %}
-    <div id="rejectModal{{ rental.id }}" class="modal">
-        <div class="modal-content">
-            <h3 class="modal-title">Reject Package Rental #{{ rental.id }}</h3>
-            <form method="post" action="{% url 'saritasapp:update_package_rental_status' rental.encrypted_id 'reject' %}">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label>Reason for rejection:</label>
-                    <textarea name="notes" class="form-control" rows="3" required></textarea>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" onclick="closeModal('rejectModal{{ rental.id }}')" class="modal-btn modal-btn-cancel">
-                        Cancel
-                    </button>
-                    <button type="submit" class="modal-btn modal-btn-confirm">
-                        Confirm Rejection
-                    </button>
-                </div>
-            </form>
-        </div>
+<!-- Rejection Modals -->
+{% for rental, encrypted_id in rental_list %}
+<div id="rejectModal{{ rental.id }}" class="modal">
+    <div class="modal-content">
+        <h3 class="modal-title">Reject Rental #{{ rental.id }}</h3>
+        <form method="post" action="{% url 'saritasapp:update_package_rental_status' encrypted_id 'reject' %}">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-medium mb-2">Reason for rejection:</label>
+                <textarea name="notes" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500" rows="3" required></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" onclick="closeModal('rejectModal{{ rental.id }}')" class="modal-btn modal-btn-cancel">
+                    Cancel
+                </button>
+                <button type="submit" class="modal-btn modal-btn-confirm">
+                    <i class="fas fa-ban mr-1"></i> Confirm Rejection
+                </button>
+            </div>
+        </form>
     </div>
-    {% endfor %}
+</div>
+{% endfor %}
 
-    <script>
-        // Modal functions
-        function openModal(id) {
-            document.getElementById(id).style.display = 'flex';
+{% block extra_js %}
+<script>
+    // Modal functions
+    function openModal(id) {
+        document.getElementById(id).style.display = 'flex';
+    }
+    
+    function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+    }
+    
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.style.display = 'none';
         }
-        
-        function closeModal(id) {
-            document.getElementById(id).style.display = 'none';
-        }
-        
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            if (event.target.className === 'modal') {
-                event.target.style.display = 'none';
-            }
-        }
-        
-        // Initialize DataTables
-        document.addEventListener('DOMContentLoaded', function() {
-            $('#approvalsTable').DataTable({
-                responsive: true,
-                language: {
-                    search: "_INPUT_",
-                    searchPlaceholder: "Search rentals...",
-                    lengthMenu: "Show _MENU_ entries",
-                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
+    }
+    
+    // Initialize DataTables if present
+    document.addEventListener('DOMContentLoaded', function() {
+        const table = document.querySelector('.approvals-table');
+        if (table) {
+            new simpleDatatables.DataTable(table, {
+                searchable: true,
+                fixedHeight: false,
+                perPage: 10,
+                labels: {
+                    placeholder: "Search rentals...",
+                    perPage: "{select} entries per page",
+                    noRows: "No rentals found",
+                    info: "Showing {start} to {end} of {rows} entries",
                 }
             });
-        });
-    </script>
+        }
+    });
+</script>
+{% endblock %}
 {% endblock %}

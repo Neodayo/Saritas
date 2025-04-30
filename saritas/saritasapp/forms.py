@@ -11,6 +11,18 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 User = get_user_model()
 
+
+
+
+from django import forms
+from .models import Branch
+
+class BranchForm(forms.ModelForm):
+    class Meta:
+        model = Branch
+        fields = ['branch_name', 'location']
+
+
 class EventForm(forms.ModelForm):
     class Meta:
         model = Event
@@ -630,58 +642,22 @@ class BulkPackageItemForm(forms.Form):
 class StaffRentalApprovalForm(forms.ModelForm):
     class Meta:
         model = WardrobePackageRental
-        fields = ['status', 'staff', 'notes']  # Only include fields that exist
+        fields = ['status', 'notes', 'pickup_date', 'return_date']
         widgets = {
-            'status': forms.Select(attrs={'class': 'form-control'}),
-            'staff': forms.Select(attrs={'class': 'form-control'}),
-            'notes': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Enter any notes...'
-            }),
+            'status': forms.Select(choices=WardrobePackageRental.STATUS_CHOICES),
+            'notes': forms.Textarea(attrs={'rows': 3}),
+            'pickup_date': forms.DateInput(attrs={'type': 'date'}),
+            'return_date': forms.DateInput(attrs={'type': 'date'}),
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Limit staff choices to actual staff users
-        self.fields['staff'].queryset = User.objects.filter(
-            is_staff=True
-        ).order_by('username')
 
 class PackageReturnForm(forms.ModelForm):
     class Meta:
         model = WardrobePackageRental
-        fields = ['actual_return_date', 'status', 'notes']  # Only use existing fields
+        fields = ['actual_return_date', 'notes']
         widgets = {
-            'actual_return_date': forms.DateInput(attrs={
-                'type': 'date',
-                'class': 'form-control'
-            }),
-            'status': forms.Select(attrs={
-                'class': 'form-control',
-                'disabled': 'disabled'  # Auto-set to 'returned'
-            }),
-            'notes': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Enter condition notes...'
-            }),
+            'actual_return_date': forms.DateInput(attrs={'type': 'date'}),
+            'notes': forms.Textarea(attrs={'rows': 3}),
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['status'].initial = 'returned'  # Auto-set status
-
-    def clean(self):
-        cleaned_data = super().clean()
-        actual_return_date = cleaned_data.get('actual_return_date')
-        
-        if actual_return_date and actual_return_date < self.instance.event_date:
-            raise forms.ValidationError(
-                "Return date cannot be before the event date"
-            )
-        
-        return cleaned_data
     
 class EditStaffForm(forms.ModelForm):
     class Meta:
