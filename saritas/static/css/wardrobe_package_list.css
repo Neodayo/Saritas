@@ -15,11 +15,12 @@
     margin-bottom: 2rem;
     padding-bottom: 1rem;
     border-bottom: 2px solid #EAEAEA;
+    font-family: 'Arial', sans-serif;
 }
 
 .package-title {
     color: #8E793E;
-    font-family: 'Playfair Display', serif;
+    font-family: 'Arial', sans-serif;
     font-size: 2.2rem;
     margin: 0;
 }
