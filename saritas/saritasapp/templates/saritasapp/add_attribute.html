@@ -1,0 +1,277 @@
+{% extends "saritasapp/base.html" %}
+{% load static %}
+
+{% block title %}Add {{ attribute_type|title }} | Sarita's{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Consistent with add_category styles */
+.container {
+    max-width: 800px;
+    margin: 100px auto 50px;
+    padding: 20px;
+}
+
+.attribute-form {
+    background-color: #EAEAEA;
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.attribute-form h1 {
+    color: #272832;
+    font-size: 28px;
+    margin-bottom: 25px;
+    text-align: center;
+    font-weight: 700;
+}
+
+/* Form Elements */
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #272832;
+    font-size: 16px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #AD974F;
+    border-radius: 8px;
+    font-size: 16px;
+    background-color: white;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #9E8729;
+    box-shadow: 0 0 0 3px rgba(173, 151, 79, 0.2);
+}
+
+.help-text {
+    font-size: 13px;
+    color: #666;
+    margin-top: 5px;
+    display: block;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: #AD974F;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:hover {
+    background-color: #9E8729;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary i {
+    margin-right: 8px;
+}
+
+/* Back Link */
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    color: #272832;
+    font-weight: 600;
+    text-decoration: none;
+    margin-top: 20px;
+    transition: all 0.3s ease;
+}
+
+.back-link:hover {
+    color: #AD974F;
+    transform: translateX(-3px);
+}
+
+.back-link i {
+    margin-right: 8px;
+}
+
+/* Alerts */
+.alert {
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Error Messages */
+.errorlist {
+    color: #dc3545;
+    margin-top: 5px;
+    padding-left: 0;
+    list-style: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+/* Color Preview for Color Attribute */
+.color-preview {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    border: 2px solid #ddd;
+    margin-top: 10px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        margin: 100px 20px 50px;
+        padding: 15px;
+    }
+    
+    .attribute-form {
+        padding: 20px;
+    }
+    
+    .attribute-form h1 {
+        font-size: 24px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="attribute-form">
+        <h1 class="text-center mb-4">Add New {{ attribute_type|title }}</h1>
+        
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert {% if message.tags %}{{ message.tags }}{% else %}alert-success{% endif %} mb-4">
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+            
+            <div class="form-group">
+                <label for="{{ form.name.id_for_label }}">{{ attribute_type|title }} Name</label>
+                {{ form.name }}
+                {% if form.name.help_text %}
+                    <small class="help-text">{{ form.name.help_text }}</small>
+                {% endif %}
+                {% if form.name.errors %}
+                    <div class="errorlist">{{ form.name.errors }}</div>
+                {% endif %}
+            </div>
+
+            {% if attribute_type == 'color' %}
+            <div class="form-group">
+                <label for="{{ form.hex_code.id_for_label }}">Color Code</label>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    {{ form.hex_code }}
+                    <div class="color-preview" id="colorPreview" style="background-color: {{ form.hex_code.value|default:'#ffffff' }}"></div>
+                </div>
+                {% if form.hex_code.help_text %}
+                    <small class="help-text">{{ form.hex_code.help_text }}</small>
+                {% endif %}
+                {% if form.hex_code.errors %}
+                    <div class="errorlist">{{ form.hex_code.errors }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if form.description %}
+            <div class="form-group">
+                <label for="{{ form.description.id_for_label }}">Description</label>
+                {{ form.description }}
+                {% if form.description.help_text %}
+                    <small class="help-text">{{ form.description.help_text }}</small>
+                {% endif %}
+                {% if form.description.errors %}
+                    <div class="errorlist">{{ form.description.errors }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="form-actions text-center">
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-save me-2"></i>Save {{ attribute_type|title }}
+                </button>
+                <a href="{% url 'saritasapp:add_inventory' %}" class="back-link">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Inventory
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if attribute_type == 'color' %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const colorInput = document.querySelector('#{{ form.hex_code.id_for_label }}');
+    const colorPreview = document.getElementById('colorPreview');
+    
+    if (colorInput && colorPreview) {
+        colorInput.addEventListener('input', function() {
+            colorPreview.style.backgroundColor = this.value || '#ffffff';
+        });
+        
+        // Initialize with current value if form is re-displayed with errors
+        if (colorInput.value) {
+            colorPreview.style.backgroundColor = colorInput.value;
+        }
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

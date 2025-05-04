@@ -1,0 +1,27 @@
+{% extends 'saritasapp/base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-10">
+    <div class="bg-white p-6 rounded-lg shadow-md text-center">
+        <i class="fas fa-exclamation-triangle text-4xl text-yellow-500 mb-4"></i>
+        <h2 class="text-2xl font-bold text-[#5a3e2b] mb-2">
+            Delete Variant?
+        </h2>
+        <p class="mb-6">
+            Are you sure you want to delete:<br>
+            <strong>{{ variant.inventory.name }} - {{ variant.size.name }}/{{ variant.color.name }}</strong>?
+        </p>
+        
+        <form method="post" class="space-x-4">
+            {% csrf_token %}
+            <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                Confirm Delete
+            </button>
+            <a href="{% url 'manage_variants' variant.inventory.encrypted_id %}" 
+               class="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
+                Cancel
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

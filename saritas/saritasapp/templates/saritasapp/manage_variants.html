@@ -1,0 +1,47 @@
+{% extends 'saritasapp/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Manage Variants for {{ item.name }}</h2>
+    
+    <div class="card mb-4">
+        <div class="card-header">Add New Variant</div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ variant_form.as_p }}
+                <button type="submit" class="btn btn-primary">Add Variant</button>
+            </form>
+        </div>
+    </div>
+
+    <h3>Existing Variants</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Size</th>
+                <th>Color</th>
+                <th>Stock</th>
+                <th>Price</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for variant in variants %}
+            <tr>
+                <td>{{ variant.size.name }}</td>
+                <td>{{ variant.color.name }}</td>
+                <td>{{ variant.available_quantity }}/{{ variant.quantity }}</td>
+                <td>₱{{ variant.effective_rental_price }}</td>
+                <td>
+                    <a href="{% url 'edit_variant' variant.encrypted_id %}" 
+                       class="btn btn-sm btn-outline-primary">Edit</a>
+                    <a href="{% url 'delete_variant' variant.encrypted_id %}" 
+                       class="btn btn-sm btn-outline-danger">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

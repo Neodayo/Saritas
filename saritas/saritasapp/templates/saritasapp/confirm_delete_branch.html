@@ -1,0 +1,29 @@
+{% extends 'saritasapp/base.html' %}
+
+{% block title %}Confirm Delete{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+            <h2 class="mb-0">
+                <i class="fas fa-exclamation-triangle"></i> Confirm Delete
+            </h2>
+        </div>
+        <div class="card-body">
+            <p>Are you sure you want to delete the branch <strong>{{ branch.branch_name }}</strong>?</p>
+            <p>This action cannot be undone.</p>
+            
+            <form method="POST" action="{% url 'saritasapp:delete_branch' branch.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> Confirm Delete
+                </button>
+                <a href="{% url 'saritasapp:manage_branches' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

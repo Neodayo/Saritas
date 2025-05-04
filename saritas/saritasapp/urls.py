@@ -11,12 +11,16 @@ app_name = 'saritasapp'
 register_converter(EncryptedIDConverter, 'encrypted')
 
 urlpatterns = [
-    path('branches/add/',views.add_branch, name='add_branch'),
+    path('branches/', views.manage_branches, name='manage_branches'),
+    path('branches/delete/<int:branch_id>/', views.delete_branch, name='delete_branch'),
     path('add-inventory/', views.add_inventory, name='add_inventory'),
     path('inventory/', views.inventory_view, name='inventory_list'),
-    path('add-category/', views.add_category, name='add_category'),
+    path('add_category/', views.add_category, name='add_category'),
     path('add_color/', views.add_color, name='add_color'),
     path('add_size/', views.add_size, name='add_size'),
+    path('add_style/', views.add_style, name= 'add_style'),
+    path('add_material/', views.add_material, name='add_material'),
+    path('add_tag/', views.add_tag, name='add_tag'),
     path('inventory/<str:encrypted_id>/', views.view_item, name='view_inventory'),
     path('inventory/<str:encrypted_id>/edit/', views.edit_inventory, name='edit_inventory'),
     path('inventory/<str:encrypted_id>/delete/', views.delete_inventory, name='delete_inventory'),

@@ -4,18 +4,14 @@ from pyexpat.errors import messages
 from tkinter import Image
 from django import forms
 from django.urls import reverse_lazy
-from .models import CustomizedWardrobePackage, Inventory, Category, ItemType, PackageCustomization, User, WardrobePackage, WardrobePackageItem, Branch, Event, Color, Size, Staff, WardrobePackageRental
+from .models import CustomizedWardrobePackage, Inventory, Category, ItemType, Material, Style, PackageCustomization, Tag, User, WardrobePackage, WardrobePackageItem, Branch, Event, Color, Size, Staff, WardrobePackageRental
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model, authenticate
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import transaction
 User = get_user_model()
 
-
-
-
-from django import forms
-from .models import Branch
 
 class BranchForm(forms.ModelForm):
     class Meta:
@@ -37,185 +33,207 @@ class EventForm(forms.ModelForm):
         
 
 class InventoryForm(forms.ModelForm):
+    # Basic Information
     name = forms.CharField(
-        label="Item Name",
         max_length=255,
-        required=True,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'style': 'text-transform: capitalize;',
-            'placeholder': 'Enter item name'
-        })
+            'placeholder': 'e.g., Ivory Wedding Gown',
+            'autofocus': True
+        }),
+        help_text="Enter a descriptive name for the item"
     )
-    quantity = forms.IntegerField(
-        min_value=0,
-        label="Quantity",
-        required=True,
-        widget=forms.NumberInput(attrs={
+    
+    description = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
             'class': 'form-control',
-            'oninput': "validity.valid||(value='');"
-        })
+            'rows': 3,
+            'placeholder': 'Detailed description of the item'
+        }),
+        help_text="Optional detailed description"
     )
-    rental_price = forms.DecimalField(
-        min_value=0,
-        max_digits=10,
-        decimal_places=2,
-        label="Rental Price",
-        required=True,
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'})
-    )
-    reservation_price = forms.DecimalField(
-        min_value=0,
-        max_digits=10,
-        decimal_places=2,
-        label="Reservation Price",
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-        required=False,
-    )
-    deposit_price = forms.DecimalField(
-        min_value=0,
-        max_digits=10,
-        decimal_places=2,
-        label="Deposit Price",
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-        required=False,
-    )
-    purchase_price = forms.DecimalField(
-        min_value=0,
-        max_digits=10,
-        decimal_places=2,
-        label="Purchase Price",
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-        required=False,
-    )
-    size = forms.ModelChoiceField(
-        queryset=Size.objects.all().order_by('name'),
-        required=True,
-        label="Size",
-        widget=forms.Select(attrs={'class': 'form-select select2'})
-    )
+    
+    # Relationships
     branch = forms.ModelChoiceField(
         queryset=Branch.objects.all().order_by('branch_name'),
-        required=True,
-        label="Branch",
-        widget=forms.Select(attrs={'class': 'form-select'})
+        widget=forms.Select(attrs={'class': 'form-select select2'}),
+        help_text="Select which branch this item belongs to"
     )
-    image = forms.ImageField(
-        required=True, 
-        label="Upload Image",
-        widget=forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
-    )
-    item_type = forms.ModelChoiceField(
-        queryset=ItemType.objects.all().order_by('name'),
-        required=True,
-        widget=forms.Select(attrs={'class': 'form-select select2', 'data-placeholder': 'Select item type'}),
-        label="Item Role Type",
-        empty_label="Select item type"
-    )
+    
     category = forms.ModelChoiceField(
         queryset=Category.objects.all().order_by('name'),
-        required=True,
-        label="Category",
-        widget=forms.Select(attrs={'class': 'form-select select2', 'data-placeholder': 'Select category'})
+        widget=forms.Select(attrs={'class': 'form-select select2'}),
+        help_text="Select the primary category"
     )
+    
+    item_type = forms.ModelChoiceField(
+        queryset=ItemType.objects.all().order_by('name'),
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select select2'}),
+        help_text="Select the item type (e.g., Bridal Gown)"
+    )
+    
     color = forms.ModelChoiceField(
         queryset=Color.objects.all().order_by('name'),
         required=False,
-        label="Color",
-        widget=forms.Select(attrs={'class': 'form-select select2', 'data-placeholder': 'Select color'}),
+        widget=forms.Select(attrs={'class': 'form-select select2'}),
+        help_text="Select the primary color"
     )
-    available = forms.BooleanField(
-        label="Available",
+    
+    size = forms.ModelChoiceField(
+        queryset=Size.objects.all().order_by('name'),
         required=False,
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+        widget=forms.Select(attrs={'class': 'form-select select2'}),
+        help_text="Select the size"
     )
-
+    
+    style = forms.ModelChoiceField(
+        queryset=Style.objects.all().order_by('name'),
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select select2'}),
+        help_text="Select the style (e.g., A-line)"
+    )
+    
+    material = forms.ModelChoiceField(
+        queryset=Material.objects.all().order_by('name'),
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select select2'}),
+        help_text="Select the primary material"
+    )
+    
+    tags = forms.ModelMultipleChoiceField(
+        queryset=Tag.objects.all().order_by('name'),
+        required=False,
+        widget=forms.SelectMultiple(attrs={'class': 'form-select select2'}),
+        help_text="Select relevant tags (hold Ctrl to select multiple)"
+    )
+    
+    # Inventory Management
+    quantity = forms.IntegerField(
+        initial=0,
+        min_value=0,
+        validators=[MinValueValidator(0)],
+        widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        help_text="Current stock quantity"
+    )
+    
+    # Pricing Information
+    rental_price = forms.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+        help_text="Standard rental price"
+    )
+    
+    reservation_price = forms.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+        help_text="Optional reservation deposit amount"
+    )
+    
+    deposit_price = forms.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+        help_text="Optional security deposit amount"
+    )
+    
+    purchase_price = forms.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+        help_text="Optional purchase price (if item is for sale)"
+    )
+    
+    # Media
+    image = forms.ImageField(
+        required=True,
+        widget=forms.FileInput(attrs={'class': 'form-control'}),
+        help_text="Upload item photo (recommended size: 800x800px)"
+    )
+    
     class Meta:
         model = Inventory
         fields = [
-            'name', 'branch', 'category', 'item_type', 'color', 'size', 'quantity',
-            'rental_price', 'reservation_price', 'deposit_price', 'purchase_price',
-            'available', 'image'
+            'name', 'description', 'branch', 'category', 'item_type',
+            'color', 'size', 'style', 'material', 'tags', 'quantity',
+            'rental_price', 'reservation_price', 'deposit_price', 
+            'purchase_price', 'image'
         ]
-
+    
     def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user', None)
+        user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-
-        # Ensure item types exist in the database
-        if not ItemType.objects.exists():
-            ItemType.initialize_choices()
-            self.fields['item_type'].queryset = ItemType.objects.all().order_by('name')
-
-        # Handle branch field based on user type
-        if self.user and hasattr(self.user, 'staff_profile'):
-            # Staff users - auto-set to their branch
-            self.fields['branch'].initial = self.user.staff_profile.branch
-            self.fields['branch'].widget = forms.HiddenInput()
-            self.fields['branch'].queryset = Branch.objects.filter(pk=self.user.staff_profile.branch.pk)
-        elif self.user and self.user.is_superuser:
-            # For admin users - show all branches
-            self.fields['branch'].queryset = Branch.objects.all().order_by('branch_name')
-            self.fields['branch'].widget.attrs.update({'class': 'form-select'})
-        else:
-            # For other users (shouldn't happen since view requires login)
-            self.fields['branch'].widget = forms.HiddenInput()
-
-        # Set required fields with asterisk
-        for field in self.fields:
-            if self.fields[field].required:
-                self.fields[field].label = f"{self.fields[field].label} *"
-
-        # If editing an existing item, make image not required
+        
+        # Set initial branch for staff users
+        if user and hasattr(user, 'staff_profile'):
+            self.fields['branch'].initial = user.staff_profile.branch
+        
+        # Make image not required for edits
         if self.instance and self.instance.pk:
             self.fields['image'].required = False
-
+        
+        # Ensure all ItemType choices exist in the database
+        self.initialize_item_types()
+    
+    def initialize_item_types(self):
+        """Create all defined item types if they don't exist"""
+        for choice_value, choice_label in ItemType.ITEM_TYPES:
+            ItemType.objects.get_or_create(
+                name=choice_value,
+                defaults={'name': choice_value}
+            )
+        
+        # Refresh the queryset to include any newly created items
+        self.fields['item_type'].queryset = ItemType.objects.all().order_by('name')
+        
+        # Set initial value for existing instances
+        if self.instance and self.instance.item_type:
+            self.fields['item_type'].initial = self.instance.item_type
+    
     def clean(self):
         cleaned_data = super().clean()
         
-        # Validate deposit price is >= rental price
-        deposit_price = cleaned_data.get("deposit_price")
-        rental_price = cleaned_data.get("rental_price")
-
-        # Validate item_type exists
-        item_type = cleaned_data.get('item_type')
-        if item_type and not ItemType.objects.filter(pk=item_type.pk).exists():
-            self.add_error('item_type', 'Selected item type does not exist.')
-
+        # Validate pricing relationships
+        rental_price = cleaned_data.get('rental_price')
+        deposit_price = cleaned_data.get('deposit_price')
+        
+        
+        # Validate quantity makes sense with availability
+        quantity = cleaned_data.get('quantity', 0)
+        if quantity < 0:
+            self.add_error('quantity', 'Quantity cannot be negative')
+        
         return cleaned_data
-
+    
     def save(self, commit=True):
         instance = super().save(commit=False)
         
         # Format name properly
-        instance.name = instance.name.title() if instance.name else ""
+        instance.name = instance.name.title()
         
         # Set availability based on quantity
         instance.available = instance.quantity > 0
         
-        # Set created_by if this is a new item
-        if not instance.pk and hasattr(self.user, 'staff_profile'):
-            instance.created_by = self.user
-
         if commit:
             instance.save()
-            self.save_m2m()
-
-            # Handle image separately to avoid issues with existing images
-            if 'image' in self.changed_data:
-                if self.cleaned_data['image']:
-                    instance.image = self.cleaned_data['image']
-                    instance.save()
-                elif not self.cleaned_data['image'] and self.instance.image:
-                    # Keep existing image if no new one was uploaded
-                    instance.image = self.instance.image
-                    instance.save()
-
+            self.save_m2m()  # Save many-to-many relationships
+            
+            # Handle image separately to avoid resetting on form updates
+            if 'image' in self.changed_data and self.cleaned_data['image']:
+                instance.image = self.cleaned_data['image']
+                instance.save()
+        
         return instance
 
 class ColorForm(forms.ModelForm):
     name = forms.CharField(
-        max_length=50,
+    max_length=50,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': 'e.g., Ivory, Champagne, Navy Blue',
@@ -237,6 +255,8 @@ class ColorForm(forms.ModelForm):
         if Color.objects.filter(name__iexact=name).exists():
             raise forms.ValidationError("This color already exists.")
         return name
+    
+
 
 
 class SizeForm(forms.ModelForm):
@@ -284,6 +304,73 @@ class CategoryForm(forms.ModelForm):
             raise forms.ValidationError("This category already exists.")
         return name
 
+class MaterialForm(forms.ModelForm):
+    name = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'e.g., Silk, Chiffon, Lace',
+            'style': 'text-transform: capitalize;',
+            'autofocus': True
+        }),
+        help_text="Enter a material name"
+    )
+
+    class Meta:
+        model = Material
+        fields = ['name']
+
+    def clean_name(self):
+        name = self.cleaned_data.get('name').strip().title()
+        if Material.objects.filter(name__iexact=name).exists():
+            raise forms.ValidationError("This material already exists.")
+        return name
+
+
+class StyleForm(forms.ModelForm):
+    name = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'e.g., A-Line, Mermaid, Ballgown',
+            'style': 'text-transform: capitalize;',
+            'autofocus': True
+        }),
+        help_text="Enter a style name"
+    )
+
+    class Meta:
+        model = Style
+        fields = ['name']
+
+    def clean_name(self):
+        name = self.cleaned_data.get('name').strip().title()
+        if Style.objects.filter(name__iexact=name).exists():
+            raise forms.ValidationError("This style already exists.")
+        return name
+
+
+class TagForm(forms.ModelForm):
+    name = forms.CharField(
+        max_length=50,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'e.g., Vintage, Modern, Bohemian',
+            'style': 'text-transform: capitalize;',
+            'autofocus': True
+        }),
+        help_text="Enter a tag name"
+    )
+
+    class Meta:
+        model = Tag
+        fields = ['name']
+
+    def clean_name(self):
+        name = self.cleaned_data.get('name').strip().title()
+        if Tag.objects.filter(name__iexact=name).exists():
+            raise forms.ValidationError("This tag already exists.")
+        return name
 
 class StaffSignUpForm(UserCreationForm):
     # Staff-specific fields (not part of User model)

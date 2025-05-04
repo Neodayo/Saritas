@@ -34,14 +34,14 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 
 # Local app imports
 from .forms import (
-    AddPackageItemForm, AdminSignUpForm, BulkPackageItemForm, CategoryForm, ColorForm, EditProfileForm, EditStaffForm, EventForm,
-    InventoryForm, LoginForm, PackageItemForm, PackageReturnForm, SizeForm, StaffRentalApprovalForm, StaffSignUpForm,
+    AddPackageItemForm, AdminSignUpForm, BranchForm, BulkPackageItemForm, CategoryForm, ColorForm, EditProfileForm, EditStaffForm, EventForm,
+    InventoryForm, LoginForm, MaterialForm, PackageItemForm, PackageReturnForm, SizeForm, StaffRentalApprovalForm, StaffSignUpForm, StyleForm, TagForm,
     WardrobePackageForm, WardrobePackageItemForm,
     PackageCustomizationForm, CustomizePackageForm
 )
 from .models import (
-    Branch, Category, Color, Customer, Event, Inventory, ItemType, Notification, PackageCustomization,
-    Receipt, Rental, Reservation, Size, User, Venue,
+    Branch, Category, Color, Customer, Event, Inventory, ItemType, Material, Notification, PackageCustomization,
+    Receipt, Rental, Reservation, Size, Style, Tag, User, Venue,
     WardrobePackage, CustomizedWardrobePackage, WardrobePackageItem, WardrobePackageRental
 )
 # In your views.py
@@ -60,19 +60,49 @@ from core.utils.encryption import (
 logger = logging.getLogger(__name__)
 
 
-from django.shortcuts import render, redirect
-from .forms import BranchForm
-
-@user_passes_test(lambda u: u.is_superuser)
-def add_branch(request):    
-    if request.method == 'POST':
-        form = BranchForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('add_branch')  # Redirect to same page after adding
+def manage_branches(request):
+    # Handle edit request
+    edit_id = request.GET.get('edit')
+    if edit_id:
+        branch = get_object_or_404(Branch, id=edit_id)
+        form = BranchForm(instance=branch)
     else:
         form = BranchForm()
-    return render(request, 'saritasapp/add_branch.html', {'form': form})
+
+    # Handle form submission
+    if request.method == 'POST':
+        branch_id = request.POST.get('branch_id')
+        if branch_id:
+            branch = get_object_or_404(Branch, id=branch_id)
+            form = BranchForm(request.POST, instance=branch)
+            action = 'updated'
+        else:
+            form = BranchForm(request.POST)
+            action = 'added'
+            
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Branch {action} successfully!')
+            return redirect('saritasapp:manage_branches')
+    
+    # Get all branches
+    branches = Branch.objects.all().order_by('branch_name')
+    
+    return render(request, 'saritasapp/manage_branches.html', {
+        'form': form,
+        'branches': branches
+    })
+
+def delete_branch(request, branch_id):
+    branch = get_object_or_404(Branch, id=branch_id)
+    if request.method == 'POST':
+        branch.delete()
+        messages.success(request, 'Branch deleted successfully!')
+        return redirect('saritasapp:manage_branches')
+    
+    return render(request, 'saritasapp/confirm_delete_branch.html', {
+        'branch': branch
+    })
 
     
 @staff_member_required
@@ -86,10 +116,8 @@ def add_inventory(request):
                 # Set creator
                 if hasattr(request.user, 'staff_profile'):
                     inventory_item.created_by = request.user
-                    # Branch is already set via the form for staff users
                 elif request.user.is_superuser:
                     inventory_item.created_by = request.user
-                    # Admin can choose branch in the form
                 
                 inventory_item.save()
                 form.save_m2m()
@@ -113,7 +141,10 @@ def add_inventory(request):
         'colors': Color.objects.all().order_by('name'),
         'sizes': Size.objects.all().order_by('name'),
         'item_types': ItemType.objects.all().order_by('name'),
-        'user': request.user  # Make sure user is passed to template
+        'styles': Style.objects.all().order_by('name'),
+        'materials': Material.objects.all().order_by('name'),
+        'tags': Tag.objects.all().order_by('name'),
+        'branches': Branch.objects.all().order_by('branch_name')
     }
     return render(request, 'saritasapp/add_item.html', context)
 
@@ -158,6 +189,60 @@ def add_size(request):
     return render(request, 'saritasapp/add_size.html', {'form': form})
 
 @staff_member_required
+def add_material(request):
+    if request.method == 'POST':
+        form = MaterialForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Material "{form.cleaned_data["name"]}" was added successfully!')
+            if request.GET.get('next'):
+                return redirect(request.GET.get('next'))
+            return redirect('saritasapp:add_inventory')
+    else:
+        form = MaterialForm()
+
+    return render(request, 'saritasapp/add_material.html', {
+        'form': form,
+        'next': request.GET.get('next', '')
+    })
+
+@staff_member_required
+def add_style(request):
+    if request.method == 'POST':
+        form = StyleForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Style "{form.cleaned_data["name"]}" was added successfully!')
+            if request.GET.get('next'):
+                return redirect(request.GET.get('next'))
+            return redirect('saritasapp:add_inventory')
+    else:
+        form = StyleForm()
+
+    return render(request, 'saritasapp/add_style.html', {
+        'form': form,
+        'next': request.GET.get('next', '')
+    })
+
+@staff_member_required
+def add_tag(request):
+    if request.method == 'POST':
+        form = TagForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Tag "{form.cleaned_data["name"]}" was added successfully!')
+            if request.GET.get('next'):
+                return redirect(request.GET.get('next'))
+            return redirect('saritasapp:add_inventory')
+    else:
+        form = TagForm()
+
+    return render(request, 'saritasapp/add_tag.html', {
+        'form': form,
+        'next': request.GET.get('next', '')
+    })
+
+@staff_member_required
 def view_item(request, encrypted_id):
     try:
         item = get_decrypted_object_or_404(Inventory, encrypted_id)
@@ -170,23 +255,26 @@ def view_item(request, encrypted_id):
 @staff_member_required
 def edit_inventory(request, encrypted_id):
     item = get_decrypted_object_or_404(Inventory, encrypted_id)
-
+    
     if request.method == 'POST':
         form = InventoryForm(request.POST, request.FILES, instance=item, user=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, 'Inventory item updated successfully!')
             return redirect('saritasapp:inventory_list')
-        else:
-            messages.error(request, 'Please correct the errors below.')
     else:
         form = InventoryForm(instance=item, user=request.user)
-
+    
+    # Add error logging to help debug
+    if form.errors:
+        print("Form errors:", form.errors)
+    
     return render(request, 'saritasapp/edit_inventory.html', {
         'form': form,
         'categories': Category.objects.all(),
         'colors': Color.objects.all(),
         'sizes': Size.objects.all(),
+        'branches': Branch.objects.all(),  # This is key
         'item': item
     })
 
@@ -202,41 +290,78 @@ def delete_inventory(request, encrypted_id):
 
 @staff_member_required
 def inventory_view(request):
+    # Get all filter options
     categories = Category.objects.all()
     colors = Color.objects.all()
     sizes = Size.objects.all()
+    materials = Material.objects.all()
+    tags = Tag.objects.all()
+    styles = Style.objects.all()
+    item_types = ItemType.objects.all()
 
+    # Get selected filters from request
     selected_category = request.GET.get('category', '')
     selected_color = request.GET.get('color', '')
     selected_size = request.GET.get('size', '')
+    selected_material = request.GET.get('material', '')
+    selected_tag = request.GET.get('tag', '')
+    selected_style = request.GET.get('style', '')
+    selected_item_type = request.GET.get('item_type', '')
+    selected_available = request.GET.get('available', '')
     sort = request.GET.get('sort', '')
 
+    # Start with all inventory items
     inventory_items = Inventory.objects.all()
 
+    # Apply filters
     if selected_category:
         inventory_items = inventory_items.filter(category_id=selected_category)
     if selected_color:
         inventory_items = inventory_items.filter(color_id=selected_color)
     if selected_size:
         inventory_items = inventory_items.filter(size_id=selected_size)
+    if selected_material:
+        inventory_items = inventory_items.filter(material_id=selected_material)
+    if selected_style:
+        inventory_items = inventory_items.filter(style_id=selected_style)
+    if selected_item_type:
+        inventory_items = inventory_items.filter(item_type_id=selected_item_type)
+    if selected_tag:
+        inventory_items = inventory_items.filter(tags__id=selected_tag)
+    if selected_available:
+        inventory_items = inventory_items.filter(available=selected_available)
 
+    # Apply sorting
     if sort == 'name_asc':
         inventory_items = inventory_items.order_by('name')
     elif sort == 'name_desc':
         inventory_items = inventory_items.order_by('-name')
     elif sort == 'price_asc':
-        inventory_items = inventory_items.order_by('purchase_price')
+        inventory_items = inventory_items.order_by('rental_price')
     elif sort == 'price_desc':
-        inventory_items = inventory_items.order_by('-purchase_price')
+        inventory_items = inventory_items.order_by('-rental_price')
+    elif sort == 'quantity_asc':
+        inventory_items = inventory_items.order_by('quantity')
+    elif sort == 'quantity_desc':
+        inventory_items = inventory_items.order_by('-quantity')
 
     return render(request, 'saritasapp/inventory.html', {
         'categories': categories,
         'colors': colors,
         'sizes': sizes,
+        'materials': materials,
+        'tags': tags,
+        'styles': styles,
+        'item_types': item_types,
         'inventory_items': inventory_items,
         'selected_category': selected_category,
         'selected_color': selected_color,
         'selected_size': selected_size,
+        'selected_material': selected_material,
+        'selected_tag': selected_tag,
+        'selected_style': selected_style,
+        'selected_item_type': selected_item_type,
+        'selected_available': selected_available,
         'sort': sort
     })
 

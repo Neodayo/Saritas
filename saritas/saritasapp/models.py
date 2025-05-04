@@ -145,7 +145,26 @@ class Size(models.Model):
 
     def __str__(self):
         return self.name
+    
+class Style(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+    
+    def __str__(self):
+        return self.name
 
+class Material(models.Model):   
+    name = models.CharField(max_length=100, unique=True)
+    
+    def __str__(self):
+        return self.name
+    
+class Tag(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    
+    def __str__(self):
+        return self.name
+    
 class ItemType(models.Model):
     ITEM_TYPES = [
         ('bridal_gown', 'Bridal Gown'),
@@ -167,28 +186,43 @@ class ItemType(models.Model):
         unique=True
     )
     
-    @classmethod
-    def initialize_choices(cls):
-        for value, label in cls.ITEM_TYPES:
-            cls.objects.get_or_create(name=value)
 
     def __str__(self):
-        return self.get_name_display()
+        return self.get_name_display() 
+    
+    class Meta:
+        ordering = ['name']
+        
 # --- Inventory ---
 class Inventory(models.Model):
+    # Basic Information
     name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    
+    # Relationships with Reference Models
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name="inventory_items")
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="items")
     item_type = models.ForeignKey(ItemType, on_delete=models.SET_NULL, null=True, blank=True)
     color = models.ForeignKey(Color, null=True, blank=True, on_delete=models.SET_NULL, related_name="inventory_items")
     size = models.ForeignKey(Size, null=True, blank=True, on_delete=models.SET_NULL, related_name="inventory_items")
-    quantity = models.IntegerField(default=0)
+    style = models.ForeignKey(Style, null=True, blank=True, on_delete=models.SET_NULL, related_name="inventory_items")
+    material = models.ForeignKey(Material, null=True, blank=True, on_delete=models.SET_NULL, related_name="inventory_items")
+    tags = models.ManyToManyField(Tag, blank=True, related_name="inventory_items")
+    
+    # Inventory Management
+    quantity = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0)])
+    available = models.BooleanField(default=True)
+    
+    # Pricing Information
     rental_price = models.DecimalField(max_digits=10, decimal_places=2)
     reservation_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     deposit_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     purchase_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    available = models.BooleanField(default=True)
+    
+    # Media
     image = models.ImageField(upload_to="inventory/", null=True, blank=True)
+    
+    # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -197,24 +231,42 @@ class Inventory(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        details = [self.name, f"Branch: {self.branch.branch_name}"]
+        details = [self.name]
+        if self.item_type:
+            details.append(f"Type: {self.item_type}")
         if self.color:
             details.append(f"Color: {self.color}")
         if self.size:
             details.append(f"Size: {self.size}")
+        if self.style:
+            details.append(f"Style: {self.style}")
+        if self.material:
+            details.append(f"Material: {self.material}")
+        details.append(f"Branch: {self.branch.branch_name}")
         return " - ".join(details)
 
+    @property
     def display_name(self):
-        return f"{self.name} ({self.category.name}) - Size: {self.size}, Color: {self.color}"
+        """Comprehensive display name with all key attributes"""
+        parts = [self.name]
+        if self.item_type:
+            parts.append(f"({self.item_type})")
+        if self.color:
+            parts.append(f"{self.color}")
+        if self.size:
+            parts.append(f"Size: {self.size}")
+        if self.style:
+            parts.append(f"Style: {self.style}")
+        return " ".join(parts)
 
-    class Meta:
-        verbose_name_plural = "Inventory"
-        ordering = ['-created_at']
-    
+    @property
+    def tag_list(self):
+        """Comma-separated list of tags"""
+        return ", ".join([tag.name for tag in self.tags.all()])
+
     @property
     def encrypted_id(self):
         """Get encrypted ID or None if fails"""
-        from core.utils.encryption import encrypt_id
         try:
             return encrypt_id(self.pk) if self.pk else None
         except Exception:
@@ -225,6 +277,17 @@ class Inventory(models.Model):
         if not (enc_id := self.encrypted_id):
             raise ValueError("Encryption failed - no URL available")
         return reverse('view_inventory', kwargs={'encrypted_id': enc_id})
+
+    class Meta:
+        verbose_name_plural = "Inventory"
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['name']),
+            models.Index(fields=['category']),
+            models.Index(fields=['available']),
+            models.Index(fields=['item_type']),
+            models.Index(fields=['branch']),
+        ]
 
 
 
@@ -1051,7 +1114,7 @@ class PackageRentalItem(models.Model):
     ]
 
     package_rental = models.ForeignKey(WardrobePackageRental, on_delete=models.CASCADE, related_name='rented_items')
-    inventory_item = models.ForeignKey(Inventory, on_delete=models.PROTECT, related_name='package_rentals')
+    inventory_item = models.ForeignKey(Inventory, on_delete=models.CASCADE, related_name='package_rentals')
     quantity = models.PositiveIntegerField(default=1)
     rental_price = models.DecimalField(max_digits=10, decimal_places=2)
     

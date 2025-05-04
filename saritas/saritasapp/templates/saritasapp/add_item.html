@@ -1,21 +1,33 @@
 {% extends 'saritasapp/base.html' %}
-{%load static%} 
+{% load static %}
 
 {% block title %}Add Inventory Item{% endblock %}
-{%block extra_css %}
+{% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/add_inventory.css' %}">
 {% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <div class="card">
-        <div class="card-header bg-primary text-white">
-            <h2 class="mb-0">
+<div class="container">
+    <div class="card inventory-form-card">
+        <div class="card-header">
+            <h2 class="form-title">
                 <i class="fas fa-plus-circle"></i> {{ page_title|default:"Add New Inventory Item" }}
             </h2>
         </div>
         <div class="card-body">
             <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
                 {% csrf_token %}
+                
+                {% if messages %}
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    {% endfor %}
+                {% endif %}
                 
                 {% if form.non_field_errors %}
                     <div class="alert alert-danger">
@@ -25,55 +37,69 @@
                     </div>
                 {% endif %}
                 
-                <div class="row">
+                <div class="form-columns">
                     <!-- Left Column -->
-                    <div class="col-md-6">
+                    <div class="form-column">
                         <div class="form-group">
-                            <label for="{{ form.name.id_for_label }}" class="font-weight-bold">{{ form.name.label }}</label>
+                            <label for="{{ form.name.id_for_label }}" class="form-label">
+                                {{ form.name.label }}
+                                {% if form.name.field.required %}<span class="required">*</span>{% endif %}
+                            </label>
                             {{ form.name }}
                             {% if form.name.errors %}
-                                <div class="invalid-feedback d-block">
+                                <div class="invalid-feedback">
                                     {{ form.name.errors }}
                                 </div>
                             {% endif %}
+                            <small class="form-text">{{ form.name.help_text }}</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+                            {{ form.description }}
+                            <small class="form-text">{{ form.description.help_text }}</small>
                         </div>
                         
                         <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label for="{{ form.category.id_for_label }}" class="font-weight-bold">{{ form.category.label }}</label>
-                                <div class="input-group">
+                            <div class="form-group">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">
+                                    {{ form.category.label }}
+                                    {% if form.category.field.required %}<span class="required">*</span>{% endif %}
+                                </label>
+                                <div class="input-group-combo">
                                     {{ form.category }}
                                     <div class="input-group-append">
-                                        <a href="{% url 'saritasapp:add_category' %}" >
-                                          add category
+                                        <a href="{% url 'saritasapp:add_category' %}" title="Add new category">
+                                            add category
                                         </a>
                                     </div>
                                 </div>
                             </div>
-                            <div class="form-group col-md-6">
-                                <label for="{{ form.item_type.id_for_label }}" class="font-weight-bold">{{ form.item_type.label }}</label>
+                            <div class="form-group">
+                                <label for="{{ form.item_type.id_for_label }}" class="form-label">{{ form.item_type.label }}</label>
                                 {{ form.item_type }}
+                                <small class="form-text">{{ form.item_type.help_text }}</small>
                             </div>
                         </div>
                         
                         <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label for="{{ form.color.id_for_label }}" class="font-weight-bold">{{ form.color.label }}</label>
-                                <div class="input-group">
+                            <div class="form-group">
+                                <label for="{{ form.color.id_for_label }}" class="form-label">{{ form.color.label }}</label>
+                                <div class="input-group-combo">
                                     {{ form.color }}
                                     <div class="input-group-append">
-                                        <a href="{% url 'saritasapp:add_color' %}">
+                                        <a href="{% url 'saritasapp:add_color' %}"  title="Add new color">
                                             add color
                                         </a>
                                     </div>
                                 </div>
                             </div>
-                            <div class="form-group col-md-6">
-                                <label for="{{ form.size.id_for_label }}" class="font-weight-bold">{{ form.size.label }}</label>
-                                <div class="input-group">
+                            <div class="form-group">
+                                <label for="{{ form.size.id_for_label }}" class="form-label">{{ form.size.label }}</label>
+                                <div class="input-group-combo">
                                     {{ form.size }}
                                     <div class="input-group-append">
-                                        <a href="{% url 'saritasapp:add_size' %}">
+                                        <a href="{% url 'saritasapp:add_size' %}"  title="Add new size">
                                             add size
                                         </a>
                                     </div>
@@ -81,103 +107,180 @@
                             </div>
                         </div>
                         
-                        <div class="form-group">
-                            <label for="{{ form.quantity.id_for_label }}" class="font-weight-bold">{{ form.quantity.label }}</label>
-                            {{ form.quantity }}
-                            <small class="form-text text-muted">Current stock level</small>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="{{ form.style.id_for_label }}" class="form-label">{{ form.style.label }}</label>
+                                <div class="input-group-combo">
+                                    {{ form.style }}
+                                    <div class="input-group-append">
+                                        <a href="{% url 'saritasapp:add_style' %}"  title="Add new style">
+                                            add style
+                                        </a>
+                                    </div>
+                                </div>
+                                <small class="form-text">{{ form.style.help_text }}</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="{{ form.material.id_for_label }}" class="form-label">{{ form.material.label }}</label>
+                                <div class="input-group-combo">
+                                    {{ form.material }}
+                                    <div class="input-group-append">
+                                        <a href="{% url 'saritasapp:add_material' %}"  title="Add new material">
+                                            add material
+                                        </a>
+                                    </div>
+                                </div>
+                                <small class="form-text">{{ form.material.help_text }}</small>
+                            </div>
                         </div>
                     </div>
                     
                     <!-- Right Column -->
-                    <div class="col-md-6">
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label for="{{ form.rental_price.id_for_label }}" class="font-weight-bold">{{ form.rental_price.label }}</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">₱</span>
-                                    </div>
-                                    {{ form.rental_price }}
-                                </div>
+                    <div class="form-column">
+                        <div class="form-group">
+                            <label for="{{ form.tags.id_for_label }}" class="form-label">{{ form.tags.label }}</label>
+                            <div class="tags-container">
+                                {{ form.tags }}
+                                <a href="{% url 'saritasapp:add_tag' %}"  title="Add new tag">
+                                     Add Tag
+                                </a>
                             </div>
-                            <div class="form-group col-md-6">
-                                <label for="{{ form.reservation_price.id_for_label }}" class="font-weight-bold">{{ form.reservation_price.label }}</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">₱</span>
-                                    </div>
-                                    {{ form.reservation_price }}
-                                </div>
-                            </div>
+                            <small class="form-text">{{ form.tags.help_text }}</small>
                         </div>
                         
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label for="{{ form.deposit_price.id_for_label }}" class="font-weight-bold">{{ form.deposit_price.label }}</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">₱</span>
-                                    </div>
+                        <div class="form-group">
+                            <label for="{{ form.quantity.id_for_label }}" class="form-label">
+                                {{ form.quantity.label }}
+                                {% if form.quantity.field.required %}<span class="required">*</span>{% endif %}
+                            </label>
+                            {{ form.quantity }}
+                            {% if form.quantity.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.quantity.errors }}
+                                </div>
+                            {% endif %}
+                            <small class="form-text">{{ form.quantity.help_text }}</small>
+                        </div>
+                        
+                        <div class="price-grid">
+                            <div class="price-field">
+                                <label for="{{ form.rental_price.id_for_label }}" class="form-label">{{ form.rental_price.label }}</label>
+                                <div class="price-input">
+                                    <span class="currency">₱</span>
+                                    {{ form.rental_price }}
+                                </div>
+                                <small class="form-text">{{ form.rental_price.help_text }}</small>
+                            </div>
+                            
+                            <div class="price-field">
+                                <label for="{{ form.reservation_price.id_for_label }}" class="form-label">{{ form.reservation_price.label }}</label>
+                                <div class="price-input">
+                                    <span class="currency">₱</span>
+                                    {{ form.reservation_price }}
+                                </div>
+                                <small class="form-text">{{ form.reservation_price.help_text }}</small>
+                            </div>
+                            
+                            <div class="price-field">
+                                <label for="{{ form.deposit_price.id_for_label }}" class="form-label">{{ form.deposit_price.label }}</label>
+                                <div class="price-input">
+                                    <span class="currency">₱</span>
                                     {{ form.deposit_price }}
                                 </div>
+                                <small class="form-text">{{ form.deposit_price.help_text }}</small>
                             </div>
-                            <div class="form-group col-md-6">
-                                <label for="{{ form.purchase_price.id_for_label }}" class="font-weight-bold">{{ form.purchase_price.label }}</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">₱</span>
-                                    </div>
+                            
+                            <div class="price-field">
+                                <label for="{{ form.purchase_price.id_for_label }}" class="form-label">{{ form.purchase_price.label }}</label>
+                                <div class="price-input">
+                                    <span class="currency">₱</span>
                                     {{ form.purchase_price }}
                                 </div>
+                                <small class="form-text">{{ form.purchase_price.help_text }}</small>
                             </div>
                         </div>
                         
                         <div class="form-group">
-                            <label for="{{ form.image.id_for_label }}" class="font-weight-bold">{{ form.image.label }}</label>
-                            <div class="custom-file">
-                                {{ form.image }}
-                                <label class="custom-file-label" for="{{ form.image.id_for_label }}">Choose file</label>
+                            <label for="{{ form.image.id_for_label }}" class="form-label">{{ form.image.label }}</label>
+                            <div class="file-upload">
+                                <label class="file-upload-label">
+                                    {{ form.image }}
+                                    <span class="file-upload-text">Choose file</span>
+                                    <span class="file-upload-btn">Browse</span>
+                                </label>
                             </div>
                             {% if form.image.errors %}
-                                <div class="invalid-feedback d-block">
+                                <div class="invalid-feedback">
                                     {{ form.image.errors }}
                                 </div>
                             {% endif %}
+                            <small class="form-text">{{ form.image.help_text }}</small>
                         </div>
                     </div>
                 </div>
                 
-                <div class="form-group mt-4 text-right">
-                    <button type="submit" class="btn btn-primary mr-2">
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save"></i> Save Item
                     </button>
-                    <a href="{% url 'saritasapp:inventory_list' %}" class="btn btn-outline-secondary">
+                    <a href="{% url 'saritasapp:inventory_list' %}" class="btn btn-secondary">
                         <i class="fas fa-times"></i> Cancel
                     </a>
                 </div>
                 
-                {{ form.branch }}  <!-- Hidden branch field -->
+                {% if form.branch %}
+                    {{ form.branch }}
+                {% endif %}
             </form>
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-// Client-side validation
-(function() {
-    'use strict';
-    window.addEventListener('load', function() {
-        var forms = document.getElementsByClassName('needs-validation');
-        var validation = Array.prototype.filter.call(forms, function(form) {
-            form.addEventListener('submit', function(event) {
-                if (form.checkValidity() === false) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                }
-                form.classList.add('was-validated');
-            }, false);
+// Enhanced form validation and UI interactions
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const forms = document.querySelectorAll('.needs-validation');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+    
+    // File input label update
+    document.querySelectorAll('.file-upload input[type="file"]').forEach(input => {
+        input.addEventListener('change', function() {
+            const fileName = this.files[0] ? this.files[0].name : 'Choose file';
+            const textElement = this.closest('.file-upload-label').querySelector('.file-upload-text');
+            textElement.textContent = fileName;
         });
-    }, false);
-})();
+    });
+    
+    // Initialize select2 with better configuration
+    $('.select2').select2({
+        theme: 'bootstrap4',
+        width: '100%',
+        placeholder: 'Select an option',
+        allowClear: true,
+        dropdownParent: $('.inventory-form-card')
+    });
+    
+    // Add slight animation to form interactions
+    document.querySelectorAll('.form-control, .select2-selection').forEach(element => {
+        element.addEventListener('focus', function() {
+            this.closest('.form-group').classList.add('focused');
+        });
+        
+        element.addEventListener('blur', function() {
+            this.closest('.form-group').classList.remove('focused');
+        });
+    });
+});
 </script>
 {% endblock %}

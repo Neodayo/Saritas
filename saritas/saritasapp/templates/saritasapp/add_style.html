@@ -1,0 +1,49 @@
+{% extends "saritasapp/base.html" %}
+{% load static %}
+
+{% block title %}Add Style | Sarita's{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/add_category.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="category-form">
+        <h1 class="text-center mb-4">Add New Style</h1>
+        
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-success mb-4">
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+            
+            <div class="form-group">
+                <label for="{{ form.name.id_for_label }}">Style Name</label>
+                {{ form.name }}
+                {% if form.name.help_text %}
+                    <small class="help-text">{{ form.name.help_text }}</small>
+                {% endif %}
+                {% if form.name.errors %}
+                    <div class="errorlist">{{ form.name.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-actions text-center">
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-save me-2"></i>Save Style
+                </button>
+                <a href="{% url 'saritasapp:add_inventory' %}" class="back-link">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Inventory
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

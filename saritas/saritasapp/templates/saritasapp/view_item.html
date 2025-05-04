@@ -137,6 +137,16 @@
         color: #c62828;
     }
 
+    .tag-pill {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background-color: #e0e0e0;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
     .admin-actions {
         display: flex;
         gap: 1rem;
@@ -222,7 +232,8 @@
 
     <div class="item-header">
         <div>
-            <h1 class="item-title">{{ item.name }}</h1>
+            <h1 class="item-title">{{ item.display_name }}</h1>
+            <div class="item-id">Item ID: {{ item.id }}</div>
         </div>
     </div>
 
@@ -252,20 +263,46 @@
                     <div class="detail-label">Quantity:</div>
                     <div class="detail-value">{{ item.quantity }}</div>
 
+                    <div class="detail-label">Description:</div>
+                    <div class="detail-value">{{ item.description|default:"No description provided" }}</div>
+                </div>
+            </div>
+
+            <!-- Category & Relationships Card -->
+            <div class="detail-card">
+                <h3 class="card-title">Categories & Relationships</h3>
+                <div class="detail-grid">
                     <div class="detail-label">Branch:</div>
-                    <div class="detail-value">{{ item.branch.branch_name }}</div>
+                    <div class="detail-value">{{ item.branch.branch_name }} ({{ item.branch.location }})</div>
 
                     <div class="detail-label">Category:</div>
                     <div class="detail-value">{{ item.category.name }}</div>
 
                     <div class="detail-label">Item Type:</div>
-                    <div class="detail-value">{{ item.item_type.name|default:"-" }}</div>
+                    <div class="detail-value">{{ item.item_type.get_name_display|default:"-" }}</div>
 
                     <div class="detail-label">Color:</div>
                     <div class="detail-value">{{ item.color.name|default:"-" }}</div>
 
                     <div class="detail-label">Size:</div>
                     <div class="detail-value">{{ item.size.name|default:"-" }}</div>
+
+                    <div class="detail-label">Style:</div>
+                    <div class="detail-value">{{ item.style.name|default:"-" }}</div>
+
+                    <div class="detail-label">Material:</div>
+                    <div class="detail-value">{{ item.material.name|default:"-" }}</div>
+
+                    <div class="detail-label">Tags:</div>
+                    <div class="detail-value">
+                        {% if item.tags.all %}
+                            {% for tag in item.tags.all %}
+                                <span class="tag-pill">{{ tag.name }}</span>
+                            {% endfor %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 
@@ -292,22 +329,24 @@
                 <h3 class="card-title">System Information</h3>
                 <div class="detail-grid">
                     <div class="detail-label">Created At:</div>
-                    <div class="detail-value">{{ item.created_at }}</div>
+                    <div class="detail-value">{{ item.created_at|date:"M d, Y H:i" }}</div>
 
                     <div class="detail-label">Updated At:</div>
-                    <div class="detail-value">{{ item.updated_at }}</div>
+                    <div class="detail-value">{{ item.updated_at|date:"M d, Y H:i" }}</div>
                 </div>
             </div>
 
             <!-- Admin Actions -->
-            {% if user.is_superuser %}
+            {% if user.is_superuser or user.is_staff_user %}
             <div class="admin-actions">
                 <a href="{% url 'saritasapp:edit_inventory' item.encrypted_id %}" class="action-btn edit-btn">
                     <i class="fas fa-edit"></i> Edit Item
                 </a>
+                {% if user.is_superuser %}
                 <a href="{% url 'saritasapp:delete_inventory' item.encrypted_id %}" class="action-btn delete-btn">
                     <i class="fas fa-trash"></i> Delete Item
                 </a>
+                {% endif %}
             </div>
             {% endif %}
 
