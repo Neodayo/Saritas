@@ -174,6 +174,7 @@
         /* Action Buttons */
         .action-btns {
             display: flex;
+            flex-wrap: wrap;
             gap: 10px;
         }
         
@@ -206,10 +207,20 @@
             background-color: #d6d8db;
         }
         
+        .return-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+        }
+        
+        .return-btn:hover {
+            background-color: #218838;
+        }
+        
         /* Empty State */
         .empty-state {
             text-align: center;
-            padding: 40px 0;
+            padding: 40=px 0;
             color: #6c757d;
         }
         
@@ -328,24 +339,30 @@
                                 </span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <div class="flex space-x-2">
+                        <td>
+                            <div class="action-btns">
                                 <a href="{% url 'saritasapp:view_customer' rental.customer.encrypted_id %}" 
-                                class="flex items-center px-3 py-1.5 bg-amber-100 text-amber-700 rounded-md hover:bg-amber-200 transition-colors">
-                                 <i class="fas fa-user-circle mr-2"></i>
-                                 Profile
+                                   class="action-btn profile-btn">
+                                    <i class="fas fa-user-circle"></i> Profile
                                 </a>
                                 <a href="{% url 'saritasapp:view_inventory' rental.inventory.encrypted_id %}" 
-                                   class="flex items-center px-3 py-1.5 bg-amber-100 text-amber-700 rounded-md hover:bg-amber-200 transition-colors">
-                                    <i class="fas fa-box-open mr-2"></i>
-                                    Details
+                                   class="action-btn details-btn">
+                                    <i class="fas fa-box-open"></i> Details
                                 </a>
+                                {% if rental.display_status in 'Renting,Overdue' %}
+                                <a href="{% url 'saritasapp:return_rental' rental.encrypted_id %}" 
+                                class="action-btn return-btn flex items-center justify-center gap-2">
+                                 <i class="fas fa-check-circle text-sm"></i>
+                                 <span>Return</span>
+                             </a>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
                         <td colspan="7" class="empty-state">
+
                             <i class="fas fa-clipboard-list"></i>
                             <p>No rentals found</p>
                             <p>Try adjusting your filter</p>
@@ -357,14 +374,19 @@
         </div>
     </div>
 
-<script>
-    function clearFilters() {
-        // Reset the form
-        document.getElementById('rentalFilterForm').reset();
-        // Remove the status parameter from URL and reload
-        const url = new URL(window.location.href);
-        url.searchParams.delete('status');
-        window.location.href = url.toString();
-    }
+    <script>
+        function clearFilters() {
+            // Reset the form
+            document.getElementById('rentalFilterForm').reset();
+            // Remove the status parameter from URL and reload
+            const url = new URL(window.location.href);
+            url.searchParams.delete('status');
+            window.location.href = url.toString();
+        }
+        
+        // Auto-submit filter form when selection changes
+        document.getElementById('statusFilter').addEventListener('change', function() {
+            document.getElementById('rentalFilterForm').submit();
+        });
     </script>
 {% endblock %}

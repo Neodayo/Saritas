@@ -1,40 +1,75 @@
 {% extends "saritasapp/base.html" %}
 
 {% block content %}
-<div class="container">
-    <div class="card p-4">
-        <h2 class="mb-4">Confirm Return</h2>
-        
-        <div class="alert alert-info mb-4">
-            <h5>Rental #{{ rental.id }}</h5>
-            <p><strong>Item:</strong> {{ rental.inventory.name }}</p>
-            <p><strong>Customer:</strong> {{ rental.customer.user.get_full_name }}</p>
-        </div>
-        
-        <div class="border p-3 mb-4">
-            <h5>Financial Summary</h5>
-            <div class="row">
-                <div class="col-md-6">
-                    <p><strong>Rental Cost:</strong> ₱{{ rental_cost }}</p>
-                </div>
-                <div class="col-md-6">
-                    <p><strong>Deposit to Refund:</strong> ₱{{ deposit }}</p>
+<div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden" style="box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);">
+        <div class="p-8">
+            <!-- Header -->
+            <div class="mb-8 border-b border-gray-200 pb-4">
+                <div class="flex items-center">
+                    <h2 class="text-2xl font-bold text-amber-800">
+                        <i class="fas fa-check-circle mr-2"></i> Confirm Return
+                    </h2>
                 </div>
             </div>
-        </div>
-        
-        <form method="post">
-            {% csrf_token %}
-            <div class="d-flex justify-content-between">
-                <a href="{% url 'saritasapp:view_customer' rental.customer.id %}" 
-                   class="btn btn-secondary">
-                    Cancel
-                </a>
-                <button type="submit" class="btn btn-success">
-                    Confirm Return
-                </button>
+            
+            <!-- Rental Info Card -->
+            <div class="bg-amber-50 border border-amber-100 rounded-lg p-6 mb-8">
+                <h5 class="font-semibold text-lg text-amber-900 mb-3">Rental #{{ rental.id }}</h5>
+                <div class="space-y-2 text-amber-800">
+                    <p class="flex items-center">
+                        <i class="fas fa-box-open mr-2 text-amber-600"></i>
+                        <span class="font-medium">Item:</span> {{ rental.inventory.name }}
+                    </p>
+                    <p class="flex items-center">
+                        <i class="fas fa-user-circle mr-2 text-amber-600"></i>
+                        <span class="font-medium">Customer:</span> {{ rental.customer.user.get_full_name }}
+                    </p>
+                </div>
             </div>
-        </form>
+            
+            <!-- Financial Summary -->
+            <div class="border border-gray-200 rounded-lg p-6 mb-8 bg-gray-50">
+                <h5 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                    <i class="fas fa-receipt mr-2 text-amber-600"></i>
+                    Financial Summary
+                </h5>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-4 rounded-lg border border-gray-200">
+                        <p class="text-gray-600 mb-1">Rental Cost</p>
+                        <p class="text-xl font-bold text-amber-700">₱{{ rental_cost }}</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg border border-gray-200">
+                        <p class="text-gray-600 mb-1">Deposit to Refund</p>
+                        <p class="text-xl font-bold text-green-600">₱{{ deposit }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <form method="post">
+                {% csrf_token %}
+                <div class="flex flex-col sm:flex-row justify-end gap-4">
+                    <a href="{% url 'saritasapp:view_customer' rental.customer.id %}" 
+                       class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-medium text-center hover:bg-gray-300 transition-colors flex items-center justify-center">
+                        <i class="fas fa-times-circle mr-2"></i> Cancel
+                    </a>
+                    <button type="submit" 
+                            class="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center">
+                        <i class="fas fa-check-circle mr-2"></i> Confirm Return
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
+
+<style>
+    /* Ensure Font Awesome icons are properly sized */
+    .fa {
+        width: 1em;
+        display: inline-block;
+        text-align: center;
+    }
+</style>
 {% endblock %}
