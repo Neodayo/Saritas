@@ -141,10 +141,24 @@ class Color(models.Model):
         return self.name
 
 class Size(models.Model):
-    name = models.CharField(max_length=10, unique=True)
+    COMMON_SIZES = [
+        ('XS', 'Extra Small'),
+        ('S', 'Small'),
+        ('M', 'Medium'),
+        ('L', 'Large'),
+        ('XL', 'Extra Large'),
+        ('XXL', 'Double Extra Large'),
+        ('XXXL', 'Triple Extra Large'),
+        ('PS', 'Plus Size'),
+        ('KS', 'Kid Size'),
+        ('OS', 'One Size'),
+    ]
+    
+    name = models.CharField(max_length=10, unique=True, choices=COMMON_SIZES)
+    description = models.CharField(max_length=50, blank=True)
 
     def __str__(self):
-        return self.name
+        return self.get_name_display()
     
 class Style(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -192,25 +206,23 @@ class ItemType(models.Model):
     
     class Meta:
         ordering = ['name']
-        
-# --- Inventory ---
+
+# --- Inventory Model ---
 class Inventory(models.Model):
     # Basic Information
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     
-    # Relationships with Reference Models
+    # Relationships
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name="inventory_items")
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="items")
     item_type = models.ForeignKey(ItemType, on_delete=models.SET_NULL, null=True, blank=True)
-    color = models.ForeignKey(Color, null=True, blank=True, on_delete=models.SET_NULL, related_name="inventory_items")
-    size = models.ForeignKey(Size, null=True, blank=True, on_delete=models.SET_NULL, related_name="inventory_items")
-    style = models.ForeignKey(Style, null=True, blank=True, on_delete=models.SET_NULL, related_name="inventory_items")
-    material = models.ForeignKey(Material, null=True, blank=True, on_delete=models.SET_NULL, related_name="inventory_items")
-    tags = models.ManyToManyField(Tag, blank=True, related_name="inventory_items")
+    color = models.ForeignKey(Color, null=True, blank=True, on_delete=models.SET_NULL)
+    style = models.ForeignKey(Style, null=True, blank=True, on_delete=models.SET_NULL)
+    material = models.ForeignKey(Material, null=True, blank=True, on_delete=models.SET_NULL)
+    tags = models.ManyToManyField(Tag, blank=True)
     
     # Inventory Management
-    quantity = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0)])
     available = models.BooleanField(default=True)
     
     # Pricing Information
@@ -227,56 +239,34 @@ class Inventory(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
-        self.available = self.quantity > 0
+        # First save the inventory to get a PK
         super().save(*args, **kwargs)
+        # Then update availability based on sizes
+        self.available = self.sizes.filter(quantity__gt=0).exists()
+        super().save(update_fields=['available'])
+        
+
+    @property
+    def calculated_quantity(self):
+        return self.sizes.aggregate(total=models.Sum('quantity'))['total'] or 0
 
     def __str__(self):
-        details = [self.name]
-        if self.item_type:
-            details.append(f"Type: {self.item_type}")
-        if self.color:
-            details.append(f"Color: {self.color}")
-        if self.size:
-            details.append(f"Size: {self.size}")
-        if self.style:
-            details.append(f"Style: {self.style}")
-        if self.material:
-            details.append(f"Material: {self.material}")
-        details.append(f"Branch: {self.branch.branch_name}")
-        return " - ".join(details)
-
-    @property
-    def display_name(self):
-        """Comprehensive display name with all key attributes"""
-        parts = [self.name]
-        if self.item_type:
-            parts.append(f"({self.item_type})")
-        if self.color:
-            parts.append(f"{self.color}")
-        if self.size:
-            parts.append(f"Size: {self.size}")
-        if self.style:
-            parts.append(f"Style: {self.style}")
-        return " ".join(parts)
-
-    @property
-    def tag_list(self):
-        """Comma-separated list of tags"""
-        return ", ".join([tag.name for tag in self.tags.all()])
-
+        return f"{self.name} - {self.branch.branch_name}"
+    
     @property
     def encrypted_id(self):
-        """Get encrypted ID or None if fails"""
+        """Returns encrypted ID for URLs with fallback to plain ID"""
+        if not self.pk:
+            return str(self.pk)  # Shouldn't happen for saved objects
         try:
-            return encrypt_id(self.pk) if self.pk else None
-        except Exception:
-            return None
-
-    def get_absolute_url(self):
-        """Standard Django URL method with encryption"""
-        if not (enc_id := self.encrypted_id):
-            raise ValueError("Encryption failed - no URL available")
-        return reverse('view_inventory', kwargs={'encrypted_id': enc_id})
+            from core.utils.encryption import encrypt_id
+            encrypted = encrypt_id(self.pk)
+            if not encrypted or encrypted == str(self.pk):
+                raise ValueError("Encryption returned invalid value")
+            return encrypted
+        except Exception as e:
+            logger.warning(f"Encryption failed for item {self.pk}: {str(e)}")
+            return str(self.pk) 
 
     class Meta:
         verbose_name_plural = "Inventory"
@@ -289,9 +279,32 @@ class Inventory(models.Model):
             models.Index(fields=['branch']),
         ]
 
+# --- Inventory Size Model ---
+class InventorySize(models.Model):
+    inventory = models.ForeignKey(Inventory, on_delete=models.CASCADE, related_name='sizes')
+    size = models.ForeignKey(Size, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        unique_together = ('inventory', 'size')
+        verbose_name = 'Inventory Size'
+        verbose_name_plural = 'Inventory Sizes'
+        ordering = ['size__name']
+    
+    def __str__(self):
+        return f"{self.inventory.name} - {self.size.name} (Qty: {self.quantity})"
+    
+    def clean(self):
+        if self.quantity < 0:
+            raise ValidationError("Quantity cannot be negative")
+    
+    def save(self, *args, **kwargs):
+        if not self.inventory_id:  # Ensure inventory has been saved
+            raise ValidationError("Inventory must be saved before adding sizes")
+        super().save(*args, **kwargs)
+        self.inventory.save()
 
-
-# --- Rental ---
+# --- Rental Model (Corrected) ---
 class Rental(models.Model):
     PENDING = "Pending"
     APPROVED = "Approved"
@@ -312,7 +325,7 @@ class Rental(models.Model):
     ]
 
     customer = models.ForeignKey('Customer', on_delete=models.CASCADE, related_name="rentals")
-    inventory = models.ForeignKey('Inventory', on_delete=models.CASCADE, related_name="rentals")
+    inventory_size = models.ForeignKey(InventorySize, on_delete=models.CASCADE, related_name="rentals")
     staff = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -327,7 +340,6 @@ class Rental(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     notes = models.TextField(blank=True, null=True)
-    inventory_decremented = models.BooleanField(default=False)
     rejection_reason = models.TextField(blank=True, null=True)
 
     class Meta:
@@ -338,26 +350,17 @@ class Rental(models.Model):
         ]
 
     def __str__(self):
-        return f"Rental #{self.id} - {self.customer} - {self.inventory}"
+        return f"Rental #{self.id} - {self.customer} - {self.inventory_size.inventory.name} ({self.inventory_size.size})"
 
     def clean(self):
-        if not hasattr(self, 'inventory') or not self.inventory:
-            raise ValidationError("Inventory item is required")
-        
         if self.rental_end <= self.rental_start:
             raise ValidationError("Return date must be after the rental start date.")
         
-        if not self.deposit and hasattr(self, 'inventory') and self.inventory:
-            self.deposit = self.inventory.deposit_price or 0
+        if not self.deposit:
+            self.deposit = self.inventory_size.inventory.deposit_price or 0
         
-        # Additional validation for approved/rented status
-        if self.status in [self.APPROVED, self.RENTED] and not self.inventory_decremented:
-            if self.inventory.quantity <= 0:
-                raise ValidationError("This item is no longer available for rent")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
+        if self.status in [self.APPROVED, self.RENTED] and self.inventory_size.quantity <= 0:
+            raise ValidationError("This size is no longer available for rent")
 
     @property
     def duration_days(self):
@@ -365,39 +368,18 @@ class Rental(models.Model):
 
     @property
     def total_cost(self):
-        return float(self.inventory.rental_price) + float(self.deposit)
+        return float(self.inventory_size.inventory.rental_price) + float(self.deposit)
     
-    @property
-    def encrypted_id(self):
-        """Returns encrypted ID or None if encryption fails"""
-        if not self.pk:
-            return None
-        try:
-            return encrypt_id(self.pk)
-        except Exception as e:
-            logger.error(f"Failed to encrypt rental ID {self.pk}: {str(e)}")
-            return None
-
-    def get_encrypted_id(self):
-        """Returns encrypted ID or raises exception if fails"""
-        encrypted = self.encrypted_id
-        if not encrypted:
-            raise ValueError(f"Encryption failed for rental ID {self.pk}")
-        return encrypted
-
     def approve(self, user):
         if self.status != self.PENDING:
             raise ValidationError("Only pending rentals can be approved.")
 
         with transaction.atomic():
-            # Check inventory availability before approving
-            if self.inventory.quantity <= 0:
-                raise ValidationError("This item is no longer available for rent")
+            if self.inventory_size.quantity <= 0:
+                raise ValidationError("This size is no longer available for rent")
             
-            # Decrement inventory only when approving
-            self.inventory.quantity -= 1
-            self.inventory.save()
-            self.inventory_decremented = True
+            self.inventory_size.quantity -= 1
+            self.inventory_size.save()
             
             self.status = self.APPROVED
             self.staff = user
@@ -428,8 +410,8 @@ class Rental(models.Model):
             raise ValidationError("Only rented or overdue items can be returned.")
 
         with transaction.atomic():
-            self.inventory.quantity += 1
-            self.inventory.save()
+            self.inventory_size.quantity += 1
+            self.inventory_size.save()
             self.status = self.RETURNED
             self.save()
 
@@ -443,7 +425,11 @@ class Reservation(models.Model):
         ('cancelled', 'Cancelled'),
     ]
 
-    item = models.ForeignKey(Inventory, on_delete=models.CASCADE, related_name='reservations')
+    inventory_size = models.ForeignKey(
+        InventorySize,
+        on_delete=models.CASCADE,
+        related_name='reservations'
+    )
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='reservations')
     approved_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -476,9 +462,10 @@ class Reservation(models.Model):
         if self.return_date <= self.reservation_date:
             raise ValidationError("Return date must be after the reservation date.")
 
-        # Make sure item exists before checking its quantity
-        if self.item and self.quantity > self.item.quantity:
-            raise ValidationError(f"Only {self.item.quantity} items available for reservation.")
+        if self.quantity > self.inventory_size.quantity:
+            raise ValidationError(
+                f"Only {self.inventory_size.quantity} items available in size {self.inventory_size.size.name}"
+            )
 
     def save(self, *args, **kwargs):
         self.total_price = self.quantity * self.reservation_price

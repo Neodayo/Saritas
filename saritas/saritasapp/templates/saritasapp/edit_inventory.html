@@ -148,6 +148,37 @@
         margin-top: 5px;
     }
     
+    /* Size management styles */
+    .size-management {
+        grid-column: 1 / -1;
+        margin-top: 20px;
+    }
+    
+    .size-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+    
+    .size-table th, .size-table td {
+        padding: 12px;
+        border: 1px solid #ddd;
+        text-align: left;
+    }
+    
+    .size-table th {
+        background-color: #f8f9fa;
+    }
+    
+    .size-form select, .size-form input {
+        width: 100%;
+    }
+    
+    .delete-size {
+        color: #dc3545;
+        cursor: pointer;
+    }
+    
     @media (max-width: 992px) {
         .edit-form {
             grid-template-columns: 1fr;
@@ -222,14 +253,6 @@
             </div>
             
             <div class="form-group">
-                <label for="{{ form.size.id_for_label }}">{{ form.size.label }}</label>
-                {{ form.size }}
-                {% if form.size.errors %}
-                    <div class="error-message">{{ form.size.errors }}</div>
-                {% endif %}
-            </div>
-            
-            <div class="form-group">
                 <label for="{{ form.style.id_for_label }}">{{ form.style.label }}</label>
                 {{ form.style }}
                 {% if form.style.errors %}
@@ -256,15 +279,6 @@
         
         <!-- Full Width Fields -->
         <div class="form-section" style="grid-column: 1 / -1;">
-            <!-- Inventory Management -->
-            <div class="form-group">
-                <label for="{{ form.quantity.id_for_label }}" class="required-field">{{ form.quantity.label }}</label>
-                {{ form.quantity }}
-                {% if form.quantity.errors %}
-                    <div class="error-message">{{ form.quantity.errors }}</div>
-                {% endif %}
-            </div>
-            
             <!-- Pricing Information -->
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
                 <div class="form-group">
@@ -319,6 +333,47 @@
             </div>
         </div>
         
+        <!-- Size Management Section -->
+        <div class="size-management">
+            <h3>Size Quantities</h3>
+            {{ size_formset.management_form }}
+            <table class="size-table">
+                <thead>
+                    <tr>
+                        <th>Size</th>
+                        <th>Quantity</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for form in size_formset %}
+                    <tr class="size-form">
+                        <td>
+                            {{ form.size }}
+                            {% if form.size.errors %}
+                                <div class="error-message">{{ form.size.errors }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ form.quantity }}
+                            {% if form.quantity.errors %}
+                                <div class="error-message">{{ form.quantity.errors }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if size_formset.can_delete %}
+                                {{ form.DELETE }} <span class="delete-size">Delete</span>
+                            {% endif %}
+                            {% for hidden in form.hidden_fields %}
+                                {{ hidden }}
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
         <!-- Form Actions -->
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">
@@ -356,6 +411,12 @@
             } else {
                 $('#image-preview').hide();
             }
+        });
+
+        // Size form management
+        $('.delete-size').click(function() {
+            $(this).closest('tr').find('input[type=checkbox]').prop('checked', true);
+            $(this).closest('tr').hide();
         });
     });
 </script>

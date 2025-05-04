@@ -166,6 +166,32 @@
     .fas.fa-plus {
         font-size: 0.875rem;
     }
+    .size-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        margin: 0.1rem;
+        background-color: #f3f4f6;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        color: #4b5563;
+    }
+    
+    .size-badge.available {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    
+    .size-badge.unavailable {
+        background-color: #fee2e2;
+        color: #b91c1c;
+    }
+    
+    .sizes-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        margin-top: 0.5rem;
+    }
 </style>
 {% endblock %}
 
@@ -178,6 +204,17 @@
     <form id="filter-form" method="get" class="mb-8 fade-in-up">
         <!-- First Row of Filters -->
         <div class="filter-section">
+            <!-- Branch -->
+            <div class="filter-group">
+                <label for="branch">Branch:</label>
+                <select name="branch" id="branch" onchange="this.form.submit()">
+                    <option value="">All</option>
+                    {% for branch in branches %}
+                        <option value="{{ branch.id }}" {% if request.GET.branch == branch.id|stringformat:"s" %}selected{% endif %}>{{ branch.branch_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
             <!-- Categories -->
             <div class="filter-group">
                 <label for="category">Category:</label>
@@ -195,7 +232,7 @@
                 <select name="size" id="size" onchange="this.form.submit()">
                     <option value="">All</option>
                     {% for size in sizes %}
-                        <option value="{{ size.id }}" {% if request.GET.size == size.id|stringformat:"s" %}selected{% endif %}>{{ size.name }}</option>
+                        <option value="{{ size.id }}" {% if request.GET.size == size.id|stringformat:"s" %}selected{% endif %}>{{ size.get_name_display }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -210,7 +247,10 @@
                     {% endfor %}
                 </select>
             </div>
-            
+        </div>
+        
+        <!-- Second Row of Filters -->
+        <div class="filter-section">
             <!-- Material -->
             <div class="filter-group">
                 <label for="material">Material:</label>
@@ -221,10 +261,7 @@
                     {% endfor %}
                 </select>
             </div>
-        </div>
-        
-        <!-- Second Row of Filters -->
-        <div class="filter-section">
+            
             <!-- Style -->
             <div class="filter-group">
                 <label for="style">Style:</label>
@@ -246,43 +283,35 @@
                     {% endfor %}
                 </select>
             </div>
-            
-            <!-- Item Type -->
-            <div class="filter-group">
-                <label for="item_type">Item Type:</label>
-                <select name="item_type" id="item_type" onchange="this.form.submit()">
-                    <option value="">All</option>
-                    {% for item_type in item_types %}
-                        <option value="{{ item_type.id }}" {% if request.GET.item_type == item_type.id|stringformat:"s" %}selected{% endif %}>{{ item_type.get_name_display }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <!-- Availability -->
-            <div class="filter-group">
-                <label for="available">Availability:</label>
-                <select name="available" id="available" onchange="this.form.submit()">
-                    <option value="">All</option>
-                    <option value="true" {% if request.GET.available == 'true' %}selected{% endif %}>Available</option>
-                    <option value="false" {% if request.GET.available == 'false' %}selected{% endif %}>Unavailable</option>
-                </select>
-            </div>
         </div>
         
         <!-- Third Row - Sort and Actions -->
         <div class="flex flex-wrap items-center justify-between gap-4 mt-4">
-            <!-- Sort -->
-            <div class="filter-group">
-                <label for="sort">Sort by:</label>
-                <select name="sort" id="sort" onchange="this.form.submit()">
-                    <option value="">Default</option>
-                    <option value="name_asc" {% if request.GET.sort == 'name_asc' %}selected{% endif %}>Name (A-Z)</option>
-                    <option value="name_desc" {% if request.GET.sort == 'name_desc' %}selected{% endif %}>Name (Z-A)</option>
-                    <option value="price_asc" {% if request.GET.sort == 'price_asc' %}selected{% endif %}>Price (Low to High)</option>
-                    <option value="price_desc" {% if request.GET.sort == 'price_desc' %}selected{% endif %}>Price (High to Low)</option>
-                    <option value="quantity_asc" {% if request.GET.sort == 'quantity_asc' %}selected{% endif %}>Quantity (Low to High)</option>
-                    <option value="quantity_desc" {% if request.GET.sort == 'quantity_desc' %}selected{% endif %}>Quantity (High to Low)</option>
-                </select>
+            <!-- Sort and Availability -->
+            <div class="flex flex-wrap items-center gap-4">
+                <!-- Availability -->
+                <div class="filter-group">
+                    <label for="available">Availability:</label>
+                    <select name="available" id="available" onchange="this.form.submit()">
+                        <option value="">All</option>
+                        <option value="true" {% if request.GET.available == 'true' %}selected{% endif %}>Available</option>
+                        <option value="false" {% if request.GET.available == 'false' %}selected{% endif %}>Unavailable</option>
+                    </select>
+                </div>
+                
+                <!-- Sort -->
+                <div class="filter-group">
+                    <label for="sort">Sort by:</label>
+                    <select name="sort" id="sort" onchange="this.form.submit()">
+                        <option value="">Default</option>
+                        <option value="name_asc" {% if request.GET.sort == 'name_asc' %}selected{% endif %}>Name (A-Z)</option>
+                        <option value="name_desc" {% if request.GET.sort == 'name_desc' %}selected{% endif %}>Name (Z-A)</option>
+                        <option value="price_asc" {% if request.GET.sort == 'price_asc' %}selected{% endif %}>Price (Low to High)</option>
+                        <option value="price_desc" {% if request.GET.sort == 'price_desc' %}selected{% endif %}>Price (High to Low)</option>
+                        <option value="quantity_asc" {% if request.GET.sort == 'quantity_asc' %}selected{% endif %}>Quantity (Low to High)</option>
+                        <option value="quantity_desc" {% if request.GET.sort == 'quantity_desc' %}selected{% endif %}>Quantity (High to Low)</option>
+                    </select>
+                </div>
             </div>
             
             <!-- Action Buttons -->
@@ -303,8 +332,8 @@
 
     <!-- Product Grid -->
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4" id="product-grid">
-        {% if inventory_items %}
-            {% for item in inventory_items %}
+        {% if page_obj %}
+            {% for item in page_obj %}
             <a href="{% url 'saritasapp:view_inventory' item.encrypted_id %}" class="group block bg-white rounded overflow-hidden product-card hover:shadow-lg transition-all">
                 <div class="h-[380px] w-full overflow-hidden">
                     {% if item.image %}
@@ -317,10 +346,13 @@
                     <h3 class="text-gray-800 font-medium text-base truncate">{{ item.name }}</h3>
                     <p class="text-gray-700 mt-1">₱{{ item.rental_price }}</p>
                     <div class="flex justify-between items-center mt-1 text-sm">
-                        <span class="text-gray-500">Qty: {{ item.quantity }}</span>
+                        <span class="text-gray-500">Qty: {{ item.item_quantity }}</span>
                         <span class="{% if item.available %}text-green-600{% else %}text-red-600{% endif %}">
                             {% if item.available %}Available{% else %}Unavailable{% endif %}
                         </span>
+                    </div>
+                    <div class="mt-1 text-xs text-gray-500">
+                        {{ item.branch.branch_name }}
                     </div>
                 </div>
             </a>
@@ -333,9 +365,39 @@
         </div>
         {% endif %}
     </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="mt-8 flex justify-center">
+        <div class="flex items-center gap-2">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="filter-btn">
+                    &laquo; Previous
+                </a>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="filter-btn bg-[#5a3e2b]">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="filter-btn">
+                        {{ num }}
+                    </a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="filter-btn">
+                    Next &raquo;
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 <script>
+    // Your existing JavaScript remains the same
     function clearFilters() {
         // Get all select elements in the form
         const selects = document.querySelectorAll('#filter-form select');

@@ -4,6 +4,27 @@
 {% block title %}Add Inventory Item{% endblock %}
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/add_inventory.css' %}">
+<style>
+    /* Add styles for size management */
+    .size-management {
+        margin-top: 20px;
+    }
+    .size-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .size-table th, .size-table td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: left;
+    }
+    .size-table th {
+        background-color: #f8f9fa;
+    }
+    .add-size-btn {
+        margin-top: 10px;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -29,9 +50,12 @@
                     {% endfor %}
                 {% endif %}
                 
-                {% if form.non_field_errors %}
+                {% if form.non_field_errors or size_formset.non_form_errors %}
                     <div class="alert alert-danger">
                         {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                        {% for error in size_formset.non_form_errors %}
                             {{ error }}
                         {% endfor %}
                     </div>
@@ -95,20 +119,6 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label for="{{ form.size.id_for_label }}" class="form-label">{{ form.size.label }}</label>
-                                <div class="input-group-combo">
-                                    {{ form.size }}
-                                    <div class="input-group-append">
-                                        <a href="{% url 'saritasapp:add_size' %}"  title="Add new size">
-                                            add size
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
                                 <label for="{{ form.style.id_for_label }}" class="form-label">{{ form.style.label }}</label>
                                 <div class="input-group-combo">
                                     {{ form.style }}
@@ -146,20 +156,6 @@
                                 </a>
                             </div>
                             <small class="form-text">{{ form.tags.help_text }}</small>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="{{ form.quantity.id_for_label }}" class="form-label">
-                                {{ form.quantity.label }}
-                                {% if form.quantity.field.required %}<span class="required">*</span>{% endif %}
-                            </label>
-                            {{ form.quantity }}
-                            {% if form.quantity.errors %}
-                                <div class="invalid-feedback">
-                                    {{ form.quantity.errors }}
-                                </div>
-                            {% endif %}
-                            <small class="form-text">{{ form.quantity.help_text }}</small>
                         </div>
                         
                         <div class="price-grid">
@@ -219,7 +215,47 @@
                     </div>
                 </div>
                 
-                <div class="form-actions">
+                <!-- Size Management Section -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h4>Size Quantities</h4>
+                    </div>
+                    <div class="card-body">
+                        {{ size_formset.management_form }}
+                        <table class="table size-table">
+                            <thead>
+                                <tr>
+                                    <th>Size</th>
+                                    <th>Quantity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for form in size_formset %}
+                                <tr class="size-form">
+                                    <td>
+                                        {{ form.size }}
+                                        {% if form.size.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.size.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ form.quantity }}
+                                        {% if form.quantity.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.quantity.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="form-actions mt-4">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save"></i> Save Item
                     </button>
@@ -280,6 +316,30 @@ document.addEventListener('DOMContentLoaded', function() {
         element.addEventListener('blur', function() {
             this.closest('.form-group').classList.remove('focused');
         });
+    });
+
+    // Dynamic size form management
+    $('.size-table').on('click', '.add-size', function() {
+        const formCount = $('#id_sizes-TOTAL_FORMS').val();
+        const newForm = $('.size-form:first').clone();
+        
+        newForm.find(':input').each(function() {
+            const name = $(this).attr('name').replace('-0-', '-' + formCount + '-');
+            const id = $(this).attr('id').replace('-0-', '-' + formCount + '-');
+            $(this).attr({'name': name, 'id': id}).val('').removeAttr('checked');
+        });
+        
+        newForm.find('td:last').html('<button type="button" class="btn btn-sm btn-danger remove-size">Remove</button>');
+        $('.size-table tbody').append(newForm);
+        $('#id_sizes-TOTAL_FORMS').val(parseInt(formCount) + 1);
+    });
+
+    $('.size-table').on('click', '.remove-size', function() {
+        const formCount = $('#id_sizes-TOTAL_FORMS').val();
+        if (formCount > 1) {
+            $(this).closest('.size-form').remove();
+            $('#id_sizes-TOTAL_FORMS').val(parseInt(formCount) - 1);
+        }
     });
 });
 </script>

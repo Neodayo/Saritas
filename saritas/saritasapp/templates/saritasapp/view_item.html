@@ -221,6 +221,68 @@
             flex-direction: column;
         }
     }
+    .item-view-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+
+    /* Add new styles for sizes table */
+    .sizes-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+    
+    .sizes-table th, .sizes-table td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .sizes-table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        color: #555;
+    }
+    
+    .sizes-table tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .quantity-cell {
+        font-weight: 600;
+    }
+    
+    .in-stock {
+        color: #0d6b28;
+    }
+    
+    .out-of-stock {
+        color: #c62828;
+    }
+    
+    /* Update status badges */
+    .status-badge {
+        display: inline-block;
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .available {
+        background-color: #e6f7ea;
+        color: #0d6b28;
+    }
+    
+    .unavailable {
+        background-color: #fce8e8;
+        color: #c62828;
+    }
 </style>
 {% endblock %}
 
@@ -232,8 +294,11 @@
 
     <div class="item-header">
         <div>
-            <h1 class="item-title">{{ item.display_name }}</h1>
+            <h1 class="item-title">{{ item.name }}</h1>
             <div class="item-id">Item ID: {{ item.id }}</div>
+        </div>
+        <div class="status-badge {% if item.available %}available{% else %}unavailable{% endif %}">
+            {% if item.available %}Available{% else %}Unavailable{% endif %}
         </div>
     </div>
 
@@ -253,19 +318,43 @@
             <div class="detail-card">
                 <h3 class="card-title">Basic Information</h3>
                 <div class="detail-grid">
-                    <div class="detail-label">Status:</div>
-                    <div class="detail-value">
-                        <span class="status-badge {% if item.available %}available{% else %}unavailable{% endif %}">
-                            {% if item.available %}Available{% else %}Unavailable{% endif %}
-                        </span>
-                    </div>
-
-                    <div class="detail-label">Quantity:</div>
-                    <div class="detail-value">{{ item.quantity }}</div>
-
                     <div class="detail-label">Description:</div>
                     <div class="detail-value">{{ item.description|default:"No description provided" }}</div>
+                    
+                    <div class="detail-label">Total Quantity:</div>
+                    <div class="detail-value">{{ total_quantity }}</div>  <!-- Use the passed total -->
                 </div>
+            </div>
+
+            <!-- Sizes Availability Card -->
+            <div class="detail-card">
+                <h3 class="card-title">Size Availability</h3>
+                {% if sizes %}
+                    <table class="sizes-table">
+                        <thead>
+                            <tr>
+                                <th>Size</th>
+                                <th>Quantity</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for inventory_size in sizes %}
+                            <tr>
+                                <td>{{ inventory_size.size.get_name_display }}</td>
+                                <td class="quantity-cell">{{ inventory_size.quantity }}</td>
+                                <td>
+                                    <span class="{% if inventory_size.quantity > 0 %}in-stock{% else %}out-of-stock{% endif %}">
+                                        {% if inventory_size.quantity > 0 %}In Stock{% else %}Out of Stock{% endif %}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>No size information available</p>
+                {% endif %}
             </div>
 
             <!-- Category & Relationships Card -->
@@ -273,7 +362,7 @@
                 <h3 class="card-title">Categories & Relationships</h3>
                 <div class="detail-grid">
                     <div class="detail-label">Branch:</div>
-                    <div class="detail-value">{{ item.branch.branch_name }} ({{ item.branch.location }})</div>
+                    <div class="detail-value">{{ item.branch.branch_name }}</div>
 
                     <div class="detail-label">Category:</div>
                     <div class="detail-value">{{ item.category.name }}</div>
@@ -283,9 +372,6 @@
 
                     <div class="detail-label">Color:</div>
                     <div class="detail-value">{{ item.color.name|default:"-" }}</div>
-
-                    <div class="detail-label">Size:</div>
-                    <div class="detail-value">{{ item.size.name|default:"-" }}</div>
 
                     <div class="detail-label">Style:</div>
                     <div class="detail-value">{{ item.style.name|default:"-" }}</div>

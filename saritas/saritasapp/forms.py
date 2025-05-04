@@ -4,7 +4,7 @@ from pyexpat.errors import messages
 from tkinter import Image
 from django import forms
 from django.urls import reverse_lazy
-from .models import CustomizedWardrobePackage, Inventory, Category, ItemType, Material, Style, PackageCustomization, Tag, User, WardrobePackage, WardrobePackageItem, Branch, Event, Color, Size, Staff, WardrobePackageRental
+from .models import CustomizedWardrobePackage, Inventory, Category, InventorySize, ItemType, Material, Style, PackageCustomization, Tag, User, WardrobePackage, WardrobePackageItem, Branch, Event, Color, Size, Staff, WardrobePackageRental
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model, authenticate
 from django.core.exceptions import ValidationError
@@ -12,25 +12,32 @@ from django.core.validators import MinValueValidator
 from django.db import transaction
 User = get_user_model()
 
+class InventorySizeForm(forms.ModelForm):
+    size = forms.ModelChoiceField(
+        queryset=Size.objects.all(),
+        widget=forms.Select(attrs={'class': 'form-select size-select'}),
+        help_text="Select size"
+    )
+    
+    quantity = forms.IntegerField(
+        min_value=0,
+        initial=0,
+        widget=forms.NumberInput(attrs={'class': 'form-control quantity-input'}),
+        help_text="Quantity available"
+    )
 
-class BranchForm(forms.ModelForm):
     class Meta:
-        model = Branch
-        fields = ['branch_name', 'location']
+        model = InventorySize
+        fields = ['size', 'quantity']
 
-
-class EventForm(forms.ModelForm):
-    class Meta:
-        model = Event
-        fields = ['title', 'venue', 'start_date', 'end_date', 'notes']
-        widgets = {
-            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'venue': forms.TextInput(attrs={'class': 'form-control'}),
-            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-        }
-        
+InventorySizeFormSet = forms.inlineformset_factory(
+    Inventory,
+    InventorySize,
+    form=InventorySizeForm,
+    extra=len(Size.COMMON_SIZES),  # Start with 1 empty form
+    can_delete=True,
+    fields=('size', 'quantity')
+) 
 
 class InventoryForm(forms.ModelForm):
     # Basic Information
@@ -81,13 +88,6 @@ class InventoryForm(forms.ModelForm):
         help_text="Select the primary color"
     )
     
-    size = forms.ModelChoiceField(
-        queryset=Size.objects.all().order_by('name'),
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-select select2'}),
-        help_text="Select the size"
-    )
-    
     style = forms.ModelChoiceField(
         queryset=Style.objects.all().order_by('name'),
         required=False,
@@ -107,15 +107,6 @@ class InventoryForm(forms.ModelForm):
         required=False,
         widget=forms.SelectMultiple(attrs={'class': 'form-select select2'}),
         help_text="Select relevant tags (hold Ctrl to select multiple)"
-    )
-    
-    # Inventory Management
-    quantity = forms.IntegerField(
-        initial=0,
-        min_value=0,
-        validators=[MinValueValidator(0)],
-        widget=forms.NumberInput(attrs={'class': 'form-control'}),
-        help_text="Current stock quantity"
     )
     
     # Pricing Information
@@ -152,7 +143,7 @@ class InventoryForm(forms.ModelForm):
     
     # Media
     image = forms.ImageField(
-        required=True,
+        required=False,
         widget=forms.FileInput(attrs={'class': 'form-control'}),
         help_text="Upload item photo (recommended size: 800x800px)"
     )
@@ -161,7 +152,7 @@ class InventoryForm(forms.ModelForm):
         model = Inventory
         fields = [
             'name', 'description', 'branch', 'category', 'item_type',
-            'color', 'size', 'style', 'material', 'tags', 'quantity',
+            'color', 'style', 'material', 'tags',
             'rental_price', 'reservation_price', 'deposit_price', 
             'purchase_price', 'image'
         ]
@@ -170,61 +161,46 @@ class InventoryForm(forms.ModelForm):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         
-        # Set initial branch for staff users
         if user and hasattr(user, 'staff_profile'):
             self.fields['branch'].initial = user.staff_profile.branch
         
-        # Make image not required for edits
         if self.instance and self.instance.pk:
             self.fields['image'].required = False
         
-        # Ensure all ItemType choices exist in the database
         self.initialize_item_types()
     
     def initialize_item_types(self):
-        """Create all defined item types if they don't exist"""
         for choice_value, choice_label in ItemType.ITEM_TYPES:
             ItemType.objects.get_or_create(
                 name=choice_value,
                 defaults={'name': choice_value}
             )
-        
-        # Refresh the queryset to include any newly created items
         self.fields['item_type'].queryset = ItemType.objects.all().order_by('name')
         
-        # Set initial value for existing instances
         if self.instance and self.instance.item_type:
             self.fields['item_type'].initial = self.instance.item_type
     
     def clean(self):
         cleaned_data = super().clean()
-        
-        # Validate pricing relationships
         rental_price = cleaned_data.get('rental_price')
         deposit_price = cleaned_data.get('deposit_price')
         
+        if rental_price and rental_price < 0:
+            self.add_error('rental_price', 'Rental price cannot be negative')
         
-        # Validate quantity makes sense with availability
-        quantity = cleaned_data.get('quantity', 0)
-        if quantity < 0:
-            self.add_error('quantity', 'Quantity cannot be negative')
+        if deposit_price and deposit_price < 0:
+            self.add_error('deposit_price', 'Deposit price cannot be negative')
         
         return cleaned_data
     
     def save(self, commit=True):
         instance = super().save(commit=False)
-        
-        # Format name properly
         instance.name = instance.name.title()
-        
-        # Set availability based on quantity
-        instance.available = instance.quantity > 0
         
         if commit:
             instance.save()
-            self.save_m2m()  # Save many-to-many relationships
+            self.save_m2m()
             
-            # Handle image separately to avoid resetting on form updates
             if 'image' in self.changed_data and self.cleaned_data['image']:
                 instance.image = self.cleaned_data['image']
                 instance.save()
@@ -371,6 +347,24 @@ class TagForm(forms.ModelForm):
         if Tag.objects.filter(name__iexact=name).exists():
             raise forms.ValidationError("This tag already exists.")
         return name
+    
+class BranchForm(forms.ModelForm):
+    class Meta:
+        model = Branch
+        fields = ['branch_name', 'location']
+
+
+class EventForm(forms.ModelForm):
+    class Meta:
+        model = Event
+        fields = ['title', 'venue', 'start_date', 'end_date', 'notes']
+        widgets = {
+            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'venue': forms.TextInput(attrs={'class': 'form-control'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
 
 class StaffSignUpForm(UserCreationForm):
     # Staff-specific fields (not part of User model)

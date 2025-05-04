@@ -16,7 +16,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import transaction
 from django.db.models import Count, F, Q, Sum
-from django.db.models.functions import ExtractMonth, ExtractWeek, ExtractYear, TruncMonth
+from django.db.models.functions import ExtractMonth, ExtractWeek, ExtractYear, TruncMonth, Coalesce
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy, reverse
@@ -35,12 +35,12 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 # Local app imports
 from .forms import (
     AddPackageItemForm, AdminSignUpForm, BranchForm, BulkPackageItemForm, CategoryForm, ColorForm, EditProfileForm, EditStaffForm, EventForm,
-    InventoryForm, LoginForm, MaterialForm, PackageItemForm, PackageReturnForm, SizeForm, StaffRentalApprovalForm, StaffSignUpForm, StyleForm, TagForm,
+    InventoryForm, InventorySizeFormSet, LoginForm, MaterialForm, PackageItemForm, PackageReturnForm, SizeForm, StaffRentalApprovalForm, StaffSignUpForm, StyleForm, TagForm,
     WardrobePackageForm, WardrobePackageItemForm,
     PackageCustomizationForm, CustomizePackageForm
 )
 from .models import (
-    Branch, Category, Color, Customer, Event, Inventory, ItemType, Material, Notification, PackageCustomization,
+    Branch, Category, Color, Customer, Event, Inventory, InventorySize, ItemType, Material, Notification, PackageCustomization,
     Receipt, Rental, Reservation, Size, Style, Tag, User, Venue,
     WardrobePackage, CustomizedWardrobePackage, WardrobePackageItem, WardrobePackageRental
 )
@@ -105,37 +105,70 @@ def delete_branch(request, branch_id):
     })
 
     
+# views.py
 @staff_member_required
 def add_inventory(request):
     if request.method == 'POST':
         form = InventoryForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             try:
-                inventory_item = form.save(commit=False)
-                
-                # Set creator
-                if hasattr(request.user, 'staff_profile'):
-                    inventory_item.created_by = request.user
-                elif request.user.is_superuser:
-                    inventory_item.created_by = request.user
-                
-                inventory_item.save()
-                form.save_m2m()
-                
-                messages.success(request, f"Successfully added {inventory_item.name}")
-                return redirect('saritasapp:inventory_list')
-                
+                with transaction.atomic():
+                    # 1. First save the Inventory instance alone
+                    inventory = form.save(commit=False)
+                    if hasattr(request.user, 'staff_profile'):
+                        inventory.created_by = request.user
+                    inventory.save()  # This creates the PK
+                    form.save_m2m()  # Save many-to-many relationships
+                    
+                    # 2. Now handle sizes with the saved inventory instance
+                    size_formset = InventorySizeFormSet(
+                        request.POST,
+                        instance=inventory,
+                        queryset=InventorySize.objects.none()
+                    )
+                    
+                    if size_formset.is_valid():
+                        sizes = size_formset.save(commit=False)
+                        for size in sizes:
+                            size.inventory = inventory  # Ensure relationship is set
+                            size.save()
+                        
+                        # Update inventory availability
+                        inventory.available = inventory.sizes.filter(quantity__gt=0).exists()
+                        inventory.save(update_fields=['available'])
+                        
+                        messages.success(request, f"Successfully added {inventory.name}")
+                        return redirect('saritasapp:inventory_list')
+                    else:
+                        # Handle formset errors
+                        for form in size_formset:
+                            for field, errors in form.errors.items():
+                                for error in errors:
+                                    messages.error(request, f"Size {form.cleaned_data.get('size', '')}: {error}")
+                        for error in size_formset.non_form_errors():
+                            messages.error(request, error)
+                        
+                        # Rollback if size data is invalid
+                        raise ValidationError("Invalid size data")
             except Exception as e:
                 messages.error(request, f"Error saving item: {str(e)}")
+                # Re-initialize forms for correction
+                size_formset = InventorySizeFormSet(queryset=InventorySize.objects.none())
         else:
+            # Form is invalid, initialize empty formset
+            size_formset = InventorySizeFormSet(queryset=InventorySize.objects.none())
+            # Handle form errors
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{form.fields[field].label}: {error}")
     else:
+        # GET request - initialize empty forms
         form = InventoryForm(user=request.user)
+        size_formset = InventorySizeFormSet(queryset=InventorySize.objects.none())
     
     context = {
         'form': form,
+        'size_formset': size_formset,
         'user': request.user,
         'categories': Category.objects.all().order_by('name'),
         'colors': Color.objects.all().order_by('name'),
@@ -258,25 +291,31 @@ def edit_inventory(request, encrypted_id):
     
     if request.method == 'POST':
         form = InventoryForm(request.POST, request.FILES, instance=item, user=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Inventory item updated successfully!')
-            return redirect('saritasapp:inventory_list')
+        size_formset = InventorySizeFormSet(request.POST, instance=item)
+        
+        if form.is_valid() and size_formset.is_valid():
+            try:
+                with transaction.atomic():
+                    form.save()
+                    size_formset.save()
+                    messages.success(request, 'Inventory item updated successfully!')
+                    return redirect('saritasapp:inventory_list')
+            except Exception as e:
+                messages.error(request, f"Error updating item: {str(e)}")
     else:
         form = InventoryForm(instance=item, user=request.user)
-    
-    # Add error logging to help debug
-    if form.errors:
-        print("Form errors:", form.errors)
+        size_formset = InventorySizeFormSet(instance=item)
     
     return render(request, 'saritasapp/edit_inventory.html', {
         'form': form,
+        'size_formset': size_formset,
         'categories': Category.objects.all(),
         'colors': Color.objects.all(),
         'sizes': Size.objects.all(),
-        'branches': Branch.objects.all(),  # This is key
+        'branches': Branch.objects.all(),
         'item': item
     })
+
 
 @staff_member_required
 def delete_inventory(request, encrypted_id):
@@ -289,37 +328,56 @@ def delete_inventory(request, encrypted_id):
     return render(request, 'saritasapp/confirm_delete.html', {'item': item})
 
 @staff_member_required
+def view_item(request, encrypted_id):
+    try:
+        item = get_decrypted_object_or_404(Inventory, encrypted_id)
+        sizes = item.sizes.all().order_by('size__name')
+        
+        # Calculate total quantity by summing all sizes
+        total_quantity = sizes.aggregate(total=Sum('quantity'))['total'] or 0
+        
+        return render(request, 'saritasapp/view_item.html', {
+            'item': item,
+            'sizes': sizes,
+            'total_quantity': total_quantity  # Pass the calculated total
+        })
+    except BadRequest:
+        return HttpResponseBadRequest("Invalid item ID")
+    except Http404:
+        return HttpResponseNotFound("Item not found")
+
+@staff_member_required
 def inventory_view(request):
     # Get all filter options
     categories = Category.objects.all()
     colors = Color.objects.all()
-    sizes = Size.objects.all()
     materials = Material.objects.all()
     tags = Tag.objects.all()
     styles = Style.objects.all()
     item_types = ItemType.objects.all()
+    sizes = Size.objects.all()
+    branches = Branch.objects.all()
 
     # Get selected filters from request
     selected_category = request.GET.get('category', '')
     selected_color = request.GET.get('color', '')
-    selected_size = request.GET.get('size', '')
     selected_material = request.GET.get('material', '')
     selected_tag = request.GET.get('tag', '')
     selected_style = request.GET.get('style', '')
     selected_item_type = request.GET.get('item_type', '')
+    selected_size = request.GET.get('size', '')
+    selected_branch = request.GET.get('branch', '')
     selected_available = request.GET.get('available', '')
     sort = request.GET.get('sort', '')
 
     # Start with all inventory items
-    inventory_items = Inventory.objects.all()
+    inventory_items = Inventory.objects.all().prefetch_related('sizes')
 
     # Apply filters
     if selected_category:
         inventory_items = inventory_items.filter(category_id=selected_category)
     if selected_color:
         inventory_items = inventory_items.filter(color_id=selected_color)
-    if selected_size:
-        inventory_items = inventory_items.filter(size_id=selected_size)
     if selected_material:
         inventory_items = inventory_items.filter(material_id=selected_material)
     if selected_style:
@@ -328,8 +386,17 @@ def inventory_view(request):
         inventory_items = inventory_items.filter(item_type_id=selected_item_type)
     if selected_tag:
         inventory_items = inventory_items.filter(tags__id=selected_tag)
+    if selected_size:
+        inventory_items = inventory_items.filter(sizes__size_id=selected_size)
+    if selected_branch:
+        inventory_items = inventory_items.filter(branch_id=selected_branch)
     if selected_available:
         inventory_items = inventory_items.filter(available=selected_available)
+
+    # Annotate with total quantity (fixed version)
+    inventory_items = inventory_items.annotate(
+        item_quantity=Coalesce(Sum('sizes__quantity'), 0)
+    ).distinct()
 
     # Apply sorting
     if sort == 'name_asc':
@@ -341,29 +408,42 @@ def inventory_view(request):
     elif sort == 'price_desc':
         inventory_items = inventory_items.order_by('-rental_price')
     elif sort == 'quantity_asc':
-        inventory_items = inventory_items.order_by('quantity')
+        inventory_items = inventory_items.order_by('item_quantity')
     elif sort == 'quantity_desc':
-        inventory_items = inventory_items.order_by('-quantity')
+        inventory_items = inventory_items.order_by('-item_quantity')
+
+    # Pagination
+    paginator = Paginator(inventory_items, 25)
+    page_number = request.GET.get('page')
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
 
     return render(request, 'saritasapp/inventory.html', {
         'categories': categories,
         'colors': colors,
-        'sizes': sizes,
         'materials': materials,
         'tags': tags,
         'styles': styles,
         'item_types': item_types,
-        'inventory_items': inventory_items,
+        'sizes': sizes,
+        'branches': branches,
+        'page_obj': page_obj,
         'selected_category': selected_category,
         'selected_color': selected_color,
-        'selected_size': selected_size,
         'selected_material': selected_material,
         'selected_tag': selected_tag,
         'selected_style': selected_style,
         'selected_item_type': selected_item_type,
+        'selected_size': selected_size,
+        'selected_branch': selected_branch,
         'selected_available': selected_available,
         'sort': sort
     })
+
 
 # Create a logger instance
 
