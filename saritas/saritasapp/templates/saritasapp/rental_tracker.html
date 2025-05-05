@@ -5,15 +5,105 @@
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'css/rental_tracker.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Additional styles for the improved layout */
+        .customer-group {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        
+        .customer-header {
+            background-color: #e9ecef;
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .customer-name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .rental-count {
+            background-color: #6c757d;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+        
+        .rental-items {
+            display: none;
+        }
+        
+        .customer-group.expanded .rental-items {
+            display: block;
+        }
+        
+        .compact-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .compact-table th, .compact-table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .compact-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .item-details {
+            display: flex;
+            align-items: center;
+        }
+        
+        .item-image {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 3px;
+            margin-right: 10px;
+        }
+        
+        .date-cell {
+            white-space: nowrap;
+        }
+        
+        .status-cell {
+            min-width: 120px;
+        }
+        
+        .action-btns {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        .action-btn {
+            padding: 5px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+    </style>
 {% endblock %}
+
 {% block content %}
     <div class="rental-tracker-container">
         <div class="page-header">
             <h1 class="page-title">
-                <i class="fas fa-concierge-bell"></i> Rental Tracking Management
+                <i class="fas fa-concierge-bell"></i> Rental Management
             </h1>
             <div class="total-rentals">
-                Total Rentals: {{ rentals|length }}
+                {{ rentals|length }} active rental{{ rentals|length|pluralize }}
             </div>
         </div>
 
@@ -36,119 +126,137 @@
             </form>
         </div>
 
-        <!-- Table Section -->
-        <div class="table-responsive">
-            <table class="rentals-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Customer</th>
-                        <th>Item</th>
-                        <th>Start Date</th>
-                        <th>End Date</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for rental in rentals %}
-                    <tr class="{% if rental.is_overdue %}overdue{% endif %}">
-                        <td>#{{ rental.id }}</td>
-                        <td>{{ rental.customer.user.get_full_name }}</td>
-                        <td>
-                            {{ rental.inventory_size.inventory.name }}
-                            <div class="text-muted" style="font-size: 12px; color: #6c757d;">
-                                {{ rental.inventory_size.inventory.category.name }} | {{ rental.inventory_size.size.name }}
-                            </div>
-                        </td>
-                        <td>{{ rental.rental_start|date:"M d, Y" }}</td>
-                        <td>
-                            {{ rental.rental_end|date:"M d, Y" }}
-                            <div class="text-muted" style="font-size: 12px; color: #6c757d;">
-                                {{ rental.duration_days }} day{{ rental.duration_days|pluralize }}
-                            </div>
-                        </td>
-                        <td>
-                            {% if rental.is_overdue %}
-                                <span class="status-badge status-overdue">
-                                    <i class="fas fa-exclamation-circle" style="margin-right: 5px;"></i> Overdue
-                                </span>
-                            {% elif rental.status == rental.RETURNED %}
-                                <span class="status-badge status-returned">
-                                    <i class="fas fa-check-circle" style="margin-right: 5px;"></i> Returned
-                                </span>
-                            {% elif rental.status == rental.RENTED %}
-                                <span class="status-badge status-renting">
-                                    <i class="fas fa-shopping-bag" style="margin-right: 5px;"></i> Renting
-                                </span>
-                            {% elif rental.status == rental.APPROVED %}
-                                <span class="status-badge status-approved">
-                                    <i class="fas fa-thumbs-up" style="margin-right: 5px;"></i> Approved
-                                </span>
-                            {% elif rental.status == rental.PENDING %}
-                                <span class="status-badge status-pending">
-                                    <i class="fas fa-clock" style="margin-right: 5px;"></i> Pending
-                                </span>
-                            {% elif rental.status == rental.CANCELLED %}
-                                <span class="status-badge status-cancelled">
-                                    <i class="fas fa-times-circle" style="margin-right: 5px;"></i> Cancelled
-                                </span>
-                            {% elif rental.status == rental.REJECTED %}
-                                <span class="status-badge status-rejected">
-                                    <i class="fas fa-ban" style="margin-right: 5px;"></i> Rejected
-                                </span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <div class="action-btns">
-                                <a href="{% url 'saritasapp:view_customer' rental.customer.encrypted_id %}" 
-                                   class="action-btn profile-btn">
-                                    <i class="fas fa-user-circle"></i> Profile
-                                </a>
-                                <a href="{% url 'saritasapp:rental_detail' rental.encrypted_id %}" 
-                                   class="action-btn details-btn">
-                                    <i class="fas fa-box-open"></i> Details
-                                </a>
-                                {% if rental.status == rental.APPROVED %}
-                                <div class="payment-ready-badge">
-                                    <i class="fas fa-check-circle"></i> Ready
-                                </div>
-                                {% elif rental.status == rental.RENTED or rental.is_overdue %}
-                                <a href="{% url 'saritasapp:return_rental' rental.encrypted_id %}" 
-                                   class="action-btn return-btn">
-                                    <i class="fas fa-undo"></i> Return
-                                </a>
-                                {% endif %}
-                            </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="7" class="empty-state">
-                            <i class="fas fa-clipboard-list"></i>
-                            <p>No rentals found</p>
-                            <p>Try adjusting your filter</p>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <!-- Customer Grouped Rentals -->
+        <div class="rentals-grouped">
+            {% regroup rentals by customer as customer_list %}
+            
+            {% if customer_list %}
+                {% for customer in customer_list %}
+                <div class="customer-group {% if forloop.first %}expanded{% endif %}" onclick="toggleCustomerGroup(this)">
+                    <div class="customer-header">
+                        <div class="customer-name">
+                            <i class="fas fa-user-circle"></i>
+                            {{ customer.grouper.user.get_full_name }}
+                        </div>
+                        <div class="rental-count">
+                            {{ customer.list|length }} rental{{ customer.list|length|pluralize }}
+                        </div>
+                    </div>
+                    
+                    <div class="rental-items">
+                        <table class="compact-table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Rental Period</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rental in customer.list %}
+                                <tr class="{% if rental.is_overdue %}overdue{% endif %}">
+                                    <td>
+                                        <div class="item-details">
+                                            {% if rental.inventory_size.inventory.image %}
+                                            <img src="{{ rental.inventory_size.inventory.image.url }}" alt="{{ rental.inventory_size.inventory.name }}" class="item-image">
+                                            {% else %}
+                                            <div class="item-image-placeholder">
+                                                <i class="fas fa-tshirt"></i>
+                                            </div>
+                                            {% endif %}
+                                            <div>
+                                                <div>{{ rental.inventory_size.inventory.name }}</div>
+                                                <div class="text-muted" style="font-size: 12px;">
+                                                    {{ rental.inventory_size.inventory.category.name }} | {{ rental.inventory_size.size.name }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="date-cell">
+                                        {{ rental.rental_start|date:"M d" }} - {{ rental.rental_end|date:"M d, Y" }}
+                                        <div class="text-muted" style="font-size: 12px;">
+                                            {{ rental.duration_days }} day{{ rental.duration_days|pluralize }}
+                                        </div>
+                                    </td>
+                                    <td class="status-cell">
+                                        {% if rental.is_overdue %}
+                                            <span class="status-badge status-overdue">
+                                                <i class="fas fa-exclamation-circle"></i> Overdue
+                                            </span>
+                                        {% elif rental.status == rental.RETURNED %}
+                                            <span class="status-badge status-returned">
+                                                <i class="fas fa-check-circle"></i> Returned
+                                            </span>
+                                        {% elif rental.status == rental.RENTED %}
+                                            <span class="status-badge status-renting">
+                                                <i class="fas fa-shopping-bag"></i> Renting
+                                            </span>
+                                        {% elif rental.status == rental.APPROVED %}
+                                            <span class="status-badge status-approved">
+                                                <i class="fas fa-thumbs-up"></i> Approved
+                                            </span>
+                                        {% elif rental.status == rental.PENDING %}
+                                            <span class="status-badge status-pending">
+                                                <i class="fas fa-clock"></i> Pending
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="action-btns">
+                                            <a href="{% url 'saritasapp:rental_detail' rental.encrypted_id %}" 
+                                               class="action-btn details-btn">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                            {% if rental.status == rental.RENTED or rental.is_overdue %}
+                                            <a href="{% url 'saritasapp:return_rental' rental.encrypted_id %}" 
+                                               class="action-btn return-btn">
+                                                <i class="fas fa-undo"></i> Return
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-clipboard-list"></i>
+                    <p>No rentals found</p>
+                    <p>Try adjusting your filter</p>
+                </div>
+            {% endif %}
         </div>
     </div>
 
     <script>
         function clearFilters() {
-            // Reset the form
             document.getElementById('rentalFilterForm').reset();
-            // Remove the status parameter from URL and reload
             const url = new URL(window.location.href);
             url.searchParams.delete('status');
             window.location.href = url.toString();
         }
         
-        // Auto-submit filter form when selection changes
         document.getElementById('statusFilter').addEventListener('change', function() {
             document.getElementById('rentalFilterForm').submit();
+        });
+        
+        function toggleCustomerGroup(element) {
+            element.classList.toggle('expanded');
+        }
+        
+        // Auto-expand group if filtered by status
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusFilter = "{{ request.GET.status }}";
+            if (statusFilter) {
+                document.querySelectorAll('.customer-group').forEach(group => {
+                    group.classList.add('expanded');
+                });
+            }
         });
     </script>
 {% endblock %}
