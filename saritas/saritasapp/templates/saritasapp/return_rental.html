@@ -1,0 +1,180 @@
+{% extends "saritasapp/base.html" %}
+{% load static %}
+{% load math_filters %}
+
+{% block title %}Return Rental | Sarita's{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/return_rental.css' %}">
+    <style>
+        .fee-calculation {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #8E793E;
+        }
+        .fee-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .fee-total {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            font-weight: bold;
+        }
+        .condition-fee {
+            display: none; /* Will be shown by JavaScript */
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="return-rental-container">
+    <!-- [Keep existing header and rental details sections] -->
+
+    <div class="return-form-card">
+        <h3><i class="fas fa-clipboard-check"></i> Return Details</h3>
+        
+        <form method="post" class="return-form" id="returnForm">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="condition">Item Condition:</label>
+                <select id="condition" name="condition" class="form-select" required>
+                    <option value="" selected disabled>Select condition</option>
+                    <option value="excellent">Excellent - No issues (No additional charges)</option>
+                    <option value="good">Good - Minor wear (No additional charges)</option>
+                    <option value="fair">Fair - Needs cleaning/repair (20% of deposit)</option>
+                    <option value="poor">Poor - Significant damage (50% of deposit)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="notes">Notes:</label>
+                <textarea id="notes" name="notes" class="form-textarea" 
+                          placeholder="Describe the item's condition and any damage..."></textarea>
+            </div>
+
+            <!-- Fee Calculation Section -->
+            <div class="fee-calculation">
+                <h4>Fee Calculation</h4>
+                
+                <!-- Overdue Fee (if applicable) -->
+                {% if potential_fees.is_overdue %}
+                <div class="fee-item">
+                    <span>Overdue Penalty ({{ rental.days_overdue }} day{{ rental.days_overdue|pluralize }}):</span>
+                    <span>₱{{ potential_fees.overdue_fee|floatformat:2 }}</span>
+                </div>
+                {% endif %}
+                
+                <!-- Condition-based Fees -->
+                <div id="excellentCondition" class="condition-fee">
+                    <div class="fee-item">
+                        <span>Damage Fee:</span>
+                        <span>₱0.00</span>
+                    </div>
+                </div>
+                
+                <div id="goodCondition" class="condition-fee">
+                    <div class="fee-item">
+                        <span>Damage Fee:</span>
+                        <span>₱0.00</span>
+                    </div>
+                </div>
+                
+                <div id="fairCondition" class="condition-fee">
+                    <div class="fee-item">
+                        <span>Cleaning/Repair Fee (20% of deposit):</span>
+                        <span>₱{{ potential_fees.fair_condition_fee|floatformat:2 }}</span>
+                    </div>
+                </div>
+                
+                <div id="poorCondition" class="condition-fee">
+                    <div class="fee-item">
+                        <span>Damage Fee (50% of deposit):</span>
+                        <span>₱{{ potential_fees.poor_condition_fee|floatformat:2 }}</span>
+                    </div>
+                </div>
+                
+                <!-- Total Fees -->
+                <div class="fee-total">
+                    <span>Total Additional Fees:</span>
+                    <span id="totalFees">
+                        {% if potential_fees.is_overdue %}
+                            ₱{{ potential_fees.overdue_fee|floatformat:2 }}
+                        {% else %}
+                            ₱0.00
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-check-circle"></i> Confirm Return
+                </button>
+                <a href="{% url 'saritasapp:rental_tracker' %}" class="cancel-btn">
+                    <i class="fas fa-times-circle"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const conditionSelect = document.getElementById('condition');
+    const conditionSections = {
+        'excellent': document.getElementById('excellentCondition'),
+        'good': document.getElementById('goodCondition'),
+        'fair': document.getElementById('fairCondition'),
+        'poor': document.getElementById('poorCondition')
+    };
+    
+    // Hide all condition fee sections initially
+    Object.values(conditionSections).forEach(section => {
+        section.style.display = 'none';
+    });
+    
+    // Calculate initial total
+    let overdueFee = {{ potential_fees.overdue_fee|default:0 }};
+    updateTotalFee(0);
+    
+    conditionSelect.addEventListener('change', function() {
+        // Hide all condition sections
+        Object.values(conditionSections).forEach(section => {
+            section.style.display = 'none';
+        });
+        
+        // Show the selected condition section
+        const selectedCondition = this.value;
+        if (selectedCondition && conditionSections[selectedCondition]) {
+            conditionSections[selectedCondition].style.display = 'block';
+        }
+        
+        // Update total based on condition
+        let damageFee = 0;
+        switch(selectedCondition) {
+            case 'fair':
+                damageFee = {{ potential_fees.fair_condition_fee|default:0 }};
+                break;
+            case 'poor':
+                damageFee = {{ potential_fees.poor_condition_fee|default:0 }};
+                break;
+        }
+        
+        updateTotalFee(damageFee);
+    });
+    
+    function updateTotalFee(damageFee) {
+        const total = overdueFee + damageFee;
+        document.getElementById('totalFees').textContent = '₱' + total.toFixed(2);
+    }
+});
+</script>
+{% endblock %}

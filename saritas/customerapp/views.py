@@ -183,6 +183,7 @@ def item_detail(request, encrypted_id):
 @login_required
 def rent_item(request, encrypted_id):
     inventory = get_decrypted_object_or_404(Inventory, encrypted_id)
+    
     try:
         customer = request.user.customer_profile
     except Customer.DoesNotExist:
@@ -198,25 +199,41 @@ def rent_item(request, encrypted_id):
         
         if form.is_valid():
             try:
-                rental = form.save()
-                messages.success(request, "Rental request submitted successfully! Please wait for approval.")
-                return redirect('customerapp:my_rentals')
+                with transaction.atomic():
+                    rental = form.save()
+                    
+                    # Check for potential penalty
+                    penalty_warning = form.get_penalty_warning()
+                    if penalty_warning:
+                        messages.warning(request, penalty_warning['message'])
+                    
+                    messages.success(
+                        request,
+                        "Rental request submitted successfully! "
+                        "Please wait for approval."
+                    )
+                    return redirect(rental.get_absolute_url())
             except Exception as e:
-                messages.error(request, f"Error processing rental: {str(e)}")
+                logger.error(f"Error creating rental: {str(e)}")
+                messages.error(request, "An error occurred while processing your request")
     else:
         form = RentalForm(
-            initial={
-                'rental_start': timezone.now().date(),
-                'rental_end': timezone.now().date() + timedelta(days=7),
-                'deposit': inventory.deposit_price or 0
-            },
             inventory=inventory,
             customer=customer
         )
     
+    # Calculate potential penalty for initial display
+    penalty_warning = None
+    if form.is_bound and not form.errors:
+        penalty_warning = form.get_penalty_warning()
+    
     return render(request, 'customerapp/rent_item.html', {
         'form': form,
-        'item': inventory
+        'item': inventory,
+        'is_available': inventory.sizes.filter(quantity__gt=0).exists(),
+        'penalty_warning': penalty_warning,
+        'rental_price': inventory.rental_price,
+        'deposit_price': inventory.deposit_price or 0
     })
 
 @login_required
@@ -238,7 +255,12 @@ def rental_detail(request, encrypted_id):
         encrypted_id,
         queryset=Rental.objects.filter(customer=request.user.customer_profile)
     )
-    return render(request, 'customerapp/rental_detail.html', {'rental': rental})
+    return render(request, 'customerapp/rental_detail.html', {
+        'rental': rental,
+        'encrypted_id': rental.encrypted_id  # Pass to template if needed
+    })
+
+
 
 logger = logging.getLogger(__name__)
 

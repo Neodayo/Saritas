@@ -2,7 +2,7 @@ import logging
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
-from saritasapp.models import Customer, PackageRentalItem, User, Rental, Reservation, WardrobePackageRental
+from saritasapp.models import Customer, InventorySize, PackageRentalItem, Size, User, Rental, Reservation, WardrobePackageRental
 from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
@@ -68,6 +68,13 @@ class CustomerUpdateForm(forms.ModelForm):
         }
 
 class RentalForm(forms.ModelForm):
+    size = forms.ModelChoiceField(
+        queryset=InventorySize.objects.none(),
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        label="Select Size",
+        required=True
+    )
+    
     deposit = forms.DecimalField(
         disabled=True,
         required=False,
@@ -76,25 +83,22 @@ class RentalForm(forms.ModelForm):
 
     class Meta:
         model = Rental
-        fields = ['rental_start', 'rental_end', 'deposit', 'notes']
+        fields = ['rental_start', 'rental_end', 'deposit', 'notes', 'size']
         widgets = {
-            'rental_start': forms.DateInput(
-                attrs={
-                    'type': 'date',
-                    'class': 'form-control',
-                    'min': timezone.now().date().isoformat()
-                }
-            ),
-            'rental_end': forms.DateInput(
-                attrs={
-                    'type': 'date',
-                    'class': 'form-control',
-                    'min': (timezone.now() + timedelta(days=1)).date().isoformat()
-                }
-            ),
+            'rental_start': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control',
+                'min': timezone.now().date().isoformat()
+            }),
+            'rental_end': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control',
+                'min': (timezone.now() + timedelta(days=1)).date().isoformat()
+            }),
             'notes': forms.Textarea(attrs={
                 'class': 'form-control',
-                'rows': 3
+                'rows': 3,
+                'placeholder': 'Any special requests or notes...'
             }),
         }
 
@@ -104,35 +108,79 @@ class RentalForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if self.inventory:
+            # Set initial deposit value
             self.fields['deposit'].initial = self.inventory.deposit_price or 0
-            self.instance.inventory = self.inventory  # Critical fix
+            
+            # Only show sizes with available inventory
+            self.fields['size'].queryset = InventorySize.objects.filter(
+                inventory=self.inventory,
+                quantity__gt=0
+            ).select_related('size')
+            
+            # Format the size choices to show available quantities
+            self.fields['size'].label_from_instance = lambda obj: (
+                f"{obj.size.get_name_display()} (Available: {obj.quantity})"
+            )
+
+            # Set default dates
+            self.fields['rental_start'].initial = timezone.now().date()
+            self.fields['rental_end'].initial = (timezone.now() + timedelta(days=7)).date()
 
     def clean(self):
         cleaned_data = super().clean()
+        
         if not self.inventory:
-            raise forms.ValidationError("Inventory item is required")
+            raise ValidationError("Inventory item is required")
         
-        # Ensure inventory is available
-        if self.inventory.quantity <= 0:
-            raise forms.ValidationError("This item is no longer available for rent")
-        
+        size = cleaned_data.get('size')
+        rental_start = cleaned_data.get('rental_start')
+        rental_end = cleaned_data.get('rental_end')
+
+        # Validate size availability
+        if size:
+            if size.quantity <= 0:
+                raise ValidationError("This size is no longer available for rent")
+            
+            # Check if inventory size belongs to the selected inventory
+            if size.inventory != self.inventory:
+                raise ValidationError("Invalid size selection")
+
         # Validate rental dates
-        if cleaned_data.get('rental_end') <= cleaned_data.get('rental_start'):
-            raise forms.ValidationError("Return date must be after the rental start date")
-        
+        if rental_start and rental_end:
+            if rental_end <= rental_start:
+                raise ValidationError("Return date must be after the rental start date")
+            
+            if rental_start < timezone.now().date():
+                raise ValidationError("Start date cannot be in the past")
+
+        # Set deposit if not already set
+        if 'deposit' not in cleaned_data or not cleaned_data['deposit']:
+            cleaned_data['deposit'] = self.inventory.deposit_price or 0
+
         return cleaned_data
 
     def save(self, commit=True):
         rental = super().save(commit=False)
-        rental.inventory = self.inventory
         rental.customer = self.customer
-        rental.deposit = self.inventory.deposit_price or 0
+        rental.inventory_size = self.cleaned_data['size']
+        rental.deposit = self.cleaned_data['deposit']
         rental.status = Rental.PENDING
-        rental.inventory_decremented = False  # Set to False initially
         
         if commit:
             rental.save()
         return rental
+
+    def get_penalty_warning(self):
+        """Calculate potential penalty for display in template"""
+        rental_end = self.cleaned_data.get('rental_end')
+        if rental_end and rental_end < timezone.now().date():
+            overdue_days = (timezone.now().date() - rental_end).days
+            return {
+                'days': overdue_days,
+                'amount': overdue_days * 100,  # 100php per day
+                'message': f"Warning: This rental would be {overdue_days} days overdue (₱{overdue_days * 100} penalty)"
+            }
+        return None
     
 class ReservationForm(forms.ModelForm):
     class Meta:

@@ -167,6 +167,7 @@
         /* Action Buttons */
         .action-btns {
             display: flex;
+            flex-wrap: wrap;
             gap: 10px;
         }
         
@@ -199,10 +200,20 @@
             background-color: #d6d8db;
         }
         
+        .return-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+        }
+        
+        .return-btn:hover {
+            background-color: #218838;
+        }
+        
         /* Empty State */
         .empty-state {
             text-align: center;
-            padding: 40px 0;
+            padding: 40=px 0;
             color: #6c757d;
         }
         
@@ -226,4 +237,74 @@
                 flex-direction: column;
                 gap: 8px;
             }
+        }
+        .rent-btn {
+            background-color: #8E793E;
+            color: white;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+        }
+        
+        .rent-btn:hover {
+            background-color: #7a6935;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+        
+        .rent-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+        }
+        
+        /* Flex utilities for alignment */
+        .flex {
+            display: flex;
+        }
+        
+        .items-center {
+            align-items: center;
+        }
+        
+        .justify-center {
+            justify-content: center;
+        }
+        
+        .gap-2 {
+            gap: 0.5rem;
+        }
+        .payment-ready-badge {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 6px 10px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9em;
+        }
+        
+        .payment-ready-badge i {
+            font-size: 1em;
+        }
+        
+        /* Button sizing */
+        .px-3 {
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+        }
+        
+        .py-2 {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+        
+        .rounded-md {
+            border-radius: 0.375rem;
+        }
+        
+        .transition-colors {
+            transition-property: background-color, border-color, color, fill, stroke;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
         }

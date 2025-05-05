@@ -324,8 +324,20 @@ class Rental(models.Model):
         (REJECTED, "Rejected"),
     ]
 
+    CONDITION_EXCELLENT = "excellent"
+    CONDITION_GOOD = "good"
+    CONDITION_FAIR = "fair"
+    CONDITION_POOR = "poor"
+
+    CONDITION_CHOICES = [
+        (CONDITION_EXCELLENT, "Excellent - No issues"),
+        (CONDITION_GOOD, "Good - Minor wear"),
+        (CONDITION_FAIR, "Fair - Needs cleaning/repair"),
+        (CONDITION_POOR, "Poor - Significant damage"),
+    ]
+
     customer = models.ForeignKey('Customer', on_delete=models.CASCADE, related_name="rentals")
-    inventory_size = models.ForeignKey(InventorySize, on_delete=models.CASCADE, related_name="rentals")
+    inventory_size = models.ForeignKey('InventorySize', on_delete=models.PROTECT, related_name="rentals")
     staff = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -341,13 +353,40 @@ class Rental(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     notes = models.TextField(blank=True, null=True)
     rejection_reason = models.TextField(blank=True, null=True)
+    returned_date = models.DateField(null=True, blank=True)
+    penalty_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    # New fields for return processing
+    return_condition = models.CharField(
+        max_length=10,
+        choices=CONDITION_CHOICES,
+        null=True,
+        blank=True
+    )
+    return_notes = models.TextField(blank=True, null=True)
+    damage_fee = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+    processed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="processed_returns"
+    )
 
     class Meta:
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['status']),
             models.Index(fields=['rental_start', 'rental_end']),
+            models.Index(fields=['returned_date']),
+            models.Index(fields=['return_condition']),
         ]
+        verbose_name = "Rental"
+        verbose_name_plural = "Rentals"
 
     def __str__(self):
         return f"Rental #{self.id} - {self.customer} - {self.inventory_size.inventory.name} ({self.inventory_size.size})"
@@ -368,8 +407,41 @@ class Rental(models.Model):
 
     @property
     def total_cost(self):
-        return float(self.inventory_size.inventory.rental_price) + float(self.deposit)
-    
+        """Calculate total cost including any penalties and damage fees"""
+        base_cost = float(self.inventory_size.inventory.rental_price) + float(self.deposit)
+        return base_cost + float(self.penalty_fee) + float(self.damage_fee)
+
+    @property
+    def is_overdue(self):
+        """Check if rental is currently overdue"""
+        return self.status == self.OVERDUE or (
+            self.status == self.RENTED and timezone.now().date() > self.rental_end
+        )
+
+    @property
+    def days_overdue(self):
+        """Calculate number of days overdue (0 if not overdue)"""
+        if self.is_overdue:
+            return (timezone.now().date() - self.rental_end).days
+        return 0
+
+    @property
+    def calculated_penalty(self):
+        """Calculate current penalty amount (100php per day per item)"""
+        return self.days_overdue * 100
+
+    @property
+    def calculated_damage_fee(self, condition=None):
+        """Calculate potential damage fee based on condition"""
+        condition = condition or self.return_condition
+        deposit = float(self.inventory_size.inventory.deposit_price)
+        
+        if condition == self.CONDITION_POOR:
+            return deposit * 0.5  # 50% of deposit
+        elif condition == self.CONDITION_FAIR:
+            return deposit * 0.2  # 20% of deposit
+        return 0
+
     def approve(self, user):
         if self.status != self.PENDING:
             raise ValidationError("Only pending rentals can be approved.")
@@ -381,7 +453,8 @@ class Rental(models.Model):
             self.inventory_size.quantity -= 1
             self.inventory_size.save()
             
-            self.status = self.APPROVED
+            # Automatically set to Rented status when approved
+            self.status = self.RENTED
             self.staff = user
             self.save()
             
@@ -405,15 +478,79 @@ class Rental(models.Model):
         self.staff = user
         self.save()
 
-    def mark_as_returned(self):
-        if self.status not in [self.RENTED, self.OVERDUE]:
-            raise ValidationError("Only rented or overdue items can be returned.")
+    def is_rentable(self):
+        """Check if rental can be marked as rented"""
+        return (
+            self.status == self.APPROVED and
+            self.inventory_size.quantity > 0 and
+            self.rental_start <= timezone.now().date()
+        )
+
+    def mark_as_returned(self, condition=None, notes=None, processed_by=None):
+        """Mark rental as returned with proper error handling"""
+        allowed_statuses = [self.RENTED, self.OVERDUE]
+        if self.status not in allowed_statuses:
+            raise ValidationError(
+                f"Only rentals with status {allowed_statuses} can be returned. "
+                f"Current status: {self.status}"
+            )
 
         with transaction.atomic():
+            # Save return details
+            self.return_condition = condition
+            self.return_notes = notes
+            self.processed_by = processed_by
+            
+            # Calculate fees - ensure these are properties, not methods
+            if condition:
+                self.damage_fee = Decimal(str(self.calculated_damage_fee))  # Note: no parentheses
+            
+            if self.is_overdue:  # Note: property access, not method call
+                self.penalty_fee = Decimal(str(self.calculated_penalty))  # Note: no parentheses
+            
+            # Return item to inventory
             self.inventory_size.quantity += 1
             self.inventory_size.save()
+            
+            # Update status and timestamps
             self.status = self.RETURNED
+            self.returned_date = timezone.now().date()
             self.save()
+
+    def mark_as_overdue(self):
+        """Mark rental as overdue if not already returned"""
+        if self.status in [self.RENTED] and timezone.now().date() > self.rental_end:
+            self.status = self.OVERDUE
+            self.save()
+
+    @property
+    def encrypted_id(self):
+        """Returns encrypted ID for URLs"""
+        if not self.pk:
+            return None
+        try:
+            from core.utils.encryption import encrypt_id
+            return encrypt_id(self.pk)
+        except Exception as e:
+            logger.error(f"Failed to encrypt rental ID {self.pk}: {str(e)}")
+            return None
+
+    def get_absolute_url(self):
+        """Use this in templates for rental detail links"""
+        if not self.encrypted_id:
+            raise ValueError("Cannot generate URL - encryption failed")
+        return reverse('saritasapp:rental_detail', kwargs={'encrypted_id': self.encrypted_id})
+
+    def get_return_summary(self):
+        """Generate a summary of return fees and conditions"""
+        return {
+            'condition': self.get_return_condition_display(),
+            'damage_fee': self.damage_fee,
+            'penalty_fee': self.penalty_fee,
+            'total_fees': self.damage_fee + self.penalty_fee,
+            'return_date': self.returned_date,
+            'processed_by': self.processed_by.get_full_name() if self.processed_by else None
+        }
 
 # --- Reservation ---
 class Reservation(models.Model):

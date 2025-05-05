@@ -1,0 +1,41 @@
+{% extends "saritasapp/base.html" %}
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/confirm_approve.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="approval-container">
+    <div class="approval-card">
+        <h2>Confirm Rental Approval</h2>
+        <h1>Confirm Customer's Payment Before Proceeding to Approval</h1>
+        
+        <div class="rental-info">
+            <p><strong>Customer:</strong> {{ rental.customer.user.get_full_name }}</p>
+            <p><strong>Item:</strong> {{ rental.inventory_size.inventory.name }} ({{ rental.inventory_size.size.name }})</p>
+            <p><strong>Duration:</strong> {{ rental.duration_days }} days</p>
+            <p><strong>Total Cost:</strong> ₱{{ rental.total_cost|floatformat:2 }}</p>
+        </div>
+
+        <form method="POST" class="approval-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="payment-verify">
+                    <input type="checkbox" name="payment_verified" checked>
+                    <span>Payment has been verified</span>
+                </label>
+                <small class="help-text">Uncheck if payment still needs verification</small>
+            </div>
+
+            <div class="action-buttons">
+                <button type="submit" class="btn-approve">
+                    <i class="fas fa-check-circle"></i> Confirm Approval
+                </button>
+                <a href="{% url 'saritasapp:rental_approvals' %}" class="btn-cancel">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -7,208 +7,6 @@
 <link rel="stylesheet" href="{% static 'css/rental_detail.css' %}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
-<style>
-    /* Main Container */
-    .rental-detail-container {
-        max-width: 1400px;
-        margin: 30px auto;
-        padding: 30px;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-        font-family: 'Arial', sans-serif;
-    }
-
-    /* Header */
-    .rental-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-        flex-wrap: wrap;
-        gap: 20px;
-    }
-
-    .rental-header h1 {
-        color: #8E793E;
-        font-size: 28px;
-        font-weight: 600;
-        margin: 0;
-    }
-
-    .back-btn {
-        background-color: #EAEAEA;
-        color: #8E793E;
-        padding: 10px 20px;
-        border-radius: 6px;
-        text-decoration: none;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        transition: all 0.3s;
-        border: 1px solid #8E793E;
-    }
-
-    .back-btn:hover {
-        background-color: #e0d9c5;
-    }
-
-    /* Card Styling */
-    .detail-card {
-        border-radius: 12px;
-        overflow: hidden;
-        margin-bottom: 30px;
-    }
-
-    .card-header {
-        background-color: #8E793E;
-        color: white;
-        padding: 15px 20px;
-    }
-
-    .card-header h5 {
-        margin: 0;
-        font-weight: 500;
-    }
-
-    .card-body {
-        padding: 25px;
-    }
-
-    /* Section Styling */
-    .section-title {
-        color: #8E793E;
-        font-size: 18px;
-        font-weight: 600;
-        margin-bottom: 15px;
-        padding-bottom: 8px;
-        border-bottom: 2px solid #e6d6b8;
-    }
-
-    .detail-row {
-        display: flex;
-        flex-wrap: wrap;
-        margin-bottom: 20px;
-    }
-
-    .detail-col {
-        flex: 1;
-        min-width: 300px;
-        padding: 0 15px;
-        margin-bottom: 20px;
-    }
-
-    .detail-item {
-        margin-bottom: 12px;
-    }
-
-    .detail-label {
-        font-weight: 600;
-        color: #5a3e2b;
-        display: inline-block;
-        min-width: 120px;
-    }
-
-    /* Status Badge */
-    .status-badge {
-        display: inline-block;
-        padding: 5px 10px;
-        border-radius: 20px;
-        font-size: 14px;
-        font-weight: 500;
-    }
-
-    .status-pending {
-        background-color: #FFF3CD;
-        color: #856404;
-    }
-
-    .status-approved {
-        background-color: #D4EDDA;
-        color: #155724;
-    }
-
-    .status-rejected {
-        background-color: #F8D7DA;
-        color: #721C24;
-    }
-
-    .status-rented {
-        background-color: #CCE5FF;
-        color: #004085;
-    }
-
-    /* Notes Section */
-    .notes-section {
-        background-color: #f9f8f5;
-        padding: 20px;
-        border-radius: 8px;
-        margin-top: 20px;
-    }
-
-    /* Action Buttons */
-    .action-buttons {
-        display: flex;
-        gap: 15px;
-        margin-top: 30px;
-        flex-wrap: wrap;
-    }
-
-    .btn {
-        padding: 10px 20px;
-        border-radius: 6px;
-        font-size: 14px;
-        cursor: pointer;
-        transition: all 0.3s;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .btn-approve {
-        background-color: #28A745;
-        color: white;
-        border: none;
-    }
-
-    .btn-approve:hover {
-        background-color: #218838;
-        transform: translateY(-2px);
-    }
-
-    .btn-reject {
-        background-color: #DC3545;
-        color: white;
-        border: none;
-    }
-
-    .btn-reject:hover {
-        background-color: #C82333;
-        transform: translateY(-2px);
-    }
-
-    /* Responsive Design */
-    @media (max-width: 768px) {
-        .rental-detail-container {
-            padding: 20px;
-            margin: 15px;
-        }
-        
-        .detail-col {
-            min-width: 100%;
-        }
-        
-        .action-buttons {
-            flex-direction: column;
-        }
-        
-        .btn {
-            width: 100%;
-            justify-content: center;
-        }
-    }
-</style>
 {% endblock %}
 
 {% block content %}
@@ -216,8 +14,8 @@
     <!-- Header -->
     <div class="rental-header">
         <h1>Rental Details #{{ rental.id }}</h1>
-        <a href="{% url 'saritasapp:rental_approvals' %}" class="back-btn">
-            <i class="fas fa-arrow-left"></i> Back to Approvals
+        <a href="{% url 'saritasapp:rental_tracker' %}" class="back-btn">
+            <i class="fas fa-arrow-left"></i> Back to Rental Tracker
         </a>
     </div>
 
@@ -234,7 +32,9 @@
                     <h5 class="section-title">Customer Details</h5>
                     <div class="detail-item">
                         <span class="detail-label">Name:</span>
-                        {{ rental.customer.user.get_full_name }}
+                        <a href="{% url 'saritasapp:view_customer' rental.customer.encrypted_id %}">
+                            {{ rental.customer.user.get_full_name }}
+                        </a>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Email:</span>
@@ -256,13 +56,13 @@
                 <div class="detail-col">
                     <h5 class="section-title">Rental Details</h5>
                     <div class="detail-item">
-                        <span class="detail-label">Item:</span>
-                        {{ rental.inventory.name }}
-                    </div>
-                    <div class="detail-item">
                         <span class="detail-label">Status:</span>
                         <span class="status-badge status-{{ rental.status|lower }}">
-                            {{ rental.status }}
+                            {% if rental.status == rental.APPROVED and rental.rental_start <= today and rental.rental_end >= today %}
+                                Renting (Approved)
+                            {% else %}
+                                {{ rental.get_status_display }}
+                            {% endif %}
                         </span>
                     </div>
                     <div class="detail-item">
@@ -277,43 +77,124 @@
                         <span class="detail-label">Duration:</span>
                         {{ rental.duration_days }} days
                     </div>
+                    {% if rental.returned_date %}
+                    <div class="detail-item">
+                        <span class="detail-label">Returned Date:</span>
+                        {{ rental.returned_date|date:"M d, Y" }}
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
-            <!-- Pricing and Timestamps -->
+            <!-- Item Details -->
             <div class="detail-row">
-                <!-- Pricing Column -->
+                <div class="detail-col">
+                    <h5 class="section-title">Item Details</h5>
+                    <div class="detail-item">
+                        <span class="detail-label">Item Name:</span>
+                        <a href="{% url 'saritasapp:view_inventory' rental.inventory_size.inventory.encrypted_id %}">
+                            {{ rental.inventory_size.inventory.name }}
+                        </a>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Category:</span>
+                        {{ rental.inventory_size.inventory.category.name }}
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Type:</span>
+                        {{ rental.inventory_size.inventory.item_type.get_name_display }}
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Size:</span>
+                        {{ rental.inventory_size.size.get_name_display }}
+                    </div>
+                </div>
+                
+                <div class="detail-col">
+                    <h5 class="section-title">Item Image</h5>
+                    {% if rental.inventory_size.inventory.image %}
+                    <div class="item-image-container">
+                        <img src="{{ rental.inventory_size.inventory.image.url }}" 
+                             alt="{{ rental.inventory_size.inventory.name }}" 
+                             class="item-image">
+                    </div>
+                    {% else %}
+                    <div class="text-muted">No image available</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Pricing Section -->
+            <div class="detail-row">
                 <div class="detail-col">
                     <h5 class="section-title">Pricing</h5>
                     <div class="detail-item">
                         <span class="detail-label">Rental Price:</span>
-                        ₱{{ rental.inventory.rental_price|floatformat:2 }}
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Total Cost:</span>
-                        ₱{{ rental.total_cost|floatformat:2 }}
+                        ₱{{ rental.inventory_size.inventory.rental_price|floatformat:2 }}
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Deposit:</span>
-                        ₱{{ rental.inventory.deposit_price|floatformat:2 }}
+                        ₱{{ rental.deposit|floatformat:2 }}
+                    </div>
+                    {% if rental.penalty_fee > 0 %}
+                    <div class="detail-item">
+                        <span class="detail-label">Penalty Fee:</span>
+                        ₱{{ rental.penalty_fee|floatformat:2 }}
+                    </div>
+                    {% endif %}
+                    <div class="detail-item">
+                        <span class="detail-label">Total Cost:</span>
+                        <strong>₱{{ rental.total_cost|floatformat:2 }}</strong>
                     </div>
                 </div>
-
-                <!-- Timestamps Column -->
+                
                 <div class="detail-col">
-                    <h5 class="section-title">Timestamps</h5>
+                    <h5 class="section-title">Processing Info</h5>
                     <div class="detail-item">
                         <span class="detail-label">Requested:</span>
                         {{ rental.created_at|date:"M d, Y h:i A" }}
                     </div>
+                    {% if rental.staff %}
+                    <div class="detail-item">
+                        <span class="detail-label">Processed By:</span>
+                        {{ rental.staff.get_full_name }}
+                    </div>
+                    {% endif %}
                     {% if rental.approved_at %}
                     <div class="detail-item">
-                        <span class="detail-label">Approved:</span>
+                        <span class="detail-label">Approved At:</span>
                         {{ rental.approved_at|date:"M d, Y h:i A" }}
                     </div>
                     {% endif %}
                 </div>
             </div>
+
+            <!-- Rejection Reason (if rejected) -->
+            {% if rental.status == 'Rejected' and rental.rejection_reason %}
+            <div class="rejection-section">
+                <h5 class="section-title">Rejection Reason</h5>
+                <p>{{ rental.rejection_reason }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Penalty Details (if overdue) -->
+            {% if rental.is_overdue %}
+            <div class="penalty-section">
+                <h5 class="section-title">Overdue Details</h5>
+                <div class="detail-item">
+                    <span class="detail-label">Days Overdue:</span>
+                    {{ rental.days_overdue }}
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Daily Penalty:</span>
+                    ₱100.00 per day
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Total Penalty:</span>
+                    ₱{{ rental.calculated_penalty|floatformat:2 }}
+                </div>
+            </div>
+            {% endif %}
 
             <!-- Notes Section -->
             {% if rental.notes %}
@@ -323,19 +204,25 @@
             </div>
             {% endif %}
 
-            <!-- Action Buttons (if pending) -->
-            {% if rental.status == 'Pending' %}
+            <!-- Action Buttons -->
             <div class="action-buttons">
-                <a href="{% url 'saritasapp:approve_or_reject_rental' rental.get_encrypted_id 'approve' %}" 
+                {% if rental.status == rental.PENDING %}
+                <a href="{% url 'saritasapp:approve_or_reject_rental' rental.encrypted_id 'approve' %}" 
                    class="btn btn-approve">
                     <i class="fas fa-check"></i> Approve Rental
                 </a>
-                <a href="{% url 'saritasapp:approve_or_reject_rental' rental.get_encrypted_id 'reject' %}" 
+                <a href="{% url 'saritasapp:approve_or_reject_rental' rental.encrypted_id 'reject' %}" 
                    class="btn btn-reject">
                     <i class="fas fa-times"></i> Reject Rental
                 </a>
+                
+                {% elif rental.status == rental.RENTED or rental.status == rental.OVERDUE %}
+                <a href="{% url 'saritasapp:return_rental' rental.encrypted_id %}" 
+                   class="btn btn-return">
+                    <i class="fas fa-undo"></i> Process Return
+                </a>
+                {% endif %}
             </div>
-            {% endif %}
         </div>
     </div>
 </div>

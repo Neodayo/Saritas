@@ -2,255 +2,15 @@
 {% load static %}
 
 {% block title %}Rental Tracker | Sarita's{% endblock %}
-
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/rental_tracker.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
 {% block content %}
-    <style>
-        /* Main Container */
-        .rental-tracker-container {
-            max-width: 1400px;
-            margin: 30px auto;
-            padding: 30px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-            font-family: 'Arial', sans-serif;
-        }
-        
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .page-title {
-            color: #8E793E;
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin: 0;
-        }
-        
-        .total-rentals {
-            background-color: #ad974f;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-weight: 600;
-            color: #333;
-        }
-        
-        /* Filter Section */
-        .filter-section {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 25px;
-        }
-        
-        .filter-form {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        
-        .filter-group {
-            flex: 1;
-            min-width: 200px;
-        }
-        
-        .filter-label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #555;
-        }
-        
-        .filter-select {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-        
-        .filter-select:focus {
-            outline: none;
-            border-color: #8E793E;
-            box-shadow: 0 0 0 2px rgba(142, 121, 62, 0.2);
-        }
-        
-        .clear-btn {
-            background-color: transparent;
-            color: #8E793E;
-            border: 1px solid #8E793E;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-            align-self: flex-end;
-        }
-        
-        .clear-btn:hover {
-            background-color: rgba(142, 121, 62, 0.1);
-        }
-        
-        /* Table Styles */
-        .rentals-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        
-        .rentals-table th {
-            background-color: #f8f9fa;
-            padding: 12px 15px;
-            text-align: left;
-            font-weight: 600;
-            color: #555;
-            border-bottom: 2px solid #eee;
-        }
-        
-        .rentals-table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #eee;
-            vertical-align: middle;
-        }
-        
-        .rentals-table tr:hover {
-            background-color: #f9f9f9;
-        }
-        
-        .rentals-table tr.overdue {
-            background-color: #fff5f5;
-        }
-        
-        /* Status Badges */
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-        }
-        
-        .status-pending {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-        
-        .status-approved {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        
-        .status-renting {
-            background-color: #cce5ff;
-            color: #004085;
-        }
-        
-        .status-returned {
-            background-color: #d1ecf1;
-            color: #0c5460;
-        }
-        
-        .status-overdue {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        
-        .status-cancelled {
-            background-color: #e2e3e5;
-            color: #383d41;
-        }
-        
-        .status-rejected {
-            background-color: #f1e5e5;
-            color: #721c24;
-        }
-        
-        /* Action Buttons */
-        .action-btns {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        
-        .action-btn {
-            display: inline-flex;
-            align-items: center;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 13px;
-            font-weight: 500;
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-        
-        .profile-btn {
-            background-color: #e9ecef;
-            color: #495057;
-        }
-        
-        .profile-btn:hover {
-            background-color: #dee2e6;
-        }
-        
-        .details-btn {
-            background-color: #e2e3e5;
-            color: #383d41;
-        }
-        
-        .details-btn:hover {
-            background-color: #d6d8db;
-        }
-        
-        .return-btn {
-            background-color: #28a745;
-            color: white;
-            border: none;
-        }
-        
-        .return-btn:hover {
-            background-color: #218838;
-        }
-        
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 40=px 0;
-            color: #6c757d;
-        }
-        
-        .empty-state i {
-            font-size: 40px;
-            margin-bottom: 15px;
-            color: #adb5bd;
-        }
-        
-        @media (max-width: 768px) {
-            .filter-form {
-                flex-direction: column;
-                gap: 15px;
-            }
-            
-            .filter-group {
-                min-width: 100%;
-            }
-            
-            .action-btns {
-                flex-direction: column;
-                gap: 8px;
-            }
-        }
-    </style>
-
     <div class="rental-tracker-container">
         <div class="page-header">
             <h1 class="page-title">
-                <i class="fas fa-concierge-bell"></i> Rental Management
+                <i class="fas fa-concierge-bell"></i> Rental Tracking Management
             </h1>
             <div class="total-rentals">
                 Total Rentals: {{ rentals|length }}
@@ -292,13 +52,13 @@
                 </thead>
                 <tbody>
                     {% for rental in rentals %}
-                    <tr class="{% if rental.display_status == 'Overdue' %}overdue{% endif %}">
+                    <tr class="{% if rental.is_overdue %}overdue{% endif %}">
                         <td>#{{ rental.id }}</td>
                         <td>{{ rental.customer.user.get_full_name }}</td>
                         <td>
-                            {{ rental.inventory.name }}
+                            {{ rental.inventory_size.inventory.name }}
                             <div class="text-muted" style="font-size: 12px; color: #6c757d;">
-                                {{ rental.inventory.category.name }} | {{ rental.inventory.size.name }}
+                                {{ rental.inventory_size.inventory.category.name }} | {{ rental.inventory_size.size.name }}
                             </div>
                         </td>
                         <td>{{ rental.rental_start|date:"M d, Y" }}</td>
@@ -309,31 +69,31 @@
                             </div>
                         </td>
                         <td>
-                            {% if rental.display_status == "Overdue" %}
+                            {% if rental.is_overdue %}
                                 <span class="status-badge status-overdue">
                                     <i class="fas fa-exclamation-circle" style="margin-right: 5px;"></i> Overdue
                                 </span>
-                            {% elif rental.display_status == "Returned" %}
+                            {% elif rental.status == rental.RETURNED %}
                                 <span class="status-badge status-returned">
                                     <i class="fas fa-check-circle" style="margin-right: 5px;"></i> Returned
                                 </span>
-                            {% elif rental.display_status == "Renting" %}
+                            {% elif rental.status == rental.RENTED %}
                                 <span class="status-badge status-renting">
                                     <i class="fas fa-shopping-bag" style="margin-right: 5px;"></i> Renting
                                 </span>
-                            {% elif rental.display_status == "Approved" %}
+                            {% elif rental.status == rental.APPROVED %}
                                 <span class="status-badge status-approved">
                                     <i class="fas fa-thumbs-up" style="margin-right: 5px;"></i> Approved
                                 </span>
-                            {% elif rental.display_status == "Pending" %}
+                            {% elif rental.status == rental.PENDING %}
                                 <span class="status-badge status-pending">
                                     <i class="fas fa-clock" style="margin-right: 5px;"></i> Pending
                                 </span>
-                            {% elif rental.display_status == "Cancelled" %}
+                            {% elif rental.status == rental.CANCELLED %}
                                 <span class="status-badge status-cancelled">
                                     <i class="fas fa-times-circle" style="margin-right: 5px;"></i> Cancelled
                                 </span>
-                            {% elif rental.display_status == "Rejected" %}
+                            {% elif rental.status == rental.REJECTED %}
                                 <span class="status-badge status-rejected">
                                     <i class="fas fa-ban" style="margin-right: 5px;"></i> Rejected
                                 </span>
@@ -345,16 +105,19 @@
                                    class="action-btn profile-btn">
                                     <i class="fas fa-user-circle"></i> Profile
                                 </a>
-                                <a href="{% url 'saritasapp:view_inventory' rental.inventory.encrypted_id %}" 
+                                <a href="{% url 'saritasapp:rental_detail' rental.encrypted_id %}" 
                                    class="action-btn details-btn">
                                     <i class="fas fa-box-open"></i> Details
                                 </a>
-                                {% if rental.display_status in 'Renting,Overdue' %}
+                                {% if rental.status == rental.APPROVED %}
+                                <div class="payment-ready-badge">
+                                    <i class="fas fa-check-circle"></i> Ready
+                                </div>
+                                {% elif rental.status == rental.RENTED or rental.is_overdue %}
                                 <a href="{% url 'saritasapp:return_rental' rental.encrypted_id %}" 
-                                class="action-btn return-btn flex items-center justify-center gap-2">
-                                 <i class="fas fa-check-circle text-sm"></i>
-                                 <span>Return</span>
-                             </a>
+                                   class="action-btn return-btn">
+                                    <i class="fas fa-undo"></i> Return
+                                </a>
                                 {% endif %}
                             </div>
                         </td>
@@ -362,7 +125,6 @@
                     {% empty %}
                     <tr>
                         <td colspan="7" class="empty-state">
-
                             <i class="fas fa-clipboard-list"></i>
                             <p>No rentals found</p>
                             <p>Try adjusting your filter</p>

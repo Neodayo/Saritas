@@ -1,0 +1,35 @@
+{% extends "saritasapp/base.html" %}
+
+{% block content %}
+<h2>Awaiting Pickups</h2>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Rental ID</th>
+      <th>Customer</th>
+      <th>Item</th>
+      <th>Pickup By</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for rental in rentals %}
+    <tr>
+      <td>#{{ rental.id }}</td>
+      <td>{{ rental.customer.user.get_full_name }}</td>
+      <td>{{ rental.inventory_size.inventory.name }}</td>
+      <td>{{ rental.rental_start|date:"M d, Y" }}</td>
+      <td>
+        <a href="{% url 'process_pickup' rental.id %}" class="btn btn-primary">
+          Process Pickup
+        </a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="5">No rentals awaiting pickup</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
