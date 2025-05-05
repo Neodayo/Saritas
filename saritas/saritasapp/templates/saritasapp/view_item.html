@@ -3,443 +3,204 @@
 
 {% block title %}{{ item.name }} | Staff View | Sarita's{% endblock %}
 
-{% block extra_css %}
-<style>
-    .item-view-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 2rem;
-        background-color: #fff;
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-    }
-
-    .back-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: #555;
-        text-decoration: none;
-        font-weight: 500;
-        margin-bottom: 1.5rem;
-        transition: all 0.2s;
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        background-color: #f8f9fa;
-    }
-    .back-btn:hover {
-        background-color: #e9ecef;
-        color: #333;
-    }
-
-    .item-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 2rem;
-    }
-
-    .item-title {
-        font-size: 2rem;
-        color: #222;
-        margin: 0;
-        font-weight: 700;
-    }
-
-    .item-id {
-        font-size: 0.9rem;
-        color: #777;
-        margin-top: 0.5rem;
-    }
-
-    .item-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 3rem;
-    }
-
-    .item-image-container {
-        height: 500px;
-        background-color: #f8f9fa;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 12px;
-        overflow: hidden;
-        border: 1px solid #eee;
-    }
-
-    .item-image {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-    }
-
-    .placeholder-icon {
-        font-size: 5rem;
-        color: #adb5bd;
-    }
-
-    .details-section {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .detail-card {
-        margin-bottom: 2rem;
-        background-color: #f8f9fa;
-        border-radius: 10px;
-        padding: 1.5rem;
-    }
-
-    .card-title {
-        font-size: 1.2rem;
-        color: #333;
-        margin: 0 0 1.5rem 0;
-        padding-bottom: 0.75rem;
-        border-bottom: 1px solid #e0e0e0;
-        font-weight: 600;
-    }
-
-    .detail-grid {
-        display: grid;
-        grid-template-columns: 150px 1fr;
-        gap: 1rem;
-        row-gap: 1.25rem;
-    }
-
-    .detail-label {
-        font-weight: 600;
-        color: #555;
-        font-size: 0.95rem;
-    }
-
-    .detail-value {
-        color: #222;
-        font-size: 0.95rem;
-    }
-
-    .status-badge {
-        display: inline-block;
-        padding: 0.4rem 1rem;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
-
-    .available {
-        background-color: #e6f7ea;
-        color: #0d6b28;
-    }
-
-    .unavailable {
-        background-color: #fce8e8;
-        color: #c62828;
-    }
-
-    .tag-pill {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        background-color: #e0e0e0;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        margin-right: 0.5rem;
-        margin-bottom: 0.5rem;
-    }
-
-    .admin-actions {
-        display: flex;
-        gap: 1rem;
-        margin-top: 2rem;
-        padding-top: 2rem;
-        border-top: 1px solid #eee;
-    }
-
-    .action-btn {
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.2s;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .edit-btn {
-        background-color: #8E793E;
-        color: white;
-    }
-
-    .edit-btn:hover {
-        background-color: #AD974F;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-
-    .delete-btn {
-        background-color: #dc3545;
-        color: white;
-    }
-
-    .delete-btn:hover {
-        background-color: #bb2d3b;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-
-    .metadata {
-        font-size: 0.85rem;
-        color: #777;
-        margin-top: 2rem;
-        padding-top: 1rem;
-        border-top: 1px solid #eee;
-    }
-
-    @media (max-width: 992px) {
-        .item-grid {
-            grid-template-columns: 1fr;
-            gap: 2rem;
-        }
-        
-        .item-image-container {
-            height: 400px;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .item-view-container {
-            padding: 1.5rem;
-        }
-        
-        .detail-grid {
-            grid-template-columns: 1fr;
-            gap: 0.5rem;
-        }
-        
-        .admin-actions {
-            flex-direction: column;
-        }
-    }
-    .item-view-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 2rem;
-        background-color: #fff;
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-    }
-
-    /* Add new styles for sizes table */
-    .sizes-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 1rem;
-    }
-    
-    .sizes-table th, .sizes-table td {
-        padding: 0.75rem;
-        text-align: left;
-        border-bottom: 1px solid #eee;
-    }
-    
-    .sizes-table th {
-        background-color: #f8f9fa;
-        font-weight: 600;
-        color: #555;
-    }
-    
-    .sizes-table tr:hover {
-        background-color: #f8f9fa;
-    }
-    
-    .quantity-cell {
-        font-weight: 600;
-    }
-    
-    .in-stock {
-        color: #0d6b28;
-    }
-    
-    .out-of-stock {
-        color: #c62828;
-    }
-    
-    /* Update status badges */
-    .status-badge {
-        display: inline-block;
-        padding: 0.4rem 1rem;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
-    
-    .available {
-        background-color: #e6f7ea;
-        color: #0d6b28;
-    }
-    
-    .unavailable {
-        background-color: #fce8e8;
-        color: #c62828;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="item-view-container">
-    <a href="{% url 'saritasapp:inventory_list' %}" class="back-btn">
-        <i class="fas fa-arrow-left"></i> Back to Inventory
-    </a>
-
-    <div class="item-header">
-        <div>
-            <h1 class="item-title">{{ item.name }}</h1>
-            <div class="item-id">Item ID: {{ item.id }}</div>
-        </div>
-        <div class="status-badge {% if item.available %}available{% else %}unavailable{% endif %}">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Back Button & Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <a href="javascript:history.back()" class="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium">
+            <i class="fas fa-arrow-left"></i> Back to Inventory
+        </a>
+        <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold {% if item.available %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
             {% if item.available %}Available{% else %}Unavailable{% endif %}
-        </div>
+        </span>
     </div>
 
-    <div class="item-grid">
-        <!-- Item Image -->
-        <div class="item-image-container">
-            {% if item.image %}
-                <img src="{{ item.image.url }}" alt="{{ item.name }}" class="item-image">
-            {% else %}
-                <i class="fas fa-image placeholder-icon"></i>
-            {% endif %}
-        </div>
+    <!-- Unified Main Container -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <!-- Main Product Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column - Image & Basic Info -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Image Gallery - Clickable -->
+                <div class="bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center h-96 cursor-zoom-in" 
+                     onclick="document.getElementById('imageModal').classList.remove('hidden')">
+                    {% if item.image %}
+                        <img src="{{ item.image.url }}" alt="{{ item.name }}" class="max-w-full max-h-full object-contain p-4">
+                    {% else %}
+                        <i class="fas fa-image text-6xl text-gray-300"></i>
+                    {% endif %}
+                </div>
 
-        <!-- Item Details -->
-        <div class="details-section">
-            <!-- Basic Information Card -->
-            <div class="detail-card">
-                <h3 class="card-title">Basic Information</h3>
-                <div class="detail-grid">
-                    <div class="detail-label">Description:</div>
-                    <div class="detail-value">{{ item.description|default:"No description provided" }}</div>
+                <!-- Basic Info Section -->
+                <div class="space-y-6">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ item.name }}</h1>
+                        <p class="text-gray-600">{{ item.description|default:"No description provided" }}</p>
+                    </div>
                     
-                    <div class="detail-label">Total Quantity:</div>
-                    <div class="detail-value">{{ total_quantity }}</div>  <!-- Use the passed total -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                            <p class="text-sm font-medium text-gray-500">Item ID</p>
+                            <p class="mt-1 text-gray-900">{{ item.id }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                            <p class="text-sm font-medium text-gray-500">Branch</p>
+                            <p class="mt-1 text-gray-900">{{ item.branch.branch_name }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                            <p class="text-sm font-medium text-gray-500">Category</p>
+                            <p class="mt-1 text-gray-900">{{ item.category.name }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                            <p class="text-sm font-medium text-gray-500">Total Qty</p>
+                            <p class="mt-1 text-gray-900 font-medium">{{ total_quantity }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Size Availability Section -->
+                <div class="pt-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Size Availability</h3>
+                    {% if sizes %}
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                            {% for inventory_size in sizes %}
+                            <div class="border rounded-lg p-3 {% if inventory_size.quantity > 0 %}border-green-100 bg-green-50{% else %}border-red-100 bg-red-50{% endif %}">
+                                <p class="text-sm font-medium text-gray-500">Size</p>
+                                <p class="text-lg font-semibold">{{ inventory_size.size.get_name_display }}</p>
+                                <p class="mt-1 text-sm {% if inventory_size.quantity > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                    {{ inventory_size.quantity }} in stock
+                                </p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-gray-500">No size information available</p>
+                    {% endif %}
                 </div>
             </div>
 
-            <!-- Sizes Availability Card -->
-            <div class="detail-card">
-                <h3 class="card-title">Size Availability</h3>
-                {% if sizes %}
-                    <table class="sizes-table">
-                        <thead>
-                            <tr>
-                                <th>Size</th>
-                                <th>Quantity</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for inventory_size in sizes %}
-                            <tr>
-                                <td>{{ inventory_size.size.get_name_display }}</td>
-                                <td class="quantity-cell">{{ inventory_size.quantity }}</td>
-                                <td>
-                                    <span class="{% if inventory_size.quantity > 0 %}in-stock{% else %}out-of-stock{% endif %}">
-                                        {% if inventory_size.quantity > 0 %}In Stock{% else %}Out of Stock{% endif %}
-                                    </span>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                {% else %}
-                    <p>No size information available</p>
-                {% endif %}
-            </div>
+            <!-- Right Column - Attributes → Tags → Pricing -->
+            <div class="space-y-6">
+                <!-- Attributes Section -->
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Attributes</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-sm text-gray-500">Item Type</p>
+                            <p class="font-medium">{{ item.item_type.get_name_display|default:"-" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Color</p>
+                            <p class="font-medium">{{ item.color.name|default:"-" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Style</p>
+                            <p class="font-medium">{{ item.style.name|default:"-" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Material</p>
+                            <p class="font-medium">{{ item.material.name|default:"-" }}</p>
+                        </div>
+                    </div>
+                </div>
 
-            <!-- Category & Relationships Card -->
-            <div class="detail-card">
-                <h3 class="card-title">Categories & Relationships</h3>
-                <div class="detail-grid">
-                    <div class="detail-label">Branch:</div>
-                    <div class="detail-value">{{ item.branch.branch_name }}</div>
-
-                    <div class="detail-label">Category:</div>
-                    <div class="detail-value">{{ item.category.name }}</div>
-
-                    <div class="detail-label">Item Type:</div>
-                    <div class="detail-value">{{ item.item_type.get_name_display|default:"-" }}</div>
-
-                    <div class="detail-label">Color:</div>
-                    <div class="detail-value">{{ item.color.name|default:"-" }}</div>
-
-                    <div class="detail-label">Style:</div>
-                    <div class="detail-value">{{ item.style.name|default:"-" }}</div>
-
-                    <div class="detail-label">Material:</div>
-                    <div class="detail-value">{{ item.material.name|default:"-" }}</div>
-
-                    <div class="detail-label">Tags:</div>
-                    <div class="detail-value">
+                <!-- Tags Section -->
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Tags</h3>
+                    <div class="flex flex-wrap gap-2">
                         {% if item.tags.all %}
                             {% for tag in item.tags.all %}
-                                <span class="tag-pill">{{ tag.name }}</span>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    {{ tag.name }}
+                                </span>
                             {% endfor %}
                         {% else %}
-                            -
+                            <span class="text-gray-500">No tags</span>
                         {% endif %}
                     </div>
                 </div>
-            </div>
 
-            <!-- Pricing Information Card -->
-            <div class="detail-card">
-                <h3 class="card-title">Pricing Information</h3>
-                <div class="detail-grid">
-                    <div class="detail-label">Rental Price:</div>
-                    <div class="detail-value">₱{{ item.rental_price|floatformat:2 }}</div>
-
-                    <div class="detail-label">Reservation Price:</div>
-                    <div class="detail-value">₱{{ item.reservation_price|floatformat:2|default:"-" }}</div>
-
-                    <div class="detail-label">Deposit Price:</div>
-                    <div class="detail-value">₱{{ item.deposit_price|floatformat:2|default:"-" }}</div>
-
-                    <div class="detail-label">Purchase Price:</div>
-                    <div class="detail-value">₱{{ item.purchase_price|floatformat:2|default:"-" }}</div>
+                <!-- Pricing Section -->
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Pricing</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Rental Price:</span>
+                            <span class="font-medium">₱{{ item.rental_price|floatformat:2 }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Reservation Price:</span>
+                            <span class="font-medium">₱{{ item.reservation_price|floatformat:2|default:"-" }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Deposit Price:</span>
+                            <span class="font-medium">₱{{ item.deposit_price|floatformat:2|default:"-" }}</span>
+                        </div>
+                        <div class="flex justify-between border-t border-gray-200 pt-3 mt-3">
+                            <span class="text-gray-600">Purchase Price:</span>
+                            <span class="font-medium">₱{{ item.purchase_price|floatformat:2|default:"-" }}</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <!-- System Information Card -->
-            <div class="detail-card">
-                <h3 class="card-title">System Information</h3>
-                <div class="detail-grid">
-                    <div class="detail-label">Created At:</div>
-                    <div class="detail-value">{{ item.created_at|date:"M d, Y H:i" }}</div>
-
-                    <div class="detail-label">Updated At:</div>
-                    <div class="detail-value">{{ item.updated_at|date:"M d, Y H:i" }}</div>
+                <!-- Admin Actions - Side by Side -->
+                {% if user.is_superuser or user.is_staff_user %}
+                <div class="pt-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Manage Item</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <a href="{% url 'saritasapp:edit_inventory' item.encrypted_id %}" 
+                           class="flex items-center justify-center gap-2 px-4 py-3 bg-[#8E793E] hover:bg-[#7A6B34] text-white font-medium rounded-lg transition-colors">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        {% if user.is_superuser %}
+                        <a href="{% url 'saritasapp:delete_inventory' item.encrypted_id %}" 
+                           class="flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors">
+                            <i class="fas fa-trash"></i> Delete
+                        </a>
+                        {% endif %}
+                    </div>
                 </div>
-            </div>
-
-            <!-- Admin Actions -->
-            {% if user.is_superuser or user.is_staff_user %}
-            <div class="admin-actions">
-                <a href="{% url 'saritasapp:edit_inventory' item.encrypted_id %}" class="action-btn edit-btn">
-                    <i class="fas fa-edit"></i> Edit Item
-                </a>
-                {% if user.is_superuser %}
-                <a href="{% url 'saritasapp:delete_inventory' item.encrypted_id %}" class="action-btn delete-btn">
-                    <i class="fas fa-trash"></i> Delete Item
-                </a>
                 {% endif %}
-            </div>
-            {% endif %}
 
-            <div class="metadata">
-                Last updated: {{ item.updated_at|timesince }} ago
+                <!-- Metadata -->
+                <div class="text-sm text-gray-500 pt-6">
+                    <p>Created: {{ item.created_at|date:"M d, Y" }}</p>
+                    <p>Updated: {{ item.updated_at|timesince }} ago</p>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-75 flex items-center justify-center p-4 transition-opacity duration-300">
+    <div class="relative max-w-4xl w-full">
+        <button onclick="document.getElementById('imageModal').classList.add('hidden')" 
+                class="absolute -top-10 right-0 text-white hover:text-gray-300 focus:outline-none">
+            <i class="fas fa-times text-2xl"></i>
+        </button>
+        <div class="bg-white rounded-lg overflow-hidden">
+            {% if item.image %}
+                <img src="{{ item.image.url }}" alt="{{ item.name }}" class="w-full max-h-[80vh] object-contain">
+            {% endif %}
+        </div>
+        <p class="text-white text-center mt-2">{{ item.name }}</p>
+    </div>
+</div>
+
+<script>
+// Close modal when clicking outside the image
+document.getElementById('imageModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        this.classList.add('hidden');
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.getElementById('imageModal').classList.add('hidden');
+    }
+});
+</script>
 {% endblock %}

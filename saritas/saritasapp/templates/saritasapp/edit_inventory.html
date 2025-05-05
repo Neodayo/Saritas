@@ -3,387 +3,305 @@
 
 {% block title %}Edit Inventory Item | Sarita's{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/select2.min.css' %}">
-<style>
-    .edit-container {
-        max-width: 1200px;
-        margin: 30px auto;
-        padding: 30px;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-    }
-    
-    .title {
-        color: #8E793E;
-        font-size: 1.8rem;
-        font-weight: 600;
-        margin-bottom: 25px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .edit-form {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 25px;
-    }
-    
-    .form-section {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-    
-    .form-group {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    
-    label {
-        font-weight: 600;
-        color: #333;
-        font-size: 0.95rem;
-    }
-    
-    .required-field::after {
-        content: "*";
-        color: #dc3545;
-        margin-left: 4px;
-    }
-    
-    input, select, textarea {
-        padding: 10px 12px;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        font-size: 0.95rem;
-        transition: all 0.3s;
-    }
-    
-    input:focus, select:focus, textarea:focus {
-        outline: none;
-        border-color: #8E793E;
-        box-shadow: 0 0 0 2px rgba(142, 121, 62, 0.2);
-    }
-    
-    .select2-container--default .select2-selection--single,
-    .select2-container--default .select2-selection--multiple {
-        border: 1px solid #ddd;
-        min-height: 42px;
-        padding: 5px;
-    }
-    
-    .image-upload {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-    
-    .image-preview {
-        width: 200px;
-        height: 200px;
-        border: 1px dashed #ddd;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-        background-color: #f8f9fa;
-    }
-    
-    .image-preview img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-    }
-    
-    .form-actions {
-        grid-column: 1 / -1;
-        display: flex;
-        gap: 15px;
-        margin-top: 20px;
-        padding-top: 20px;
-        border-top: 1px solid #eee;
-    }
-    
-    .btn {
-        padding: 10px 20px;
-        border-radius: 6px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        text-decoration: none;
-    }
-    
-    .btn-primary {
-        background-color: #8E793E;
-        color: white;
-        border: none;
-    }
-    
-    .btn-primary:hover {
-        background-color: #AD974F;
-        transform: translateY(-2px);
-    }
-    
-    .btn-secondary {
-        background-color: #f8f9fa;
-        color: #333;
-        border: 1px solid #ddd;
-    }
-    
-    .btn-secondary:hover {
-        background-color: #e9ecef;
-    }
-    
-    .error-message {
-        color: #dc3545;
-        font-size: 0.85rem;
-        margin-top: 5px;
-    }
-    
-    /* Size management styles */
-    .size-management {
-        grid-column: 1 / -1;
-        margin-top: 20px;
-    }
-    
-    .size-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 15px;
-    }
-    
-    .size-table th, .size-table td {
-        padding: 12px;
-        border: 1px solid #ddd;
-        text-align: left;
-    }
-    
-    .size-table th {
-        background-color: #f8f9fa;
-    }
-    
-    .size-form select, .size-form input {
-        width: 100%;
-    }
-    
-    .delete-size {
-        color: #dc3545;
-        cursor: pointer;
-    }
-    
-    @media (max-width: 992px) {
-        .edit-form {
-            grid-template-columns: 1fr;
-        }
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="edit-container">
-    <h1 class="title">
-        <i class="fas fa-edit"></i> Edit Inventory Item
-    </h1>
+<div class="max-w-6xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-xl shadow-lg p-8">
+        <h1 class="text-2xl font-semibold mb-6 flex items-center gap-2" style="color: #8E793E;">
+            <i class="fas fa-edit"></i> Edit Inventory Item
+        </h1>
 
-    <form method="POST" enctype="multipart/form-data" class="edit-form">
-        {% csrf_token %}
-        
-        <!-- Left Column -->
-        <div class="form-section">
-            <!-- Basic Information -->
-            <div class="form-group">
-                <label for="{{ form.name.id_for_label }}" class="required-field">{{ form.name.label }}</label>
-                {{ form.name }}
-                {% if form.name.errors %}
-                    <div class="error-message">{{ form.name.errors }}</div>
-                {% endif %}
-            </div>
+        <form method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {% csrf_token %}
             
-            <div class="form-group">
-                <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
-                {{ form.description }}
-                {% if form.description.errors %}
-                    <div class="error-message">{{ form.description.errors }}</div>
-                {% endif %}
-            </div>
-            
-            <!-- Relationships -->
-            <div class="form-group">
-                <label for="{{ form.branch.id_for_label }}" class="required-field">{{ form.branch.label }}</label>
-                {{ form.branch }}
-                {% if form.branch.errors %}
-                    <div class="error-message">{{ form.branch.errors }}</div>
-                {% endif %}
-            </div>
-            
-            <div class="form-group">
-                <label for="{{ form.category.id_for_label }}" class="required-field">{{ form.category.label }}</label>
-                {{ form.category }}
-                {% if form.category.errors %}
-                    <div class="error-message">{{ form.category.errors }}</div>
-                {% endif %}
-            </div>
-            
-            <div class="form-group">
-                <label for="{{ form.item_type.id_for_label }}">{{ form.item_type.label }}</label>
-                {{ form.item_type }}
-                {% if form.item_type.errors %}
-                    <div class="error-message">{{ form.item_type.errors }}</div>
-                {% endif %}
-            </div>
-        </div>
-        
-        <!-- Right Column -->
-        <div class="form-section">
-            <!-- Attributes -->
-            <div class="form-group">
-                <label for="{{ form.color.id_for_label }}">{{ form.color.label }}</label>
-                {{ form.color }}
-                {% if form.color.errors %}
-                    <div class="error-message">{{ form.color.errors }}</div>
-                {% endif %}
-            </div>
-            
-            <div class="form-group">
-                <label for="{{ form.style.id_for_label }}">{{ form.style.label }}</label>
-                {{ form.style }}
-                {% if form.style.errors %}
-                    <div class="error-message">{{ form.style.errors }}</div>
-                {% endif %}
-            </div>
-            
-            <div class="form-group">
-                <label for="{{ form.material.id_for_label }}">{{ form.material.label }}</label>
-                {{ form.material }}
-                {% if form.material.errors %}
-                    <div class="error-message">{{ form.material.errors }}</div>
-                {% endif %}
-            </div>
-            
-            <div class="form-group">
-                <label for="{{ form.tags.id_for_label }}">{{ form.tags.label }}</label>
-                {{ form.tags }}
-                {% if form.tags.errors %}
-                    <div class="error-message">{{ form.tags.errors }}</div>
-                {% endif %}
-            </div>
-        </div>
-        
-        <!-- Full Width Fields -->
-        <div class="form-section" style="grid-column: 1 / -1;">
-            <!-- Pricing Information -->
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
-                <div class="form-group">
-                    <label for="{{ form.rental_price.id_for_label }}" class="required-field">{{ form.rental_price.label }}</label>
-                    {{ form.rental_price }}
-                    {% if form.rental_price.errors %}
-                        <div class="error-message">{{ form.rental_price.errors }}</div>
+            <!-- Left Column -->
+            <div class="space-y-4">
+                <!-- Basic Information -->
+                <div>
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.name.label }} <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="{{ form.name.name }}" id="{{ form.name.id_for_label }}" 
+                           value="{{ form.name.value|default_if_none:'' }}" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#8E793E] focus:border-[#8E793E]">
+                    {% if form.name.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.name.errors }}</p>
                     {% endif %}
                 </div>
                 
-                <div class="form-group">
-                    <label for="{{ form.reservation_price.id_for_label }}">{{ form.reservation_price.label }}</label>
-                    {{ form.reservation_price }}
-                    {% if form.reservation_price.errors %}
-                        <div class="error-message">{{ form.reservation_price.errors }}</div>
+                <div>
+                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.description.label }}
+                    </label>
+                    <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}" 
+                              rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#8E793E] focus:border-[#8E793E]">{{ form.description.value|default_if_none:'' }}</textarea>
+                    {% if form.description.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.description.errors }}</p>
                     {% endif %}
                 </div>
                 
-                <div class="form-group">
-                    <label for="{{ form.deposit_price.id_for_label }}">{{ form.deposit_price.label }}</label>
-                    {{ form.deposit_price }}
-                    {% if form.deposit_price.errors %}
-                        <div class="error-message">{{ form.deposit_price.errors }}</div>
+                <!-- Relationships -->
+                <div>
+                    <label for="{{ form.branch.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.branch.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.branch }}
+                    {% if form.branch.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.branch.errors }}</p>
                     {% endif %}
                 </div>
                 
-                <div class="form-group">
-                    <label for="{{ form.purchase_price.id_for_label }}">{{ form.purchase_price.label }}</label>
-                    {{ form.purchase_price }}
-                    {% if form.purchase_price.errors %}
-                        <div class="error-message">{{ form.purchase_price.errors }}</div>
+                <div class="flex items-end gap-2">
+                    <div class="flex-1">
+                        <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            {{ form.category.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.category }}
+                        {% if form.category.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.category.errors }}</p>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'saritasapp:add_category' %}?next={{ request.path }}" 
+                       class="mb-1 px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md text-sm transition-colors">
+                        + Add Category
+                    </a>
+                </div>
+                
+                <div>
+                    <label for="{{ form.item_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.item_type.label }}
+                    </label>
+                    {{ form.item_type }}
+                    {% if form.item_type.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.item_type.errors }}</p>
                     {% endif %}
                 </div>
             </div>
             
-            <!-- Image Upload -->
-            <div class="form-group">
-                <label for="{{ form.image.id_for_label }}">{{ form.image.label }}</label>
-                <div class="image-upload">
-                    {{ form.image }}
-                    {% if form.image.errors %}
-                        <div class="error-message">{{ form.image.errors }}</div>
+            <!-- Right Column -->
+            <div class="space-y-4">
+                <!-- Attributes -->
+                <div class="flex items-end gap-2">
+                    <div class="flex-1">
+                        <label for="{{ form.color.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            {{ form.color.label }}
+                        </label>
+                        {{ form.color }}
+                        {% if form.color.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.color.errors }}</p>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'saritasapp:add_color' %}?next={{ request.path }}" 
+                       class="mb-1 px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md text-sm transition-colors">
+                        + Add Color
+                    </a>
+                </div>
+                
+                <div class="flex items-end gap-2">
+                    <div class="flex-1">
+                        <label for="{{ form.style.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            {{ form.style.label }}
+                        </label>
+                        {{ form.style }}
+                        {% if form.style.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.style.errors }}</p>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'saritasapp:add_style' %}?next={{ request.path }}" 
+                       class="mb-1 px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md text-sm transition-colors">
+                        + Add Style
+                    </a>
+                </div>
+                
+                <div class="flex items-end gap-2">
+                    <div class="flex-1">
+                        <label for="{{ form.material.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            {{ form.material.label }}
+                        </label>
+                        {{ form.material }}
+                        {% if form.material.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.material.errors }}</p>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'saritasapp:add_material' %}?next={{ request.path }}" 
+                       class="mb-1 px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md text-sm transition-colors">
+                        + Add Material
+                    </a>
+                </div>
+                
+                <!-- Checkbox-style Tags with Add Button -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-sm font-medium text-gray-700">Tags</label>
+                        <a href="{% url 'saritasapp:add_tag' %}?next={{ request.path }}" 
+                           class="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md text-sm transition-colors">
+                            + Add Tag
+                        </a>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        {% for tag in form.tags.field.queryset %}
+                        <div class="relative flex items-center">
+                            <input 
+                                id="tag-{{ tag.id }}" 
+                                type="checkbox" 
+                                name="tags" 
+                                value="{{ tag.id }}"
+                                class="hidden peer"
+                                {% if tag in form.instance.tags.all %}checked{% endif %}
+                            >
+                            <label for="tag-{{ tag.id }}" 
+                            class="px-3 py-1 border-2 border-gray-300 rounded-full text-sm cursor-pointer 
+                                   peer-checked:bg-[#8E793E] peer-checked:text-white peer-checked:border-[#8E793E]
+                                   transition-colors duration-200">
+                         {{ tag.name }}
+                     </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if form.tags.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.tags.errors }}</p>
                     {% endif %}
-                    <div class="image-preview">
-                        {% if form.instance.image %}
-                            <img id="image-preview" src="{{ form.instance.image.url }}" alt="Current Image">
-                        {% else %}
-                            <img id="image-preview" style="display: none;">
+                </div>
+            </div>
+            
+            <!-- Full Width Fields -->
+            <div class="md:col-span-2 space-y-4">
+                <!-- Pricing Information -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                        <label for="{{ form.rental_price.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            {{ form.rental_price.label }} <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" name="{{ form.rental_price.name }}" id="{{ form.rental_price.id_for_label }}" 
+                               value="{{ form.rental_price.value|default_if_none:'' }}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#8E793E] focus:border-[#8E793E]">
+                        {% if form.rental_price.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.rental_price.errors }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.reservation_price.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            {{ form.reservation_price.label }}
+                        </label>
+                        <input type="number" name="{{ form.reservation_price.name }}" id="{{ form.reservation_price.id_for_label }}" 
+                               value="{{ form.reservation_price.value|default_if_none:'' }}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#8E793E] focus:border-[#8E793E]">
+                        {% if form.reservation_price.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.reservation_price.errors }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.deposit_price.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            {{ form.deposit_price.label }}
+                        </label>
+                        <input type="number" name="{{ form.deposit_price.name }}" id="{{ form.deposit_price.id_for_label }}" 
+                               value="{{ form.deposit_price.value|default_if_none:'' }}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#8E793E] focus:border-[#8E793E]">
+                        {% if form.deposit_price.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.deposit_price.errors }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.purchase_price.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            {{ form.purchase_price.label }}
+                        </label>
+                        <input type="number" name="{{ form.purchase_price.name }}" id="{{ form.purchase_price.id_for_label }}" 
+                               value="{{ form.purchase_price.value|default_if_none:'' }}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#8E793E] focus:border-[#8E793E]">
+                        {% if form.purchase_price.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.purchase_price.errors }}</p>
                         {% endif %}
                     </div>
                 </div>
+                
+                <!-- Image Upload -->
+                <div>
+                    <label for="{{ form.image.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.image.label }}
+                    </label>
+                    <div class="flex flex-col gap-2">
+                        <input type="file" name="{{ form.image.name }}" id="{{ form.image.id_for_label }}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#8E793E] focus:border-[#8E793E]">
+                        {% if form.image.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.image.errors }}</p>
+                        {% endif %}
+                        <div class="w-48 h-48 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 overflow-hidden">
+                            {% if form.instance.image %}
+                                <img id="image-preview" src="{{ form.instance.image.url }}" alt="Current Image" class="max-w-full max-h-full object-contain">
+                            {% else %}
+                                <img id="image-preview" class="max-w-full max-h-full object-contain hidden">
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-        
-        <!-- Size Management Section -->
-        <div class="size-management">
-            <h3>Size Quantities</h3>
-            {{ size_formset.management_form }}
-            <table class="size-table">
-                <thead>
-                    <tr>
-                        <th>Size</th>
-                        <th>Quantity</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for form in size_formset %}
-                    <tr class="size-form">
-                        <td>
-                            {{ form.size }}
-                            {% if form.size.errors %}
-                                <div class="error-message">{{ form.size.errors }}</div>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {{ form.quantity }}
-                            {% if form.quantity.errors %}
-                                <div class="error-message">{{ form.quantity.errors }}</div>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if size_formset.can_delete %}
-                                {{ form.DELETE }} <span class="delete-size">Delete</span>
-                            {% endif %}
-                            {% for hidden in form.hidden_fields %}
-                                {{ hidden }}
-                            {% endfor %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        
-        <!-- Form Actions -->
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save"></i> Save Changes
-            </button>
-            <a href="{% url 'saritasapp:inventory_list' %}" class="btn btn-secondary">
-                <i class="fas fa-times"></i> Cancel
-            </a>
-        </div>
-    </form>
+            
+<!-- Size Management Section -->
+<div class="md:col-span-2 mt-6">
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-medium text-gray-900">Size Quantities</h3>
+        <a href="{% url 'saritasapp:add_size' %}?next={{ request.path }}" 
+           class="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md text-sm transition-colors">
+            + Add Size
+        </a>
+    </div>
+    {{ size_formset.management_form }}
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-2 border-gray-200">Size</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-2 border-gray-200">Quantity</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-2 border-gray-200">Action</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for form in size_formset %}
+                <tr class="size-form {% if form.DELETE.value %}opacity-50{% endif %}">
+                    <td class="px-6 py-4 whitespace-nowrap border-2 border-gray-200">
+                        {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                        {{ form.size }}
+                        {% if form.size.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.size.errors }}</p>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap border-2 border-gray-200">
+                        {{ form.quantity }}
+                        {% if form.quantity.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.quantity.errors }}</p>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap border-2 border-gray-200">
+                        {% if size_formset.can_delete %}
+                            <div class="flex items-center gap-2">
+                                {{ form.DELETE }}
+                                <label for="{{ form.DELETE.id_for_label }}" class="text-red-600 hover:text-red-800 cursor-pointer font-medium">Delete</label>
+                            </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+            
+            <!-- Form Actions -->
+            <div class="md:col-span-2 flex justify-end gap-4 pt-6 border-t border-gray-200">
+                <a href="{% url 'saritasapp:inventory_list' %}" class="inline-flex items-center px-4 py-2 border-2 border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
+                    <i class="fas fa-times mr-2"></i> Cancel
+                </a>
+                
+                <button type="submit" class="inline-flex items-center px-4 py-2 border-2 border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#8E793E] hover:bg-[#7A6B34] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8E793E]">
+                    <i class="fas fa-save mr-2"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}
 
@@ -392,13 +310,13 @@
 <script>
     // Initialize Select2
     $(document).ready(function() {
-        $('.select2').select2({
+        $('select').select2({
             theme: 'bootstrap4',
             width: '100%',
             placeholder: 'Select an option',
             allowClear: true
         });
-        
+
         // Image preview
         $('#{{ form.image.id_for_label }}').change(function() {
             const file = this.files[0];
@@ -414,9 +332,12 @@
         });
 
         // Size form management
-        $('.delete-size').click(function() {
-            $(this).closest('tr').find('input[type=checkbox]').prop('checked', true);
-            $(this).closest('tr').hide();
+        $('input[name$="-DELETE"]').change(function() {
+            if ($(this).is(':checked')) {
+                $(this).closest('tr').addClass('opacity-50');
+            } else {
+                $(this).closest('tr').removeClass('opacity-50');
+            }
         });
     });
 </script>
