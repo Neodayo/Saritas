@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 class CustomerRegistrationForm(UserCreationForm):
     email = forms.EmailField(required=True)
     first_name = forms.CharField(max_length=30)
-    middle_initial = forms.CharField(max_length=1, required=False)  
     last_name = forms.CharField(max_length=30)
     phone = forms.CharField(max_length=15)
     address = forms.CharField(widget=forms.Textarea, required=False)
@@ -23,14 +22,13 @@ class CustomerRegistrationForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ("username", "first_name", "middle_initial", "last_name", "email", "phone", "address", "image", "password1", "password2")
+        fields = ("username", "first_name", "last_name", "email", "phone", "address", "image", "password1", "password2")
 
     @transaction.atomic
     def save(self, commit=True):
         user = super().save(commit=False)
         user.email = self.cleaned_data["email"]
         user.first_name = self.cleaned_data["first_name"]
-        user.middle_initial = self.cleaned_data.get("middle_initial", "") 
         user.last_name = self.cleaned_data["last_name"]
         user.role = 'customer'
 
@@ -43,16 +41,12 @@ class CustomerRegistrationForm(UserCreationForm):
                 image=self.cleaned_data.get("image")
             )
         return user
-
 class UserUpdateForm(forms.ModelForm):
-    middle_initial = forms.CharField(max_length=1, required=False)  
-    
     class Meta:
         model = User
-        fields = ['first_name', 'middle_initial', 'last_name', 'email'] 
+        fields = ['first_name', 'last_name', 'email']
         widgets = {
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'middle_initial': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 50px;'}),  
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
         }

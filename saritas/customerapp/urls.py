@@ -1,5 +1,6 @@
 from django.urls import path, register_converter
 from core.converters import EncryptedIDConverter
+from . import email_verification
 from . import views
 
 app_name = 'customerapp'
@@ -9,6 +10,8 @@ register_converter(EncryptedIDConverter, 'encrypted')
 urlpatterns = [
     path('', views.homepage, name='homepage'),
     path('register/', views.register, name='register'),
+    path('verify-email/', email_verification.request_email, name='request_email'),
+    path('enter-otp/', email_verification.verify_otp, name='verify_otp'),
     path('terms/', views.terms, name='terms'),
     path('privacy/', views.privacy, name='privacy'),
     path('profile/', views.customer_profile, name='customer_profile'),

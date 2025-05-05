@@ -1,0 +1,163 @@
+{% extends "customerapp/base.html" %}
+{% load static %}
+{% block title %}Enter OTP | Saritas{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Scoped styles that won't affect base template */
+  .saritas-otp-container {
+    width: 100%;
+    max-width: 420px;
+    background: white;
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(35, 31, 32, 0.08);
+    border: 1px solid rgba(173, 151, 79, 0.2);
+    margin: 2rem auto;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .saritas-otp-container:hover {
+    box-shadow: 0 15px 35px rgba(35, 31, 32, 0.12);
+    transform: translateY(-2px);
+  }
+
+  .saritas-otp-title {
+    color: #8E793E;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.75rem;
+    letter-spacing: -0.5px;
+  }
+
+  .saritas-otp-description {
+    color: #5a5a5a;
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .saritas-otp-input {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    border: 2px solid rgba(173, 151, 79, 0.4);
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #231F20;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: #fafafa;
+  }
+
+  .saritas-otp-input:focus {
+    outline: none;
+    border-color: #AD974F;
+    box-shadow: 0 0 0 3px rgba(142, 121, 62, 0.15);
+    background-color: white;
+  }
+
+  .saritas-otp-input::placeholder {
+    color: #a0a0a0;
+    opacity: 1;
+  }
+
+  .saritas-otp-button {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(to right, #8E793E, #AD974F);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-top: 0.5rem;
+  }
+
+  .saritas-otp-button:hover {
+    background: linear-gradient(to right, #AD974F, #8E793E);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(142, 121, 62, 0.2);
+  }
+
+  .saritas-otp-button:active {
+    transform: translateY(0);
+  }
+
+  .saritas-otp-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: #6d6d6d;
+    font-size: 0.9rem;
+  }
+
+  .saritas-otp-footer a {
+    color: #8E793E;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+
+  .saritas-otp-footer a:hover {
+    color: #AD974F;
+    text-decoration: underline;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .saritas-otp-container {
+      padding: 2rem;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .saritas-otp-container {
+      padding: 1.75rem;
+      margin: 1.5rem auto;
+      border-radius: 12px;
+    }
+
+    .saritas-otp-title {
+      font-size: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .saritas-otp-input {
+      padding: 0.9rem 1.1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .saritas-otp-button {
+      padding: 0.9rem;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .saritas-otp-container {
+      padding: 1.5rem;
+    }
+    
+    .saritas-otp-title {
+      font-size: 1.4rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="saritas-otp-container">
+  <h2 class="saritas-otp-title">OTP Verification</h2>
+  <p class="saritas-otp-description">Please enter the 6-digit verification code sent to your email address</p>
+  
+  <form method="POST">
+    {% csrf_token %}
+    <input type="text" name="otp" class="saritas-otp-input" placeholder="Enter verification code" required>
+    <button type="submit" class="saritas-otp-button">Verify Account</button>
+  </form>
+</div>
+{% endblock %}

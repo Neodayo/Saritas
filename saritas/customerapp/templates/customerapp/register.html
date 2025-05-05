@@ -126,7 +126,7 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gold-dark mb-2">Email <span class="text-error-red">*</span></label>
+                            <label class="block text-sm font-medium text-gold-dark mb-2">Email and Use your Personal Gmail Account <span class="text-error-red">*</span></label>
                             <input type="email" name="email" placeholder="Enter your email" value="{{ form.email.value|default:'' }}" class="w-full px-4 py-3 border border-gold-primary rounded-lg placeholder-gold-secondary {% if form.email.errors %}form-error{% endif %}">
                             {% if form.email.errors %}
                                 <div class="error-message">{{ form.email.errors.0 }}</div>

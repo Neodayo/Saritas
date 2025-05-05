@@ -85,20 +85,37 @@ def homepage(request):
     })
 
 
+from .utils import send_otp_email  # Import the function
+import random
+
+def send_otp_email(user):
+    otp = str(random.randint(100000, 999999))
+    user.otp_code = otp
+    user.otp_created_at = timezone.now()
+    user.save()
+
+    subject = 'Verify your email'
+    message = f'Hello {user.username},\n\nYour OTP for verifying your email is: {otp}\n\nThank you!'
+    from_email = settings.DEFAULT_FROM_EMAIL
+    recipient_list = [user.email]
+
+    print("Sending email to:", user.email)  # 👈 Add this to confirm it's triggering
+    send_mail(subject, message, from_email, recipient_list)
+
 def register(request):
     if request.method == 'POST':
         form = CustomerRegistrationForm(request.POST, request.FILES)
         if form.is_valid():
             try:
                 user = form.save()
-                messages.success(request, "Registration successful! Please sign in.")
-                return redirect('saritasapp:sign_in')  # Using namespace
+                send_otp_email(user)  # Send OTP email after registration
+                messages.success(request, "Registration successful! Please check your email to verify.")
+                return redirect('customerapp:request_email')
             except IntegrityError as e:
                 messages.error(request, "This username or email already exists.")
             except Exception as e:
                 messages.error(request, "An error occurred during registration.")
         else:
-            # Show specific field errors
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field.title()}: {error}")
@@ -106,6 +123,20 @@ def register(request):
         form = CustomerRegistrationForm()
     
     return render(request, 'customerapp/register.html', {'form': form})
+
+def customer_register(request):
+    if request.method == "POST":
+        form = CustomerRegistrationForm(request.POST)
+        if form.is_valid():
+            # Save the form data to session
+            request.session['temp_customer_data'] = form.cleaned_data
+            request.session['verification_email'] = form.cleaned_data['email']
+            return redirect('customerapp:request_email')
+    else:
+        form = CustomerRegistrationForm()
+
+    return render(request, 'customerapp/verify_otp.html', {'form': form})
+
 
 @login_required
 def customer_profile(request):

@@ -73,4 +73,18 @@ class FeaturedCollectionsSection(models.Model):
         self.categories.set(default_cats)
         self.save()
 
+# models.py for email OTP
+from django.db import models
+from django.utils import timezone
+import random
+
+class EmailOTP(models.Model):
+    email = models.EmailField()
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_valid(self):
+        return timezone.now() < self.created_at + timezone.timedelta(minutes=5)
+
+
         

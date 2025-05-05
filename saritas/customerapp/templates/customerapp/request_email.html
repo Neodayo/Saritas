@@ -1,0 +1,125 @@
+{% extends "customerapp/base.html" %}
+{% load static %}
+{% block title %}Verify Email | Saritas{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Scoped styles with unique class prefixes */
+  .saritas-email-container {
+    max-width: 420px;
+    margin: 2rem auto;
+    background-color: #fff;
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(35, 31, 32, 0.1);
+    border: 1px solid #AD974F;
+    transition: all 0.3s ease;
+  }
+
+  .saritas-email-title {
+    color: #8E793E;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 1.75rem;
+    font-size: 1.75rem;
+    letter-spacing: -0.5px;
+  }
+
+  .saritas-email-input {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    margin: 0.75rem 0 1.5rem 0;
+    border: 2px solid rgba(173, 151, 79, 0.4);
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #231F20;
+    background-color: #fafafa;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .saritas-email-input:focus {
+    outline: none;
+    border-color: #AD974F;
+    box-shadow: 0 0 0 3px rgba(142, 121, 62, 0.15);
+    background-color: white;
+  }
+
+  .saritas-email-input::placeholder {
+    color: #a0a0a0;
+  }
+
+  .saritas-email-button {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(to right, #8E793E, #AD974F);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .saritas-email-button:hover {
+    background: linear-gradient(to right, #AD974F, #8E793E);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(142, 121, 62, 0.2);
+  }
+
+  .saritas-email-button:active {
+    transform: translateY(0);
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .saritas-email-container {
+      padding: 2rem;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .saritas-email-container {
+      padding: 1.75rem;
+      margin: 1.5rem auto;
+    }
+    
+    .saritas-email-title {
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .saritas-email-input {
+      padding: 0.9rem 1.1rem;
+      margin: 0.5rem 0 1.25rem 0;
+    }
+    
+    .saritas-email-button {
+      padding: 0.9rem;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .saritas-email-container {
+      padding: 1.5rem;
+    }
+    
+    .saritas-email-title {
+      font-size: 1.4rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="saritas-email-container">
+  <h2 class="saritas-email-title">Verify Your Email</h2>
+  <form method="POST">
+    {% csrf_token %}
+    <input type="email" name="email" class="saritas-email-input" placeholder="Enter your email address" required>
+    <button type="submit" class="saritas-email-button">Send Verification Code</button>
+  </form>
+</div>
+{% endblock %}

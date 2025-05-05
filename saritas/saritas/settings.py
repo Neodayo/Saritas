@@ -128,9 +128,16 @@ PASSWORD_HASHERS = [
 
 # Email Configuration
 # For development, emails will just print to the console.
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Change to SMTP in production
-DEFAULT_FROM_EMAIL = 'noreply@saritas.local'  # Change this in production
-SITE_URL = config('SITE_URL', default='http://localhost:8000')  # Adjust this for production
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'saritascreation93@gmail.com'
+EMAIL_HOST_PASSWORD = 'rlkd phun nnac ovze'  # App password (DO NOT use your real password!)
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+SITE_URL = config('SITE_URL', default='http://localhost:8000')
 SITE_NAME = 'Sarita\'s Event Planning'
 
 # SMTP Email Backend Configuration for Production
@@ -139,8 +146,9 @@ if not DEBUG:
     EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
     EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
     EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-    EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-    EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+    EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='saritascreation93@gmail.com')
+    EMAIL_HOST_PASSWORD = config('rlkdphunnnacovze')
+
 
 # Celery Configuration
 CELERY_BROKER_URL = 'redis://localhost:6379/0'  # URL for Redis as the broker
