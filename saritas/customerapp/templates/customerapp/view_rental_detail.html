@@ -1,0 +1,219 @@
+{% extends "customerapp/base.html" %}
+{% load static %}
+
+{% block title %}My Rental Details | Sarita's{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+    <h1 class="text-3xl font-serif font-bold text-[#8E793E]"> {{ rental.inventory_size.inventory.name }}</h1>
+    <a href="{% url 'customerapp:rental_list' %}" class="flex items-center gap-2 text-[#8E793E] font-semibold hover:underline">
+      <i class="fas fa-arrow-left"></i> Back to My Rentals
+    </a>
+  </div>
+
+  <!-- Main Card -->
+  <div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="bg-gray-50 px-6 py-4 border-b">
+      <h2 class="text-xl font-semibold text-[#8E793E]">Rental Information</h2>
+    </div>
+
+    <div class="p-6">
+      <!-- Rental Info Section -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <!-- Status Column -->
+        <div>
+          <h3 class="text-lg font-semibold text-[#8E793E] border-b pb-2 mb-4">Rental Status</h3>
+          <div class="space-y-3">
+            <div class="flex">
+              <span class="w-32 text-gray-600">Status:</span>
+              <span class="px-3 py-1 rounded-full text-sm font-medium
+                {% if rental.status == rental.PENDING %}bg-yellow-100 text-yellow-800
+                {% elif rental.status == rental.APPROVED %}bg-green-100 text-green-800
+                {% elif rental.status == rental.RENTED %}bg-blue-100 text-blue-800
+                {% elif rental.status == rental.RETURNED %}bg-gray-100 text-gray-800
+                {% elif rental.status == rental.OVERDUE %}bg-red-100 text-red-800
+                {% elif rental.status == rental.REJECTED %}bg-red-100 text-red-800
+                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                {% if rental.status == rental.APPROVED and rental.rental_start <= today and rental.rental_end >= today %}
+                  Currently Renting
+                {% else %}
+                  {{ rental.get_status_display }}
+                {% endif %}
+              </span>
+            </div>
+            <div class="flex">
+              <span class="w-32 text-gray-600">Start Date:</span>
+              <span>{{ rental.rental_start|date:"M d, Y" }}</span>
+            </div>
+            <div class="flex">
+              <span class="w-32 text-gray-600">End Date:</span>
+              <span>{{ rental.rental_end|date:"M d, Y" }}</span>
+            </div>
+            <div class="flex">
+              <span class="w-32 text-gray-600">Duration:</span>
+              <span>{{ rental.duration_days }} days</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item Column -->
+        <div>
+          <h3 class="text-lg font-semibold text-[#8E793E] border-b pb-2 mb-4">Item Details</h3>
+          <div class="space-y-3">
+            <div class="flex">
+              <span class="w-32 text-gray-600">Item:</span>
+              <span>{{ rental.inventory_size.inventory.name }}</span>
+            </div>
+            
+            <!-- Fixed Size Section -->
+            <div class="flex items-center gap-2">
+              <span class="w-32 text-gray-600">Size:</span>
+              <span class="font-medium">
+                {{ rental.inventory_size.size.get_name_display }}
+                {% if can_edit %}
+                <a href="{% url 'customerapp:edit_rental' rental.encrypted_id %}" 
+                   class="ml-2 text-sm text-[#8E793E] hover:underline">
+                  (Change)
+                </a>
+                {% endif %}
+              </span>
+            </div>
+
+            <div class="flex">
+              <span class="w-32 text-gray-600">Category:</span>
+              <span>{{ rental.inventory_size.inventory.category.name }}</span>
+            </div>
+            {% if rental.inventory_size.inventory.image %}
+            <div class="mt-4">
+              <img src="{{ rental.inventory_size.inventory.image.url }}" 
+                   alt="{{ rental.inventory_size.inventory.name }}" 
+                   class="max-w-xs rounded border border-gray-200">
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Pricing Section -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <div>
+          <h3 class="text-lg font-semibold text-[#8E793E] border-b pb-2 mb-4">Payment Summary</h3>
+          <div class="space-y-3">
+            <div class="flex">
+              <span class="w-32 text-gray-600">Rental Fee:</span>
+              <span>₱{{ rental.inventory_size.inventory.rental_price|floatformat:2 }}</span>
+            </div>
+            <div class="flex">
+              <span class="w-32 text-gray-600">Deposit:</span>
+              <span>₱{{ rental.deposit|floatformat:2 }}</span>
+            </div>
+            {% if rental.penalty_fee > 0 %}
+            <div class="flex">
+              <span class="w-32 text-gray-600">Penalty Fee:</span>
+              <span>₱{{ rental.penalty_fee|floatformat:2 }}</span>
+            </div>
+            {% endif %}
+            <div class="flex pt-3 border-t">
+              <span class="w-32 text-gray-600 font-semibold">Total Cost:</span>
+              <span class="font-semibold">₱{{ rental.total_cost|floatformat:2 }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="text-lg font-semibold text-[#8E793E] border-b pb-2 mb-4">Timeline</h3>
+          <div class="space-y-3">
+            <div class="flex">
+              <span class="w-32 text-gray-600">Requested:</span>
+              <span>{{ rental.created_at|date:"M d, Y h:i A" }}</span>
+            </div>
+            {% if rental.approved_at %}
+            <div class="flex">
+              <span class="w-32 text-gray-600">Approved:</span>
+              <span>{{ rental.approved_at|date:"M d, Y h:i A" }}</span>
+            </div>
+            {% endif %}
+            {% if rental.returned_date %}
+            <div class="flex">
+              <span class="w-32 text-gray-600">Returned:</span>
+              <span>{{ rental.returned_date|date:"M d, Y" }}</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Notices -->
+      {% if rental.status == rental.REJECTED and rental.rejection_reason %}
+      <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-red-800">Rejection Reason</h3>
+            <div class="mt-2 text-sm text-red-700">
+              <p>{{ rental.rejection_reason }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if rental.is_overdue %}
+      <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-yellow-800">Overdue Notice</h3>
+            <div class="mt-2 text-sm text-yellow-700">
+              <p>This rental is {{ rental.days_overdue }} day(s) overdue. Please return the item immediately to avoid additional penalties.</p>
+              <p class="mt-1 font-medium">Current penalty: ₱{{ rental.calculated_penalty|floatformat:2 }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Notes Section -->
+      {% if rental.notes %}
+      <div class="mt-8 pt-6 border-t">
+        <h3 class="text-lg font-semibold text-[#8E793E] mb-3">Your Notes</h3>
+        <div class="bg-gray-50 p-4 rounded">
+          <p class="text-gray-700">{{ rental.notes }}</p>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Action Buttons -->
+      {% if rental.status == rental.PENDING %}
+      <div class="mt-6 flex flex-wrap gap-4 justify-end">
+        <!-- Edit Button -->
+        <a href="{% url 'customerapp:edit_rental' rental.encrypted_id %}" 
+           class="px-4 py-2 bg-[#8E793E] text-white rounded hover:bg-[#AD974F] transition">
+          Edit Rental
+        </a>
+        
+        <!-- Cancel Request Button -->
+        <form method="post" action="{% url 'customerapp:cancel_rental_request' rental.encrypted_id %}" class="inline">
+          {% csrf_token %}
+          <button type="submit" 
+                  class="px-4 py-2 bg-white border border-red-500 text-red-600 rounded hover:bg-red-50 transition"
+                  onclick="return confirm('Are you sure you want to cancel this rental request? This cannot be undone.')">
+            Cancel Request
+          </button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

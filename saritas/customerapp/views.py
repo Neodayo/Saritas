@@ -46,6 +46,7 @@ from core.utils.encryption import (
 from .models import HeroSection, EventSlide
 from .forms import EventSlideForm
 from .models import FeaturedCollectionsSection
+from .forms import RentalEditForm
 
 logger = logging.getLogger(__name__)
 
@@ -172,7 +173,7 @@ def notifications(request):
     # Add proper URLs to notifications
     for notification in user_notifications:
         if notification.rental:
-            notification.url = reverse('customerapp:rental_detail', args=[encrypt_id(notification.rental.id)])
+            notification.url = reverse('customerapp:view_rental_detail', args=[encrypt_id(notification.rental.id)])
         elif notification.reservation:
             notification.url = reverse('customerapp:reservation_detail', args=[encrypt_id(notification.reservation.id)])
         # Add other notification types as needed
@@ -278,18 +279,6 @@ def my_rentals(request):
         customer=request.user.customer_profile
     ).order_by('-created_at')
     return render(request, 'customerapp/my_rentals.html', {'rentals': rentals})
-
-@login_required
-def rental_detail(request, encrypted_id):
-    rental = get_decrypted_object_or_404(
-        Rental, 
-        encrypted_id,
-        queryset=Rental.objects.filter(customer=request.user.customer_profile)
-    )
-    return render(request, 'customerapp/rental_detail.html', {
-        'rental': rental,
-        'encrypted_id': rental.encrypted_id  # Pass to template if needed
-    })
 
 
 @login_required
@@ -772,3 +761,91 @@ def package_detail(request, package_id):
         raise Http404("Package not found")
     
     return render(request, 'saritasapp/package_detail.html', {'package': package})
+
+@login_required
+def view_rental_detail(request, encrypted_id):
+    # Get rental or return 404, ensuring it belongs to the current customer
+    rental = get_decrypted_object_or_404(
+        Rental,
+        encrypted_id,
+        queryset=Rental.objects.filter(customer=request.user.customer_profile)
+    )
+    
+    context = {
+        'rental': rental,
+        'today': timezone.now().date(),
+        'can_edit': rental.can_be_edited_by(request.user)
+    }
+    return render(request, 'customerapp/view_rental_detail.html', context)
+
+@login_required
+def edit_rental(request, encrypted_id):
+    rental = get_decrypted_object_or_404(
+        Rental,
+        encrypted_id,
+        queryset=Rental.objects.filter(customer=request.user.customer_profile)
+    )
+    
+    if not rental.status == Rental.PENDING:
+        messages.error(request, "Only pending rentals can be edited")
+        return redirect('customerapp:view_rental_detail', encrypted_id=encrypted_id)
+    
+    if request.method == 'POST':
+        form = RentalEditForm(request.POST, instance=rental, rental=rental)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    # Return original size to inventory
+                    original_size = rental.inventory_size
+                    original_size.quantity += 1
+                    original_size.save()
+                    
+                    # Update rental with new size
+                    rental = form.save(commit=False)
+                    new_size = form.cleaned_data['size']
+                    new_size.quantity -= 1
+                    new_size.save()
+                    
+                    rental.inventory_size = new_size
+                    rental.save()
+                    messages.success(request, "Rental updated successfully")
+                return redirect('customerapp:view_rental_detail', encrypted_id=encrypted_id)
+            except Exception as e:
+                messages.error(request, f"Error updating rental: {str(e)}")
+    else:
+        form = RentalEditForm(instance=rental, rental=rental)
+    
+    return render(request, 'customerapp/edit_rental.html', {
+        'form': form,
+        'rental': rental,
+        'can_edit': rental.status == Rental.PENDING
+    })
+
+@login_required
+@require_POST
+def cancel_rental_request(request, encrypted_id):
+    try:
+        rental = get_decrypted_object_or_404(
+            Rental,
+            encrypted_id,
+            queryset=Rental.objects.filter(
+                customer=request.user.customer_profile,
+                status=Rental.PENDING  # Only allow cancelling pending rentals
+            )
+        )
+        
+        with transaction.atomic():
+            # Return inventory to stock
+            rental.inventory_size.quantity += 1
+            rental.inventory_size.save()
+            
+            # Delete the rental record
+            rental.delete()
+            
+            messages.success(request, "Rental request has been cancelled successfully")
+            return redirect('customerapp:rental_list')
+            
+    except Exception as e:
+        logger.error(f"Error cancelling rental: {str(e)}")
+        messages.error(request, "Could not cancel this rental request")
+        return redirect('customerapp:view_rental_detail', encrypted_id=encrypted_id)

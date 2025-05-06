@@ -296,3 +296,45 @@ class EventSlideForm(forms.ModelForm):
         widgets = {
             'order': forms.NumberInput(attrs={'min': 0})
         }
+
+class RentalEditForm(forms.ModelForm):
+    size = forms.ModelChoiceField(
+        queryset=InventorySize.objects.none(),  # Will be set in __init__
+        required=True,
+        label="Select Size"
+    )
+
+    class Meta:
+        model = Rental
+        fields = ['rental_start', 'rental_end', 'size', 'notes']
+        widgets = {
+            'rental_start': forms.DateInput(attrs={'type': 'date', 'class': 'form-input'}),
+            'rental_end': forms.DateInput(attrs={'type': 'date', 'class': 'form-input'}),
+            'notes': forms.Textarea(attrs={'rows': 3, 'class': 'form-textarea'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        rental = kwargs.pop('rental', None)
+        super().__init__(*args, **kwargs)
+        
+        if rental:
+            # Only show available sizes for the same inventory item
+            self.fields['size'].queryset = InventorySize.objects.filter(
+                inventory=rental.inventory_size.inventory,
+                quantity__gt=0
+            ).select_related('size')
+            self.initial['size'] = rental.inventory_size
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start = cleaned_data.get('rental_start')
+        end = cleaned_data.get('rental_end')
+        new_size = cleaned_data.get('size')
+        
+        if start and end and end <= start:
+            raise forms.ValidationError("End date must be after start date")
+        
+        if new_size and not self.instance.can_change_size(new_size):
+            raise forms.ValidationError("Cannot change to this size")
+        
+        return cleaned_data

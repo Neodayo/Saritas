@@ -26,7 +26,9 @@ urlpatterns = [
 
     path('rentals/', views.rental_list, name='rental_list'),
     path('my-rentals/', views.my_rentals, name='my_rentals'),
-    path('rental/<str:encrypted_id>/', views.rental_detail, name='rental_detail'),
+    path('my-rentals/<str:encrypted_id>/', views.view_rental_detail, name='view_rental_detail'),
+    path('my-rentals/<str:encrypted_id>/edit/', views.edit_rental, name='edit_rental'),
+     path('my-rentals/<str:encrypted_id>/cancel/', views.cancel_rental_request, name='cancel_rental_request'),
     path('reserve/<str:encrypted_id>/', views.reserve_item, name='reserve_item'),
     
     path('logout/', views.logout_view, name='logout'),

@@ -551,7 +551,61 @@ class Rental(models.Model):
             'return_date': self.returned_date,
             'processed_by': self.processed_by.get_full_name() if self.processed_by else None
         }
-
+    
+    def can_be_edited_by(self, user):
+        """Check if rental can be edited by the given user"""
+        return (
+            self.status == self.PENDING and
+            hasattr(user, 'customer_profile') and
+            self.customer == user.customer_profile
+        )
+    
+    def can_change_size(self, new_size):
+        """Check if the rental can be changed to the new size"""
+        # Only allow size changes for pending rentals
+        if self.status != self.PENDING:
+            return False
+            
+        # The new size must be for the same inventory item
+        if new_size.inventory != self.inventory_size.inventory:
+            return False
+            
+        # The new size must be available
+        if new_size.quantity < 1:
+            return False
+            
+        return True
+    
+    def cancel_rental(self, cancelled_by_customer=True):
+        """Cancel this rental and handle inventory updates"""
+        if self.status != self.PENDING:
+            return False
+            
+        try:
+            with transaction.atomic():
+                # Return inventory to stock
+                self.inventory_size.quantity += 1
+                self.inventory_size.save()
+                
+                # Delete the rental record
+                self.delete()
+                
+                # Create notification
+                if cancelled_by_customer:
+                    Notification.objects.create(
+                        user=self.customer.user,
+                        message=f"You cancelled rental request for {self.inventory_size.inventory.name}",
+                        notification_type='rental_cancelled'
+                    )
+                    # Notify admin
+                    notify_staff_about_rental_request.delay(
+                        f"Rental request cancelled by customer: {self.inventory_size.inventory.name}"
+                    )
+            return True
+        except Exception as e:
+            logger.error(f"Error cancelling rental {self.id}: {str(e)}")
+            return False
+        
 # --- Reservation ---
 class Reservation(models.Model):
     STATUS_CHOICES = [
@@ -1616,3 +1670,4 @@ class Venue(models.Model):
     base_price = models.DecimalField(max_digits=10, decimal_places=2)
     is_custom = models.BooleanField(default=False)
     created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+
