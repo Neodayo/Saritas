@@ -337,7 +337,7 @@ class Rental(models.Model):
     ]
 
     customer = models.ForeignKey('Customer', on_delete=models.CASCADE, related_name="rentals")
-    inventory_size = models.ForeignKey('InventorySize', on_delete=models.PROTECT, related_name="rentals")
+    inventory_size = models.ForeignKey('InventorySize', on_delete=models.CASCADE, related_name="rentals")
     staff = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -619,7 +619,7 @@ class Reservation(models.Model):
     # Core Fields
     inventory_size = models.ForeignKey(
         'InventorySize',
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name='reservations'
     )
     customer = models.ForeignKey(
