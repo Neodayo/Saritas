@@ -863,199 +863,6 @@ def delete_staff(request, staff_id):
         messages.success(request, 'Staff member deleted successfully.')
         return redirect('saritasapp:manage_staff')
     return render(request, 'saritasapp/confirm_staff_delete.html', {'staff': staff})
-#data_analysis
-
-
-@staff_member_required
-def data_analysis(request):
-    # Total rentals and customers
-    Total_Rentals = Rental.objects.count()
-    total_customers = Customer.objects.count()
-
-    # Most rented items
-    most_rented_items = (
-        Inventory.objects.annotate(rental_count=Count('rental'))
-        .order_by('-rental_count')[:5]
-    )
-
-    # Get the last 5 weeks dynamically
-    today = datetime.today()
-    last_5_weeks = [(today - timedelta(weeks=i)).isocalendar()[1] for i in range(5)]
-    
-    # Weekly rentals & income (last 5 weeks)
-    weekly_rentals = (
-        Rental.objects.annotate(week=ExtractWeek('rental_start'))
-        .filter(week__in=last_5_weeks)
-        .values('week')
-        .annotate(
-            count=Count('id'),
-            income=Sum('inventory__rental_price')
-        )
-        .order_by('week')
-    )
-
-    # Monthly rentals & income (full 12 months)
-    month_names = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-    ]
-    
-    monthly_rentals = {month: {'count': 0, 'income': 0} for month in month_names}
-    monthly_data = (
-        Rental.objects.annotate(month=ExtractMonth('rental_start'))
-        .values('month')
-        .annotate(
-            count=Count('id'),
-            income=Sum('inventory__rental_price')
-        )
-    )
-
-    for entry in monthly_data:
-        month_index = entry['month'] - 1
-        month_name = month_names[month_index]
-        monthly_rentals[month_name] = {
-            'count': entry['count'],
-            'income': entry['income'] or 0,
-        }
-
-    monthly_rentals_list = [{'month': key, **value} for key, value in monthly_rentals.items()]
-
-    # Yearly rentals & income (all available years)
-    yearly_rentals = (
-        Rental.objects.annotate(year=ExtractYear('rental_start'))
-        .values('year')
-        .annotate(
-            count=Count('id'),
-            income=Sum('inventory__rental_price')
-        )
-        .order_by('year')
-    )
-
-    # Function to determine max digits dynamically
-    def get_max_digits(data, key):
-        max_value = max((entry[key] or 0) for entry in data) if data else 0
-        max_digits = len(str(max_value)) + 1  # One extra digit
-        return max_digits
-
-    # Apply max digits formatting
-    max_digits_weekly = get_max_digits(weekly_rentals, 'count')
-    max_digits_monthly = get_max_digits(monthly_rentals_list, 'count')
-    max_digits_yearly = get_max_digits(yearly_rentals, 'count')
-
-    # Function to create bar charts with dynamic X-axis scaling
-    def create_chart(x_values, y_values, title, color, y_label):
-        max_digits = len(str(max(y_values) if y_values else 0)) + 1
-        y_max = 10 ** max_digits  # Round up based on max digits
-
-        fig = go.Figure()
-        fig.add_trace(go.Bar(x=x_values, y=y_values, name=title, marker_color=color))
-
-        fig.update_layout(
-            title=title,
-            xaxis_title="Time Period",
-            yaxis_title=y_label,
-            yaxis=dict(range=[0, y_max])
-        )
-        return fig.to_html(full_html=False)
-
-    # Income charts
-    weekly_income_chart = create_chart(
-        [entry['week'] for entry in weekly_rentals],
-        [entry['income'] for entry in weekly_rentals],
-        "Weekly Income", 'green', "Income (₱)"
-    )
-    monthly_income_chart = create_chart(
-        [entry['month'] for entry in monthly_rentals_list],
-        [entry['income'] for entry in monthly_rentals_list],
-        "Monthly Income", 'blue', "Income (₱)"
-    )
-    yearly_income_chart = create_chart(
-        [entry['year'] for entry in yearly_rentals],
-        [entry['income'] for entry in yearly_rentals],
-        "Yearly Income", 'red', "Income (₱)"
-    )
-
-    # Rental count charts
-    weekly_rental_chart = create_chart(
-        [entry['week'] for entry in weekly_rentals],
-        [entry['count'] for entry in weekly_rentals],
-        "Weekly Rentals", 'orange', "Number of Rentals"
-    )
-    monthly_rental_chart = create_chart(
-        [entry['month'] for entry in monthly_rentals_list],
-        [entry['count'] for entry in monthly_rentals_list],
-        "Monthly Rentals", 'purple', "Number of Rentals"
-    )
-    yearly_rental_chart = create_chart(
-        [entry['year'] for entry in yearly_rentals],
-        [entry['count'] for entry in yearly_rentals],
-        "Yearly Rentals", 'brown', "Number of Rentals"
-    )
-
-    context = {
-        'total_rentals': total_rentals,
-        'total_customers': total_customers,
-        'most_rented_items': most_rented_items,
-        'weekly_income_chart': weekly_income_chart,
-        'monthly_income_chart': monthly_income_chart,
-        'yearly_income_chart': yearly_income_chart,
-        'weekly_rental_chart': weekly_rental_chart,
-        'monthly_rental_chart': monthly_rental_chart,
-        'yearly_rental_chart': yearly_rental_chart,
-    }
-
-    return render(request, 'saritasapp/data_analysis.html', context)
-
-
-#calnder
-@staff_member_required
-def calendar_view(request):
-    return render(request, "saritasapp/calendar.html")
-
-@staff_member_required
-def ongoing_events(request):
-    events = Event.objects.filter(start_date__lte=now().date(), end_date__gte=now().date())
-    return render(request, "saritasapp/ongoing_events.html", {"events": events})
-
-@staff_member_required
-def upcoming_events(request):
-    events = Event.objects.filter(start_date__gt=now().date())
-    return render(request, "saritasapp/upcoming_events.html", {"events": events})
-
-@staff_member_required
-def past_events(request):
-    events = Event.objects.filter(end_date__lt=now().date())
-    return render(request, "saritasapp/past_events.html", {"events": events})
-
-@staff_member_required
-def create_event(request):
-    if request.method == "POST":
-        title = request.POST.get("title")
-        start_date = request.POST.get("start_date")
-        end_date = request.POST.get("end_date")
-        notes = request.POST.get("notes")
-        Event.objects.create(title=title, start_date=start_date, end_date=end_date, notes=notes)
-        return redirect("calendar")
-    return render(request, "saritasapp/create_event.html")
-
-@staff_member_required
-def view_event(request, encrypted_id):
-    event = get_decrypted_object_or_404(Event, encrypted_id)
-    return render(request, 'saritasapp/view_event.html', {'event': event})
-
-@staff_member_required
-def get_events(request):
-    events = Event.objects.all()
-    events_data = [
-        {
-            "id": event.id,
-            "title": event.title,
-            "start": event.start_date.strftime("%Y-%m-%d"),
-            "end": event.end_date.strftime("%Y-%m-%d"),
-        }
-        for event in events
-    ]
-    return JsonResponse(events_data, safe=False)
 
 
 
@@ -2190,127 +1997,284 @@ def rental_events_api(request):
         })
     return JsonResponse(data, safe=False)
 
-from django.db.models import Count, Sum
-from django.utils import timezone
-from datetime import timedelta
-import json
+# saritasapp/views.py
+# saritasapp/views.py
+from django.db.models import Q, Sum
+from django.shortcuts import render
+from datetime import datetime, timedelta
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from io import BytesIO
+import base64
+from .models import Rental, Reservation
 
-@staff_member_required
-def data_analysis(request):
-    # Calculate totals
-    total_rentals = Rental.objects.count()
-    total_customers = int(Customer.objects.count())
-    active_reservations = int(Reservation.objects.exclude(status__in=['completed', 'cancelled', 'rejected']).count())  # Fixed the parenthesis
+# Elegant color palette
+COLOR_PALETTE = {
+    'primary': '#4a6fa5',      # Navy blue
+    'secondary': '#a78a7f',    # Muted brown
+    'accent': '#c1666b',       # Dusty red
+    'success': '#5b8c5a',      # Sage green
+    'light': '#f8f9fa',        # Light background
+    'dark': '#212529',         # Dark text
+    'border': '#dee2e6',       # Light border
+    'highlight': '#e9ecef'     # Highlight color
+}
+
+def financial_report(request):
+    period = request.GET.get('period', 'weekly')
+    start_date, end_date = get_date_range(period)
     
-    # Calculate total income
-    rental_income = float(Rental.objects.filter(status='Returned').aggregate(
-        total=Sum('inventory__rental_price')
-    )['total'] or 0)
+    # Rental data
+    rentals = Rental.objects.filter(
+        Q(created_at__date__gte=start_date) & 
+        Q(created_at__date__lte=end_date) &
+        Q(status__in=['Rented', 'Returned'])
+    )
     
-    reservation_income = float(Reservation.objects.filter(status='completed').aggregate(
-        total=Sum('total_price')
-    )['total'] or 0)
+    rental_revenue = rentals.aggregate(
+        Sum('inventory_size__inventory__rental_price')
+    )['inventory_size__inventory__rental_price__sum'] or 0
     
-    total_income = rental_income + reservation_income
+    rental_deposits = rentals.aggregate(Sum('deposit'))['deposit__sum'] or 0
+    penalty_total = rentals.aggregate(Sum('penalty_fee'))['penalty_fee__sum'] or 0
+    damage_total = rentals.aggregate(Sum('damage_fee'))['damage_fee__sum'] or 0
+    rental_fees = penalty_total + damage_total
+
     
-    # Prepare chart data
-    now = timezone.now()
+    # Reservation data
+    reservations = Reservation.objects.filter(
+        Q(created_at__date__gte=start_date) & 
+        Q(created_at__date__lte=end_date) &
+        Q(status__in=['paid', 'fulfilled'])
+    )
     
-    # Weekly data (last 8 weeks)
-    weekly_labels = []
-    weekly_rentals = []
+    reservation_revenue = reservations.aggregate(
+        Sum('reservation_fee')
+    )['reservation_fee__sum'] or 0
     
-    for i in range(8, -1, -1):
-        week_start = now - timedelta(weeks=i)
-        week_end = week_start + timedelta(weeks=1)
-        week_label = week_start.strftime('%b %d')
-        
-        rentals = int(Rental.objects.filter(
-            rental_start__gte=week_start,
-            rental_start__lt=week_end,
-            status='Returned'
-        ).count())
-        
-        weekly_labels.append(week_label)
-        weekly_rentals.append(max(0, rentals))
-    
-    # Monthly data (last 12 months)
-    monthly_labels = []
-    monthly_rentals = []
-    
-    for i in range(12, -1, -1):
-        month_start = now - timedelta(days=30*i)
-        month_end = month_start + timedelta(days=30)
-        month_label = month_start.strftime('%b %Y')
-        
-        rentals = int(Rental.objects.filter(
-            rental_start__gte=month_start,
-            rental_start__lt=month_end,
-            status='Returned'
-        ).count())
-        
-        monthly_labels.append(month_label)
-        monthly_rentals.append(max(0, rentals))
-    
-    # Yearly data (all years)
-    yearly_labels = []
-    yearly_rentals = []
-    
-    years = Rental.objects.dates('rental_start', 'year')
-    
-    for year in years:
-        year_start = year
-        year_end = year_start.replace(year=year_start.year + 1)
-        year_label = year_start.strftime('%Y')
-        
-        rentals = int(Rental.objects.filter(
-            rental_start__gte=year_start,
-            rental_start__lt=year_end,
-            status='Returned'
-        ).count())
-        
-        yearly_labels.append(year_label)
-        yearly_rentals.append(max(0, rentals))
-    
-    chart_data = {
-        'weekly': {
-            'labels': weekly_labels,
-            'rentals': weekly_rentals,
-            'stats': {
-                'total_rentals': sum(weekly_rentals),
-                'total_customers': total_customers,
-                'active_reservations': active_reservations,
-                'total_income': sum([r * 1000 for r in weekly_rentals])
-            }
+    # Combined financials
+    financials = {
+        'rentals': {
+            'revenue': rental_revenue,
+            'deposits': rental_deposits,
+            'fees': rental_fees,
+            'count': rentals.count()
         },
-        'monthly': {
-            'labels': monthly_labels,
-            'rentals': monthly_rentals,
-            'stats': {
-                'total_rentals': sum(monthly_rentals),
-                'total_customers': total_customers,
-                'active_reservations': active_reservations,
-                'total_income': sum([r * 1000 for r in monthly_rentals])
-            }
+        'reservations': {
+            'revenue': reservation_revenue,
+            'count': reservations.count()
         },
-        'yearly': {
-            'labels': yearly_labels,
-            'rentals': yearly_rentals,
-            'stats': {
-                'total_rentals': sum(yearly_rentals),
-                'total_customers': total_customers,
-                'active_reservations': active_reservations,
-                'total_income': sum([r * 1000 for r in yearly_rentals])
-            }
+        'total': {
+            'revenue': rental_revenue + reservation_revenue,
+            'transactions': rentals.count() + reservations.count()
         }
     }
     
-    context = {
-        'total_rentals': total_rentals,
-        'total_customers': total_customers,
-        'active_reservations': active_reservations,
-        'total_income': total_income,
-        'chart_data_json': json.dumps(chart_data)
+    # Generate charts
+    charts = {
+        'rental_trend': generate_chart(rentals, 'rental_start', 'inventory_size__inventory__rental_price', 
+                                      'Rental Revenue Trend', COLOR_PALETTE['primary'], period),
+        'reservation_trend': generate_chart(reservations, 'created_at', 'reservation_fee', 
+                                          'Reservation Revenue Trend', COLOR_PALETTE['secondary'], period),
+        'rental_distribution': generate_pie_chart(rentals, 'inventory_size__inventory__category__name', 
+                                                'inventory_size__inventory__rental_price', 
+                                                'Rental Revenue Distribution', COLOR_PALETTE['primary']),
+        'reservation_distribution': generate_pie_chart(reservations, 'inventory_size__inventory__category__name', 
+                                                     'reservation_fee', 
+                                                     'Reservation Revenue Distribution', COLOR_PALETTE['secondary']),
+        'comparison': generate_comparison_chart(rentals, reservations, period)
     }
     
+    has_data = rentals.exists() or reservations.exists()
+    
+    context = {
+        'period': period,
+        'start_date': start_date,
+        'end_date': end_date,
+        'financials': financials,
+        'charts': charts,
+        'colors': COLOR_PALETTE,
+        'has_data': has_data
+    }
     return render(request, 'saritasapp/data_analysis.html', context)
+
+def get_date_range(period):
+    today = datetime.now().date()
+    if period == 'weekly':
+        start_date = today - timedelta(days=7)
+    elif period == 'monthly':
+        start_date = today - timedelta(days=30)
+    elif period == 'yearly':
+        start_date = today - timedelta(days=365)
+    else:
+        start_date = today - timedelta(days=7)
+    return start_date, today
+
+def generate_chart(queryset, date_field, value_field, title, color, period):
+    try:
+        df = pd.DataFrame.from_records(
+            queryset.values(date_field).annotate(
+                amount=Sum(value_field)
+            )
+        )
+        if df.empty:
+            return None
+            
+        df['date'] = pd.to_datetime(df[date_field])
+        df = df[['date', 'amount']].set_index('date')
+        
+        if period == 'weekly':
+            resampled = df.resample('W-MON').sum()
+            title = f'Weekly {title}'
+        elif period == 'monthly':
+            resampled = df.resample('ME').sum()
+            title = f'Monthly {title}'
+        else:
+            resampled = df.resample('YE').sum()
+            title = f'Yearly {title}'
+
+        plt.figure(figsize=(8, 4.5))
+        ax = sns.lineplot(
+            data=resampled, x=resampled.index, y='amount',
+            color=color,
+            linewidth=2.5,
+            marker='o',
+            markersize=8
+        )
+        
+        # Style enhancements
+        ax.set_title(title, color=COLOR_PALETTE['dark'], fontsize=13, pad=15)
+        ax.set_xlabel('Date', color=COLOR_PALETTE['dark'], fontsize=11)
+        ax.set_ylabel('Amount (₱)', color=COLOR_PALETTE['dark'], fontsize=11)
+        ax.tick_params(colors=COLOR_PALETTE['dark'], labelsize=9)
+        ax.grid(True, linestyle='--', alpha=0.3)
+        ax.set_facecolor(COLOR_PALETTE['light'])
+        plt.xticks(rotation=45, ha='right')
+        plt.tight_layout()
+        
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png', facecolor='white', dpi=100, bbox_inches='tight')
+        plt.close()
+        return base64.b64encode(buffer.getvalue()).decode('utf-8')
+    except Exception as e:
+        print(f"Chart Error ({title}): {str(e)}")
+        return None
+
+def generate_pie_chart(queryset, group_field, value_field, title, base_color):
+    try:
+        df = pd.DataFrame.from_records(
+            queryset.values(group_field).annotate(
+                total=Sum(value_field)
+            )
+        )
+        if df.empty or df['total'].sum() == 0:
+            return None
+            
+        df['total'] = pd.to_numeric(df['total'], errors='coerce').fillna(0)
+        df = df[df['total'] > 0]
+        
+        if df.empty:
+            return None
+
+        # Generate a color palette based on the base color
+        colors = sns.light_palette(base_color, n_colors=len(df)+2)[1:-1]
+        
+        plt.figure(figsize=(7, 7))
+        ax = df.set_index(group_field)['total'].plot.pie(
+            autopct=lambda p: f'{p:.1f}%\n(₱{p*sum(df["total"])/100:.2f}',
+            startangle=90,
+            colors=colors,
+            wedgeprops={'edgecolor': COLOR_PALETTE['dark'], 'linewidth': 0.7},
+            textprops={'color': COLOR_PALETTE['dark'], 'fontsize': 9}
+        )
+        ax.set_title(title, color=COLOR_PALETTE['dark'], fontsize=13, pad=20)
+        ax.set_ylabel('')
+        
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png', facecolor='white', dpi=100, bbox_inches='tight')
+        plt.close()
+        return base64.b64encode(buffer.getvalue()).decode('utf-8')
+    except Exception as e:
+        print(f"Pie Chart Error ({title}): {str(e)}")
+        return None
+
+def generate_comparison_chart(rentals, reservations, period):
+    try:
+        # Rental data
+        rental_df = pd.DataFrame.from_records(
+            rentals.values('rental_start').annotate(
+                rental_revenue=Sum('inventory_size__inventory__rental_price')
+            )
+        )
+        if not rental_df.empty:
+            rental_df['date'] = pd.to_datetime(rental_df['rental_start'])
+            rental_df = rental_df.set_index('date')['rental_revenue']
+            
+            if period == 'weekly':
+                rental_df = rental_df.resample('W-MON').sum()
+            elif period == 'monthly':
+                rental_df = rental_df.resample('ME').sum()
+            else:
+                rental_df = rental_df.resample('YE').sum()
+        
+        # Reservation data
+        reservation_df = pd.DataFrame.from_records(
+            reservations.values('created_at').annotate(
+                reservation_revenue=Sum('reservation_fee')
+            )
+        )
+        if not reservation_df.empty:
+            reservation_df['date'] = pd.to_datetime(reservation_df['created_at'])
+            reservation_df = reservation_df.set_index('date')['reservation_revenue']
+            
+            if period == 'weekly':
+                reservation_df = reservation_df.resample('W-MON').sum()
+            elif period == 'monthly':
+                reservation_df = reservation_df.resample('ME').sum()
+            else:
+                reservation_df = reservation_df.resample('YE').sum()
+        
+        # Combine data
+        df = pd.concat([
+            rental_df.rename('Rentals'),
+            reservation_df.rename('Reservations')
+        ], axis=1).fillna(0)
+        
+        if df.empty:
+            return None
+            
+        title = 'Rental vs Reservation Revenue'
+        if period == 'weekly':
+            title = 'Weekly ' + title
+        elif period == 'monthly':
+            title = 'Monthly ' + title
+        else:
+            title = 'Yearly ' + title
+
+        plt.figure(figsize=(9, 5))
+        ax = df.plot.bar(
+            color=[COLOR_PALETTE['primary'], COLOR_PALETTE['secondary']],
+            edgecolor=COLOR_PALETTE['dark'],
+            width=0.8,
+            alpha=0.9
+        )
+        
+        # Style enhancements
+        ax.set_title(title, color=COLOR_PALETTE['dark'], fontsize=13, pad=15)
+        ax.set_xlabel('Date', color=COLOR_PALETTE['dark'], fontsize=11)
+        ax.set_ylabel('Amount (₱)', color=COLOR_PALETTE['dark'], fontsize=11)
+        ax.tick_params(colors=COLOR_PALETTE['dark'], labelsize=9)
+        ax.grid(True, linestyle='--', alpha=0.3, axis='y')
+        ax.set_facecolor(COLOR_PALETTE['light'])
+        plt.xticks(rotation=45, ha='right')
+        plt.legend(title='Transaction Type', fontsize=9)
+        plt.tight_layout()
+        
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png', facecolor='white', dpi=100, bbox_inches='tight')
+        plt.close()
+        return base64.b64encode(buffer.getvalue()).decode('utf-8')
+    except Exception as e:
+        print(f"Comparison Chart Error: {str(e)}")
+        return None

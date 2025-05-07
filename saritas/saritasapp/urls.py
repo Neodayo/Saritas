@@ -34,7 +34,7 @@ urlpatterns = [
     path('manage-staff/delete/<int:staff_id>/', views.delete_staff, name='delete_staff'),
 
     # Data analysis
-    path('data-analysis/', views.data_analysis, name='data_analysis'),
+    path('data-analysis/', views.financial_report, name='data_analysis'),
 
     # Calendar
     path("calendar/", views.calendar_view, name="calendar"),
