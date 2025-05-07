@@ -1,0 +1,24 @@
+{% extends 'customerapp/base.html' %}
+
+{% block content %}
+<div class="container">
+  <h2>Pay Reservation Fee</h2>
+  <div class="card">
+    <div class="card-body">
+      <p>Item: {{ reservation.inventory_size.inventory.name }} ({{ reservation.inventory_size.size.name }})</p>
+      <p class="fw-bold">Total Due: ₱{{ outstanding_amount|floatformat:2 }}</p>
+      
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label">Payment Amount (₱500 minimum)</label>
+          <input type="number" name="amount" 
+                 value="{{ outstanding_amount|floatformat:2 }}" 
+                 min="500" step="0.01" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary">Submit Payment</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

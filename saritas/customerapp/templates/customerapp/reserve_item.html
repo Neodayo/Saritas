@@ -6,119 +6,134 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/reservations.css' %}">
 <style>
-    .reservation-card { max-width: 1200px; margin: 0 auto; }
-    .item-image { max-height: 400px; object-fit: contain; }
-    .summary-card { background-color: #f8f9fa; }
-    .invalid-feedback { display: block; color: #dc3545; }
-    .fee-display { font-size: 1.2rem; font-weight: bold; }
+    .size-option {
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 10px;
+        transition: all 0.3s;
+    }
+    .size-option:hover {
+        background-color: #f8f9fa;
+        border-color: #0d6efd;
+    }
+    .size-option.selected {
+        background-color: #e7f1ff;
+        border-color: #0d6efd;
+    }
+    .payment-summary {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        padding: 20px;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container py-5">
-    <div class="reservation-card card shadow-lg">
+    <div class="card shadow-lg">
         <div class="card-header bg-primary text-white">
             <h2 class="mb-0">Reserve: {{ inventory.name }}</h2>
         </div>
 
         <div class="card-body">
             <div class="row">
-                <!-- Item Image Column -->
+                <!-- Item Details Column -->
                 <div class="col-md-5">
-                    <div class="item-image-container text-center mb-4">
+                    <div class="text-center mb-4">
                         {% if inventory.image %}
-                            <img src="{{ inventory.image.url }}" alt="{{ inventory.name }}" class="img-fluid rounded item-image">
+                            <img src="{{ inventory.image.url }}" alt="{{ inventory.name }}" 
+                                 class="img-fluid rounded" style="max-height: 300px;">
                         {% else %}
-                            <img src="{% static 'images/default-placeholder.png' %}" alt="No image available" class="img-fluid rounded item-image">
+                            <div class="bg-light rounded d-flex align-items-center justify-content-center" 
+                                 style="height: 300px;">
+                                <span class="text-muted">No image available</span>
+                            </div>
                         {% endif %}
                     </div>
 
-                    <div class="item-details">
-                        <h4 class="text-primary">{{ inventory.name }}</h4>
-                        <p class="text-muted">{{ inventory.category.name }}</p>
+                    <h4>{{ inventory.name }}</h4>
+                    <p class="text-muted">{{ inventory.category.name }}</p>
+                    
+                    <div class="mb-3">
+                        <span class="badge bg-{% if inventory.calculated_quantity > 0 %}success{% else %}danger{% endif %}">
+                            {% if inventory.calculated_quantity > 0 %}
+                                {{ inventory.calculated_quantity }} available
+                            {% else %}
+                                Out of stock
+                            {% endif %}
+                        </span>
+                    </div>
 
-                        {% if inventory.color %}
-                        <div class="item-meta mb-2">
-                            <span class="badge bg-info me-2">Color: {{ inventory.color.name }}</span>
-                        </div>
-                        {% endif %}
-
-                        <div class="availability mb-3">
-                            <span class="badge {% if inventory.calculated_quantity > 0 %}bg-success{% else %}bg-danger{% endif %}">
-                                {% if inventory.calculated_quantity > 0 %}
-                                    {{ inventory.calculated_quantity }} available
-                                {% else %}
-                                    Out of stock
-                                {% endif %}
-                            </span>
-                        </div>
-
-                        <div class="pricing">
-                            <h5 class="text-success">₱{{ inventory.rental_price }} <small class="text-muted">is rental price</small></h5>
-                            <p class="text-muted mb-1">Deposit: ₱{{ inventory.deposit_price|default:"0.00" }}</p>
-                        </div>
+                    <div class="mb-4">
+                        <h5 class="text-success">₱{{ inventory.rental_price }}</h5>
+                        <small class="text-muted">rental price</small>
+                        <p class="mt-2">Deposit: ₱{{ inventory.deposit_price|default:"0.00" }}</p>
                     </div>
                 </div>
 
                 <!-- Reservation Form Column -->
                 <div class="col-md-7">
                     {% if messages %}
-                    <div class="alert-container mb-4">
                         {% for message in messages %}
-                        <div class="alert alert-dismissible {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
                             {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                         {% endfor %}
-                    </div>
                     {% endif %}
 
-                    <form method="post" class="reservation-form needs-validation" novalidate>
+                    <form method="post" class="needs-validation" novalidate>
                         {% csrf_token %}
+                        
+                        <h5 class="mb-3">Select Size</h5>
+                        {% for size in form.inventory_size %}
+                            <div class="form-check size-option">
+                                {{ size.tag }}
+                                <label class="form-check-label" for="{{ size.id_for_label }}">
+                                    <strong>{{ size.choice_label }}</strong>
+                                </label>
+                            </div>
+                        {% endfor %}
+                        {% if form.inventory_size.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.inventory_size.errors }}
+                            </div>
+                        {% endif %}
 
-                        <!-- Size Selection -->
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">Select Size*</label>
-                            {% for radio in form.inventory_size %}
-                                <div class="form-check mb-2">
-                                    {{ radio.tag }}
-                                    <label class="form-check-label" for="{{ radio.id_for_label }}">
-                                        {{ radio.choice_label }}
-                                    </label>
+                        <div class="payment-summary mt-4">
+                            <h5 class="mb-3">Payment Details</h5>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.amount_paid.id_for_label }}" class="form-label">
+                                    {{ form.amount_paid.label }}
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₱</span>
+                                    {{ form.amount_paid }}
                                 </div>
-                            {% endfor %}
-                            {% if form.inventory_size.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.inventory_size.errors.as_text }}
-                                </div>
-                            {% endif %}
-                        </div>
+                                <div class="form-text">{{ form.amount_paid.help_text }}</div>
+                                {% if form.amount_paid.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.amount_paid.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
 
-                        <!-- Reservation Fee Information -->
-                        <div class="card mb-4 summary-card">
-                            <div class="card-body">
-                                <h5 class="card-title">Reservation Summary</h5>
-                                <hr>
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span>Reservation Fee:</span>
-                                    <span class="fee-display text-primary">₱500.00</span>
-                                </div>
-                                <small class="text-muted">
-                                    This fee will be applied to your rental when you pick up the item.
-                                </small>
-                                <div class="alert alert-info mt-3">
-                                    <i class="bi bi-info-circle"></i> You have 24 hours to pick up the item after reservation.
-                                </div>
+                            <div class="alert alert-info mt-3">
+                                <i class="bi bi-info-circle"></i> 
+                                You have 24 hours to pick up the item after reservation.
+                                The reservation fee will be applied to your total rental cost.
                             </div>
                         </div>
 
-                        <!-- Submit Buttons -->
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="{% url 'customerapp:item_detail' inventory.encrypted_id %}" class="btn btn-outline-secondary me-md-2">
-                                <i class="bi bi-arrow-left"></i> Back to Item
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{% url 'customerapp:item_detail' inventory.encrypted_id %}" 
+                               class="btn btn-outline-secondary me-md-2">
+                                <i class="bi bi-arrow-left"></i> Back
                             </a>
                             <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-calendar-check"></i> Reserve Now (₱500)
+                                <i class="bi bi-credit-card"></i>Request Reserve
                             </button>
                         </div>
                     </form>
@@ -132,6 +147,7 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
     const form = document.querySelector('.needs-validation');
     form.addEventListener('submit', function(event) {
         if (!form.checkValidity()) {
@@ -140,6 +156,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         form.classList.add('was-validated');
     }, false);
+
+    // Size selection styling
+    const sizeOptions = document.querySelectorAll('.size-option');
+    sizeOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            const radio = this.querySelector('input[type="radio"]');
+            radio.checked = true;
+            
+            sizeOptions.forEach(opt => opt.classList.remove('selected'));
+            this.classList.add('selected');
+        });
+    });
 });
 </script>
 {% endblock %}

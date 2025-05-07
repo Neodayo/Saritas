@@ -28,8 +28,9 @@ urlpatterns = [
     path('my-rentals/', views.my_rentals, name='my_rentals'),
     path('my-rentals/<str:encrypted_id>/', views.view_rental_detail, name='view_rental_detail'),
     path('my-rentals/<str:encrypted_id>/edit/', views.edit_rental, name='edit_rental'),
-     path('my-rentals/<str:encrypted_id>/cancel/', views.cancel_rental_request, name='cancel_rental_request'),
+    path('my-rentals/<str:encrypted_id>/cancel/', views.cancel_rental_request, name='cancel_rental_request'),
     path('reserve/<str:encrypted_id>/', views.reserve_item, name='reserve_item'),
+    path('wardrobe/<str:encrypted_id>/reserve/', views.reserve_item, name='reserve_item'),
     
     path('logout/', views.logout_view, name='logout'),
     path('story/', views.about_us, name='about_us'),
@@ -51,7 +52,4 @@ urlpatterns = [
     path('manage-event-slides/', views.manage_event_slides, name='manage_event_slides'),
      path('delete-event-slide/<int:slide_id>/', views.delete_event_slide, name='delete_event_slide'),
     path('update-featured-collections/', views.update_featured_collections, name='update_featured_collections'),
-    path('reservation/confirmation/<str:encrypted_id>/', 
-         views.reservation_confirmation, 
-         name='reservation_confirmation'),
 ]

@@ -621,30 +621,37 @@ def update_reservation(request, encrypted_id, action):
 
     if request.method == 'POST':
         if action == 'approve':
-            # In new model, approving means marking as paid
-            reservation.status = 'paid'
-            reservation.staff = request.user  # Previously approved_by
-            messages.success(request, f"Reservation #{reservation.id} approved")
-            
+            try:
+                reservation.approve(request.user)
+                messages.success(request, f"Reservation #{reservation.id} approved")
+            except ValidationError as e:
+                messages.error(request, str(e))
+            except Exception as e:
+                logger.error(f"Error approving reservation: {str(e)}")
+                messages.error(request, "Error approving reservation")
+                
         elif action == 'reject':
-            reservation.status = 'cancelled'
-            reservation.staff = request.user
-            # Optionally refund the reservation fee
-            reservation.cancel_reservation(refund_amount=reservation.amount_paid)
-            messages.success(request, f"Reservation #{reservation.id} cancelled")
-            
+            try:
+                reservation.status = 'cancelled'
+                reservation.staff = request.user
+                reservation.save()
+                messages.success(request, f"Reservation #{reservation.id} rejected")
+            except Exception as e:
+                messages.error(request, "Error rejecting reservation")
+        
+        # Add this new handler for complete action
         elif action == 'complete':
-            # In new model, completing means converting to rental
             try:
                 rental = reservation.convert_to_rental(request.user)
-                messages.success(request, 
-                    f"Reservation converted to rental #{rental.id}")
-            except Exception as e:
+                messages.success(request, f"Reservation #{reservation.id} converted to rental #{rental.id}")
+            except ValidationError as e:
                 messages.error(request, str(e))
-                return redirect('saritasapp:view_reservations')
-        
-        reservation.save()
-
+            except Exception as e:
+                logger.error(f"Error completing reservation: {str(e)}")
+                messages.error(request, "Error completing reservation")
+                
+        return redirect('saritasapp:view_reservations')
+    
     return redirect('saritasapp:view_reservations')
 
 

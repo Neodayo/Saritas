@@ -283,50 +283,84 @@ def my_rentals(request):
 
 @login_required
 def reserve_item(request, encrypted_id):
-    inventory = get_decrypted_object_or_404(Inventory, encrypted_id)
-    customer = request.user.customer_profile
-
-    if request.method == "POST":
-        form = ReservationForm(
-            request.POST, 
-            inventory=inventory, 
-            customer=customer
-        )
-        if form.is_valid():
-            try:
-                reservation = form.save()
-                messages.success(
-                    request, 
-                    "Your reservation has been created successfully!"
-                )
-                return redirect(
-                    'customerapp:reservation_confirmation', 
-                    encrypted_id=reservation.encrypted_id
-                )
-            except ValidationError as e:
-                messages.error(request, e.message)
-    else:
-        form = ReservationForm(inventory=inventory, customer=customer)
-
-    return render(request, 'customerapp/reserve_item.html', {
-        'form': form,
-        'inventory': inventory
-    })
+    try:
+        inventory = get_decrypted_object_or_404(Inventory, encrypted_id)
+        customer = request.user.customer_profile
+        
+        if request.method == 'POST':
+            form = ReservationForm(request.POST, inventory=inventory, customer=customer)
+            if form.is_valid():
+                try:
+                    reservation = form.save()
+                    messages.success(request, f"Reservation successful! Your reservation ID is #{reservation.id}")
+                    return redirect('customerapp:reservation_detail', encrypted_id=reservation.encrypted_id)
+                except Exception as e:
+                    # Clear any existing messages before showing error
+                    storage = messages.get_messages(request)
+                    storage.used = True
+        else:
+            form = ReservationForm(inventory=inventory, customer=customer)
+            
+        return render(request, 'customerapp/reserve_item.html', {
+            'form': form,
+            'inventory': inventory
+        })
+        
+    except Exception as e:
+        messages.error(request, "Item not found")
+        return redirect('customerapp:inventory_list')
 
 @login_required
-def reservation_confirmation(request, encrypted_id):
+def reservation_detail(request, encrypted_id):
     try:
-        reservation = get_decrypted_object_or_404(Reservation, encrypted_id)
-        if reservation.customer != request.user.customer_profile:
-            raise Http404("Reservation not found")
-            
-        return render(request, 'customerapp/reservation_confirmation.html', {
+        reservation = get_decrypted_object_or_404(
+            Reservation,
+            encrypted_id,
+            customer=request.user.customer_profile
+        )
+        
+        context = {
             'reservation': reservation,
-            'inventory': reservation.inventory_size.inventory
-        })
-    except Exception as e:
-        messages.error(request, "Error accessing reservation details")
+            'inventory': reservation.inventory_size.inventory,
+            'time_remaining': reservation.time_remaining,
+            'can_cancel': reservation.status in ['pending', 'paid'],
+            'page_title': f"Reservation #{reservation.id}"
+        }
+        return render(request, 'customerapp/reservation_detail.html', context)
+        
+    except Reservation.DoesNotExist:
+        messages.error(request, "Reservation not found")
         return redirect('customerapp:dashboard')
+
+@login_required
+def cancel_reservation(request, encrypted_id):
+    try:
+        reservation = get_decrypted_object_or_404(
+            Reservation,
+            encrypted_id,
+            customer=request.user.customer_profile
+        )
+        
+        if request.method == 'POST':
+            try:
+                with transaction.atomic():
+                    reservation.cancel_reservation(refund_amount=reservation.amount_paid)
+                    messages.success(request, "Reservation cancelled successfully")
+                    return redirect('customerapp:dashboard')
+            except Exception as e:
+                messages.error(request, f"Error cancelling reservation: {str(e)}")
+                logger.error(f"Cancel failed: {str(e)}")
+        
+        context = {
+            'reservation': reservation,
+            'page_title': f"Cancel Reservation #{reservation.id}"
+        }
+        return render(request, 'customerapp/cancel_reservation.html', context)
+        
+    except Reservation.DoesNotExist:
+        messages.error(request, "Reservation not found")
+        return redirect('customerapp:dashboard')
+
 
 def wardrobe_view(request):
     inventory_items = Inventory.objects.filter(available=True)

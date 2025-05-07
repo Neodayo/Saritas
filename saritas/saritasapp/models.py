@@ -727,6 +727,30 @@ class Reservation(models.Model):
                 
         except InventorySize.DoesNotExist:
             raise ValidationError("This item size is no longer available")
+        
+    def approve(self, staff_user):
+        """Staff approves the reservation"""
+        if self.status != 'pending':
+            raise ValidationError("Only pending reservations can be approved")
+            
+        with transaction.atomic():
+            # Lock inventory row
+            inventory_size = InventorySize.objects.select_for_update().get(
+                pk=self.inventory_size.pk
+            )
+            
+            # Verify inventory is still available
+            if inventory_size.quantity <= 0:
+                raise ValidationError("This size is no longer available")
+            
+            # Update reservation status
+            self.status = 'paid'  # Or 'approved' depending on your workflow
+            self.staff = staff_user
+            self.save()
+            
+            # Reduce inventory
+            inventory_size.quantity -= 1
+            inventory_size.save()
 
     def convert_to_rental(self, staff_user):
         """Convert reservation to a rental upon pickup"""

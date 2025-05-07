@@ -10,7 +10,6 @@ from datetime import datetime, timedelta
 from django.utils.timezone import now, timedelta
 from .models import HeroSection
 from .models import EventSlide
-from django.utils.translation import gettext_lazy as _
 
 logger = logging.getLogger(__name__)
 
@@ -184,13 +183,21 @@ class RentalForm(forms.ModelForm):
             }
         return None
     
-class ReservationForm(forms.ModelForm):
-    class Meta:
-        model = Reservation
-        fields = ['inventory_size']
-        widgets = {
-            'inventory_size': forms.RadioSelect(attrs={'class': 'form-check-input'}),
-        }
+class ReservationForm(forms.Form):
+    inventory_size = forms.ModelChoiceField(
+        queryset=InventorySize.objects.none(),
+        label="Select Size",
+        empty_label="Choose a size",
+        widget=forms.RadioSelect
+    )
+    amount_paid = forms.DecimalField(
+        label="Reservation Amount (Minimum ₱500)",
+        min_value=Decimal('500.00'),
+        max_digits=10,
+        decimal_places=2,
+        initial=Decimal('500.00'),
+        help_text="Minimum reservation fee is ₱500."
+    )
 
     def __init__(self, *args, **kwargs):
         self.customer = kwargs.pop('customer', None)
@@ -198,59 +205,41 @@ class ReservationForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if self.inventory:
-            # Filter sizes with available quantity
+            # Only show sizes with quantity > 0
             self.fields['inventory_size'].queryset = InventorySize.objects.filter(
                 inventory=self.inventory,
                 quantity__gt=0
             ).select_related('size')
 
-            # Human-readable labels for radio buttons
-            self.fields['inventory_size'].label_from_instance = lambda obj: (
-                f"{obj.size.name} ({obj.quantity} available)"
-            )
-
     def clean(self):
         cleaned_data = super().clean()
         inventory_size = cleaned_data.get("inventory_size")
+        amount_paid = cleaned_data.get("amount_paid")
 
         if not inventory_size:
-            raise ValidationError(_("Please select a valid size."))
+            raise ValidationError("Please select a valid size.")
+
+        if amount_paid < Decimal('500.00'):
+            raise ValidationError("Reservation amount must be at least ₱500.")
 
         return cleaned_data
 
-    def save(self, commit=True):
-        """
-        Creates a reservation using validated data.
-        Uses atomic transaction to lock inventory and prevent race conditions.
-        """
-        if not self.customer:
-            raise ValueError(_("Customer must be provided to create a reservation."))
-
-        inventory_size = self.cleaned_data["inventory_size"]
-
+    # In your ReservationForm
+    def save(self):
         try:
-            with transaction.atomic():
-                # Lock inventory row for update
-                locked_inventory = InventorySize.objects.select_for_update().get(
-                    pk=inventory_size.pk,
-                    quantity__gt=0
-                )
-
-                # Create reservation with fixed ₱500 fee
-                reservation = Reservation.objects.create(
-                    customer=self.customer,
-                    inventory_size=locked_inventory,
-                    amount_paid=Decimal('500.00'),
-                    status='paid'
-                )
-
-                # Decrease available quantity
-                locked_inventory.quantity -= 1
-                locked_inventory.save()
-
-                return reservation
-        except InventorySize.DoesNotExist:
-            raise ValidationError(_("This item size is no longer available."))
+            # Get the selected size
+            size = self.cleaned_data['inventory_size']
+            
+            # Create and return the reservation
+            return Reservation.objects.create(
+                customer=self.customer,
+                inventory_size=size,
+                amount_paid=Decimal('0.00'),
+                status='pending'
+            )
+        except Exception as e:
+            logger.error(f"Simple reservation error: {str(e)}")
+            raise ValidationError("Couldn't create reservation. Please try again.")
     
 class WardrobePackageRentalForm(forms.ModelForm):
     class Meta:

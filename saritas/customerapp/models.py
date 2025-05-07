@@ -68,7 +68,7 @@ class FeaturedCollectionsSection(models.Model):
     def __str__(self):
         return self.title
     
-    def restore_defaults(self):
+    def restore_defaults(s2elf):
         default_cats = Category.objects.filter(name__in=self.DEFAULT_CATEGORIES)
         self.categories.set(default_cats)
         self.save()

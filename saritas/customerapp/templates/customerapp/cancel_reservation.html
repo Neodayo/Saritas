@@ -1,0 +1,47 @@
+{% extends 'customerapp/base.html' %}
+{% load static %}
+
+{% block title %}Cancel Reservation | Sarita's{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h3><i class="fas fa-exclamation-triangle"></i> Cancel Reservation</h3>
+        </div>
+        <div class="card-body">
+            <h5>Reservation #{{ reservation.id }}</h5>
+            <p>
+                <strong>Item:</strong> {{ reservation.inventory_size.inventory.name }}<br>
+                <strong>Size:</strong> {{ reservation.inventory_size.size.name }}<br>
+                <strong>Status:</strong> <span class="badge bg-{{ reservation.get_status_display_with_color.color }}">
+                    {{ reservation.get_status_display_with_color.text }}
+                </span>
+            </p>
+            
+            <div class="alert alert-warning">
+                <h5><i class="fas fa-exclamation-circle"></i> Are you sure you want to cancel this reservation?</h5>
+                {% if reservation.status == 'approved' %}
+                <p class="mb-0">
+                    <i class="fas fa-info-circle"></i> This reservation has already been approved. 
+                    Cancelling will make this size available for other customers.
+                </p>
+                {% endif %}
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{% url 'customerapp:reservation_confirmation' encrypted_id=reservation.encrypted_id %}" 
+                       class="btn btn-secondary me-md-2">
+                        <i class="fas fa-arrow-left"></i> Go Back
+                    </a>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times-circle"></i> Confirm Cancellation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
