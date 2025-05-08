@@ -580,22 +580,40 @@ def approve_or_reject_rental(request, encrypted_id, action):
 def view_reservations(request):
     status = request.GET.get('status', 'all')
     
+    # Updated query to match new model structure
     reservations = Reservation.objects.select_related(
-        'item',
-        'customer__user',
-        'approved_by'
-    ).order_by('-created_at')
+        'inventory_size__inventory',  # Access item through inventory_size
+        'customer__user',             # Access user through customer
+        'staff'                       # Previously approved_by
+    ).order_by('-reservation_date')   # Changed from created_at to reservation_date
     
     if status != 'all':
         reservations = reservations.filter(status=status)
     
+    # Map old status names to new ones if needed
+    status_mapping = {
+        'pending': 'pending',
+        'approved': 'paid',
+        'rejected': 'cancelled',
+        'completed': 'fulfilled'
+    }
+    
+    # If using different status names in the new model
+    if status in status_mapping:
+        reservations = reservations.filter(status=status_mapping[status])
+    
     context = {
         'reservations': reservations,
         'status': status,
-        'status_choices': Reservation.STATUS_CHOICES,
+        'status_choices': [
+            ('pending', 'Pending'),
+            ('paid', 'Approved'),      # Mapping paid to approved for UI
+            ('fulfilled', 'Completed'),
+            ('cancelled', 'Rejected'),
+            ('expired', 'Expired')
+        ],
     }
     return render(request, 'saritasapp/view_reservation.html', context)
-
 
 @staff_member_required
 def update_reservation(request, encrypted_id, action):
@@ -603,31 +621,28 @@ def update_reservation(request, encrypted_id, action):
 
     if request.method == 'POST':
         if action == 'approve':
-            reservation.status = 'approved'
-            reservation.approved_by = request.user
-            Notification.objects.create(
-                user=reservation.customer.user,
-                notification_type='reservation_approved',
-                reservation=reservation,
-                message=f"Your reservation for '{reservation.item.name}' has been approved."
-            )
+            # In new model, approving means marking as paid
+            reservation.status = 'paid'
+            reservation.staff = request.user  # Previously approved_by
+            messages.success(request, f"Reservation #{reservation.id} approved")
+            
         elif action == 'reject':
-            reservation.status = 'rejected'
-            reservation.approved_by = request.user
-            Notification.objects.create(
-                user=reservation.customer.user,
-                notification_type='reservation_rejected',
-                reservation=reservation,
-                message=f"Your reservation for '{reservation.item.name}' has been rejected."
-            )
+            reservation.status = 'cancelled'
+            reservation.staff = request.user
+            # Optionally refund the reservation fee
+            reservation.cancel_reservation(refund_amount=reservation.amount_paid)
+            messages.success(request, f"Reservation #{reservation.id} cancelled")
+            
         elif action == 'complete':
-            reservation.status = 'completed'
-            Notification.objects.create(
-                user=reservation.customer.user,
-                notification_type='reservation_completed',
-                reservation=reservation,
-                message=f"Your reservation for '{reservation.item.name}' has been marked as completed."
-            )
+            # In new model, completing means converting to rental
+            try:
+                rental = reservation.convert_to_rental(request.user)
+                messages.success(request, 
+                    f"Reservation converted to rental #{rental.id}")
+            except Exception as e:
+                messages.error(request, str(e))
+                return redirect('saritasapp:view_reservations')
+        
         reservation.save()
 
     return redirect('saritasapp:view_reservations')

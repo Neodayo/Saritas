@@ -3,7 +3,7 @@
 
 {% block title %}Reservation Management | Sarita's{% endblock %}
 
-{% block content %}
+{% block extra_css %}
 <style>
     /* Main Container */
     .reservation-container {
@@ -361,7 +361,9 @@
         }
     }
 </style>
+{% endblock %}
 
+{% block content %}
 <div class="reservation-container">
     <div class="page-header">
         <i class="header-icon fas fa-calendar-check w-6 text-center mr-2"></i>
@@ -408,36 +410,46 @@
                             <div class="customer-email">{{ reservation.customer.user.email }}</div>
                         </div>
                     </td>
+                    <!-- Change item references from reservation.item to reservation.inventory_size.inventory -->
                     <td>
                         <div class="item-container">
-                            {% if reservation.item.image %}
-                            <img src="{{ reservation.item.image.url }}" alt="{{ reservation.item.name }}" class="item-thumb">
+                            {% if reservation.inventory_size.inventory.image %}
+                            <img src="{{ reservation.inventory_size.inventory.image.url }}" 
+                                alt="{{ reservation.inventory_size.inventory.name }}" class="item-thumb">
                             {% endif %}
                             <div class="item-details">
-                                <div class="item-name">{{ reservation.item.name }}</div>
-                                <div class="item-category">{{ reservation.item.category.name }}</div>
+                                <div class="item-name">{{ reservation.inventory_size.inventory.name }}</div>
+                                <div class="item-category">{{ reservation.inventory_size.inventory.category.name }}</div>
                             </div>
                         </div>
                     </td>
+                    <!-- Update date references -->
                     <td>
                         <div class="date-range">
                             {{ reservation.reservation_date|date:"M d" }} - 
-                            {{ reservation.return_date|date:"M d" }}
+                            {{ reservation.pickup_deadline|date:"M d" }}
                         </div>
-                        <div class="duration">{{ reservation.duration_days }} days</div>
+                        <div class="duration">
+                            {% with duration=reservation.pickup_deadline|timeuntil:reservation.reservation_date %}
+                                {{ duration }}
+                            {% endwith %}
+                        </div>
                     </td>
-                    <td class="quantity">{{ reservation.quantity }}</td>
-                    <td class="total">₱{{ reservation.total_cost|floatformat:2 }}</td>
+                    <!-- Update quantity and total -->
+                    <td class="quantity">1</td>  <!-- New model has quantity at 1 per reservation -->
+                    <td class="total">₱{{ reservation.amount_paid }}</td>
+                    <!-- Update status display -->
                     <td>
                         <div class="status-container">
                             <span class="status-badge status-{{ reservation.status }}">
                                 {{ reservation.get_status_display }}
                             </span>
-                            {% if reservation.approved_by %}
-                            <div class="approver">By: {{ reservation.approved_by.get_full_name }}</div>
+                            {% if reservation.staff %}  <!-- Changed from approved_by to staff -->
+                            <div class="approver">By: {{ reservation.staff.get_full_name }}</div>
                             {% endif %}
                         </div>
                     </td>
+                    <!-- Update action buttons logic -->
                     <td>
                         <div class="action-buttons">
                             {% if reservation.status == 'pending' %}
@@ -453,7 +465,7 @@
                                     <i class="fas fa-times"></i> Reject
                                 </button>
                             </form>
-                            {% elif reservation.status == 'approved' %}
+                            {% elif reservation.status == 'paid' %}  <!-- Changed from approved to paid -->
                             <form method="post" action="{% url 'saritasapp:update_reservation' reservation.encrypted_id 'complete' %}">
                                 {% csrf_token %}
                                 <button type="submit" class="action-btn btn-complete">

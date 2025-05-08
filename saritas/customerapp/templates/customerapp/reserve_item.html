@@ -1,7 +1,7 @@
 {% extends 'customerapp/base.html' %}
 {% load static %}
 
-{% block title %}Reserve {{ item.name }} | Saritas{% endblock %}
+{% block title %}Reserve {{ inventory.name }} | Saritas{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/reservations.css' %}">
@@ -10,6 +10,7 @@
     .item-image { max-height: 400px; object-fit: contain; }
     .summary-card { background-color: #f8f9fa; }
     .invalid-feedback { display: block; color: #dc3545; }
+    .fee-display { font-size: 1.2rem; font-weight: bold; }
 </style>
 {% endblock %}
 
@@ -17,7 +18,7 @@
 <div class="container py-5">
     <div class="reservation-card card shadow-lg">
         <div class="card-header bg-primary text-white">
-            <h2 class="mb-0">Reserve: {{ item.name }}</h2>
+            <h2 class="mb-0">Reserve: {{ inventory.name }}</h2>
         </div>
 
         <div class="card-body">
@@ -25,30 +26,27 @@
                 <!-- Item Image Column -->
                 <div class="col-md-5">
                     <div class="item-image-container text-center mb-4">
-                        {% if item.image %}
-                            <img src="{{ item.image.url }}" alt="{{ item.name }}" class="img-fluid rounded item-image">
+                        {% if inventory.image %}
+                            <img src="{{ inventory.image.url }}" alt="{{ inventory.name }}" class="img-fluid rounded item-image">
                         {% else %}
                             <img src="{% static 'images/default-placeholder.png' %}" alt="No image available" class="img-fluid rounded item-image">
                         {% endif %}
                     </div>
 
                     <div class="item-details">
-                        <h4 class="text-primary">{{ item.name }}</h4>
-                        <p class="text-muted">{{ item.category.name }}</p>
-                        
-                        <div class="item-meta mb-3">
-                            {% if item.color %}
-                                <span class="badge bg-info me-2">Color: {{ item.color.name }}</span>
-                            {% endif %}
-                            {% if item.size %}
-                                <span class="badge bg-info">Size: {{ item.size.name }}</span>
-                            {% endif %}
+                        <h4 class="text-primary">{{ inventory.name }}</h4>
+                        <p class="text-muted">{{ inventory.category.name }}</p>
+
+                        {% if inventory.color %}
+                        <div class="item-meta mb-2">
+                            <span class="badge bg-info me-2">Color: {{ inventory.color.name }}</span>
                         </div>
+                        {% endif %}
 
                         <div class="availability mb-3">
-                            <span class="badge {% if item.quantity > 0 %}bg-success{% else %}bg-danger{% endif %}">
-                                {% if item.quantity > 0 %}
-                                    {{ item.quantity }} available
+                            <span class="badge {% if inventory.calculated_quantity > 0 %}bg-success{% else %}bg-danger{% endif %}">
+                                {% if inventory.calculated_quantity > 0 %}
+                                    {{ inventory.calculated_quantity }} available
                                 {% else %}
                                     Out of stock
                                 {% endif %}
@@ -56,8 +54,8 @@
                         </div>
 
                         <div class="pricing">
-                            <h5 class="text-success">₱{{ item.reservation_price }} <small class="text-muted">per item</small></h5>
-                            <p class="text-muted mb-1">Deposit: ₱{{ item.deposit_price|default:"0.00" }}</p>
+                            <h5 class="text-success">₱{{ inventory.rental_price }} <small class="text-muted">is rental price</small></h5>
+                            <p class="text-muted mb-1">Deposit: ₱{{ inventory.deposit_price|default:"0.00" }}</p>
                         </div>
                     </div>
                 </div>
@@ -77,71 +75,50 @@
 
                     <form method="post" class="reservation-form needs-validation" novalidate>
                         {% csrf_token %}
-                        <input type="hidden" name="item_id" value="{{ item.id }}">
 
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="id_reservation_date" class="form-label">Start Date*</label>
-                                {{ form.reservation_date }}
-                                {% if form.reservation_date.errors %}
-                                    <div class="invalid-feedback">
-                                        {{ form.reservation_date.errors.as_text }}
-                                    </div>
-                                {% endif %}
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="id_return_date" class="form-label">End Date*</label>
-                                {{ form.return_date }}
-                                {% if form.return_date.errors %}
-                                    <div class="invalid-feedback">
-                                        {{ form.return_date.errors.as_text }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="id_quantity" class="form-label">Quantity* (Available: {{ item.quantity }})</label>
-                            {{ form.quantity }}
-                            {% if form.quantity.errors %}
-                                <div class="invalid-feedback">
-                                    {{ form.quantity.errors.as_text }}
+                        <!-- Size Selection -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Select Size*</label>
+                            {% for radio in form.inventory_size %}
+                                <div class="form-check mb-2">
+                                    {{ radio.tag }}
+                                    <label class="form-check-label" for="{{ radio.id_for_label }}">
+                                        {{ radio.choice_label }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                            {% if form.inventory_size.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.inventory_size.errors.as_text }}
                                 </div>
                             {% endif %}
                         </div>
 
-                        <div class="mb-3">
-                            <label for="id_notes" class="form-label">Special Requests</label>
-                            {{ form.notes }}
-                            <div class="form-text">Any special instructions or requests</div>
-                        </div>
-
-                        <div class="summary-card card mb-4">
+                        <!-- Reservation Fee Information -->
+                        <div class="card mb-4 summary-card">
                             <div class="card-body">
                                 <h5 class="card-title">Reservation Summary</h5>
-                                <div class="d-flex justify-content-between">
-                                    <span>Flat Rate:</span>
-                                    <span>₱<span id="flat-rate">{{ item.reservation_price }}</span></span>
-                                </div>
                                 <hr>
-                                <div class="d-flex justify-content-between fw-bold">
-                                    <span>Estimated Total:</span>
-                                    <span>₱<span id="estimated-total">0.00</span></span>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Reservation Fee:</span>
+                                    <span class="fee-display text-primary">₱500.00</span>
                                 </div>
-                                <div class="d-flex justify-content-between text-muted small">
-                                    <span>Plus deposit:</span>
-                                    <span>₱<span id="deposit-amount">{{ item.deposit_price|default:"0.00" }}</span></span>
+                                <small class="text-muted">
+                                    This fee will be applied to your rental when you pick up the item.
+                                </small>
+                                <div class="alert alert-info mt-3">
+                                    <i class="bi bi-info-circle"></i> You have 24 hours to pick up the item after reservation.
                                 </div>
                             </div>
                         </div>
 
+                        <!-- Submit Buttons -->
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="{% url 'customerapp:item_detail' item.id %}" class="btn btn-outline-secondary me-md-2">
+                            <a href="{% url 'customerapp:item_detail' inventory.encrypted_id %}" class="btn btn-outline-secondary me-md-2">
                                 <i class="bi bi-arrow-left"></i> Back to Item
                             </a>
                             <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-calendar-check"></i> Confirm Reservation
+                                <i class="bi bi-calendar-check"></i> Reserve Now (₱500)
                             </button>
                         </div>
                     </form>
@@ -155,19 +132,6 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const quantityInput = document.getElementById('id_quantity');
-    const flatRate = parseFloat(document.getElementById('flat-rate').textContent);
-    const estimatedTotal = document.getElementById('estimated-total');
-
-    function updateTotal() {
-        const quantity = parseInt(quantityInput.value) || 0;
-        const total = flatRate * quantity;
-        estimatedTotal.textContent = total.toFixed(2);
-    }
-
-    quantityInput.addEventListener('input', updateTotal);
-    updateTotal();
-
     const form = document.querySelector('.needs-validation');
     form.addEventListener('submit', function(event) {
         if (!form.checkValidity()) {

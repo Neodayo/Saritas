@@ -1,0 +1,79 @@
+{% extends 'customerapp/base.html' %}
+{% load static %}
+
+{% block title %}Reservation Confirmation | Saritas{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-success text-white">
+            <h2 class="mb-0">Reservation Confirmed!</h2>
+        </div>
+        
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="alert alert-success">
+                        <h4 class="alert-heading">Thank you for your reservation!</h4>
+                        <p>Your reservation #{{ reservation.id }} has been confirmed.</p>
+                        <hr>
+                        <p class="mb-0">
+                            <strong>Pickup Deadline:</strong> 
+                            {{ reservation.pickup_deadline|date:"F j, Y H:i" }}
+                        </p>
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Reservation Details</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">
+                                    <strong>Item:</strong> {{ inventory.name }}
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Size:</strong> {{ reservation.inventory_size.size.name }}
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Reservation Fee:</strong> ₱{{ reservation.amount_paid }}
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Status:</strong> 
+                                    <span class="badge bg-success">{{ reservation.get_status_display }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    {% if inventory.image %}
+                    <img src="{{ inventory.image.url }}" alt="{{ inventory.name }}" 
+                         class="img-fluid rounded mb-4">
+                    {% endif %}
+                    
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">Next Steps</h5>
+                        </div>
+                        <div class="card-body">
+                            <ol>
+                                <li>Visit our store within 24 hours</li>
+                                <li>Bring your ID and this reservation number</li>
+                                <li>Pay the remaining balance (if any)</li>
+                                <li>Complete the rental agreement</li>
+                            </ol>
+                            
+                            <a href="{% url 'customerapp:dashboard' %}" 
+                               class="btn btn-primary mt-3">
+                                <i class="bi bi-house-door"></i> Back to Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

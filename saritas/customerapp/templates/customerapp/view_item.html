@@ -66,10 +66,10 @@
                     </a>
                     
                     <!-- Updated Reserve link with encrypted_id -->
-                    <!-- <a href="{% url 'customerapp:reservation' encrypted_id=item.encrypted_id %}" 
-                       class="px-6 py-3 border border-[#8E793E] text-[#8E793E] hover:bg-[#F8F4EA] font-medium rounded-lg transition duration-300">
-                        Reserve
-                    </a> -->
+                    <a href="{% url 'customerapp:reserve_item' encrypted_id=item.encrypted_id %}"
+                    class="px-6 py-3 border border-[#8E793E] text-[#8E793E] hover:bg-[#F8F4EA] font-medium rounded-lg transition duration-300">
+                     Reserve
+                 </a> 
                 </div>
                 {% endif %}
             </div>

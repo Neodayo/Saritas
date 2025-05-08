@@ -29,8 +29,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 # Local Apps
 from .forms import (
-    CustomerRegistrationForm, RentalForm, ReservationForm,
-    CustomerUpdateForm, UserUpdateForm, WardrobePackageRentalForm
+    CustomerRegistrationForm, RentalForm,
+    CustomerUpdateForm, ReservationForm, UserUpdateForm, WardrobePackageRentalForm
 )
 from saritasapp.forms import CustomizePackageForm, PackageCustomizationForm
 from .tasks import send_reservation_notification, notify_staff_about_rental_request
@@ -292,68 +292,52 @@ def rental_detail(request, encrypted_id):
     })
 
 
-
-logger = logging.getLogger(__name__)
-
 @login_required
-@transaction.atomic
 def reserve_item(request, encrypted_id):
-    item = get_decrypted_object_or_404(Inventory, encrypted_id)
+    inventory = get_decrypted_object_or_404(Inventory, encrypted_id)
+    customer = request.user.customer_profile
 
-    if not item.available or item.quantity <= 0:
-        messages.error(request, "This item is currently not available for reservation.")
-        return redirect('customerapp:item_detail', item_id=item.id)
-
-    if request.method == 'POST':
-        form = ReservationForm(request.POST, item=item, user=request.user)
+    if request.method == "POST":
+        form = ReservationForm(
+            request.POST, 
+            inventory=inventory, 
+            customer=customer
+        )
         if form.is_valid():
             try:
-                reservation = form.save(commit=False)
-                reservation.item = item
-                reservation.customer = request.user.customer_profile
-                reservation.created_by = request.user
-                reservation.status = 'pending'
-
-                # Check if requested quantity is available
-                if reservation.quantity > item.quantity:
-                    messages.error(request, f"Only {item.quantity} unit(s) of {item.name} are available for reservation.")
-                    return redirect('customerapp:item_detail', item_id=item.id)
-
-                # Save the reservation
-                reservation.save()
-
-                # Send notification to staff
-                send_reservation_notification.delay(reservation.id)
-
-                messages.success(request, f"Your reservation for {item.name} was submitted successfully!")
-                return redirect('customerapp:my_reservations')
-
-            except IntegrityError:
-                messages.error(request, "A database error occurred. Please try again.")
-            except Exception as e:
-                logger.exception("Unexpected error during reservation")
-                messages.error(request, "An unexpected error occurred. Please contact support.")
-        else:
-            for field, errors in form.errors.items():
-                label = form.fields[field].label if field in form.fields else field
-                for error in errors:
-                    messages.error(request, f"{label}: {error}")
+                reservation = form.save()
+                messages.success(
+                    request, 
+                    "Your reservation has been created successfully!"
+                )
+                return redirect(
+                    'customerapp:reservation_confirmation', 
+                    encrypted_id=reservation.encrypted_id
+                )
+            except ValidationError as e:
+                messages.error(request, e.message)
     else:
-        initial_data = {
-            'reservation_date': timezone.now().date(),
-            'return_date': timezone.now().date() + timedelta(days=1),
-            'quantity': 1,
-            'reservation_price': item.reservation_price,
-        }
-        form = ReservationForm(initial=initial_data, item=item, user=request.user)
+        form = ReservationForm(inventory=inventory, customer=customer)
 
-    context = {
+    return render(request, 'customerapp/reserve_item.html', {
         'form': form,
-        'item': item,
-        'available_quantity': item.quantity
-    }
-    return render(request, 'customerapp/reserve_item.html', context)
+        'inventory': inventory
+    })
 
+@login_required
+def reservation_confirmation(request, encrypted_id):
+    try:
+        reservation = get_decrypted_object_or_404(Reservation, encrypted_id)
+        if reservation.customer != request.user.customer_profile:
+            raise Http404("Reservation not found")
+            
+        return render(request, 'customerapp/reservation_confirmation.html', {
+            'reservation': reservation,
+            'inventory': reservation.inventory_size.inventory
+        })
+    except Exception as e:
+        messages.error(request, "Error accessing reservation details")
+        return redirect('customerapp:dashboard')
 
 def wardrobe_view(request):
     inventory_items = Inventory.objects.filter(available=True)

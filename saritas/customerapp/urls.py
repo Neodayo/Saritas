@@ -23,10 +23,11 @@ urlpatterns = [
     path('wardrobe/<str:encrypted_id>/', views.item_detail, name='item_detail'),
     # path('wardrobe/<str:encrypted_id>/', views.product_detail, name='product_detail'),
     path('rent-item/<str:encrypted_id>/', views.rent_item, name='rent_item'),
-    path('reservation/<str:encrypted_id>/', views.reserve_item, name='reservation'),
+
     path('rentals/', views.rental_list, name='rental_list'),
     path('my-rentals/', views.my_rentals, name='my_rentals'),
     path('rental/<str:encrypted_id>/', views.rental_detail, name='rental_detail'),
+    path('reserve/<str:encrypted_id>/', views.reserve_item, name='reserve_item'),
     
     path('logout/', views.logout_view, name='logout'),
     path('story/', views.about_us, name='about_us'),
@@ -48,4 +49,7 @@ urlpatterns = [
     path('manage-event-slides/', views.manage_event_slides, name='manage_event_slides'),
      path('delete-event-slide/<int:slide_id>/', views.delete_event_slide, name='delete_event_slide'),
     path('update-featured-collections/', views.update_featured_collections, name='update_featured_collections'),
+    path('reservation/confirmation/<str:encrypted_id>/', 
+         views.reservation_confirmation, 
+         name='reservation_confirmation'),
 ]

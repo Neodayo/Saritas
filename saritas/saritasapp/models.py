@@ -555,72 +555,211 @@ class Rental(models.Model):
 # --- Reservation ---
 class Reservation(models.Model):
     STATUS_CHOICES = [
-        ('pending', 'Pending Approval'),
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected'),
-        ('completed', 'Completed'),
+        ('pending', 'Pending Payment'),
+        ('paid', 'Paid - Awaiting Pickup'),
+        ('fulfilled', 'Fulfilled (Converted to Rental)'),
+        ('expired', 'Expired (No Show)'),
         ('cancelled', 'Cancelled'),
     ]
 
+    # Core Fields
     inventory_size = models.ForeignKey(
-        InventorySize,
+        'InventorySize',
+        on_delete=models.PROTECT,
+        related_name='reservations'
+    )
+    customer = models.ForeignKey(
+        'Customer',
         on_delete=models.CASCADE,
         related_name='reservations'
     )
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='reservations')
-    approved_by = models.ForeignKey(
+    staff = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='approved_reservations'
+        related_name='processed_reservations'
     )
-    reservation_date = models.DateField(default=timezone.now)
-    return_date = models.DateField()
-    quantity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
-    reservation_price = models.DecimalField(
-        max_digits=8, decimal_places=2,
+    
+    # Timing
+    reservation_date = models.DateTimeField(auto_now_add=True)
+    pickup_deadline = models.DateTimeField()
+    pickup_time = models.DateTimeField(null=True, blank=True)
+    
+    # Financials
+    reservation_fee = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
         default=500.00,
-        editable=False,
-        validators=[MinValueValidator(500.00), MaxValueValidator(500.00)],
-        help_text="Flat reservation fee of ₱500.00 per item"
+        validators=[MinValueValidator(500.00)],
+        help_text="Minimum ₱500 reservation fee"
     )
-    total_price = models.DecimalField(max_digits=10, decimal_places=2, editable=False, default=0.00)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    amount_paid = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=0.00
+    )
+    
+    # Status Tracking
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
+    payment_reference = models.CharField(max_length=100, blank=True)
+    
+    # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
-    notes = models.TextField(blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-    def clean(self):
-        today = timezone.now().date()
-
-        if self.reservation_date < today:
-            raise ValidationError("Reservation date cannot be in the past.")
-
-        if self.return_date <= self.reservation_date:
-            raise ValidationError("Return date must be after the reservation date.")
-
-        if self.quantity > self.inventory_size.quantity:
-            raise ValidationError(
-                f"Only {self.inventory_size.quantity} items available in size {self.inventory_size.size.name}"
-            )
-
-    def save(self, *args, **kwargs):
-        self.total_price = self.quantity * self.reservation_price
-        super().save(*args, **kwargs)
+    class Meta:
+        ordering = ['reservation_date']
+        indexes = [
+            models.Index(fields=['status', 'pickup_deadline']),
+            models.Index(fields=['inventory_size', 'status']),
+        ]
 
     def __str__(self):
-        return f"Reservation #{self.pk} by {self.customer.user.username} for '{self.item.name}'"
+        return f"Reservation #{self.id} - {self.customer}"
+
+    def clean(self):
+        super().clean()
+        
+        # Ensure pickup deadline is in the future
+        if self.pickup_deadline and self.pickup_deadline <= timezone.now():
+            raise ValidationError("Pickup deadline must be in the future")
+            
+        # Validate payment meets minimum
+        if self.amount_paid < 500 and self.status != 'pending':
+            raise ValidationError("Minimum reservation fee is ₱500")
+
+    def save(self, *args, **kwargs):
+        # Auto-set pickup deadline if not specified (24 hours from now)
+        if not self.pickup_deadline:
+            self.pickup_deadline = timezone.now() + timedelta(hours=24)
+            
+        # Auto-update status based on payment
+        if self.amount_paid >= 500 and self.status == 'pending':
+            self.status = 'paid'
+            
+        super().save(*args, **kwargs)
+
+    # === Core Business Methods ===
+
+    @classmethod
+    def create_reservation(cls, customer, inventory_size, amount_paid=500.00):
+        """First-come-first-serve reservation with locking"""
+        try:
+            with transaction.atomic():
+                # Lock inventory row
+                item = InventorySize.objects.select_for_update().get(
+                    pk=inventory_size.pk,
+                    quantity__gt=0
+                )
+                
+                # Create reservation
+                reservation = cls.objects.create(
+                    customer=customer,
+                    inventory_size=item,
+                    amount_paid=max(Decimal('500.00'), Decimal(str(amount_paid))),
+                    status='paid' if amount_paid >= 500 else 'pending'
+                )
+                
+                # Reduce available quantity
+                item.quantity -= 1
+                item.save()
+                
+                return reservation
+                
+        except InventorySize.DoesNotExist:
+            raise ValidationError("This item size is no longer available")
+
+    def convert_to_rental(self, staff_user):
+        """Convert reservation to a rental upon pickup"""
+        if self.status != 'paid':
+            raise ValidationError("Only paid reservations can be converted")
+            
+        if timezone.now() > self.pickup_deadline:
+            self.mark_as_expired()
+            raise ValidationError("Pickup deadline has passed")
+
+        with transaction.atomic():
+            # Create the rental
+            rental = Rental.objects.create(
+                customer=self.customer,
+                inventory_size=self.inventory_size,
+                staff=staff_user,
+                rental_start=timezone.now().date(),
+                rental_end=timezone.now().date() + timedelta(days=7),  # Default 7-day rental
+                deposit=self.inventory_size.inventory.deposit_price or 0,
+                status=Rental.RENTED
+            )
+            
+            # Update reservation status
+            self.status = 'fulfilled'
+            self.pickup_time = timezone.now()
+            self.staff = staff_user
+            self.save()
+            
+            return rental
+
+    def mark_as_expired(self):
+        """Handle no-show scenarios"""
+        if self.status not in ['paid', 'pending']:
+            return
+            
+        with transaction.atomic():
+            # Return inventory
+            self.inventory_size.quantity += 1
+            self.inventory_size.save()
+            
+            # Update status (forfeit payment)
+            self.status = 'expired'
+            self.save()
+            
+            # TODO: Send notification to customer
+            # notification.send(...)
+
+    def cancel_reservation(self, refund_amount=0.00):
+        """Cancel with partial refund"""
+        if self.status != 'paid':
+            raise ValidationError("Only paid reservations can be cancelled")
+            
+        if refund_amount > self.amount_paid:
+            raise ValidationError("Refund cannot exceed amount paid")
+
+        with transaction.atomic():
+            # Return inventory
+            self.inventory_size.quantity += 1
+            self.inventory_size.save()
+            
+            # Update status
+            self.status = 'cancelled'
+            self.amount_paid -= Decimal(str(refund_amount))
+            self.save()
+            
+            # Process refund
+            # payment_service.process_refund(...)
+
+    # === Utility Methods ===
+
+    @property
+    def is_active(self):
+        return self.status in ['paid'] and timezone.now() <= self.pickup_deadline
+
+    @property
+    def time_remaining(self):
+        if self.is_active:
+            return self.pickup_deadline - timezone.now()
+        return timedelta(0)
 
     @property
     def encrypted_id(self):
-        """Returns encrypted ID for URLs"""
-        if not self.pk:
-            return None
-        try:
-            return encrypt_id(self.pk)
-        except Exception as e:
-            logger.error(f"Failed to encrypt reservation ID {self.pk}: {str(e)}")
-            return None
+        """For secure URL generation"""
+        return encrypt_id(self.pk) if self.pk else None
+
+    def get_absolute_url(self):
+        return reverse('reservation_detail', kwargs={'encrypted_id': self.encrypted_id})
         
     # --- Fitting Schedule System ---
 class FittingAppointment(models.Model):
